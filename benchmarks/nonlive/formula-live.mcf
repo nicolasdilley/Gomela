@@ -1,0 +1,6 @@
+[(Closing_main_maint1 + Sync_main_maint1 + tau + tausync)*]
+(
+(<RECV_main_maint1>true => mu Z .(<Sync_main_maint1>true) || (<tau>Z || <tausync>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z))
+&&
+(<SEND_main_maint1>true => mu Z .(<Sync_main_maint1>true) || (<tau>Z || <tausync>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z))
+)

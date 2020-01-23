@@ -1,0 +1,53 @@
+act
+tausync; 
+% actions
+Close_main_maint1, Chan_Close_main_maint1, Closing_main_maint1, Select_NSend_main_maint1, Rcv_Select_main_maint1, Sync_main_maint1, Send_main_maint1, Rcv_main_maint1, Send_Select_main_maint1, Select_NRcv_main_maint1, Closed_Chan_Rcv_main_maint1, Rcv_Close_main_maint1, Closed_Chan_Rcv_Select_main_maint1, Select_Rcv_Close_main_maint1, Close_main_maint3, Chan_Close_main_maint3, Closing_main_maint3, Select_NSend_main_maint3, Rcv_Select_main_maint3, Sync_main_maint3, Send_main_maint3, Rcv_main_maint3, Send_Select_main_maint3, Select_NRcv_main_maint3, Closed_Chan_Rcv_main_maint3, Rcv_Close_main_maint3, Closed_Chan_Rcv_Select_main_maint3, Select_Rcv_Close_main_maint3, Close_main_selt3, Chan_Close_main_selt3, Closing_main_selt3, Select_NSend_main_selt3, Rcv_Select_main_selt3, Sync_main_selt3, Send_main_selt3, Rcv_main_selt3, Send_Select_main_selt3, Select_NRcv_main_selt3, Closed_Chan_Rcv_main_selt3, Rcv_Close_main_selt3, Closed_Chan_Rcv_Select_main_selt3, Select_Rcv_Close_main_selt3;
+% barbs
+SEND_main_maint1, SEND_main_maint3, RECV_main_selt3, RECV_main_maint1, SEND_main_selt3, RECV_main_maint3, CHANCLOSED_main_maint1, CHANCLOSED_main_maint3, CHANCLOSED_main_selt3;
+% spawnings
+REQ_MAIN_MAIN_1MAIN_MAINT1, ACC_MAIN_MAIN_1MAIN_MAINT1, REQ_MAIN_MAIN_2MAIN_MAINT3, ACC_MAIN_MAIN_2MAIN_MAINT3, REQ_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1, ACC_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1, REQ_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3, ACC_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3;
+
+proc
+MAIN_MAIN = (REQ_MAIN_MAIN_1MAIN_MAINT1) . ((REQ_MAIN_MAIN_2MAIN_MAINT3) . ((MAIN_SELMAIN_MAINT1MAIN_MAINT3) . (MAIN_SELMAIN_MAINT1MAIN_MAINT3)));
+MAIN_MAIN_1MAIN_MAINT1 = ((SEND_main_maint1) . (delta)) + ((Send_main_maint1) + (Send_Select_main_maint1));
+MAIN_MAIN_2MAIN_MAINT3 = ((SEND_main_maint3) . (delta)) + ((Send_main_maint3) + (Send_Select_main_maint3));
+MAIN_SELMAIN_MAINT1MAIN_MAINT3 = (REQ_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1) . ((REQ_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3) . (((RECV_main_selt3) . (delta)) + ((Rcv_main_selt3) + ((Rcv_Select_main_selt3) + (Rcv_Close_main_selt3)))));
+MAIN_SEL_1MAIN_SELT3MAIN_MAINT1 = (RECV_main_maint1) + (((Rcv_main_maint1) + ((Rcv_Select_main_maint1) + (Rcv_Close_main_maint1))) . (((SEND_main_selt3) . (delta)) + ((Send_main_selt3) + (Send_Select_main_selt3))));
+MAIN_SEL_2MAIN_SELT3MAIN_MAINT3 = (RECV_main_maint3) + (((Rcv_main_maint3) + ((Rcv_Select_main_maint3) + (Rcv_Close_main_maint3))) . (((SEND_main_selt3) . (delta)) + ((Send_main_selt3) + (Send_Select_main_selt3))));
+
+MAIN_MAINT1 = (Chan_Close_main_maint1) . (CLOSED_MAIN_MAINT1);
+
+CLOSED_MAIN_MAINT1 = (CHANCLOSED_main_maint1) + (((Closed_Chan_Rcv_main_maint1) + (Closed_Chan_Rcv_Select_main_maint1)) . (CLOSED_MAIN_MAINT1));
+
+MAIN_MAINT3 = (Chan_Close_main_maint3) . (CLOSED_MAIN_MAINT3);
+
+CLOSED_MAIN_MAINT3 = (CHANCLOSED_main_maint3) + (((Closed_Chan_Rcv_main_maint3) + (Closed_Chan_Rcv_Select_main_maint3)) . (CLOSED_MAIN_MAINT3));
+
+MAIN_SELT3 = (Chan_Close_main_selt3) . (CLOSED_MAIN_SELT3);
+
+CLOSED_MAIN_SELT3 = (CHANCLOSED_main_selt3) + (((Closed_Chan_Rcv_main_selt3) + (Closed_Chan_Rcv_Select_main_selt3)) . (CLOSED_MAIN_SELT3));
+CHANS = MAIN_MAINT1 || MAIN_MAINT3 || MAIN_SELT3;
+
+init
+allow({SEND_main_maint1, SEND_main_maint3, RECV_main_selt3, RECV_main_maint1, SEND_main_selt3, RECV_main_maint3, CHANCLOSED_main_maint1, CHANCLOSED_main_maint3, CHANCLOSED_main_selt3, Closing_main_maint1, Sync_main_maint1, Closing_main_maint3, Sync_main_maint3, Closing_main_selt3, Sync_main_selt3, tausync},
+comm({Close_main_maint1|Chan_Close_main_maint1->Closing_main_maint1,
+Select_NSend_main_maint1|Rcv_Select_main_maint1->Sync_main_maint1,
+Send_main_maint1|Rcv_main_maint1->Sync_main_maint1,
+Send_Select_main_maint1|Select_NRcv_main_maint1->Sync_main_maint1,
+Closed_Chan_Rcv_main_maint1|Rcv_Close_main_maint1->Sync_main_maint1,
+Closed_Chan_Rcv_Select_main_maint1|Select_Rcv_Close_main_maint1->Sync_main_maint1,
+Close_main_maint3|Chan_Close_main_maint3->Closing_main_maint3,
+Select_NSend_main_maint3|Rcv_Select_main_maint3->Sync_main_maint3,
+Send_main_maint3|Rcv_main_maint3->Sync_main_maint3,
+Send_Select_main_maint3|Select_NRcv_main_maint3->Sync_main_maint3,
+Closed_Chan_Rcv_main_maint3|Rcv_Close_main_maint3->Sync_main_maint3,
+Closed_Chan_Rcv_Select_main_maint3|Select_Rcv_Close_main_maint3->Sync_main_maint3,
+Close_main_selt3|Chan_Close_main_selt3->Closing_main_selt3,
+Select_NSend_main_selt3|Rcv_Select_main_selt3->Sync_main_selt3,
+Send_main_selt3|Rcv_main_selt3->Sync_main_selt3,
+Send_Select_main_selt3|Select_NRcv_main_selt3->Sync_main_selt3,
+Closed_Chan_Rcv_main_selt3|Rcv_Close_main_selt3->Sync_main_selt3,
+Closed_Chan_Rcv_Select_main_selt3|Select_Rcv_Close_main_selt3->Sync_main_selt3
+, REQ_MAIN_MAIN_1MAIN_MAINT1|ACC_MAIN_MAIN_1MAIN_MAINT1->tausync, REQ_MAIN_MAIN_2MAIN_MAINT3|ACC_MAIN_MAIN_2MAIN_MAINT3->tausync, REQ_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1|ACC_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1->tausync, REQ_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3|ACC_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3->tausync
+},
+ CHANS || MAIN_MAIN||(ACC_MAIN_MAIN_1MAIN_MAINT1 . MAIN_MAIN_1MAIN_MAINT1) || (ACC_MAIN_MAIN_2MAIN_MAINT3 . MAIN_MAIN_2MAIN_MAINT3) || (ACC_MAIN_SEL_1MAIN_SELT3MAIN_MAINT1 . MAIN_SEL_1MAIN_SELT3MAIN_MAINT1) || (ACC_MAIN_SEL_2MAIN_SELT3MAIN_MAINT3 . MAIN_SEL_2MAIN_SELT3MAIN_MAINT3)));

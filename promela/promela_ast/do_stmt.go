@@ -1,0 +1,27 @@
+package promela_ast
+
+import (
+	"go/token"
+
+	"git.cs.kent.ac.uk/nd315/gopology/promela/utils"
+)
+
+// a do statement is a repetition construct that is used to repete certain action that might or might not be executable.
+// If non of the guards are executable, the doStmt blocks until one is ready. (Like a for{select}) in go
+type DoStmt struct {
+	Do     token.Position
+	Guards []GuardStmt
+}
+
+func (s *DoStmt) GoNode() token.Position {
+	return s.Do
+}
+
+func (s *DoStmt) Print(num_tabs int) (stmt string) {
+	stmt += "do\n"
+	for _, guard := range s.Guards {
+		stmt += guard.Print(num_tabs) + "\n"
+	}
+	stmt += utils.GetTabs(num_tabs) + "od"
+	return stmt
+}
