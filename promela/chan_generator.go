@@ -3,8 +3,8 @@ package promela
 import (
 	"go/token"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_types"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
 // Generating the processes for a chan struct

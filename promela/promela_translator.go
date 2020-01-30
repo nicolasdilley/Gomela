@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_types"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_types"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -21,7 +21,6 @@ type Model struct {
 	Package         string                   // the name of the package
 	Name            string                   // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
 	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
-	Inlines         []*promela_ast.Inline    // the inline functions representing the non recursive func call of the model
 	Fun             *ast.FuncDecl            // the function being modelled
 	Chans           map[ast.Expr]*ChanStruct // the promela chan used in the module mapped to their go expr
 	Init            *promela_ast.InitDef
@@ -56,7 +55,6 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 		Known_bounds: &Bounds{List: []*Bound{}},
 		Chan_closing: false,
 	}
-
 	m.Name = m.Package + "_" + m.Fun.Name.String() + strconv.Itoa(m.Fun.Type.Params.NumFields())
 	m.Init = &promela_ast.InitDef{Def: f.Position(m.Fun.Pos()), Body: m.TranslateBlockStmt(project, m.Fun.Body)}
 
@@ -330,6 +328,7 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				}
 			}
 			if hasChan {
+				func_name = "go_" + func_name
 				if !m.CallExists(func_name) {
 					proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: p.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 					proc.Params = []promela_ast.Param{}
@@ -970,7 +969,7 @@ func addBlock(b1 *promela_ast.BlockStmt, b2 *promela_ast.BlockStmt) {
 }
 
 // 1. Replace the name of the channel with the name we have in the body of the function
-// 2. Create an inline function if no recursion or a process with a channel child to act as a return
+// 2. Create a process with a channel child to act as a return
 // 3. Translate the body of the function to Promela.
 
 func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj types.Object) *promela_ast.BlockStmt {
@@ -995,7 +994,6 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 		}
 
 		if !m.CallExists(func_name) {
-
 			if found, decl := FindDecl(pack_name, fun, len(call_expr.Args), p.AstMap); found {
 
 				hasChan := false
@@ -1008,88 +1006,45 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 				}
 
 				if hasChan {
-					// If the call is not recursive and does not create a chan we can translate it to an inline call.
-					if !isRecursive(pack_name, decl.Body, p.AstMap, []ast.Expr{}) && len(AnalyseFuncCall(p.Fileset, decl, p.AstMap[pack_name])) == 0 {
+					// Generate a new proctype to model the recursive call
+					proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: p.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+					proc.Params = []promela_ast.Param{}
 
-						// Generate a new proctype to model the recursive call
-						proc := &promela_ast.Inline{
-							Name: promela_ast.Ident{Name: func_name}, Pos: p.Fileset.Position(call_expr.Pos()),
-							Body:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
-							Params: []promela_ast.Expr{},
+					// change the aliases
+					for i, arg := range call_expr.Args {
+						if m.containsChan(arg) {
+							param := findExprFromParams(decl.Type.Params, i)
+							proc.Params = append(proc.Params, promela_ast.Param{Name: param.Name, Types: promela_types.Chandef})
 						}
-
-						// change the aliases
-						args := []promela_ast.Expr{}
-						counter := 0
-						for _, field := range decl.Type.Params.List {
-							for _, name := range field.Names {
-								switch field.Type.(type) {
-								case *ast.ChanType:
-									proc.Params = append(proc.Params, &promela_ast.Ident{Name: name.Name})
-									m.Chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}}
-									args = append(args, m.TranslateArgs(p, call_expr.Args[counter]))
-								}
-								counter++
-							}
-
-						}
-
-						prev_decl := *m.Fun
-						m.Fun = decl
-						prev_pack := m.Package
-						m.Package = pack_name
-						proc.Body.List = m.TranslateBlockStmt(p, decl.Body).List
-
-						m.Package = prev_pack
-						m.Inlines = append(m.Inlines, proc)
-						m.Fun = &prev_decl
-
-						// add a call to it
-						stmts.List = append(stmts.List,
-							&promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name}, Args: args},
-						)
-						m.Counter++
-					} else {
-
-						// Generate a new proctype to model the recursive call
-						proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: p.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-						proc.Params = []promela_ast.Param{}
-
-						// change the aliases
-						for i, arg := range call_expr.Args {
-							if m.containsChan(arg) {
-								param := findExprFromParams(decl.Type.Params, i)
-								proc.Params = append(proc.Params, promela_ast.Param{Name: param.Name, Types: promela_types.Chandef})
-							}
-						}
-
-						proc.Params = append(proc.Params, promela_ast.Param{Name: "child", Types: promela_types.Chan})
-
-						prev_decl := *m.Fun
-						m.Fun = decl
-						proc.Body.List = m.TranslateBlockStmt(p, decl.Body).List
-						proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
-						m.Proctypes = append(m.Proctypes, proc)
-						m.Fun = &prev_decl
-
-						// add call to the proctype
-						var args []promela_ast.Expr = []promela_ast.Expr{}
-						for _, arg := range call_expr.Args {
-							if m.containsChan(arg) {
-								args = append(args, &m.getChanStruct(arg).Name)
-							}
-						}
-
-						args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
-
-						// add a call to it
-						stmts.List = append(stmts.List,
-							&promela_ast.Chandef{Name: promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Size: promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
-							&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name}, Args: args}},
-							&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
-						)
-						m.Counter++
 					}
+
+					proc.Params = append(proc.Params, promela_ast.Param{Name: "child", Types: promela_types.Chan})
+
+					prev_decl := *m.Fun
+					m.Fun = decl
+					proc.Body.List = m.TranslateBlockStmt(p, decl.Body).List
+					proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
+					m.Proctypes = append(m.Proctypes, proc)
+					m.Fun = &prev_decl
+
+					// add call to the proctype
+					var args []promela_ast.Expr = []promela_ast.Expr{}
+					for _, arg := range call_expr.Args {
+						if m.containsChan(arg) {
+							args = append(args, &m.getChanStruct(arg).Name)
+						}
+					}
+
+					args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
+
+					// add a call to it
+					stmts.List = append(stmts.List,
+						&promela_ast.Chandef{Name: promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Size: promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
+						&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name}, Args: args}},
+						&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
+					)
+					m.Counter++
+					// }
 				} else {
 					// fmt.Print("users_translation.go : Func call not found : " + func_name + "\n Called at :")
 					// fmt.Println(p.Fileset.Position(call_expr.Fun.Pos()))
@@ -1124,36 +1079,7 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
 				)
 				m.Counter++
-			} else if m.isInline(func_name) {
-				// add call to the proctype
-				var args []promela_ast.Expr = []promela_ast.Expr{}
-				for _, arg := range call_expr.Args {
-					if m.containsChan(arg) {
-						args = append(args, &m.getChanStruct(arg).Name)
-					}
-				}
-
-				// add a call to it
-				stmts.List = append(stmts.List,
-					&promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name}, Args: args},
-				)
 			}
-
-			// else if m.isInline(func_name) {
-			// 	if found, _ := FindDecl(pack_name, fun, len(call_expr.Args), p.AstMap); found {
-			// 		prom_call := &promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name, Ident: p.Fileset.Position(call_expr.Fun.Pos())}, Args: []promela_ast.Expr{}, Call: p.Fileset.Position(call_expr.Pos())}
-
-			// 		for _, arg := range call_expr.Args {
-			// 			// new_decl.Body = RenameBlockStmt(new_decl.Body, []ast.Expr{findExprFromParams(decl.Type.Params, i)}, arg)
-			// 			prom_call.Args = append(prom_call.Args, m.TranslateArgs(p, arg))
-			// 		}
-
-			// 		stmts.List = append(stmts.List, prom_call)
-
-			// 	} else {
-			// 		panic("promela_translator: Couldnt find the decleration of a known inline ")
-			// 	}
-			// }
 		}
 	}
 
@@ -1235,11 +1161,6 @@ func (m *Model) CallExists(name string) bool {
 			return true
 		}
 	}
-	for _, inline := range m.Inlines {
-		if inline.Name.Name == name {
-			return true
-		}
-	}
 
 	return false
 }
@@ -1247,16 +1168,6 @@ func (m *Model) CallExists(name string) bool {
 func (m *Model) isProc(fun string) bool {
 	for _, proc := range m.Proctypes {
 		if proc.Name.Name == fun {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (m *Model) isInline(fun string) bool {
-	for _, inline := range m.Inlines {
-		if inline.Name.Name == fun {
 			return true
 		}
 	}

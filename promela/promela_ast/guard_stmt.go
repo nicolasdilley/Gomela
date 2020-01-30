@@ -3,7 +3,7 @@ package promela_ast
 import (
 	"go/token"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/utils"
+	"github.com/nicolasdilley/gomela/promela/utils"
 )
 
 // a guard statement is a statement that execute the body only when the Cond is executable

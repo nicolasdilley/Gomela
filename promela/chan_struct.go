@@ -3,7 +3,7 @@ package promela
 import (
 	"go/token"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
 type ChanStruct struct {

@@ -8,8 +8,8 @@ import (
 	"go/ast"
 	"go/token"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_types"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
 type ForCounter struct { // used to create the labels to jump to for for select statement
@@ -56,9 +56,6 @@ func Print(p *ProjectInfo, m *Model) {
 
 	if len(m.Chans) > 0 {
 		stmt += chan_struct.Print(0)
-	}
-	for _, inline := range m.Inlines {
-		stmt += inline.Print(0)
 	}
 	stmt += "\n"
 	stmt += b.Print(0)
@@ -151,10 +148,6 @@ func (p *ProjectInfo) checkChanClosing(m *Model) {
 	if !p.Chan_closing {
 		for _, proc := range m.Proctypes {
 			checkChanClosing(proc.Body)
-		}
-
-		for _, inline := range m.Inlines {
-			checkChanClosing(inline.Body)
 		}
 
 		checkChanClosing(m.Init.Body)
