@@ -8,8 +8,8 @@ import (
 	"log"
 	"strings"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela"
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -54,7 +54,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 							Global_vars:    []promela_ast.Stmt{},
 							For_counter:    &promela.ForCounter{},
 						}
-
 						m.GoToPromela(proj_name, fileSet, ast_map)
 					}
 				}

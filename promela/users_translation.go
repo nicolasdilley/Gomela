@@ -3,7 +3,7 @@ package promela
 import (
 	"go/ast"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
 func TranslateIdent(p *ProjectInfo, expr ast.Expr) (expr1 promela_ast.Ident) {

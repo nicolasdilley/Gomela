@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_ast"
-	"git.cs.kent.ac.uk/nd315/gopology/promela/promela_types"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
+	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
 type PropertyGenerator struct {
@@ -18,9 +18,6 @@ type PropertyGenerator struct {
 // Add the LTL properties to the model
 func (gen *PropertyGenerator) GenerateProperties() {
 	for _, proc := range gen.Model.Proctypes {
-		proc.Body = gen.parseBlockStmt(proc.Body)
-	}
-	for _, proc := range gen.Model.Inlines {
 		proc.Body = gen.parseBlockStmt(proc.Body)
 	}
 

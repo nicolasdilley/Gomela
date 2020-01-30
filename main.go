@@ -47,7 +47,6 @@ func main() {
 	for _, dir := range files {
 
 		if dir.IsDir() {
-
 			fmt.Println("Infering : " + dir.Name())
 
 			// 			// need to create 10 benchmark and take average
@@ -100,7 +99,6 @@ func gopologyTest(path string, dir_name string, packages []string) {
 
 			parseResults(output.String(), &ver)
 
-			fmt.Println(ver)
 			fmt.Println("-------------------------------")
 			fmt.Println("Result for " + model.Name())
 			fmt.Println("Number of states : ", ver.Num_states)
@@ -125,158 +123,11 @@ func colorise(flag bool) string {
 	return green("false")
 }
 
-// --------- BENCHMARK CODE ----------
-// 	os.RemoveAll("./results")
-// 	os.Mkdir("./results", os.ModePerm)
-// 	files, e := ioutil.ReadDir("./benchmarks")
-
-// 	if e != nil {
-// 		fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", os.Args[1], e)
-// 		return
-// 	}
-
-// 	projects := []ProjectResult{}
-
-// 	for _, dir := range files {
-
-// 		if dir.IsDir() {
-
-// 			fmt.Println("Parsing : " + dir.Name())
-
-// 			// need to create 10 benchmark and take average
-
-// 			path, _ := filepath.Abs("./benchmarks/" + dir.Name())
-
-// 			packages := []string{}
-// 			filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
-
-// 				if file.IsDir() {
-// 					if file.Name() != "vendor" && file.Name() != "tests" {
-// 						packages = append(packages, path)
-// 					} else {
-// 						return filepath.SkipDir
-// 					}
-// 				}
-// 				return nil
-// 			})
-
-// 			// calculate average
-// 			godel_average := 0
-// 			spin_average := 0
-// 			infer_average := 0
-// 			migoinfer_average := 0
-
-// 			test_projects := []ProjectResult{}
-// 			models := []int{}
-// 			for i := 0; i < NUM_OF_TESTS; i++ {
-// 				proj := gopologyTest(path, dir.Name(), packages)
-// 				test_projects = append(test_projects, proj)
-
-// 				for i, model := range proj.Models {
-// 					models[i] += model.Spin_timing
-// 				}
-
-// 				godel_average += proj.Godel_timing
-// 				spin_average += proj.Spin_timing
-// 				infer_average += proj.Infer_timing
-// 				migoinfer_average += proj.Migoinfer_timing
-// 			}
-
-// 			overall_result := test_projects[NUM_OF_TESTS-1]
-
-// 			overall_result.Godel_timing = godel_average / NUM_OF_TESTS
-// 			overall_result.Spin_timing = spin_average / NUM_OF_TESTS
-// 			overall_result.Infer_timing = infer_average / NUM_OF_TESTS
-// 			overall_result.Migoinfer_timing = migoinfer_average / NUM_OF_TESTS
-
-// 			for i, model := range models {
-// 				overall_result.Models[i].Spin_timing = model / NUM_OF_TESTS
-// 			}
-
-// 			projects = append(projects, overall_result)
-// 		}
-// 	}
-
-// 	printProjects(&projects)
-// 	return
-// }
-
-// func gopologyTest(path string, dir_name string, packages []string) ProjectResult {
-
-// 	project := ProjectResult{Name: dir_name}
-// 	infer := time.Now()
-
-// 	// Partition program
-// 	f, ast_map := GenerateAst(packages)
-// 	ParseAst(f, dir_name, ast_map)
-
-// 	t := time.Now()
-// 	var dur time.Duration = t.Sub(infer)
-// 	project.Infer_timing = int((float64(dur.Nanoseconds())) / 1000000.0)
-
-// 	// Verify with SPIN
-// 	models, _ := ioutil.ReadDir("./results/" + dir_name)
-
-// 	// verify each part
-// 	for _, model := range models {
-// 		if strings.HasSuffix(model.Name(), ".pml") {
-// 			var ver VerificationRun = VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
-// 			path, _ := filepath.Abs("./results/" + dir_name + "/" + model.Name())
-// 			var output bytes.Buffer
-
-// 			command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
-// 			command.Stdout = &output
-// 			start := time.Now()
-// 			command.Run()
-
-// 			parseResults(output.String(), &ver)
-
-// 			finish := time.Now()
-// 			var dur time.Duration = finish.Sub(start)
-// 			ver.Spin_timing = int((float64(dur.Nanoseconds())) / 1000000.0)
-
-// 			project.Spin_timing += ver.Spin_timing
-// 			project.Models = append(project.Models, ver)
-// 			project.Num_states += ver.Num_states
-// 			project.Safety_error = project.Safety_error || ver.Safety_error
-// 			project.Global_deadlock = project.Global_deadlock || ver.Global_deadlock
-// 		}
-// 	}
-
-// 	temp_file_name := "./benchmarks/" + dir_name + "/temp"
-
-// 	var out bytes.Buffer
-// 	// MigoInfer
-// 	command := exec.Command("migoinfer", path+"/main.go")
-// 	command.Stdout = &out
-
-// 	start := time.Now()
-// 	command.Run()
-// 	finish := time.Now()
-// 	dur = finish.Sub(start)
-
-// 	project.Migoinfer_timing = int((float64(dur.Nanoseconds())) / 1000000.0)
-// 	ioutil.WriteFile(temp_file_name, out.Bytes(), 0644)
-
-// 	start = time.Now()
-// 	command = exec.Command("Godel", "-D", temp_file_name)
-// 	var output bytes.Buffer
-// 	command.Stdout = &output
-// 	command.Run()
-
-// 	//Godel
-// 	finish = time.Now()
-// 	dur = finish.Sub(start)
-// 	project.Godel_timing = int((float64(dur.Nanoseconds())) / 1000000.0)
-// 	os.Remove(temp_file_name)
-// 	return project
-
 func parseResults(result string, ver *VerificationRun) {
 
 	fmt.Println(result)
 
 	if !strings.Contains(result, "assertion violated") {
-		fmt.Println("Ici")
 		ver.Safety_error = false
 	}
 	if strings.Contains(result, "errors: 0") {
@@ -300,28 +151,6 @@ func parseResults(result string, ver *VerificationRun) {
 			ver.Num_states = states
 		}
 	}
-}
-
-func printProjects(projects *[]ProjectResult) {
-
-	os.Remove("./table.tex")
-
-	to_write := "\\begin{center} \n \\begin{tabular}{ c | c | c c | c c c } \n "
-	to_write += "Programs & \\# states & $\\psi_s$ & $\\psi_g$ & Infer & Spin & Godel \\\\ \n "
-	for _, project := range *projects {
-
-		to_write += project.Name + " & " + fmt.Sprintf("%d", project.Num_states) + " & " + tickIt(project.Safety_error) + " & " + tickIt(project.Global_deadlock) + " & " +
-			fmt.Sprintf("%d", project.Infer_timing) + " & " + fmt.Sprintf("%d", project.Spin_timing) + " & " + fmt.Sprintf("%d", project.Godel_timing) + "\\\\ \n"
-		if len(project.Models) > 1 {
-			for _, model := range project.Models {
-				to_write += " & " + fmt.Sprintf("%d", model.Num_states) + " & " + tickIt(model.Safety_error) + " & " + tickIt(model.Global_deadlock) + " & " +
-					" - " + " & " + fmt.Sprintf("%d", model.Spin_timing) + " &  $\\emptyset$ \\\\ \n"
-			}
-		}
-
-	}
-	to_write += "\\end{tabular} \n \\end{center} \n"
-	ioutil.WriteFile("./table.tex", []byte(to_write), 0644)
 }
 
 // proj_listings := strings.Split(string(data), "\n")
