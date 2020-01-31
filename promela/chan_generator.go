@@ -89,25 +89,25 @@ func GenerateChanMonitor() *promela_ast.Proctype {
 	procType := &promela_ast.Proctype{Name: promela_ast.Ident{Name: "chanMonitor"}, Active: false}
 	procType.Params = []promela_ast.Param{promela_ast.Param{Name: "ch", Types: promela_types.Chandef}}
 
-	closed := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "closed"}, Rhs: &promela_ast.Ident{Name: "false"}}
+	closed := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "state"}, Rhs: &promela_ast.Ident{Name: "false"}}
 
-	send_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.sending"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.sending"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	assert_false := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "false"}}}
 	send_closed_guard := promela_ast.GuardStmt{Cond: &send_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	send_in := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.in"}, Rhs: &promela_ast.Ident{Name: "0"}}
 	send_in_guard := promela_ast.GuardStmt{Cond: &send_in, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
-	send_is_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.is_closed"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_is_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	send_is_closed_guard := promela_ast.GuardStmt{Cond: &send_is_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	receive_closed := &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "ch.closing"}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_closed_guard := promela_ast.GuardStmt{Cond: receive_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	if_closed := &promela_ast.CondStmt{Guards: []promela_ast.GuardStmt{send_closed_guard, receive_closed_guard, send_in_guard, send_is_closed_guard}}
-	if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "closed"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end"}, if_closed}}}
+	if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end"}, if_closed}}}
 
-	send_closed1 := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.sending"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_closed1 := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "ch.sending"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	send_closed_guard1 := promela_ast.GuardStmt{Cond: &send_closed1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	receive_closed1 := &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "ch.closing"}, Rhs: &promela_ast.Ident{Name: "true"}}
-	assign_closed := promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "closed"}, Rhs: &promela_ast.Ident{Name: "true"}}
+	assign_closed := promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "state"}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_closed_guard1 := promela_ast.GuardStmt{Cond: receive_closed1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assign_closed}}}
 	if_not_closed := &promela_ast.CondStmt{Guards: []promela_ast.GuardStmt{send_closed_guard1, receive_closed_guard1, send_is_closed_guard}}
 	if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end1"}, if_not_closed}}}
@@ -122,25 +122,25 @@ func GenerateChanMonitor() *promela_ast.Proctype {
 }
 
 func generateClosedChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
-	closed := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "closed"}, Rhs: &promela_ast.Ident{Name: "false"}}
+	closed := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "state"}, Rhs: &promela_ast.Ident{Name: "false"}}
 
-	send_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".sending"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".sending"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	assert_false := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "false"}}}
 	send_closed_guard := promela_ast.GuardStmt{Cond: &send_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	send_in := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".in"}, Rhs: &promela_ast.Ident{Name: "0"}}
 	send_in_guard := promela_ast.GuardStmt{Cond: &send_in, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
-	send_is_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_is_closed := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	send_is_closed_guard := promela_ast.GuardStmt{Cond: &send_is_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	receive_closed := &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".closing"}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_closed_guard := promela_ast.GuardStmt{Cond: receive_closed, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	if_closed := &promela_ast.CondStmt{Guards: []promela_ast.GuardStmt{send_closed_guard, receive_closed_guard, send_in_guard, send_is_closed_guard}}
-	if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "closed"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end"}, if_closed}}}
+	if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end"}, if_closed}}}
 
-	send_closed1 := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".sending"}, Rhs: &promela_ast.Ident{Name: "closed"}}
+	send_closed1 := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".sending"}, Rhs: &promela_ast.Ident{Name: "state"}}
 	send_closed_guard1 := promela_ast.GuardStmt{Cond: &send_closed1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	receive_closed1 := &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".closing"}, Rhs: &promela_ast.Ident{Name: "true"}}
-	assign_closed := promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "closed"}, Rhs: &promela_ast.Ident{Name: "true"}}
+	assign_closed := promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "state"}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_closed_guard1 := promela_ast.GuardStmt{Cond: receive_closed1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assign_closed}}}
 	if_not_closed := &promela_ast.CondStmt{Guards: []promela_ast.GuardStmt{send_closed_guard1, receive_closed_guard1, send_is_closed_guard}}
 	if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end1"}, if_not_closed}}}
@@ -166,7 +166,7 @@ func generateAsyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	receive_in := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "in"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 	assert_false := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "false"}}}
 	receive_in_guard := promela_ast.GuardStmt{Cond: &receive_in, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
-	receive_close := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_close_guard := promela_ast.GuardStmt{Cond: &receive_close, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	if_is_closed.Guards = append(if_is_closed.Guards, send_out_guard, receive_in_guard, receive_close_guard)
 	is_closed_guard.Body.List = append(is_closed_guard.Body.List, &promela_ast.LabelStmt{Name: "end1"}, &if_is_closed)
@@ -180,7 +180,7 @@ func generateAsyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	send_ack := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "ack"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 	size_plus_plus := promela_ast.IncDecStmt{X: &promela_ast.Ident{Name: "current_size"}, Op: "++"}
 	receive_in_guard1 := promela_ast.GuardStmt{Cond: &receive_in1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&send_ack, &size_plus_plus}}}
-	receive_close1 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close1 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	closing := promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{Sel: promela_ast.Ident{Name: "is_closed"}, X: &chan_struct.Name}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_close_guard1 := promela_ast.GuardStmt{Cond: &receive_close1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&closing}}}
 	size_is_zero_if.Guards = append(size_is_zero_if.Guards, receive_in_guard1, receive_close_guard1)
@@ -194,7 +194,7 @@ func generateAsyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	send_ack2 := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "ack"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 	size_plus_plus1 := promela_ast.IncDecStmt{X: &promela_ast.Ident{Name: "current_size"}, Op: "++"}
 	receive_in_guard2 := promela_ast.GuardStmt{Cond: &receive_in2, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&send_ack2, &size_plus_plus1}}}
-	receive_close2 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close2 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	send_out1 := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "out"}}, Rhs: &promela_ast.Ident{Name: "0,false"}}
 	size_minus_minus := promela_ast.IncDecStmt{X: &promela_ast.Ident{Name: "current_size"}, Op: "--"}
 	send_out_guard1 := promela_ast.GuardStmt{Cond: &send_out1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&size_minus_minus}}}
@@ -208,7 +208,7 @@ func generateAsyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	send_out2 := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "out"}}, Rhs: &promela_ast.Ident{Name: "0,false"}}
 	size_minus_minus1 := promela_ast.IncDecStmt{X: &promela_ast.Ident{Name: "current_size"}, Op: "--"}
 	send_out_guard2 := promela_ast.GuardStmt{Cond: &send_out2, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&size_minus_minus1}}}
-	receive_close3 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close3 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	closing2 := promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{Sel: promela_ast.Ident{Name: "is_closed"}, X: &chan_struct.Name}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_close_guard3 := promela_ast.GuardStmt{Cond: &receive_close3, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&closing2}}}
 	size_is_max_if.Guards = append(size_is_max_if.Guards, send_out_guard2, receive_close_guard3)
@@ -231,7 +231,7 @@ func generateSyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	receive_in_guard := promela_ast.GuardStmt{Cond: &receive_in, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	send_out := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "out"}}, Rhs: &promela_ast.Ident{Name: "0,false"}}
 	send_out_guard := promela_ast.GuardStmt{Cond: &send_out, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-	receive_close := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_close_guard := promela_ast.GuardStmt{Cond: &receive_close, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&assert_false}}}
 	if_is_closed.Guards = append(if_is_closed.Guards, receive_in_guard, send_out_guard, receive_close_guard)
 	is_closed_guard.Body.List = append(is_closed_guard.Body.List, &promela_ast.LabelStmt{Name: "end1"}, &if_is_closed)
@@ -245,7 +245,7 @@ func generateSyncChan(chan_struct ChanStruct) *promela_ast.BlockStmt {
 	send_ack := promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "ack"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 	receive_in_guard1 := promela_ast.GuardStmt{Cond: &receive_in1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&send_out1, &send_ack}}}
 
-	receive_close1 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "closed"}}, Rhs: &promela_ast.Ident{Name: "true"}}
+	receive_close1 := promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_struct.Name, Sel: promela_ast.Ident{Name: "state"}}, Rhs: &promela_ast.Ident{Name: "true"}}
 	closing := promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{Sel: promela_ast.Ident{Name: "is_closed"}, X: &chan_struct.Name}, Rhs: &promela_ast.Ident{Name: "true"}}
 	receive_close_guard1 := promela_ast.GuardStmt{Cond: &receive_close1, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&closing}}}
 	if_size.Guards = append(if_size.Guards, receive_in_guard1, receive_close_guard1)
