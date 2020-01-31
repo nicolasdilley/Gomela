@@ -60,7 +60,7 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 
 	init_block := &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
-		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "closed"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}}}}
+		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "state"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}}}}
 
 	m.Init = &promela_ast.InitDef{Body: &promela_ast.BlockStmt{List: append(init_block.List, m.Init.Body.List...)}}
 
@@ -530,8 +530,8 @@ func (m *Model) translateRangeStmt(p *ProjectInfo, s *ast.RangeStmt) *promela_as
 	if m.containsChan(s.X) {
 		chan_struct := m.getChanStruct(s.X)
 
-		do_guard := promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "closed"}}}
-		if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "closed"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+		do_guard := promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}}
+		if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
 		if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".in"}, Rhs: &promela_ast.Ident{Name: "0"}}}}}
 
@@ -689,7 +689,7 @@ func (m *Model) translateSendStmt(p *ProjectInfo, s *ast.SendStmt) *promela_ast.
 		b.List = append(b.List, i)
 
 		closed_chan := &promela_ast.SelectorExpr{X: &chan_name, Sel: promela_ast.Ident{Name: "sending"}}
-		b.List = append(b.List, &promela_ast.RcvStmt{Chan: closed_chan, Rhs: &promela_ast.Ident{Name: "closed"}})
+		b.List = append(b.List, &promela_ast.RcvStmt{Chan: closed_chan, Rhs: &promela_ast.Ident{Name: "state"}})
 	}
 	return b
 
