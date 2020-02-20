@@ -23,5 +23,5 @@ func (s *DoStmt) Print(num_tabs int) (stmt string) {
 		stmt += guard.Print(num_tabs) + "\n"
 	}
 	stmt += utils.GetTabs(num_tabs) + "od"
-	return stmt
+	return
 }

@@ -23,5 +23,5 @@ func (s *ForStmt) Print(num_tabs int) (stmt string) {
 	stmt += utils.GetTabs(num_tabs) + fmt.Sprintf("for(i : 1.. %s) {\n", s.Bound.Name)
 	stmt += s.Body.Print(num_tabs+1) + "\n"
 	stmt += utils.GetTabs(num_tabs) + "}"
-	return stmt
+	return
 }

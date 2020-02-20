@@ -13,6 +13,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+// takes a project name and infer promela models
 func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*packages.Package) {
 
 	if strings.Contains(proj_name, "test") {
@@ -22,9 +23,9 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 					switch obj.Type().(type) {
 					case *types.Chan:
 						fmt.Println(fileSet.Position(ident.NamePos).Filename + ":" + ident.Name + " -> " + obj.String())
-						switch var1 := obj.(type) {
+						switch obj := obj.(type) {
 						case *types.Var:
-							fmt.Println(var1)
+							fmt.Println(obj)
 						}
 					}
 				}
@@ -41,14 +42,13 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 		// Analyse each file
 		for _, file := range node.Syntax {
 			for _, decl := range file.Decls {
-				switch fun_decl := decl.(type) {
+				switch decl := decl.(type) {
 				case *ast.FuncDecl:
-					if !takeChanAsParam(fun_decl) {
-
+					if !takeChanAsParam(decl) {
 						var m promela.Model = promela.Model{
 							Package:        pack_name,
 							Proctypes:      []*promela_ast.Proctype{},
-							Fun:            fun_decl,
+							Fun:            decl,
 							Chans:          make(map[ast.Expr]*promela.ChanStruct),
 							LTL_Properties: []promela_ast.LTL_property{},
 							Global_vars:    []promela_ast.Stmt{},
@@ -62,8 +62,8 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 	}
 }
 
+// Generate the GO ast for each packages in packages_names
 func GenerateAst(package_names []string) (*token.FileSet, map[string]*packages.Package) {
-
 	var ast_map map[string]*packages.Package = make(map[string]*packages.Package)
 	var cfg *packages.Config = &packages.Config{Mode: packages.LoadAllSyntax, Fset: &token.FileSet{}}
 	lpkgs, err := packages.Load(cfg, package_names...)
@@ -79,7 +79,6 @@ func GenerateAst(package_names []string) (*token.FileSet, map[string]*packages.P
 }
 
 func takeChanAsParam(decl *ast.FuncDecl) bool {
-
 	for _, field := range decl.Type.Params.List {
 		switch field.Type.(type) {
 		case *ast.ChanType:

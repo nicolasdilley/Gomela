@@ -34,19 +34,18 @@ func (gen *PropertyGenerator) parseBlockStmt(b *promela_ast.BlockStmt) *promela_
 
 	if b != nil {
 		for _, stmt := range b.List {
-			switch s := stmt.(type) {
+			switch stmt := stmt.(type) {
 			case *promela_ast.SelectStmt:
-				new_b.List = append(new_b.List, gen.parseSelectStmt(s).List...)
-
+				new_b.List = append(new_b.List, gen.parseSelectStmt(stmt).List...)
 			case *promela_ast.SendStmt:
-				new_b.List = append(new_b.List, gen.parseSendStmt(s).List...)
+				new_b.List = append(new_b.List, gen.parseSendStmt(stmt).List...)
 			case *promela_ast.RcvStmt:
-				new_b.List = append(new_b.List, gen.parseRcvStmt(s).List...)
+				new_b.List = append(new_b.List, gen.parseRcvStmt(stmt).List...)
 			case *promela_ast.CondStmt:
-				new_cond := *s
+				new_cond := *stmt
 				new_cond.Guards = []promela_ast.GuardStmt{}
 
-				for _, g := range s.Guards {
+				for _, g := range stmt.Guards {
 					body := gen.parseBlockStmt(g.Body)
 					g.Body = body
 					new_cond.Guards = append(new_cond.Guards, g)
@@ -54,10 +53,10 @@ func (gen *PropertyGenerator) parseBlockStmt(b *promela_ast.BlockStmt) *promela_
 				new_b.List = append(new_b.List, &new_cond)
 
 			case *promela_ast.DoStmt:
-				new_do := *s
+				new_do := *stmt
 				new_do.Guards = []promela_ast.GuardStmt{}
 
-				for _, g := range s.Guards {
+				for _, g := range stmt.Guards {
 					g.Body = gen.parseBlockStmt(g.Body)
 					new_do.Guards = append(new_do.Guards, g)
 
@@ -65,28 +64,28 @@ func (gen *PropertyGenerator) parseBlockStmt(b *promela_ast.BlockStmt) *promela_
 				new_b.List = append(new_b.List, &new_do)
 			case *promela_ast.ForStmt:
 
-				new_body := gen.parseBlockStmt(&s.Body)
-				s.Body = *new_body
+				new_body := gen.parseBlockStmt(&stmt.Body)
+				stmt.Body = *new_body
 
-				new_b.List = append(new_b.List, s)
+				new_b.List = append(new_b.List, stmt)
 
 			case *promela_ast.IfStmt:
-				new_if := *s
+				new_if := *stmt
 				new_if.Guards = []promela_ast.GuardStmt{}
-				for _, g := range s.Guards {
+				for _, g := range stmt.Guards {
 					body := gen.parseBlockStmt(g.Body)
 					g.Body = body
 					new_if.Guards = append(new_if.Guards, g)
 
 				}
-				init := gen.parseBlockStmt(s.Init)
+				init := gen.parseBlockStmt(stmt.Init)
 				new_if.Init = init
 				new_b.List = append(new_b.List, &new_if)
 			case *promela_ast.ExprStmt:
-				new_expr := gen.parseBlockStmt(&promela_ast.BlockStmt{List: []promela_ast.Stmt{s.X}})
+				new_expr := gen.parseBlockStmt(&promela_ast.BlockStmt{List: []promela_ast.Stmt{stmt.X}})
 				new_b.List = append(new_b.List, new_expr.List...)
 			default:
-				if s != nil {
+				if stmt != nil {
 					new_b.List = append(new_b.List, stmt)
 				}
 			}

@@ -72,13 +72,13 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 	block_stmt := &promela_ast.BlockStmt{Block: p.Fileset.Position(b.Pos()), List: []promela_ast.Stmt{}}
 	defer_stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, stmt := range b.List {
-		switch s := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *ast.IfStmt:
-			addBlock(block_stmt, m.translateIfStmt(p, s))
+			addBlock(block_stmt, m.translateIfStmt(p, stmt))
 		case *ast.AssignStmt:
 
-			for i := len(s.Rhs) - 1; i >= 0; i-- {
-				switch call := s.Rhs[i].(type) {
+			for i := len(stmt.Rhs) - 1; i >= 0; i-- {
+				switch call := stmt.Rhs[i].(type) {
 				case *ast.CallExpr:
 					switch ident := call.Fun.(type) {
 					case *ast.Ident:
@@ -90,8 +90,8 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									// a new channel is found lets change its name, rename it in function and add to struct
 									chan_name := ast.Ident{Name: CHAN_NAME + strconv.Itoa(len(m.Chans))}
 
-									b.List = RenameBlockStmt(b, []ast.Expr{s.Lhs[i]}, &chan_name).List
-									channel := &ChanStruct{Name: promela_ast.Ident{Name: chan_name.Name, Ident: p.Fileset.Position(ident.Pos())}, Chan: p.Fileset.Position(s.Pos())}
+									b.List = RenameBlockStmt(b, []ast.Expr{stmt.Lhs[i]}, &chan_name).List
+									channel := &ChanStruct{Name: promela_ast.Ident{Name: chan_name.Name, Ident: p.Fileset.Position(ident.Pos())}, Chan: p.Fileset.Position(stmt.Pos())}
 									chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
 									if len(call.Args) > 1 {
 										channel.Buffered = true
@@ -110,7 +110,7 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									set_chan := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: chan_name.Name + ".in"}, Rhs: &promela_ast.Ident{Name: chan_name.Name + "_in"}}
 									call_monitor := &promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "chanMonitor"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: chan_name.Name}}}}
 
-									m.Chans[s.Lhs[i]] = channel
+									m.Chans[stmt.Lhs[i]] = channel
 
 									block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 									block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
@@ -122,10 +122,10 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 					}
 				}
 			}
-			addBlock(block_stmt, m.translateAssignStmt(p, s))
+			addBlock(block_stmt, m.translateAssignStmt(p, stmt))
 		case *ast.DeclStmt:
 
-			switch decl := s.Decl.(type) {
+			switch decl := stmt.Decl.(type) {
 			case *ast.GenDecl:
 				for _, spec := range decl.Specs {
 					switch val := spec.(type) {
@@ -142,7 +142,7 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 												chan_name := ast.Ident{Name: CHAN_NAME + strconv.Itoa(len(m.Chans))}
 												// a new channel is found lets change its name, rename it in function and add to struct
 												b.List = RenameBlockStmt(b, []ast.Expr{val.Names[i]}, &chan_name).List
-												channel := &ChanStruct{Name: promela_ast.Ident{Name: chan_name.Name, Ident: p.Fileset.Position(ident.Pos())}, Chan: p.Fileset.Position(s.Pos())}
+												channel := &ChanStruct{Name: promela_ast.Ident{Name: chan_name.Name, Ident: p.Fileset.Position(ident.Pos())}, Chan: p.Fileset.Position(stmt.Pos())}
 												chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
 
 												if len(call.Args) > 1 {
@@ -176,30 +176,30 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 					}
 				}
 			}
-			addBlock(block_stmt, m.translateDeclStmt(p, s))
+			addBlock(block_stmt, m.translateDeclStmt(p, stmt))
 		case *ast.GoStmt:
-			addBlock(block_stmt, m.TranslateGoStmt(p, s))
+			addBlock(block_stmt, m.TranslateGoStmt(p, stmt))
 		case *ast.ExprStmt:
-			addBlock(block_stmt, m.translateExprStmt(p, s))
+			addBlock(block_stmt, m.translateExprStmt(p, stmt))
 		case *ast.ForStmt:
-			addBlock(block_stmt, m.translateForStmt(p, s))
+			addBlock(block_stmt, m.translateForStmt(p, stmt))
 		case *ast.SendStmt:
-			addBlock(block_stmt, m.translateSendStmt(p, s))
+			addBlock(block_stmt, m.translateSendStmt(p, stmt))
 		case *ast.RangeStmt:
-			addBlock(block_stmt, m.translateRangeStmt(p, s))
+			addBlock(block_stmt, m.translateRangeStmt(p, stmt))
 		case *ast.ReturnStmt:
-			addBlock(block_stmt, m.translateReturnStmt(p, s))
+			addBlock(block_stmt, m.translateReturnStmt(p, stmt))
 		case *ast.SelectStmt:
-			addBlock(block_stmt, m.translateSelectStmt(p, s))
+			addBlock(block_stmt, m.translateSelectStmt(p, stmt))
 		case *ast.SwitchStmt:
-			addBlock(block_stmt, m.translateSwitchStmt(p, s))
+			addBlock(block_stmt, m.translateSwitchStmt(p, stmt))
 		case *ast.LabeledStmt:
-			addBlock(block_stmt, m.translateLabeledStmt(p, s))
+			addBlock(block_stmt, m.translateLabeledStmt(p, stmt))
 		case *ast.BranchStmt:
-			addBlock(block_stmt, m.translateBranchStmt(p, s))
+			addBlock(block_stmt, m.translateBranchStmt(p, stmt))
 		case *ast.DeferStmt:
-			defer_stmts.Block = p.Fileset.Position(s.Pos())
-			addBlock(defer_stmts, m.TranslateExpr(p, s.Call))
+			defer_stmts.Block = p.Fileset.Position(stmt.Pos())
+			addBlock(defer_stmts, m.TranslateExpr(p, stmt.Call))
 		}
 	}
 
@@ -388,9 +388,9 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 
 			for _, arg := range call_expr.Args {
 				for _, e := range m.TranslateExpr(p, arg).List {
-					switch rcv := e.(type) {
+					switch e := e.(type) {
 					case *promela_ast.RcvStmt:
-						stmts.List = append(stmts.List, rcv)
+						stmts.List = append(stmts.List, e)
 					}
 				}
 			}
@@ -598,13 +598,13 @@ func (m *Model) translateSwitchStmt(p *ProjectInfo, s *ast.SwitchStmt) *promela_
 	addBlock(i.Init, m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{s.Init}}))
 
 	for _, stmt := range s.Body.List {
-		switch clause := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *ast.CaseClause:
 
-			for _, e := range clause.List {
+			for _, e := range stmt.List {
 				addBlock(b, m.TranslateExpr(p, e))
 			}
-			guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: m.TranslateBlockStmt(p, &ast.BlockStmt{List: clause.Body})}
+			guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: m.TranslateBlockStmt(p, &ast.BlockStmt{List: stmt.Body})}
 
 			i.Guards = append(i.Guards, *guard)
 		default:
@@ -622,12 +622,12 @@ func (m *Model) translateSelectStmt(p *ProjectInfo, s *ast.SelectStmt) *promela_
 	i := &promela_ast.SelectStmt{Select: p.Fileset.Position(s.Pos())}
 
 	for _, comm := range s.Body.List {
-		switch c := comm.(type) {
+		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
 			guard := promela_ast.GuardStmt{Guard: p.Fileset.Position(comm.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-			if c.Comm != nil { // check if default select
+			if comm.Comm != nil { // check if default select
 
-				block_stmt := m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{c.Comm}})
+				block_stmt := m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{comm.Comm}})
 				if len(block_stmt.List) > 0 {
 					guard.Cond = block_stmt.List[0]
 
@@ -643,7 +643,7 @@ func (m *Model) translateSelectStmt(p *ProjectInfo, s *ast.SelectStmt) *promela_
 				i.Has_default = true
 				guard.Cond = &promela_ast.Ident{Name: "true"}
 			}
-			guard.Body.List = append(guard.Body.List, m.TranslateBlockStmt(p, &ast.BlockStmt{List: c.Body}).List...)
+			guard.Body.List = append(guard.Body.List, m.TranslateBlockStmt(p, &ast.BlockStmt{List: comm.Body}).List...)
 
 			if !containsBreak(guard.Body) && !containsReturn(guard.Body) { // no return or break then just break
 				guard.Body.List = append(guard.Body.List, &promela_ast.Ident{Name: "break"})
@@ -700,9 +700,9 @@ func (m *Model) translateDeclStmt(p *ProjectInfo, s *ast.DeclStmt) *promela_ast.
 	switch d := s.Decl.(type) {
 	case *ast.GenDecl:
 		for _, spec := range d.Specs {
-			switch v := spec.(type) {
+			switch spec := spec.(type) {
 			case *ast.ValueSpec:
-				for _, val := range v.Values {
+				for _, val := range spec.Values {
 					addBlock(b, m.TranslateExpr(p, val))
 				}
 			}
@@ -758,27 +758,27 @@ func (m *Model) translateLabeledStmt(p *ProjectInfo, s *ast.LabeledStmt) *promel
 
 func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockStmt {
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	switch e := expr.(type) {
+	switch expr := expr.(type) {
 	case *ast.BinaryExpr:
-		addBlock(stmts, m.TranslateExpr(p, e.X))
-		addBlock(stmts, m.TranslateExpr(p, e.Y))
+		addBlock(stmts, m.TranslateExpr(p, expr.X))
+		addBlock(stmts, m.TranslateExpr(p, expr.Y))
 	case *ast.CallExpr:
-		switch name := e.Fun.(type) {
+		switch name := expr.Fun.(type) {
 		case *ast.Ident:
-			if name.Name == "close" && len(e.Args) == 1 { // closing a chan
-				// chan_struct := m.getChanStruct(e.Args[0])
+			if name.Name == "close" && len(expr.Args) == 1 { // closing a chan
+				// chan_struct := m.getChanStruct(expr.Args[0])
 				send := &promela_ast.SendStmt{Send: p.Fileset.Position(name.Pos())}
-				ch := TranslateIdent(p, e.Args[0])
+				ch := TranslateIdent(p, expr.Args[0])
 				send.Chan = &promela_ast.SelectorExpr{
 					X: &ch, Sel: promela_ast.Ident{Name: "closing"},
-					Pos: p.Fileset.Position(e.Args[0].Pos()),
+					Pos: p.Fileset.Position(expr.Args[0].Pos()),
 				}
 				send.Rhs = &promela_ast.Ident{Name: "true"}
 				p.Chan_closing = true
 				stmts.List = append(stmts.List, send)
 
 			} else {
-				addBlock(stmts, m.TranslateCallExpr(p, e, p.AstMap[m.Package].TypesInfo.ObjectOf(name)))
+				addBlock(stmts, m.TranslateCallExpr(p, expr, p.AstMap[m.Package].TypesInfo.ObjectOf(name)))
 			}
 
 		case *ast.SelectorExpr:
@@ -797,7 +797,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 							// call on a struct
 
 							// if found, sel := containSelector(u, name); found {
-							// 	found, decl := FindDecl(obj.Pkg().Path(), obj.Id(), len(e.Args),p.AstMap)
+							// 	found, decl := FindDecl(obj.Pkg().Path(), obj.Id(), len(expr.Args),p.AstMap)
 							// 	if found {
 
 							// 		aliases := []ast.Expr{&ast.SelectorExpr{X: decl.Recv.List[0].Names[0], Sel: sel.Sel}}
@@ -808,9 +808,9 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 							// 			proc_name := name.X.(*ast.Ident).Name + name.Sel.Name
 
 							// 			if !t.Module.ProcExists(proc_name) {
-							// 				proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: proc_name}, Pos:p.Fileset.Position(e.Pos()), Active: false}
+							// 				proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: proc_name}, Pos:p.Fileset.Position(expr.Pos()), Active: false}
 
-							// 				for i, arg := range e.Args {
+							// 				for i, arg := range expr.Args {
 							// 					if m.containsChan(p, u, arg) {
 							// 						param := findExprFromParams(decl.Type.Params, i)
 							// 						chan_info :=p.Module.getChanIdent(u, arg).ChanInfo
@@ -837,7 +837,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 							// 					proc.Body = body
 							// 				}
 							// 				var args []promela_ast.Expr
-							// 				for _, arg := range e.Args {
+							// 				for _, arg := range expr.Args {
 							// 					if containsChan(p, u, arg) {
 							// 						channel := TranslateIdent(p, arg)
 							// 						args = append(args, &channel)
@@ -863,7 +863,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 							// 				t.Module.Proctypes = append(t.Module.Proctypes, proc)
 							// 			} else {
 							// 				var args []promela_ast.Expr
-							// 				for _, arg := range e.Args {
+							// 				for _, arg := range expr.Args {
 							// 					if containsChan(p, u, arg) {
 							// 						channel := TranslateIdent(p, arg)
 							// 						args = append(args, &channel)
@@ -902,7 +902,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 						switch obj.Type().(type) {
 						case *types.Signature:
 							contains := false
-							for _, arg := range e.Args {
+							for _, arg := range expr.Args {
 								switch u := arg.(type) {
 								case *ast.UnaryExpr:
 									if u.Op == token.ARROW {
@@ -913,7 +913,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 							}
 
 							if contains {
-								addBlock(stmts, m.TranslateCallExpr(p, e, obj))
+								addBlock(stmts, m.TranslateCallExpr(p, expr, obj))
 							}
 						}
 					}
@@ -923,7 +923,7 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 			new_block := name.Body
 			for i, field := range name.Type.Params.List {
 				for _, name := range field.Names {
-					new_block = RenameBlockStmt(new_block, []ast.Expr{name}, e.Args[i])
+					new_block = RenameBlockStmt(new_block, []ast.Expr{name}, expr.Args[i])
 				}
 			}
 
@@ -932,12 +932,12 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 		}
 
 	case *ast.UnaryExpr:
-		switch e.Op {
+		switch expr.Op {
 		case token.ARROW:
 
-			channel := m.getChanStruct(e.X)
+			channel := m.getChanStruct(expr.X)
 			if channel != nil {
-				chan_name := m.TranslateArgs(p, e.X)
+				chan_name := m.TranslateArgs(p, expr.X)
 
 				stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: promela_ast.Ident{Name: "in"}}, Rcv: p.Fileset.Position(expr.Pos()), Rhs: &promela_ast.Ident{Name: "0"}})
 			}
@@ -945,19 +945,19 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 	// case *ast.Ident:
 	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(e).(type) {
 	// 	case *types.Chan:
-	// 		stmts.List = append(stmts.List, &promela_ast.Ident{Name: e.Name, Ident: p.Fileset.Position(e.Pos())})
+	// 		stmts.List = append(stmts.List, &promela_ast.Ident{Name: e.Name, Ident: p.Fileset.Position(expr.Pos())})
 	// 	}
 	// case *ast.SelectorExpr:
-	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(e.Sel).(type) {
+	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(expr.Sel).(type) {
 	// 	case *types.Chan:
 	// 		stmts.List = append(stmts.List, &promela_ast.SelectorExpr{
 	// 			X:   m.TranslateExpr(p, e.X).List[0],
-	// 			Sel: promela_ast.Ident{Name: e.Sel.Name, Ident: p.Fileset.Position(e.Pos())},
+	// 			Sel: promela_ast.Ident{Name: e.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
 	// 			Pos: p.Fileset.Position(e.Pos())})
 	// 	}
 
 	case *ast.ParenExpr:
-		addBlock(stmts, m.TranslateExpr(p, e.X))
+		addBlock(stmts, m.TranslateExpr(p, expr.X))
 	}
 	return stmts
 }
@@ -1051,9 +1051,9 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 
 					for _, arg := range call_expr.Args {
 						for _, e := range m.TranslateExpr(p, arg).List {
-							switch rcv := e.(type) {
+							switch e := e.(type) {
 							case *promela_ast.RcvStmt:
-								stmts.List = append(stmts.List, rcv)
+								stmts.List = append(stmts.List, e)
 							}
 						}
 					}
@@ -1089,17 +1089,17 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 func (m *Model) TranslateArgs(p *ProjectInfo, expr ast.Expr) promela_ast.Expr {
 
 	var e1 promela_ast.Expr
-	switch e := expr.(type) {
+	switch expr := expr.(type) {
 	case *ast.Ident:
 
-		e1 = &promela_ast.Ident{Name: e.Name, Ident: p.Fileset.Position(e.Pos())}
+		e1 = &promela_ast.Ident{Name: expr.Name, Ident: p.Fileset.Position(expr.Pos())}
 
 	case *ast.SelectorExpr:
 
 		e1 = &promela_ast.SelectorExpr{
-			X:   m.TranslateExpr(p, e.X).List[0],
-			Sel: promela_ast.Ident{Name: e.Sel.Name, Ident: p.Fileset.Position(e.Pos())},
-			Pos: p.Fileset.Position(e.Pos())}
+			X:   m.TranslateExpr(p, expr.X).List[0],
+			Sel: promela_ast.Ident{Name: expr.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
+			Pos: p.Fileset.Position(expr.Pos())}
 
 	}
 	return e1
@@ -1129,12 +1129,12 @@ func FindDecl(pack string, func_name string, param_num int, ast_map map[string]*
 		for _, file := range ast_map[pack].Syntax {
 			if file.Decls != nil {
 				for _, decl := range file.Decls {
-					switch fun_decl := decl.(type) {
+					switch decl := decl.(type) {
 					case *ast.FuncDecl:
 
-						if func_name == fun_decl.Name.Name {
-							if fun_decl.Type.Params.NumFields() == param_num {
-								return true, fun_decl
+						if func_name == decl.Name.Name {
+							if decl.Type.Params.NumFields() == param_num {
+								return true, decl
 							}
 						}
 					}
@@ -1179,9 +1179,9 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 
 	recursive := false
 	ast.Inspect(block, func(n ast.Node) bool {
-		switch s := n.(type) {
+		switch n := n.(type) {
 		case *ast.CallExpr:
-			if IdenticalExprs(call_seen, s.Fun) {
+			if IdenticalExprs(call_seen, n.Fun) {
 				recursive = true
 			}
 
@@ -1195,12 +1195,12 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
 func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool, val promela_ast.Ident, v ast.Expr) {
 
-	switch f := s.(type) {
+	switch s := s.(type) {
 	case *ast.ForStmt:
-		switch cond := f.Cond.(type) {
+		switch cond := s.Cond.(type) {
 		case *ast.BinaryExpr:
 			if cond.Op == token.GEQ || cond.Op == token.GTR {
-				switch inc := f.Post.(type) {
+				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.DEC {
 						if found, v := p.ContainsBound(cond.X); !found {
@@ -1216,7 +1216,7 @@ func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool
 				}
 
 			} else if cond.Op == token.LSS || cond.Op == token.LEQ {
-				switch inc := f.Post.(type) {
+				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.INC {
 						if found, v := p.ContainsBound(cond.Y); !found {
@@ -1233,9 +1233,9 @@ func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool
 			}
 
 		}
-		return false, TranslateIdent(p, f.Cond), f.Cond
+		return false, TranslateIdent(p, s.Cond), s.Cond
 	case *ast.RangeStmt:
-		return false, TranslateIdent(p, f.X), f.X
+		return false, TranslateIdent(p, s.X), s.X
 	}
 
 	panic("promela_translator: A loop should be a range or a for and nothing else. Should not happen")
@@ -1243,9 +1243,9 @@ func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool
 }
 
 func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
-	switch ident := expr.(type) {
+	switch expr := expr.(type) {
 	case *ast.Ident:
-		obj := ident.Obj
+		obj := expr.Obj
 		if obj != nil {
 			if obj.Kind == ast.Con {
 				switch value_spec := obj.Decl.(type) {
@@ -1265,7 +1265,7 @@ func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
 			}
 		}
 	case *ast.SelectorExpr:
-		obj := ident.Sel.Obj
+		obj := expr.Sel.Obj
 		if obj != nil {
 			if obj.Kind == ast.Con {
 				switch value_spec := obj.Decl.(type) {
@@ -1285,8 +1285,8 @@ func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
 			}
 		}
 	case *ast.BasicLit:
-		if ident.Kind == token.INT {
-			val, err := strconv.Atoi(ident.Value)
+		if expr.Kind == token.INT {
+			val, err := strconv.Atoi(expr.Value)
 			if err == nil {
 				return true, val
 			}
@@ -1318,9 +1318,9 @@ func containsExpr(exprs []ast.Expr, expr ast.Expr) bool {
 }
 func containsBreak(b *promela_ast.BlockStmt) bool {
 	for _, stmt := range b.List {
-		switch ident := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *promela_ast.Ident:
-			if ident.Name == "break" {
+			if stmt.Name == "break" {
 				return true
 			}
 
@@ -1330,9 +1330,9 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 }
 func containsReturn(b *promela_ast.BlockStmt) bool {
 	for _, stmt := range b.List {
-		switch ident := stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *promela_ast.GotoStmt:
-			if ident.Label == "stop_process" { // there is a return statement
+			if stmt.Label == "stop_process" { // there is a return statement
 				return true
 			}
 		}

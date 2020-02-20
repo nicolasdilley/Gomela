@@ -26,5 +26,5 @@ func (s *GuardStmt) Print(num_tabs int) (stmt string) {
 	} else {
 		stmt += ";"
 	}
-	return stmt
+	return
 }

@@ -10,29 +10,29 @@ import (
 func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.Package) []Chan_info {
 	num_chans := []Chan_info{}
 	ast.Inspect(fun.Body, func(n ast.Node) bool {
-		switch s := n.(type) {
+		switch n := n.(type) {
 		case *ast.AssignStmt:
-			for i, rhs := range s.Rhs {
-				switch call := rhs.(type) {
+			for i, rhs := range n.Rhs {
+				switch rhs := rhs.(type) {
 				case *ast.CallExpr:
-					switch ident := call.Fun.(type) {
+					switch ident := rhs.Fun.(type) {
 					case *ast.Ident:
-						if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
-							switch call.Args[0].(type) {
+						if ident.Name == "make" && len(rhs.Args) > 0 { // possibly a new chan
+							switch rhs.Args[0].(type) {
 							case *ast.ChanType:
-								num_chans = append(num_chans, Chan_info{Name: s.Lhs[i]})
+								num_chans = append(num_chans, Chan_info{Name: n.Lhs[i]})
 							}
 						}
 					}
 				}
 			}
 		case *ast.DeclStmt:
-			switch decl := s.Decl.(type) {
+			switch decl := n.Decl.(type) {
 			case *ast.GenDecl:
 				for _, spec := range decl.Specs {
-					switch val := spec.(type) {
+					switch spec := spec.(type) {
 					case *ast.ValueSpec:
-						for i, rhs := range val.Values {
+						for i, rhs := range spec.Values {
 							switch call := rhs.(type) {
 							case *ast.CallExpr:
 								switch ident := call.Fun.(type) {
@@ -40,7 +40,7 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 									if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
 										switch call.Args[0].(type) {
 										case *ast.ChanType:
-											num_chans = append(num_chans, Chan_info{Name: val.Names[i]})
+											num_chans = append(num_chans, Chan_info{Name: spec.Names[i]})
 										}
 									}
 								}

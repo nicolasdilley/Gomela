@@ -23,5 +23,5 @@ func (s *DeclStmt) Print(num_tabs int) (stmt string) {
 	if s.Rhs != nil {
 		stmt += " = " + s.Rhs.Print(num_tabs)
 	}
-	return stmt
+	return
 }

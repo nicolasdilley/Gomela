@@ -32,5 +32,5 @@ func (p *Inline) Print(num_tabs int) (stmt string) {
 	stmt += "\n " + utils.GetTabs(num_tabs+1) + "stop_process:"
 	stmt += "\n}\n"
 
-	return stmt
+	return
 }

@@ -23,5 +23,5 @@ func (c *ChanStructDef) Print(num_tabs int) (stmt string) {
 		stmt += ";\n"
 	}
 	stmt += "}\n"
-	return stmt
+	return
 }

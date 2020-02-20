@@ -36,5 +36,5 @@ func (s *IfStmt) Print(num_tabs int) (stmt string) {
 	}
 
 	stmt += utils.GetTabs(num_tabs) + "fi"
-	return stmt
+	return
 }

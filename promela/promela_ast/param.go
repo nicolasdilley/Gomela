@@ -18,5 +18,5 @@ func (p *Param) GoNode() token.Position {
 
 func (p *Param) Print(num_tabs int) (stmt string) {
 	stmt += p.Types.Name + " " + p.Name
-	return stmt
+	return
 }
