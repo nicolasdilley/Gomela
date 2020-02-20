@@ -27,5 +27,5 @@ func (s *SelectStmt) Print(num_tabs int) (stmt string) {
 	if s.Goto != nil {
 		stmt += "\n " + utils.GetTabs(num_tabs) + s.Goto.Label + " : \n"
 	}
-	return stmt
+	return
 }

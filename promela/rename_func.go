@@ -25,61 +25,61 @@ func RenameBlockStmt(b *ast.BlockStmt, prev []ast.Expr, n ast.Expr) (new_block *
 func renameStmt(s ast.Stmt, prev []ast.Expr, n ast.Expr) (s1 ast.Stmt, alias []ast.Expr) {
 	alias = prev
 	s1 = s
-	switch stmt := s.(type) {
+	switch s := s.(type) {
 	case *ast.BlockStmt:
-		return RenameBlockStmt(stmt, alias, n), alias
+		return RenameBlockStmt(s, alias, n), alias
 	case *ast.ForStmt:
-		stmt.Cond = renameExpr(stmt.Cond, alias, n)
-		stmt.Init, alias = renameStmt(stmt.Init, alias, n)
-		stmt.Post, alias = renameStmt(stmt.Post, alias, n)
-		stmt.Body = RenameBlockStmt(stmt.Body, alias, n)
+		s.Cond = renameExpr(s.Cond, alias, n)
+		s.Init, alias = renameStmt(s.Init, alias, n)
+		s.Post, alias = renameStmt(s.Post, alias, n)
+		s.Body = RenameBlockStmt(s.Body, alias, n)
 
 	case *ast.SelectStmt:
-		stmt.Body = RenameBlockStmt(stmt.Body, alias, n)
+		s.Body = RenameBlockStmt(s.Body, alias, n)
 
 	case *ast.AssignStmt:
 		found := false
 
-		for i, e := range stmt.Rhs {
+		for i, e := range s.Rhs {
 			if IdenticalExprs(alias, e) {
 				found = true
-				alias = append(alias, stmt.Lhs[i]) // this is where the aliases get added
+				alias = append(alias, s.Lhs[i]) // this is where the aliases get added
 			} else {
-				stmt.Rhs[i] = renameExpr(e, alias, n)
+				s.Rhs[i] = renameExpr(e, alias, n)
 			}
 		}
 		if found {
 			return nil, alias
 		}
-		for i, e := range stmt.Lhs {
+		for i, e := range s.Lhs {
 			if IdenticalExprs(alias, e) {
-				stmt.Lhs[i] = n
+				s.Lhs[i] = n
 			}
 		}
 	case *ast.CommClause:
-		stmt.Comm, alias = renameStmt(stmt.Comm, alias, n)
-		if stmt.Body != nil {
+		s.Comm, alias = renameStmt(s.Comm, alias, n)
+		if s.Body != nil {
 
-			for i, s1 := range stmt.Body {
-				stmt.Body[i], alias = renameStmt(s1, alias, n)
+			for i, s1 := range s.Body {
+				s.Body[i], alias = renameStmt(s1, alias, n)
 			}
 		}
 
 	case *ast.CaseClause:
 
-		for i, e := range stmt.List {
-			stmt.List[i] = renameExpr(e, alias, n)
+		for i, e := range s.List {
+			s.List[i] = renameExpr(e, alias, n)
 		}
-		if stmt.Body != nil {
+		if s.Body != nil {
 
-			for i, s1 := range stmt.Body {
-				stmt.Body[i], alias = renameStmt(s1, alias, n)
+			for i, s1 := range s.Body {
+				s.Body[i], alias = renameStmt(s1, alias, n)
 			}
 		}
 
 	case *ast.DeclStmt:
 		found := false
-		switch decl := stmt.Decl.(type) {
+		switch decl := s.Decl.(type) {
 		case *ast.GenDecl:
 			for _, spec := range decl.Specs {
 				switch val := spec.(type) {
@@ -108,66 +108,66 @@ func renameStmt(s ast.Stmt, prev []ast.Expr, n ast.Expr) (s1 ast.Stmt, alias []a
 			return nil, alias
 		}
 	case *ast.GoStmt:
-		stmt.Call = renameExpr(stmt.Call, alias, n).(*ast.CallExpr)
+		s.Call = renameExpr(s.Call, alias, n).(*ast.CallExpr)
 	case *ast.DeferStmt:
-		stmt.Call = renameExpr(stmt.Call, alias, n).(*ast.CallExpr)
+		s.Call = renameExpr(s.Call, alias, n).(*ast.CallExpr)
 	case *ast.ExprStmt:
-		stmt.X = renameExpr(stmt.X, alias, n)
+		s.X = renameExpr(s.X, alias, n)
 	case *ast.SendStmt:
-		stmt.Chan = renameExpr(stmt.Chan, alias, n)
-		stmt.Value = renameExpr(stmt.Value, alias, n)
+		s.Chan = renameExpr(s.Chan, alias, n)
+		s.Value = renameExpr(s.Value, alias, n)
 	case *ast.RangeStmt:
-		stmt.X = renameExpr(stmt.X, alias, n)
-		stmt.Body = RenameBlockStmt(stmt.Body, alias, n)
+		s.X = renameExpr(s.X, alias, n)
+		s.Body = RenameBlockStmt(s.Body, alias, n)
 	case *ast.IfStmt:
-		stmt.Init, alias = renameStmt(stmt.Init, alias, n)
-		stmt.Body = RenameBlockStmt(stmt.Body, alias, n)
-		if stmt.Else != nil {
-			stmt.Else = RenameBlockStmt(stmt.Else.(*ast.BlockStmt), alias, n)
+		s.Init, alias = renameStmt(s.Init, alias, n)
+		s.Body = RenameBlockStmt(s.Body, alias, n)
+		if s.Else != nil {
+			s.Else = RenameBlockStmt(s.Else.(*ast.BlockStmt), alias, n)
 		}
 	case *ast.ReturnStmt:
-		for i, result := range stmt.Results {
-			stmt.Results[i] = renameExpr(result, alias, n)
+		for i, result := range s.Results {
+			s.Results[i] = renameExpr(result, alias, n)
 		}
 	case *ast.LabeledStmt:
-		stmt.Stmt, alias = renameStmt(stmt.Stmt, alias, n)
+		s.Stmt, alias = renameStmt(s.Stmt, alias, n)
 	}
 
 	return s, alias
 }
 
 func renameExpr(e ast.Expr, prev []ast.Expr, n ast.Expr) ast.Expr {
-	switch e1 := e.(type) {
+	switch e := e.(type) {
 	case *ast.BinaryExpr:
-		e1.X = renameExpr(e1.X, prev, n)
-		e1.Y = renameExpr(e1.Y, prev, n)
+		e.X = renameExpr(e.X, prev, n)
+		e.Y = renameExpr(e.Y, prev, n)
 	case *ast.UnaryExpr:
-		e1.X = renameExpr(e1.X, prev, n)
+		e.X = renameExpr(e.X, prev, n)
 	case *ast.CallExpr:
 
-		switch fun := e1.Fun.(type) {
+		switch fun := e.Fun.(type) {
 		case *ast.FuncLit:
 			fun.Body = RenameBlockStmt(fun.Body, prev, n)
 		}
-		for i, arg := range e1.Args {
-			e1.Args[i] = renameExpr(arg, prev, n)
+		for i, arg := range e.Args {
+			e.Args[i] = renameExpr(arg, prev, n)
 		}
 	case *ast.StarExpr:
-		e1.X = renameExpr(e1.X, prev, n)
+		e.X = renameExpr(e.X, prev, n)
 	case *ast.ParenExpr:
-		e1.X = renameExpr(e1.X, prev, n)
+		e.X = renameExpr(e.X, prev, n)
 	case *ast.KeyValueExpr:
-		e1.Key = renameExpr(e1.Key, prev, n)
-		e1.Value = renameExpr(e1.Value, prev, n)
+		e.Key = renameExpr(e.Key, prev, n)
+		e.Value = renameExpr(e.Value, prev, n)
 	case *ast.IndexExpr:
-		e1.X = renameExpr(e1.X, prev, n)
-		e1.Index = renameExpr(e1.Index, prev, n)
+		e.X = renameExpr(e.X, prev, n)
+		e.Index = renameExpr(e.Index, prev, n)
 	case *ast.Ident:
-		if IdenticalExprs(prev, e1) {
+		if IdenticalExprs(prev, e) {
 			return n
 		}
 	case *ast.SelectorExpr:
-		if IdenticalExprs(prev, e1) {
+		if IdenticalExprs(prev, e) {
 			return n
 		}
 	}

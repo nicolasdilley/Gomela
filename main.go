@@ -13,16 +13,34 @@ import (
 	"github.com/fatih/color"
 )
 
-var (
-	NUM_OF_TESTS   = 10
-	SOURCE_FOLDER  = "./source"
-	RESULTS_FOLDER = "./results"
+const (
+	SOURCE_FOLDER  = "./source"  // The folder containing the projects to verify
+	RESULTS_FOLDER = "./results" // The folder where the models of the projects in /source are placed
 )
+
+type ProjectResult struct {
+	Name             string            // the name of the project
+	Num_states       int               // The overall number of states needed to verify the whole program
+	Infer_timing     int               // time in milli to infer the promela model
+	Models           []VerificationRun // Verification run for all Models
+	Safety_error     bool              // is there any safety errors
+	Global_deadlock  bool              // is there any global deadlock
+	Spin_timing      int               // time in milli to verify the program with spin
+	Godel_timing     int               // time in milli to verify the program with godel
+	Migoinfer_timing int               // time in milli to model the program with migoinfer
+}
+
+type VerificationRun struct {
+	Spin_timing      int  // time in milli to verify the program
+	Safety_error     bool // is there any safety errors
+	Global_deadlock  bool // is there any global deadlock
+	Partial_deadlock bool // is there any partial deadlock
+	Num_states       int  // the number of states in the model
+}
 
 func main() {
 
 	if len(os.Args) > 1 {
-
 		path, _ := filepath.Abs("./tests")
 
 		packages := []string{path}
@@ -42,20 +60,14 @@ func main() {
 		return
 	}
 
-	// projects := []ProjectResult{}
-
 	for _, dir := range files {
-
 		if dir.IsDir() {
 			fmt.Println("Infering : " + dir.Name())
-
-			// 			// need to create 10 benchmark and take average
 
 			path, _ := filepath.Abs(SOURCE_FOLDER + "/" + dir.Name())
 
 			packages := []string{}
 			filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
-
 				if file.IsDir() {
 					if file.Name() != "vendor" && file.Name() != "tests" {
 						packages = append(packages, path)
@@ -65,34 +77,33 @@ func main() {
 				}
 				return nil
 			})
-
-			gopologyTest(path, dir.Name(), packages)
+			inferProject(path, dir.Name(), packages)
 		}
 	}
 
 	return
 }
 
-func gopologyTest(path string, dir_name string, packages []string) {
+func inferProject(path string, dir_name string, packages []string) {
 
-	// 	project := ProjectResult{Name: dir_name}
-	// 	infer := time.Now()
-
-	// 	// Partition program
+	// Partition program
 	f, ast_map := GenerateAst(packages)
 	ParseAst(f, dir_name, ast_map)
 
-	// 	// Verify with SPIN
-	models, _ := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
+	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
+	if err != nil {
+		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
+	}
 
-	// 	// verify each part
+	// verify each model
 	for _, model := range models {
-		if strings.HasSuffix(model.Name(), ".pml") {
+		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
 			fmt.Println("Verifying model : " + model.Name())
-			var ver VerificationRun = VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
+			ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
 			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
 			var output bytes.Buffer
 
+			// Verify with SPIN
 			command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
 			command.Stdout = &output
 			command.Run()
@@ -125,8 +136,6 @@ func colorise(flag bool) string {
 
 func parseResults(result string, ver *VerificationRun) {
 
-	fmt.Println(result)
-
 	if !strings.Contains(result, "assertion violated") {
 		ver.Safety_error = false
 	}
@@ -153,78 +162,10 @@ func parseResults(result string, ver *VerificationRun) {
 	}
 }
 
-// proj_listings := strings.Split(string(data), "\n")
-// os.Mkdir("results", 0755)
-// for _, project_name := range proj_listings {
-
-// 	proj_name := filepath.Base(string(project_name))
-// 	var path_to_dir string
-// 	var commit_hash string
-// 	path_to_dir, commit_hash = CloneRepo(string(project_name))
-// 	path_to_main_dir := path_to_dir + "/" + proj_name
-// 	list_packages := []string{}
-// 	err := filepath.Walk(path_to_main_dir, func(path string, info os.FileInfo, err error) error {
-
-// 		if err != nil {
-// 			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path_to_dir, err)
-// 			return err
-// 		}
-// 		if info.IsDir() {
-// 			if info.Name() == "vendor" || info.Name() == "tests" || info.Name() == "test" {
-// 				fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
-// 				return filepath.SkipDir
-// 			}
-// 			package_name := "github.com/" + project_name + strings.TrimPrefix(path, path_to_main_dir)
-// 			list_packages = append(list_packages, package_name)
-// 			return nil
-// 		}
-// 		return nil
-// 	})
-// 	if err != nil {
-
-// 		fmt.Printf("error walking the path %q: %v\n", path_to_main_dir, err)
-// 	}
-// 	f, ast_map := GenerateAst(list_packages)
-// 	project_info := ParseAst(f, proj_name, path_to_main_dir, commit_hash, ast_map)
-
-// 	project_info.Full_project_name = project_name
-// 	fmt.Println("Num of chans : " + strconv.Itoa(len(project_info.Chan_infos)))
-
-// 	for _, channels := range project_info.Chan_infos {
-// 		for _, channel := range channels {
-// 			channel.Parent.SetCapability(ast_map)
-// 			channel.Print()
-// 		}
-// 	}
-
-// 	Output(&project_info, project_name, commit_hash) // output the result to html files
-// 	defer os.RemoveAll(path_to_dir)                  // clean up
-// }
-
 func tickIt(tick bool) string {
 	if !tick {
 		return "\\cmark"
 	} else {
 		return "\\xmark"
 	}
-}
-
-type ProjectResult struct {
-	Name             string            // the name of the project
-	Num_states       int               // The overall number of states needed to verify the whole program
-	Infer_timing     int               // time in milli to infer the promela model
-	Models           []VerificationRun // Verification run for all Models
-	Safety_error     bool              // is there any safety errors
-	Global_deadlock  bool              // is there any global deadlock
-	Spin_timing      int               // time in milli to verify the program with spin
-	Godel_timing     int               // time in milli to verify the program with godel
-	Migoinfer_timing int               // time in milli to model the program with migoinfer
-}
-
-type VerificationRun struct {
-	Spin_timing      int  // time in milli to verify the program
-	Safety_error     bool // is there any safety errors
-	Global_deadlock  bool // is there any global deadlock
-	Partial_deadlock bool // is there any partial deadlock
-	Num_states       int  // the number of states in the model
 }

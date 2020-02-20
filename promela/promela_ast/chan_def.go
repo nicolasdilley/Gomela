@@ -30,5 +30,5 @@ func (c *Chandef) Print(num_tabs int) (stmt string) {
 	}
 
 	stmt += "}"
-	return stmt
+	return
 }

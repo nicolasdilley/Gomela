@@ -42,7 +42,7 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 	stmt += p.Body.Print(num_tabs + 1)
 	stmt += "\n}\n"
 
-	return stmt
+	return
 }
 
 func (p *Proctype) DeclAtStart() {
