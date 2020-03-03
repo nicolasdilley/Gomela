@@ -55,7 +55,7 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 		Known_bounds: &Bounds{List: []*Bound{}},
 		Chan_closing: false,
 	}
-	m.Name = m.Package + "_" + m.Fun.Name.String() + strconv.Itoa(m.Fun.Type.Params.NumFields())
+	m.Name = m.Package + "_" + m.Fun.Name.String()
 	m.Init = &promela_ast.InitDef{Def: f.Position(m.Fun.Pos()), Body: m.TranslateBlockStmt(project, m.Fun.Body)}
 
 	init_block := &promela_ast.BlockStmt{List: []promela_ast.Stmt{
