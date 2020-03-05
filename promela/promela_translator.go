@@ -934,7 +934,6 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 	case *ast.UnaryExpr:
 		switch expr.Op {
 		case token.ARROW:
-
 			channel := m.getChanStruct(expr.X)
 			if channel != nil {
 				chan_name := m.TranslateArgs(p, expr.X)
@@ -942,19 +941,6 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 				stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: promela_ast.Ident{Name: "in"}}, Rcv: p.Fileset.Position(expr.Pos()), Rhs: &promela_ast.Ident{Name: "0"}})
 			}
 		}
-	// case *ast.Ident:
-	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(e).(type) {
-	// 	case *types.Chan:
-	// 		stmts.List = append(stmts.List, &promela_ast.Ident{Name: e.Name, Ident: p.Fileset.Position(expr.Pos())})
-	// 	}
-	// case *ast.SelectorExpr:
-	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(expr.Sel).(type) {
-	// 	case *types.Chan:
-	// 		stmts.List = append(stmts.List, &promela_ast.SelectorExpr{
-	// 			X:   m.TranslateExpr(p, e.X).List[0],
-	// 			Sel: promela_ast.Ident{Name: e.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
-	// 			Pos: p.Fileset.Position(e.Pos())})
-	// 	}
 
 	case *ast.ParenExpr:
 		addBlock(stmts, m.TranslateExpr(p, expr.X))
@@ -1080,6 +1066,10 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 				)
 				m.Counter++
 			}
+		}
+
+		for _, expr := range call_expr.Args {
+			stmts.List = append(stmts.List, m.TranslateExpr(p, expr).List...)
 		}
 	}
 
