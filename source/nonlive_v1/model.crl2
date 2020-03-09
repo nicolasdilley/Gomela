@@ -1,0 +1,25 @@
+act
+tausync; 
+% actions
+Close_main_maint0, Chan_Close_main_maint0, Closing_main_maint0, Select_NSend_main_maint0, Rcv_Select_main_maint0, Sync_main_maint0, Send_main_maint0, Rcv_main_maint0, Closed_Chan_Rcv_main_maint0, Rcv_Close_main_maint0, Closed_Chan_Rcv_Select_main_maint0, Select_Rcv_Close_main_maint0;
+% barbs
+RECV_main_maint0, CHANCLOSED_main_maint0;
+% spawnings
+
+proc
+MAIN_MAIN = ((RECV_main_maint0) . (delta)) + ((Rcv_main_maint0) + ((Rcv_Select_main_maint0) + (Rcv_Close_main_maint0)));
+
+MAIN_MAINT0 = (Chan_Close_main_maint0) . (CLOSED_MAIN_MAINT0);
+
+CLOSED_MAIN_MAINT0 = (CHANCLOSED_main_maint0) + (((Closed_Chan_Rcv_main_maint0) + (Closed_Chan_Rcv_Select_main_maint0)) . (CLOSED_MAIN_MAINT0));
+CHANS = MAIN_MAINT0;
+
+init
+allow({RECV_main_maint0, CHANCLOSED_main_maint0, Closing_main_maint0, Sync_main_maint0, tausync},
+comm({Close_main_maint0|Chan_Close_main_maint0->Closing_main_maint0,
+Select_NSend_main_maint0|Rcv_Select_main_maint0->Sync_main_maint0,
+Send_main_maint0|Rcv_main_maint0->Sync_main_maint0,
+Closed_Chan_Rcv_main_maint0|Rcv_Close_main_maint0->Sync_main_maint0,
+Closed_Chan_Rcv_Select_main_maint0|Select_Rcv_Close_main_maint0->Sync_main_maint0
+},
+ CHANS || MAIN_MAIN));
