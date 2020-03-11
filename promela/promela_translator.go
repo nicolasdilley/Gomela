@@ -223,8 +223,7 @@ func (m *Model) translateIfStmt(p *ProjectInfo, s *ast.IfStmt) *promela_ast.Bloc
 	switch block := s.Else.(type) {
 	case *ast.BlockStmt:
 		stmts := m.TranslateBlockStmt(p, block)
-		if len(stmts.List) != 0 {
-			contains = true
+		if contains {
 			i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
 		}
 	default:
