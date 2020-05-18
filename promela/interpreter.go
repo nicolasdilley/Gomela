@@ -5,9 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"go/ast"
-	"go/token"
-
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
@@ -70,6 +67,7 @@ func Print(p *ProjectInfo, m *Model) {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func (p *ProjectInfo) checkChanClosing(m *Model) {
@@ -122,74 +120,4 @@ func checkChanClosing(stmts *promela_ast.BlockStmt) {
 
 		}
 	}
-}
-
-func (t *ProjectInfo) BoundSeen(bound ast.Node) (bool, *Bound) {
-
-	for _, b := range t.Known_bounds.List {
-		if b.Name == bound {
-			return true, b
-		}
-	}
-	switch bound := bound.(type) {
-
-	case *ast.CallExpr:
-		for _, b := range t.Known_bounds.List {
-			switch e1 := b.Name.(type) {
-			case *ast.CallExpr:
-				switch i := bound.Fun.(type) {
-				case *ast.Ident:
-					switch i1 := e1.Fun.(type) {
-					case *ast.Ident:
-						if i.Name == i1.Name {
-							if len(bound.Args) > 0 && len(e1.Args) > 0 {
-								if IdenticalExpr(bound.Args[0], e1.Args[0]) {
-									return true, b
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	case *ast.ForStmt:
-		switch bin_expr := bound.Cond.(type) {
-		case *ast.BinaryExpr:
-			if bin_expr.Op == token.LEQ || bin_expr.Op == token.LSS { // <, <=
-				// check if the right hand side is a constant
-				for _, b := range t.Known_bounds.List {
-					if IdenticalExpr(bin_expr.Y, b.Name) {
-						return true, b
-					}
-				}
-			} else if bin_expr.Op == token.GEQ || bin_expr.Op == token.GTR { // >, >=
-
-				// check if the initialisation is a constant
-				switch assign := bound.Init.(type) {
-				case *ast.AssignStmt:
-					for _, rh := range assign.Rhs {
-						for _, b := range t.Known_bounds.List {
-							if IdenticalExpr(rh, b.Name) {
-								return true, b
-							}
-						}
-					}
-				}
-			}
-		}
-	case *ast.RangeStmt:
-		for _, b := range t.Known_bounds.List {
-			if IdenticalExpr(b.Name, bound.X) {
-				return true, b
-			}
-		}
-	case ast.Expr:
-		for _, b := range t.Known_bounds.List {
-			if IdenticalExpr(bound, b.Name) {
-				return true, b
-			}
-		}
-	}
-
-	return false, nil
 }
