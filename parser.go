@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -37,6 +38,8 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 		return
 	}
 
+	logger := Logger{Proj_name: proj_name}
+
 	for pack_name, node := range ast_map {
 
 		// Analyse each file
@@ -53,12 +56,25 @@ func ParseAst(fileSet *token.FileSet, proj_name string, ast_map map[string]*pack
 							LTL_Properties: []promela_ast.LTL_property{},
 							Global_vars:    []promela_ast.Stmt{},
 							For_counter:    &promela.ForCounter{},
+							Counters:       []promela.Counter{},
 						}
 						m.GoToPromela(proj_name, fileSet, ast_map)
+
+						logger.Counters = append(logger.Counters, m.Counters...)
 					}
 				}
 			}
 		}
+	}
+
+	// Print logger
+	d1 := []byte(logger.Print())
+	fmt.Println("Writing log file.")
+	folder := "./results/" + proj_name
+	filename := folder + "/log.html"
+	err := ioutil.WriteFile(filename, d1, 0644)
+	if err != nil {
+		panic(err)
 	}
 }
 

@@ -19,6 +19,7 @@ func RenameBlockStmt(b *ast.BlockStmt, prev []ast.Expr, n ast.Expr) (new_block *
 			new_block.List = append(new_block.List, stmt)
 		}
 	}
+
 	return new_block
 }
 

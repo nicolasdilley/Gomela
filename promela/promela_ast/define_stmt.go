@@ -16,5 +16,7 @@ func (s *DefineStmt) GoNode() token.Position {
 	return s.Define
 }
 func (s *DefineStmt) Print(num_tabs int) string {
-	return "#define " + s.Name.Print(num_tabs) + "  " + s.Rhs.Print(num_tabs)
+	toPrint := "#define " + s.Name.Print(num_tabs) + "  "
+	toPrint += s.Rhs.Print(num_tabs)
+	return toPrint
 }

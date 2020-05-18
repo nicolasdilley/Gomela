@@ -18,26 +18,28 @@ var (
 )
 
 type Model struct {
-	Package         string                   // the name of the package
-	Name            string                   // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
+	Package         string // the name of the package
+	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
+	Fileset         *token.FileSet
 	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
+	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
 	Fun             *ast.FuncDecl            // the function being modelled
 	Chans           map[ast.Expr]*ChanStruct // the promela chan used in the module mapped to their go expr
 	Init            *promela_ast.InitDef
 	LTL_Properties  []promela_ast.LTL_property
-	Defines         []promela_ast.DefineStmt // the define statement used to specify the bounds
 	Global_vars     []promela_ast.Stmt       // the global variable used in the ltl properties
+	Defines         []promela_ast.DefineStmt // the communications paramer
 	process_counter int                      // to give unique name to Promela processes
 	func_counter    int                      // to give unique name to inline func call
 	For_counter     *ForCounter              // Used to translate the for loop to break out properly out of them
 	Counter         int                      // used to differentiate call expr channels
+	Counters        []Counter                // The information that needs to be logged by the logger
 }
 
 type ProjectInfo struct {
 	Project_name string // the name of the project
 	Fileset      *token.FileSet
 	AstMap       map[string]*packages.Package // the map used to find the type of the channels
-	Known_bounds *Bounds
 	Chan_closing bool
 }
 
@@ -46,16 +48,50 @@ type Chan_info struct {
 	Size promela_ast.Ident
 }
 
+type Bound struct {
+	Name ast.Expr
+	Var  promela_ast.Ident
+	Val  int
+}
+
+type Counter struct {
+	Name     string
+	Line     int
+	Filename string
+	Commit   string
+}
+
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[string]*packages.Package) {
 	project := &ProjectInfo{
 		Project_name: project_name,
 		Fileset:      f,
 		AstMap:       ast_map,
-		Known_bounds: &Bounds{List: []*Bound{}},
 		Chan_closing: false,
 	}
+
+	m.Fileset = f // little hack
+
 	m.Name = m.Package + "_" + m.Fun.Name.String()
+	commPars := m.AnalyseCommParam(f, m.Package, m.Fun, ast_map, true)
+
+	//. Create a global var for each
+	for _, commPar := range commPars {
+
+		commPar_decl := promela_ast.DefineStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: "??"}, Define: f.Position(commPar.Name.Pos())}
+		if !commPar.Mandatory {
+			// Not given
+			commPar_decl.Rhs = &promela_ast.Ident{Name: "-1"}
+		}
+		m.Defines = append(m.Defines, commPar_decl)
+
+		m.Counters = append(m.Counters, Counter{
+			Name:     "Comm param, Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
+			Line:     commPar_decl.Define.Line,
+			Commit:   "master",
+			Filename: commPar_decl.Define.Filename,
+		})
+	}
 	m.Init = &promela_ast.InitDef{Def: f.Position(m.Fun.Pos()), Body: m.TranslateBlockStmt(project, m.Fun.Body)}
 
 	init_block := &promela_ast.BlockStmt{List: []promela_ast.Stmt{
@@ -65,6 +101,7 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 	m.Init = &promela_ast.InitDef{Body: &promela_ast.BlockStmt{List: append(init_block.List, m.Init.Body.List...)}}
 
 	Print(project, m)
+
 }
 
 // take a go block stmt and returns its promela counterpart
@@ -73,8 +110,6 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 	defer_stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, stmt := range b.List {
 		switch stmt := stmt.(type) {
-		case *ast.IfStmt:
-			addBlock(block_stmt, m.translateIfStmt(p, stmt))
 		case *ast.AssignStmt:
 
 			for i := len(stmt.Rhs) - 1; i >= 0; i-- {
@@ -95,14 +130,8 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
 									if len(call.Args) > 1 {
 										channel.Buffered = true
-										if found, val := IsConst(call.Args[1], p.AstMap[m.Package]); found {
-											channel.Size = promela_ast.Ident{Name: strconv.Itoa(val)}
-										} else {
-											bound := promela_ast.Ident{Name: TranslateIdent(p, call.Args[1]).Name + strconv.Itoa(len(m.Defines))}
-											channel.Size = bound
-											p.Known_bounds.List = append(p.Known_bounds.List, &Bound{Name: call.Args[1], Var: bound})
-											m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: bound, Rhs: &promela_ast.Ident{Name: "5"}})
-										}
+										channel.Size = m.lookUp(p, call.Args[1])
+
 									} else {
 										channel.Size = promela_ast.Ident{Name: "0"}
 									}
@@ -115,7 +144,13 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 									block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 								} else {
-									panic("Channel created inside a for loop")
+									m.Counters = append(m.Counters, Counter{
+										Name:     "Chan in for",
+										Line:     p.Fileset.Position(ident.Pos()).Line,
+										Commit:   "master",
+										Filename: p.Fileset.Position(ident.Pos()).Filename,
+									})
+									// panic("Channel created inside a for loop")
 								}
 							}
 						}
@@ -147,14 +182,7 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 
 												if len(call.Args) > 1 {
 													channel.Buffered = true
-													if found, val := IsConst(call.Args[1], p.AstMap[m.Package]); found {
-														channel.Size = promela_ast.Ident{Name: strconv.Itoa(val)}
-													} else {
-														bound := promela_ast.Ident{Name: TranslateIdent(p, call.Args[1]).Name + strconv.Itoa(len(m.Defines))}
-														channel.Size = bound
-														p.Known_bounds.List = append(p.Known_bounds.List, &Bound{Name: call.Args[1], Var: bound})
-														m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: bound, Rhs: &promela_ast.Ident{Name: "5"}})
-													}
+													channel.Size = m.lookUp(p, call.Args[1])
 												} else {
 													channel.Size = promela_ast.Ident{Name: "0"}
 												}
@@ -166,7 +194,14 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 												block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 												block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 											} else {
-												panic("Channel created inside a for loop")
+												m.Counters = append(m.Counters, Counter{
+													Name:     "Chan in for",
+													Line:     p.Fileset.Position(ident.Pos()).Line,
+													Commit:   "master",
+													Filename: p.Fileset.Position(ident.Pos()).Filename,
+												})
+												// fmt.Printf("Channel created inside a for loop")
+												// Need to log that
 											}
 										}
 									}
@@ -200,6 +235,8 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 		case *ast.DeferStmt:
 			defer_stmts.Block = p.Fileset.Position(stmt.Pos())
 			addBlock(defer_stmts, m.TranslateExpr(p, stmt.Call))
+		case *ast.IfStmt:
+			addBlock(block_stmt, m.translateIfStmt(p, stmt))
 		}
 	}
 
@@ -246,8 +283,6 @@ func (m *Model) translateIfStmt(p *ProjectInfo, s *ast.IfStmt) *promela_ast.Bloc
 }
 
 func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.BlockStmt {
-	// create the new proctype (has to be new each time because the user might create a new chan)
-
 	// Find the declaration of the call
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
@@ -281,7 +316,8 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				counter++
 			}
 		}
-		chans := AnalyseFuncCall(p.Fileset, m.Fun, p.AstMap[m.Package])
+		chans := AnalyseFuncCall(p.Fileset, m.Fun, p.AstMap[m.Package]) // Returns the channels that are declared before the call
+
 		for _, ch := range chans {
 			proc.Params = append(proc.Params, promela_ast.Param{Name: TranslateIdent(p, ch.Name).Name, Types: promela_types.Chandef})
 
@@ -299,7 +335,6 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 					RenameBlockStmt(name.Body, []ast.Expr{n}, call_expr.Args[counter])
 					m.Chans[call_expr.Args[counter]] = &ChanStruct{Name: translateIdent(call_expr.Args[counter])}
 				}
-
 				counter++
 			}
 		}
@@ -352,9 +387,20 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 						}
 					}
 
+					// Translate the commPar of the function call ignoring the args that are not needed
+					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+
+					// Add the commparam to the param of the new proc
+					for _, commPar := range commPars {
+						decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
+						RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
+						proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name + "_1", Types: promela_types.Int})
+					}
+
 					m.Proctypes = append(m.Proctypes, proc)
 					proc.Body = m.TranslateBlockStmt(p, decl.Body)
 				}
+
 				counter := 0
 				for _, field := range decl.Type.Params.List {
 					for range field.Names {
@@ -372,6 +418,12 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 					}
 				}
 
+				// Translate the commPar of the function call ignoring the args that are not needed
+				commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+
+				for _, commPar := range commPars {
+					prom_call.Args = append(prom_call.Args, m.TranslateArgs(p, call_expr.Args[commPar.Pos]))
+				}
 				prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: p.Fileset.Position(call_expr.Pos())}
 
 				r := &promela_ast.RunStmt{X: prom_call, Run: p.Fileset.Position(s.Pos())}
@@ -380,6 +432,12 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 
 				if m.For_counter.In_for {
 					m.For_counter.With_go = true
+					m.Counters = append(m.Counters, Counter{
+						Name:     "Go in for",
+						Line:     p.Fileset.Position(s.Pos()).Line,
+						Commit:   "master",
+						Filename: p.Fileset.Position(s.Pos()).Filename,
+					})
 				}
 			}
 		} else {
@@ -412,7 +470,6 @@ func (m *Model) translateAssignStmt(p *ProjectInfo, s *ast.AssignStmt) *promela_
 
 func (m *Model) translateForStmt(p *ProjectInfo, s *ast.ForStmt) *promela_ast.BlockStmt {
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	d := &promela_ast.DoStmt{Do: p.Fileset.Position(s.Pos())}
 
 	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
 	had_go := m.For_counter.With_go
@@ -428,72 +485,64 @@ func (m *Model) translateForStmt(p *ProjectInfo, s *ast.ForStmt) *promela_ast.Bl
 
 	label_name := fmt.Sprintf("for%d%d", m.For_counter.X, m.For_counter.Y)
 
-	addBlock(b, m.TranslateExpr(p, s.Cond))
+	addBlock(b, m.TranslateExpr(p, s.Cond)) // translating the condition in case there is a <-a
 
 	addBlock(b, m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{s.Init}}))
-
-	d.Guards = append(
-		d.Guards,
-		promela_ast.GuardStmt{
-			Cond: &promela_ast.Ident{Name: "true"},
-			Body: &promela_ast.BlockStmt{List: append(
-				[]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}},
-				m.TranslateBlockStmt(p, s.Body).List...)}},
-	)
 
 	addBlock(b, m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{s.Post}}))
 
 	for_label := &promela_ast.LabelStmt{Name: label_name + "_exit"}
 
-	if seen, val := p.BoundSeen(s); seen {
-		f := &promela_ast.ForStmt{Bound: val.Var, Body: *d.Guards[0].Body}
-		b.List = append(b.List, f)
+	lb, ub := p.lookUpFor(s, m, p.AstMap[m.Package])
+
+	// Translated body of for loop
+	body := promela_ast.BlockStmt{List: append(
+		[]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}},
+		m.TranslateBlockStmt(p, s.Body).List...)}
+
+	if m.For_counter.With_go {
+
+		// need to change the for loop into a bounded for loop
+		b.List = append(b.List, &promela_ast.ForStmt{
+			For:  p.Fileset.Position(s.Pos()),
+			Lb:   lb,
+			Ub:   ub,
+			Body: body,
+		})
+
 	} else {
+		// print the with the if
+		if_stmt := promela_ast.IfStmt{If: p.Fileset.Position(s.Pos())}
 
-		if m.For_counter.With_go {
-
-			// need to change the for loop into a bounded for loop
-
-			var bound promela_ast.Ident
-			if f, val, v := p.parseGuard(s, p.AstMap[m.Package]); f {
-				bound = val
-			} else {
-				// for_name := promela_ast.Ident{Name: fmt.Sprintf("for%d%d1", m.For_counter.X, m.For_counter.Y)}
-				sbound := TranslateIdent(p, v)
-
-				if sbound.Name == "" {
-					sbound.Name = "f" + strconv.Itoa(m.For_counter.X) + strconv.Itoa(m.For_counter.Y)
-				}
-
-				bound = sbound
-
-				// b.List = append(b.List, &promela_ast.DeclStmt{Name: for_name, Rhs: &sbound, Types: promela_types.Int})
-				p.Known_bounds.List = append(p.Known_bounds.List, &Bound{Name: v, Var: bound})
-				m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: sbound, Rhs: &promela_ast.Ident{Name: "10"}})
-
-				// bound.Name = for_name.Name
-			}
-			b.List = append(b.List, &promela_ast.ForStmt{For: p.Fileset.Position(s.Pos()), Bound: bound, Body: *d.Guards[0].Body})
-
-		} else {
-
-			if s.Cond != nil {
-				if f, val, _ := p.parseGuard(s, p.AstMap[m.Package]); f {
-					b.List = append(b.List, &promela_ast.ForStmt{For: p.Fileset.Position(s.Pos()), Bound: val, Body: *d.Guards[0].Body})
-				} else {
-
-					// adding the option to break of the for loop
-					d.Guards = append(d.Guards, promela_ast.GuardStmt{
-						Cond: &promela_ast.Ident{Name: "true"},
-						Body: &promela_ast.BlockStmt{
-							List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}})
-					b.List = append(b.List, d)
-				}
-			} else {
-
-				b.List = append(b.List, d)
-			}
+		lb_not_given := promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
+		ub_not_given := promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
+		then := promela_ast.GuardStmt{
+			Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
+				Rhs: &ub_not_given, Op: "&&"},
+			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: p.Fileset.Position(s.Pos()), Lb: lb, Ub: ub, Body: body}}},
 		}
+		// the else part
+		d := &promela_ast.DoStmt{Do: p.Fileset.Position(s.Pos())}
+
+		d.Guards = append(
+			d.Guards,
+			promela_ast.GuardStmt{
+				Cond: &promela_ast.Ident{Name: "true"},
+				Body: &body},
+		)
+
+		// adding the option to break of the for loop
+		d.Guards = append(d.Guards, promela_ast.GuardStmt{
+			Cond: &promela_ast.Ident{Name: "true"},
+			Body: &promela_ast.BlockStmt{
+				List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}})
+		// b.List = append(b.List, d)
+
+		els := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d}}}
+
+		if_stmt.Guards = []promela_ast.GuardStmt{then, els}
+
+		b.List = append(b.List, &if_stmt)
 	}
 
 	b.List = append(b.List, for_label)
@@ -546,33 +595,15 @@ func (m *Model) translateRangeStmt(p *ProjectInfo, s *ast.RangeStmt) *promela_as
 		block_stmt := m.TranslateBlockStmt(p, s.Body)
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
-		if seen, val := p.BoundSeen(&ast.CallExpr{Fun: &ast.Ident{Name: "len"}, Args: []ast.Expr{s.X}}); seen {
 
-			for_name := promela_ast.Ident{Name: fmt.Sprintf("for%d%d1", m.For_counter.X, m.For_counter.Y)}
+		if m.For_counter.With_go {
 
-			f := &promela_ast.ForStmt{Bound: for_name, Body: *block_stmt}
-			b.List = append(b.List, &promela_ast.DeclStmt{Name: for_name, Rhs: &val.Var, Types: promela_types.Int}, f)
+			// need to change the for loop into a bounded for loop
+			ub := m.lookUp(p, s.X)
+			b.List = append(b.List, &promela_ast.ForStmt{For: p.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
-
-			if m.For_counter.With_go {
-				// need to change the for loop into a bounded for loop
-
-				var bound promela_ast.Ident
-				_, val, v := p.parseGuard(s, p.AstMap[m.Package])
-				bound = promela_ast.Ident{Name: val.Name + strconv.Itoa(len(m.Defines))}
-				for_name := promela_ast.Ident{Name: fmt.Sprintf("for%d%d1", m.For_counter.X, m.For_counter.Y)}
-				b.List = append(b.List, &promela_ast.DeclStmt{Name: for_name, Rhs: &bound, Types: promela_types.Int})
-				p.Known_bounds.List = append(p.Known_bounds.List, &Bound{Name: v, Var: bound})
-
-				bound = for_name
-				m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: bound, Rhs: &promela_ast.Ident{Name: "10"}})
-
-				b.List = append(b.List, &promela_ast.ForStmt{For: p.Fileset.Position(s.Pos()), Bound: bound, Body: *block_stmt})
-			} else {
-
-				d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
-				b.List = append(b.List, d)
-			}
+			d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
+			b.List = append(b.List, d)
 		}
 	}
 
@@ -894,7 +925,6 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 
 							// }
 						}
-
 					}
 				default:
 					obj := p.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
@@ -971,6 +1001,7 @@ func addBlock(b1 *promela_ast.BlockStmt, b2 *promela_ast.BlockStmt) {
 // 1. Replace the name of the channel with the name we have in the body of the function
 // 2. Create a process with a channel child to act as a return
 // 3. Translate the body of the function to Promela.
+// 4. Translate arguments that are communication parameters
 
 func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj types.Object) *promela_ast.BlockStmt {
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -1010,14 +1041,26 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 					proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: p.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 					proc.Params = []promela_ast.Param{}
 
-					// change the aliases
+					var args []promela_ast.Expr = []promela_ast.Expr{} // building the new call's args
+
+					// change the aliases and translate the channel
 					for i, arg := range call_expr.Args {
 						if m.containsChan(arg) {
 							param := findExprFromParams(decl.Type.Params, i)
 							proc.Params = append(proc.Params, promela_ast.Param{Name: param.Name, Types: promela_types.Chandef})
+							args = append(args, &m.getChanStruct(arg).Name)
 						}
 					}
 
+					// Translate the commPar of the function call ignoring the args that are not needed
+					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+
+					for _, commPar := range commPars {
+
+						RenameChan(decl, commPar.Name, &ast.Ident{Name: commPar.Name.Name + " _1"})
+						proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name + " _1", Types: promela_types.Int})
+						args = append(args, m.TranslateArgs(p, call_expr.Args[commPar.Pos]))
+					}
 					proc.Params = append(proc.Params, promela_ast.Param{Name: "child", Types: promela_types.Chan})
 
 					prev_decl := *m.Fun
@@ -1028,13 +1071,6 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 					m.Fun = &prev_decl
 
 					// add call to the proctype
-					var args []promela_ast.Expr = []promela_ast.Expr{}
-					for _, arg := range call_expr.Args {
-						if m.containsChan(arg) {
-							args = append(args, &m.getChanStruct(arg).Name)
-						}
-					}
-
 					args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
 
 					// add a call to it
@@ -1061,7 +1097,7 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 			}
 
 		} else {
-			if m.isProc(func_name) {
+			if m.CallExists(func_name) { // have we translated this call already?
 
 				// add call to the proctype
 				var args []promela_ast.Expr = []promela_ast.Expr{}
@@ -1100,18 +1136,35 @@ func (m *Model) TranslateArgs(p *ProjectInfo, expr ast.Expr) promela_ast.Expr {
 			X:   m.TranslateExpr(p, expr.X).List[0],
 			Sel: promela_ast.Ident{Name: expr.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
 			Pos: p.Fileset.Position(expr.Pos())}
+	case *ast.BinaryExpr:
+		e1 = &promela_ast.BinaryExpr{Lhs: m.TranslateArgs(p, expr.X), Op: expr.Op.String(), Rhs: m.TranslateArgs(p, expr.Y)}
+	case *ast.UnaryExpr:
+		e1 = &promela_ast.ExprStmt{X: m.TranslateArgs(p, expr.X)}
+	case *ast.CallExpr:
+		// Need to create the call here.
+		// if found, fun_decl := FindDecl(m.Package, getIdent(expr.Fun), len(expr.Args), p.AstMap); found{
 
+		// } else {
+		// create new inline
+		e1 := &promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: p.Fileset.Position(expr.Pos())}
+
+		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
+
+			args := []promela_ast.Expr{}
+
+			for _, arg := range expr.Args {
+				args = append(args, m.TranslateArgs(p, arg))
+			}
+			e1.Args = args
+
+			m.Inlines = append(m.Inlines, &promela_ast.Inline{Name: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Params: args})
+		}
+
+	case *ast.BasicLit:
+		e1 = &promela_ast.Ident{Name: expr.Value}
+		// }
 	}
 	return e1
-}
-
-func (m *Model) getProc(fun string) *promela_ast.Proctype {
-	for _, proc := range m.Proctypes {
-		if proc.Name.Name == fun {
-			return proc
-		}
-	}
-	panic("Promela_translator.go: Couldnt find proc which is wrong")
 }
 
 func (m *Model) getChanStruct(expr ast.Expr) *ChanStruct {
@@ -1165,16 +1218,6 @@ func (m *Model) CallExists(name string) bool {
 	return false
 }
 
-func (m *Model) isProc(fun string) bool {
-	for _, proc := range m.Proctypes {
-		if proc.Name.Name == fun {
-			return true
-		}
-	}
-
-	return false
-}
-
 func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages.Package, call_seen []ast.Expr) bool {
 
 	recursive := false
@@ -1193,8 +1236,9 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 }
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool, val promela_ast.Ident, v ast.Expr) {
+func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (lb promela_ast.Ident, ub promela_ast.Ident) {
 
+	well_formed := false
 	switch s := s.(type) {
 	case *ast.ForStmt:
 		switch cond := s.Cond.(type) {
@@ -1203,14 +1247,17 @@ func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.DEC {
-						if found, v := p.ContainsBound(cond.X); !found {
-							if f, c := IsConst(cond.X, pack); f {
-								return true, promela_ast.Ident{Name: strconv.Itoa(c)}, cond.X
-							} else {
-								return false, TranslateIdent(p, cond.X), cond.X
+						ident := m.lookUp(p, cond.Y)
+						lb.Name = ident.Print(0)
+
+						// look for upper bound
+						switch stmt := s.Init.(type) {
+						case *ast.AssignStmt:
+							for _, rh := range stmt.Rhs {
+								ident := m.lookUp(p, rh)
+								ub.Name = ident.Print(0)
+								well_formed = true
 							}
-						} else {
-							return true, *v, cond.X
 						}
 					}
 				}
@@ -1219,27 +1266,64 @@ func (p *ProjectInfo) parseGuard(s ast.Stmt, pack *packages.Package) (found bool
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.INC {
-						if found, v := p.ContainsBound(cond.Y); !found {
-							if f, c := IsConst(cond.Y, pack); f {
-								return true, promela_ast.Ident{Name: strconv.Itoa(c)}, cond.Y
-							} else {
-								return false, TranslateIdent(p, cond.X), cond.Y
+						ident := m.lookUp(p, cond.Y)
+						ub.Name = ident.Print(0)
+
+						// look for lower bound
+						switch stmt := s.Init.(type) {
+						case *ast.AssignStmt:
+							for _, rh := range stmt.Rhs {
+								ident := m.lookUp(p, rh)
+								lb.Name = ident.Print(0)
+								well_formed = true
 							}
-						} else {
-							return true, *v, cond.Y
 						}
 					}
 				}
 			}
 
 		}
-		return false, TranslateIdent(p, s.Cond), s.Cond
+
 	case *ast.RangeStmt:
-		return false, TranslateIdent(p, s.X), s.X
+		lb.Name = "0"
+		ident := m.lookUp(p, s.X)
+		ub.Name = ident.Print(0)
+		well_formed = true
+
+	default:
+		panic("promela_translator: A loop should be a range or a for and nothing else. Should not happen")
 	}
 
-	panic("promela_translator: A loop should be a range or a for and nothing else. Should not happen")
-	return false, promela_ast.Ident{}, &ast.Ident{}
+	if !well_formed {
+		lb_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: "??"}}
+		ub_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: "??"}}
+
+		fmt.Println("For loop at : ", p.Fileset.Position(s.Pos()), " is badly formed.")
+		// ask user to give lb and ub for the for loop naming the variable according to its line number and unique number
+		lb_decl.Name.Name = fmt.Sprintf("lb_for%d_%d", p.Fileset.Position(s.Pos()).Line, len(m.Defines))
+		m.Defines = append(m.Defines, lb_decl) // adding lb
+
+		ub_decl.Name.Name = fmt.Sprintf("ub_for%d_%d", p.Fileset.Position(s.Pos()).Line, len(m.Defines))
+		m.Defines = append(m.Defines, ub_decl) // adding ub
+
+		lb = lb_decl.Name // returning the fresh vars
+		ub = ub_decl.Name
+
+		m.Counters = append(m.Counters, Counter{
+			Name:     "For loop not well formed",
+			Line:     p.Fileset.Position(s.Pos()).Line,
+			Commit:   "master",
+			Filename: p.Fileset.Position(s.Pos()).Filename,
+		})
+	}
+	return
+
+}
+
+// take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
+func (m *Model) lookUp(p *ProjectInfo, expr ast.Expr) promela_ast.Ident {
+	ident := m.TranslateArgs(p, expr)
+	return promela_ast.Ident{Name: ident.Print(0)}
 }
 
 func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
@@ -1328,6 +1412,14 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 	}
 	return false
 }
+func (m *Model) containsInline(expr ast.Expr) bool {
+	for _, inline := range m.Inlines {
+		if inline.Name.Name == getIdent(expr).Name {
+			return true
+		}
+	}
+	return false
+}
 func containsReturn(b *promela_ast.BlockStmt) bool {
 	for _, stmt := range b.List {
 		switch stmt := stmt.(type) {
@@ -1338,14 +1430,4 @@ func containsReturn(b *promela_ast.BlockStmt) bool {
 		}
 	}
 	return false
-}
-
-func (p *ProjectInfo) ContainsBound(expr ast.Expr) (bool, *promela_ast.Ident) {
-	for _, bound := range p.Known_bounds.List {
-		if IdenticalExpr(bound.Name, expr) {
-			return true, &bound.Var
-		}
-	}
-
-	return false, nil
 }

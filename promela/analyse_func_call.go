@@ -7,7 +7,9 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+// Return the channels that are created in the scope of a function body's
 func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.Package) []Chan_info {
+
 	num_chans := []Chan_info{}
 	ast.Inspect(fun.Body, func(n ast.Node) bool {
 		switch n := n.(type) {
@@ -55,5 +57,15 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 
 		return true
 	})
+
+	// Add the chan parameter to the list
+	for _, field := range fun.Type.Params.List {
+		switch field.Type.(type) {
+		case *ast.ChanType:
+			for _, name := range field.Names {
+				num_chans = append(num_chans, Chan_info{Name: name})
+			}
+		}
+	}
 	return num_chans
 }

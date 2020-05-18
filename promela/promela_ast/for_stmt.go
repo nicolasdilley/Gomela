@@ -10,9 +10,10 @@ import (
 // a for statement is a like a for loop in Go
 
 type ForStmt struct {
-	For   token.Position
-	Bound Ident // the number of reps
-	Body  BlockStmt
+	For  token.Position
+	Lb   Ident // the lower bound
+	Ub   Ident // the upper bound of the for loop
+	Body BlockStmt
 }
 
 func (s *ForStmt) GoNode() token.Position {
@@ -20,7 +21,7 @@ func (s *ForStmt) GoNode() token.Position {
 }
 
 func (s *ForStmt) Print(num_tabs int) (stmt string) {
-	stmt += utils.GetTabs(num_tabs) + fmt.Sprintf("for(i : 1.. %s) {\n", s.Bound.Name)
+	stmt += utils.GetTabs(num_tabs) + fmt.Sprintf("for(i : %s+1.. %s) {\n", s.Lb.Name, s.Ub.Name)
 	stmt += s.Body.Print(num_tabs+1) + "\n"
 	stmt += utils.GetTabs(num_tabs) + "}"
 	return
