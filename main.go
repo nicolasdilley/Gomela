@@ -2,15 +2,18 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/nicolasdilley/gomela/promela"
 )
 
 const (
@@ -40,55 +43,142 @@ type VerificationRun struct {
 
 func main() {
 
-	if len(os.Args) > 1 {
-		path, _ := filepath.Abs("./tests")
-
-		packages := []string{path}
-
-		f, ast_map := GenerateAst(packages)
-		ParseAst(f, "test", ast_map)
-
-		return
+	logger := &Logger{
+		Counters: []promela.Counter{},
 	}
 
+	// Create the results folder
 	os.RemoveAll(RESULTS_FOLDER)
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
-	files, e := ioutil.ReadDir(SOURCE_FOLDER)
 
-	if e != nil {
-		fmt.Printf("Could not open folder /source %q: %v\n", os.Args[1], e)
+	if len(os.Args) > 1 {
+
+		multi_projects := flag.Bool("l", false, "a .csv is also given as args and contains a list of github.com projects to parse")
+
+		flag.Parse()
+
+		if *multi_projects {
+			// parse multiple projects
+			if len(os.Args) > 2 {
+				if strings.HasSuffix(os.Args[2], ".txt") {
+
+					// parse each projects
+					data, e := ioutil.ReadFile(os.Args[2])
+
+					if e != nil {
+						fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", os.Args[2], e)
+						return
+					}
+					proj_listings := strings.Split(string(data), "\n")
+
+					for i, project_name := range proj_listings {
+						if i < len(project_name) {
+							parseProject(logger, project_name)
+						}
+					}
+
+				} else {
+					fmt.Println("Please provide a .txt file containing the list of projects to be parsed")
+				}
+			}
+
+		} else {
+			// parse project given
+			parseProject(logger, os.Args[1])
+		}
+	} else {
+
+		files, e := ioutil.ReadDir(SOURCE_FOLDER)
+
+		if e != nil {
+			fmt.Printf("Could not open folder /source %q: %v\n", os.Args[1], e)
+			return
+		}
+
+		for _, dir := range files {
+			if dir.IsDir() {
+				fmt.Println("Infering : " + dir.Name())
+
+				path, _ := filepath.Abs(SOURCE_FOLDER + "/" + dir.Name())
+
+				packages := []string{}
+				filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
+					if file.IsDir() {
+						if file.Name() != "vendor" && file.Name() != "tests" {
+							packages = append(packages, path)
+						} else {
+							return filepath.SkipDir
+						}
+					}
+					return nil
+				})
+				inferProject(logger, path, dir.Name(), "", packages)
+			}
+		}
+
 		return
 	}
 
-	for _, dir := range files {
-		if dir.IsDir() {
-			fmt.Println("Infering : " + dir.Name())
-
-			path, _ := filepath.Abs(SOURCE_FOLDER + "/" + dir.Name())
-
-			packages := []string{}
-			filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
-				if file.IsDir() {
-					if file.Name() != "vendor" && file.Name() != "tests" {
-						packages = append(packages, path)
-					} else {
-						return filepath.SkipDir
-					}
-				}
-				return nil
-			})
-			inferProject(path, dir.Name(), packages)
-		}
+	// Print logger
+	d1 := []byte(logger.PrintHTML())
+	fmt.Println("Writing log file.")
+	filename := "./results/log.html"
+	err := ioutil.WriteFile(filename, d1, 0644)
+	if err != nil {
+		panic(err)
 	}
 
-	return
+	// Print CSV
+	d1 = []byte(logger.PrintCSV())
+	filename = "./results/log.csv"
+	err = ioutil.WriteFile(filename, d1, 0644)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
-func inferProject(path string, dir_name string, packages []string) {
+func parseProject(logger *Logger, project_name string) {
+
+	fmt.Println("Infering : " + project_name)
+
+	path_to_dir, commit_hash := CloneRepo(project_name)
+
+	packages := []string{}
+
+	err := filepath.Walk(path_to_dir, func(path string, info os.FileInfo, err error) error {
+
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path_to_dir, err)
+			return err
+		}
+
+		if info.IsDir() {
+
+			if info.Name() != "vendor" && info.Name() != "tests" {
+				packages = append(packages, "."+strings.TrimPrefix(path, path_to_dir))
+			} else {
+				return filepath.SkipDir
+			}
+		}
+		return nil
+	})
+
+	fmt.Println(packages)
+
+	inferProject(logger, path_to_dir, path.Base(project_name), commit_hash, packages)
+	if err != nil {
+		fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
+	}
+	defer os.RemoveAll(path_to_dir) // clean up
+}
+
+func inferProject(logger *Logger, path string, dir_name string, commit string, packages []string) {
 
 	// Partition program
-	f, ast_map := GenerateAst(packages)
-	ParseAst(f, dir_name, ast_map)
+
+	f, ast_map := GenerateAst(path, packages)
+	ParseAst(logger, f, dir_name, commit, ast_map)
 
 	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 	if err != nil {
@@ -119,7 +209,6 @@ func inferProject(path string, dir_name string, packages []string) {
 			fmt.Println("-------------------------------")
 		}
 	}
-
 }
 
 func colorise(flag bool) string {

@@ -21,7 +21,7 @@ func (s *ForStmt) GoNode() token.Position {
 }
 
 func (s *ForStmt) Print(num_tabs int) (stmt string) {
-	stmt += utils.GetTabs(num_tabs) + fmt.Sprintf("for(i : %s+1.. %s) {\n", s.Lb.Name, s.Ub.Name)
+	stmt += utils.GetTabs(num_tabs) + fmt.Sprintf("for(i : %s.. %s+1) {\n", s.Lb.Name, s.Ub.Name)
 	stmt += s.Body.Print(num_tabs+1) + "\n"
 	stmt += utils.GetTabs(num_tabs) + "}"
 	return

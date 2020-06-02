@@ -20,6 +20,7 @@ var (
 type Model struct {
 	Package         string // the name of the package
 	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
+	Commit          string // the commit of the project
 	Fileset         *token.FileSet
 	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
 	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
@@ -55,10 +56,13 @@ type Bound struct {
 }
 
 type Counter struct {
-	Name     string
-	Line     int
-	Filename string
-	Commit   string
+	Proj_name string
+	Fun       string
+	Name      string
+	Info      string
+	Line      int
+	Filename  string
+	Commit    string
 }
 
 // Take a go function and translate it to a Promela module
@@ -71,7 +75,6 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 	}
 
 	m.Fileset = f // little hack
-
 	m.Name = m.Package + "_" + m.Fun.Name.String()
 	commPars := m.AnalyseCommParam(f, m.Package, m.Fun, ast_map, true)
 
@@ -86,10 +89,13 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 		m.Defines = append(m.Defines, commPar_decl)
 
 		m.Counters = append(m.Counters, Counter{
-			Name:     "Comm param, Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
-			Line:     commPar_decl.Define.Line,
-			Commit:   "master",
-			Filename: commPar_decl.Define.Filename,
+			Proj_name: project.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Comm param",
+			Info:      " Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
+			Line:      commPar_decl.Define.Line,
+			Commit:    m.Commit,
+			Filename:  commPar_decl.Define.Filename,
 		})
 	}
 	m.Init = &promela_ast.InitDef{Def: f.Position(m.Fun.Pos()), Body: m.TranslateBlockStmt(project, m.Fun.Body)}
@@ -145,10 +151,12 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 								} else {
 									m.Counters = append(m.Counters, Counter{
-										Name:     "Chan in for",
-										Line:     p.Fileset.Position(ident.Pos()).Line,
-										Commit:   "master",
-										Filename: p.Fileset.Position(ident.Pos()).Filename,
+										Proj_name: p.Project_name,
+										Fun:       m.Fun.Name.String(),
+										Name:      "Chan in for",
+										Line:      p.Fileset.Position(ident.Pos()).Line,
+										Commit:    m.Commit,
+										Filename:  p.Fileset.Position(ident.Pos()).Filename,
 									})
 									// panic("Channel created inside a for loop")
 								}
@@ -195,10 +203,12 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 												block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 											} else {
 												m.Counters = append(m.Counters, Counter{
-													Name:     "Chan in for",
-													Line:     p.Fileset.Position(ident.Pos()).Line,
-													Commit:   "master",
-													Filename: p.Fileset.Position(ident.Pos()).Filename,
+													Proj_name: p.Project_name,
+													Fun:       m.Fun.Name.String(),
+													Name:      "Chan in for",
+													Line:      p.Fileset.Position(ident.Pos()).Line,
+													Commit:    m.Commit,
+													Filename:  p.Fileset.Position(ident.Pos()).Filename,
 												})
 												// fmt.Printf("Channel created inside a for loop")
 												// Need to log that
@@ -266,7 +276,13 @@ func (m *Model) translateIfStmt(p *ProjectInfo, s *ast.IfStmt) *promela_ast.Bloc
 		}
 	default:
 		if s.Else != nil {
-			stmts := m.TranslateBlockStmt(p, s.Else.(*ast.BlockStmt))
+			stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+			switch els := s.Else.(type) {
+			case *ast.BlockStmt:
+				stmts = m.TranslateBlockStmt(p, els)
+			default:
+				stmts = m.TranslateBlockStmt(p, &ast.BlockStmt{List: []ast.Stmt{s.Else}})
+			}
 			if len(stmts.List) != 0 {
 				contains = true
 				i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
@@ -433,10 +449,12 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				if m.For_counter.In_for {
 					m.For_counter.With_go = true
 					m.Counters = append(m.Counters, Counter{
-						Name:     "Go in for",
-						Line:     p.Fileset.Position(s.Pos()).Line,
-						Commit:   "master",
-						Filename: p.Fileset.Position(s.Pos()).Filename,
+						Proj_name: p.Project_name,
+						Fun:       m.Fun.Name.String(),
+						Name:      "Go in for",
+						Line:      p.Fileset.Position(s.Pos()).Line,
+						Commit:    m.Commit,
+						Filename:  p.Fileset.Position(s.Pos()).Filename,
 					})
 				}
 			}
@@ -816,135 +834,24 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 			// could be a call on a struct
 			obj := p.AstMap[m.Package].TypesInfo.ObjectOf(FindIdent(name.X))
 			if obj != nil {
-				switch obj.Type().(type) {
-				case *types.Named: // struct
-					obj := p.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
-					switch s := obj.Type().(type) {
+
+				obj := p.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
+				if obj != nil {
+					switch obj.Type().(type) {
 					case *types.Signature:
-						if s.Recv() == nil {
-							panic("promela_translator.go : A struct that has no receiver ! shouldn't happen")
-						} else {
+						contains := false
+						for _, arg := range expr.Args {
+							switch u := arg.(type) {
+							case *ast.UnaryExpr:
+								if u.Op == token.ARROW {
+									contains = true
 
-							// call on a struct
-
-							// if found, sel := containSelector(u, name); found {
-							// 	found, decl := FindDecl(obj.Pkg().Path(), obj.Id(), len(expr.Args),p.AstMap)
-							// 	if found {
-
-							// 		aliases := []ast.Expr{&ast.SelectorExpr{X: decl.Recv.List[0].Names[0], Sel: sel.Sel}}
-
-							// 		if v.IsChanUsedInBody(aliases, decl.Body, obj.Pkg().Path()) {
-							// 			contains = true
-
-							// 			proc_name := name.X.(*ast.Ident).Name + name.Sel.Name
-
-							// 			if !t.Module.ProcExists(proc_name) {
-							// 				proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: proc_name}, Pos:p.Fileset.Position(expr.Pos()), Active: false}
-
-							// 				for i, arg := range expr.Args {
-							// 					if m.containsChan(p, u, arg) {
-							// 						param := findExprFromParams(decl.Type.Params, i)
-							// 						chan_info :=p.Module.getChanIdent(u, arg).ChanInfo
-							// 						u.Aliases[chan_info] = append(u.Aliases[chan_info], param)
-							// 						chan_infos = append(chan_infos, chan_info)
-							// 						proc.Params = append(proc.Params, promela_ast.Param{Name: param.Name, Types: promela_types.Chandef})
-							// 					}
-							// 				}
-
-							// 				// find the chans contained in that struct
-							// 				for _, chan_info := range chan_infos {
-							// 					for _, channel := range u.Aliases[chan_info] {
-							// 						switch s := channel.(type) {
-							// 						case *ast.SelectorExpr:
-							// 							if found, sel := containSelector(u, s); found {
-							// 								u.Aliases[chan_info] = append(u.Aliases[chan_info], &ast.SelectorExpr{X: decl.Recv.List[0].Names[0], Sel: sel.Sel})
-							// 							}
-							// 						}
-							// 					}
-							// 				}
-							// 				proc.Params = append(proc.Params, promela_ast.Param{Name: "child", Types: promela_types.Chan})
-
-							// 				if f, body := TranslateBlockStmt(p, u, decl.Body); f {
-							// 					proc.Body = body
-							// 				}
-							// 				var args []promela_ast.Expr
-							// 				for _, arg := range expr.Args {
-							// 					if containsChan(p, u, arg) {
-							// 						channel := TranslateIdent(p, arg)
-							// 						args = append(args, &channel)
-							// 					}
-							// 				}
-
-							// 				args = append(args, &promela_ast.Ident{Name: "child" + name.Sel.Name}) // may need to add a number
-
-							// 				// add a call to it
-							// 				stmts.List = append(stmts.List,
-							// 					&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: proc_name}, Args: args}},
-							// 					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child" + name.Sel.Name}, Rhs: &promela_ast.Ident{Name: "0"}},
-							// 				)
-							// 				old_proc :=p.Module.GetProc(proc_name)
-
-							// 				if old_proc != nil {
-							// 					proc.Body.List = append([]promela_ast.Stmt{&promela_ast.Chandef{Name: promela_ast.Ident{Name: "child" + name.Sel.Name}, Size: 0, Types: []promela_types.Types{promela_types.Int}}}, proc.Body.List...)
-							// 				} else {
-							// 					panic("The proc doesnt exist: Shoud not happen")
-							// 				}
-
-							// 				old_proc.Body.List = append(old_proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
-							// 				t.Module.Proctypes = append(t.Module.Proctypes, proc)
-							// 			} else {
-							// 				var args []promela_ast.Expr
-							// 				for _, arg := range expr.Args {
-							// 					if containsChan(p, u, arg) {
-							// 						channel := TranslateIdent(p, arg)
-							// 						args = append(args, &channel)
-							// 					}
-							// 				}
-
-							// 				args = append(args, &promela_ast.Ident{Name: "child" + name.Sel.Name})
-
-							// 				// add a call to it
-							// 				stmts.List = append(stmts.List,
-							// 					&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: proc_name}, Args: args}},
-							// 					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child" + name.Sel.Name}, Rhs: &promela_ast.Ident{Name: "0"}},
-							// 				)
-
-							// 				// proc :=p.Module.GetProc(proc_name)
-
-							// 				// if proc != nil {
-							// 				// 	proc.Body.List = append([]promela_ast.Stmt{&promela_ast.Chandef{Name: promela_ast.Ident{Name: "child" + name.Sel.Name}, Size: 0, Types: []promela_types.Types{promela_types.Int}}}, proc.Body.List...)
-							// 				// } else {
-							// 				// 	panic("The proc doesnt exist: Shoud not happen")
-							// 				// }
-							// 			}
-							// 		}
-							// 	} else {
-							// 		fmt.Print("users_translation.go : Func call not found : " + u.Package_name + "." + name.Sel.Name + "\n Called at :")
-							// 		fmt.Println(t.Fileset.Position(name.Pos()))
-							// 	}
-
-							// }
-						}
-					}
-				default:
-					obj := p.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
-					if obj != nil {
-						switch obj.Type().(type) {
-						case *types.Signature:
-							contains := false
-							for _, arg := range expr.Args {
-								switch u := arg.(type) {
-								case *ast.UnaryExpr:
-									if u.Op == token.ARROW {
-										contains = true
-
-									}
 								}
 							}
+						}
 
-							if contains {
-								addBlock(stmts, m.TranslateCallExpr(p, expr, obj))
-							}
+						if contains {
+							addBlock(stmts, m.TranslateCallExpr(p, expr, obj))
 						}
 					}
 				}
@@ -972,19 +879,6 @@ func (m *Model) TranslateExpr(p *ProjectInfo, expr ast.Expr) *promela_ast.BlockS
 				stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: promela_ast.Ident{Name: "in"}}, Rcv: p.Fileset.Position(expr.Pos()), Rhs: &promela_ast.Ident{Name: "0"}})
 			}
 		}
-	// case *ast.Ident:
-	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(e).(type) {
-	// 	case *types.Chan:
-	// 		stmts.List = append(stmts.List, &promela_ast.Ident{Name: e.Name, Ident: p.Fileset.Position(expr.Pos())})
-	// 	}
-	// case *ast.SelectorExpr:
-	// 	switch p.AstMap[m.Package].TypesInfo.TypeOf(expr.Sel).(type) {
-	// 	case *types.Chan:
-	// 		stmts.List = append(stmts.List, &promela_ast.SelectorExpr{
-	// 			X:   m.TranslateExpr(p, e.X).List[0],
-	// 			Sel: promela_ast.Ident{Name: e.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
-	// 			Pos: p.Fileset.Position(e.Pos())})
-	// 	}
 
 	case *ast.ParenExpr:
 		addBlock(stmts, m.TranslateExpr(p, expr.X))
@@ -1133,7 +1027,7 @@ func (m *Model) TranslateArgs(p *ProjectInfo, expr ast.Expr) promela_ast.Expr {
 	case *ast.SelectorExpr:
 
 		e1 = &promela_ast.SelectorExpr{
-			X:   m.TranslateExpr(p, expr.X).List[0],
+			X:   m.TranslateArgs(p, expr.X),
 			Sel: promela_ast.Ident{Name: expr.Sel.Name, Ident: p.Fileset.Position(expr.Pos())},
 			Pos: p.Fileset.Position(expr.Pos())}
 	case *ast.BinaryExpr:
@@ -1146,7 +1040,7 @@ func (m *Model) TranslateArgs(p *ProjectInfo, expr ast.Expr) promela_ast.Expr {
 
 		// } else {
 		// create new inline
-		e1 := &promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: p.Fileset.Position(expr.Pos())}
+		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: p.Fileset.Position(expr.Pos())}
 
 		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
 
@@ -1155,15 +1049,18 @@ func (m *Model) TranslateArgs(p *ProjectInfo, expr ast.Expr) promela_ast.Expr {
 			for _, arg := range expr.Args {
 				args = append(args, m.TranslateArgs(p, arg))
 			}
-			e1.Args = args
+			call.Args = args
 
 			m.Inlines = append(m.Inlines, &promela_ast.Inline{Name: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Params: args})
 		}
+
+		e1 = &call
 
 	case *ast.BasicLit:
 		e1 = &promela_ast.Ident{Name: expr.Value}
 		// }
 	}
+
 	return e1
 }
 
@@ -1310,10 +1207,12 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 		ub = ub_decl.Name
 
 		m.Counters = append(m.Counters, Counter{
-			Name:     "For loop not well formed",
-			Line:     p.Fileset.Position(s.Pos()).Line,
-			Commit:   "master",
-			Filename: p.Fileset.Position(s.Pos()).Filename,
+			Proj_name: p.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "For loop not well formed",
+			Line:      p.Fileset.Position(s.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  p.Fileset.Position(s.Pos()).Filename,
 		})
 	}
 	return
