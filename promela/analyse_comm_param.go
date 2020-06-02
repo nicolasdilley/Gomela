@@ -222,11 +222,11 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 		}
 
 		// Function as a comm param
-
 		m.Counters = append(m.Counters, Counter{
-			Name:     "Func has a commParam, Name : " + getIdent(expr.Fun).Name,
+			Name:     "Func as a commParam",
+			Info:     "Name : " + getIdent(expr.Fun).Name,
 			Line:     m.Fileset.Position(expr.Pos()).Line,
-			Commit:   "master",
+			Commit:   m.Commit,
 			Filename: m.Fileset.Position(expr.Pos()).Filename,
 		})
 	case *ast.BinaryExpr:
@@ -238,7 +238,7 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			m.Counters = append(m.Counters, Counter{
 				Name:     "Receive has a commParam, Name : " + getIdent(expr.X).Name,
 				Line:     m.Fileset.Position(expr.Pos()).Line,
-				Commit:   "master",
+				Commit:   m.Commit,
 				Filename: m.Fileset.Position(expr.Pos()).Filename,
 			})
 		}
@@ -269,8 +269,11 @@ func getIdent(expr ast.Expr) *ast.Ident {
 		return &ast.Ident{Name: getIdent(expr.X).Name + expr.Op.String() + getIdent(expr.Y).Name, NamePos: expr.Pos()}
 	case *ast.UnaryExpr:
 		return &ast.Ident{Name: expr.Op.String() + getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.IndexExpr:
+		return &ast.Ident{Name: getIdent(expr.X).Name + "[" + getIdent(expr.Index).Name + "]"}
+	case *ast.BasicLit:
+		return &ast.Ident{Name: expr.Value}
 	}
-
 	return nil
 }
 

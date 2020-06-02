@@ -38,7 +38,6 @@ func Print(p *ProjectInfo, m *Model) {
 	b := promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	// setting the size of the in chan
-
 	for _, c := range m.Global_vars {
 		b.List = append(b.List, c)
 	}
@@ -62,8 +61,10 @@ func Print(p *ProjectInfo, m *Model) {
 	}
 
 	d1 := []byte(stmt)
+
 	filename := folder + "/" + m.Name + ".pml"
 	err := ioutil.WriteFile(filename, d1, 0644)
+
 	if err != nil {
 		panic(err)
 	}

@@ -15,5 +15,6 @@ func (b *BinaryExpr) GoNode() token.Position {
 }
 
 func (b *BinaryExpr) Print(num_tabs int) string {
-	return b.Lhs.Print(num_tabs) + " " + b.Op + " " + b.Rhs.Print(num_tabs)
+	return b.Lhs.Print(num_tabs) + " " +
+		b.Op + " " + b.Rhs.Print(num_tabs)
 }

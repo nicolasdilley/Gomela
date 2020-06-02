@@ -7,20 +7,20 @@ import (
 )
 
 type Logger struct {
-	Proj_name string
-	Counters  []promela.Counter
+	Counters []promela.Counter
 }
 
-func (l *Logger) Print() string {
+func (l *Logger) PrintHTML() string {
 	toPrint := "<html> \n" +
 		"<head> \n" +
 		"</head> \n" +
 		"<body> \n" +
-		"</h1> " + l.Proj_name + "</h1>" +
+		"</h1> Features </h1>" +
 		"<table>" +
 		"<thead>" +
 		"<tr>" +
-		"<th> Name </th>" +
+		"<th> Project </th>" +
+		"<th> Type </th>" +
 		"<th> Line number </th>" +
 		" <th> Filename </th>" +
 		" </tr>" +
@@ -30,10 +30,12 @@ func (l *Logger) Print() string {
 	for _, counter := range l.Counters {
 		toPrint += "<tr>\n" +
 			"<td>" +
+			counter.Proj_name + "</td>\n" +
+			"<td>" +
 			counter.Name + "</td>\n" +
 			"<td>" + strconv.Itoa(counter.Line) + "</td>\n" +
 			"<td>" + "<a href=\"https://github.com/" +
-			l.Proj_name + "/blob/" +
+			counter.Proj_name + "/blob/" +
 			counter.Commit + "/" +
 			counter.Filename + "#L" +
 			strconv.Itoa(counter.Line) + "\">" +
@@ -44,6 +46,32 @@ func (l *Logger) Print() string {
 	toPrint += "</tbody> \n </table>" +
 		"</body> \n" +
 		"</html> \n"
+
+	return toPrint
+}
+
+func (l *Logger) PrintCSV() string {
+	toPrint := "Project,Type, Info, Line Num, Filename, Link,\n"
+
+	for _, counter := range l.Counters {
+		toPrint +=
+			counter.Proj_name + "," +
+				counter.Name + "," +
+				counter.Info + "," +
+				strconv.Itoa(counter.Line) + "," +
+				counter.Filename + ","
+
+		if counter.Commit != "" {
+			toPrint += "https://github.com/" +
+				counter.Proj_name + "/blob/" +
+				counter.Commit + "/" +
+				counter.Filename + "#L" +
+				strconv.Itoa(counter.Line)
+		} else {
+			toPrint += counter.Filename
+		}
+		toPrint += ",\n"
+	}
 
 	return toPrint
 }
