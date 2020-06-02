@@ -8,7 +8,7 @@ To install and use Gomela, follow these steps:
 * Run ```  go build && ./gomela```
 
 To pass a default lower and upper bound for badly formed for loop (including infinite for loops)
-use the flags -lb=value and -ub=value to give a default value for the lower and upper bound respectively.
+use the flags ```-lb=value``` and ```-ub=value``` to give a default ```value``` for the lower and upper bound respectively.
 
 To verify the benchmarks:
 
