@@ -1,5 +1,6 @@
 ./gomela
 ./.DS_Store
+./results
 ./results/*
 ./results/*/*
 ./source/*
