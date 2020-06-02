@@ -35,6 +35,8 @@ type Model struct {
 	For_counter     *ForCounter              // Used to translate the for loop to break out properly out of them
 	Counter         int                      // used to differentiate call expr channels
 	Counters        []Counter                // The information that needs to be logged by the logger
+	Default_lb int
+	Default_ub int
 }
 
 type ProjectInfo struct {
@@ -1192,8 +1194,8 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 	}
 
 	if !well_formed {
-		lb_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: "??"}}
-		ub_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: "??"}}
+		lb_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: strconv.Itoa(m.Default_lb)}}
+		ub_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: strconv.Itoa(m.Default_ub)}}
 
 		fmt.Println("For loop at : ", p.Fileset.Position(s.Pos()), " is badly formed.")
 		// ask user to give lb and ub for the for loop naming the variable according to its line number and unique number

@@ -7,6 +7,8 @@ To install and use Gomela, follow these steps:
 * Put in ``` ./source ``` the folders of the projects that you want Gomela to verify.
 * Run ```  go build && ./gomela```
 
+To pass a default lower and upper bound for badly formed for loop (including infinite for loops)
+use the flags -lb=value and -ub=value to give a default value for the lower and upper bound respectively.
 
 To verify the benchmarks:
 
@@ -21,7 +23,7 @@ To verify a list of projects:
 
 To verify a single github repository:
 
-* Run ```./gomela creator/project_name``` ie. ```./gomela nicolasdilley/Gomela``` will verify this project.
+* Run ```./gomela -s creator/project_name``` ie. ```./gomela nicolasdilley/Gomela``` will verify this project.
 * The result of the survey will be in ./result and the Promela models under ./results/project_name/\*.pml.
 
 

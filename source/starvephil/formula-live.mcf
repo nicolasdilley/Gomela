@@ -1,0 +1,20 @@
+[(Closing_main_maint0 + Sync_main_maint0 + Closing_main_maint1 + Sync_main_maint1 + Closing_main_maint2 + Sync_main_maint2 + tau + tausync)*]
+(
+(<SELECT_R_main_maint0R_main_maint1>true => mu Z .((<Sync_main_maint0>true) || (<Sync_main_maint1>true)) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<RECV_main_maint1>true => mu Z .(<Sync_main_maint1>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<SEND_main_maint0>true => mu Z .(<Sync_main_maint0>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<SEND_main_maint1>true => mu Z .(<Sync_main_maint1>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<RECV_main_maint0>true => mu Z .(<Sync_main_maint0>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<SELECT_R_main_maint1R_main_maint2>true => mu Z .((<Sync_main_maint1>true) || (<Sync_main_maint2>true)) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<RECV_main_maint2>true => mu Z .(<Sync_main_maint2>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<SEND_main_maint2>true => mu Z .(<Sync_main_maint2>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+&&
+(<SELECT_R_main_maint0R_main_maint2>true => mu Z .((<Sync_main_maint0>true) || (<Sync_main_maint2>true)) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z))
+)

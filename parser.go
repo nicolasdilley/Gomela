@@ -12,7 +12,7 @@ import (
 )
 
 // takes a project name and infer promela models
-func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package) {
+func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package, ver *VerificationInfo) {
 
 	if len(ast_map) == 0 {
 		fmt.Println("Program has no packages")
@@ -37,6 +37,8 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 							Global_vars:    []promela_ast.Stmt{},
 							For_counter:    &promela.ForCounter{},
 							Counters:       []promela.Counter{},
+							Default_ub: 		*ver.ub,
+							Default_lb: 		*ver.lb,
 						}
 
 						if file.Name.Name == "main" {

@@ -1,0 +1,10 @@
+[(Closing_main_maint0 + Sync_main_maint0 + Closing_main_maint1 + Sync_main_maint1 + Closing_main_maint2 + Sync_main_maint2 + Closing_main_maint3 + Sync_main_maint3 + tau + tausync)*]
+(
+(<SEND_main_maint0>true => mu Z .(<Sync_main_maint0>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z || <Closing_main_maint3>Z || <Sync_main_maint3>Z))
+&&
+(<SEND_main_maint1>true => mu Z .(<Sync_main_maint1>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z || <Closing_main_maint3>Z || <Sync_main_maint3>Z))
+&&
+(<SEND_main_maint2>true => mu Z .(<Sync_main_maint2>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z || <Closing_main_maint3>Z || <Sync_main_maint3>Z))
+&&
+(<SEND_main_maint3>true => mu Z .(<Sync_main_maint3>true) || (<tau>Z || <tausync>Z || <Closing_main_maint0>Z || <Sync_main_maint0>Z || <Closing_main_maint1>Z || <Sync_main_maint1>Z || <Closing_main_maint2>Z || <Sync_main_maint2>Z || <Closing_main_maint3>Z || <Sync_main_maint3>Z))
+)

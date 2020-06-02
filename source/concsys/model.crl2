@@ -1,0 +1,17 @@
+act
+tausync; 
+% actions
+Send_main_ReplicaSearch_1c, Send_Select_main_ReplicaSearch_1c;
+% barbs
+SEND_main_ReplicaSearch_1c;
+% spawnings
+
+proc
+MAIN__REPLICA_SEARCH_1 = ((SEND_main_ReplicaSearch_1c) . (delta)) + ((Send_main_ReplicaSearch_1c) + (Send_Select_main_ReplicaSearch_1c));
+
+CHANS = delta; 
+
+init
+allow({SEND_main_ReplicaSearch_1c, tausync},
+(
+ CHANS || MAIN__REPLICA_SEARCH_1));
