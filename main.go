@@ -41,6 +41,13 @@ type VerificationRun struct {
 	Num_states       int  // the number of states in the model
 }
 
+type VerificationInfo struct {
+	multi_projects *bool
+	single_project *bool
+	lb *int
+	ub *int
+}
+
 func main() {
 
 	logger := &Logger{
@@ -51,13 +58,18 @@ func main() {
 	os.RemoveAll(RESULTS_FOLDER)
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
 
-	if len(os.Args) > 1 {
+	ver := &VerificationInfo{}
 
-		multi_projects := flag.Bool("l", false, "a .csv is also given as args and contains a list of github.com projects to parse")
+		ver.multi_projects = flag.Bool("l", false, "a .csv is also given as args and contains a list of github.com projects to parse.")
+		ver.single_project = flag.Bool("s", false, "a single project is given to parse. Format \"creator/project_name\"")
+		ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
+		ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
+
 
 		flag.Parse()
 
-		if *multi_projects {
+
+		if *ver.multi_projects {
 			// parse multiple projects
 			if len(os.Args) > 2 {
 				if strings.HasSuffix(os.Args[2], ".txt") {
@@ -73,7 +85,7 @@ func main() {
 
 					for i, project_name := range proj_listings {
 						if i < len(project_name) {
-							parseProject(logger, project_name)
+							parseProject(logger, project_name,ver)
 						}
 					}
 
@@ -82,11 +94,10 @@ func main() {
 				}
 			}
 
-		} else {
+		} else if *ver.single_project {
 			// parse project given
-			parseProject(logger, os.Args[1])
-		}
-	} else {
+			parseProject(logger, os.Args[1],ver)
+		} else {
 
 		files, e := ioutil.ReadDir(SOURCE_FOLDER)
 
@@ -112,11 +123,9 @@ func main() {
 					}
 					return nil
 				})
-				inferProject(logger, path, dir.Name(), "", packages)
+				inferProject(logger, path, dir.Name(), "", packages,ver)
 			}
 		}
-
-		return
 	}
 
 	// Print logger
@@ -138,7 +147,7 @@ func main() {
 	}
 }
 
-func parseProject(logger *Logger, project_name string) {
+func parseProject(logger *Logger, project_name string, ver *VerificationInfo) {
 
 	fmt.Println("Infering : " + project_name)
 
@@ -164,21 +173,20 @@ func parseProject(logger *Logger, project_name string) {
 		return nil
 	})
 
-	fmt.Println(packages)
 
-	inferProject(logger, path_to_dir, path.Base(project_name), commit_hash, packages)
+	inferProject(logger, path_to_dir, path.Base(project_name), commit_hash, packages,ver)
 	if err != nil {
 		fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
 	}
 	defer os.RemoveAll(path_to_dir) // clean up
 }
 
-func inferProject(logger *Logger, path string, dir_name string, commit string, packages []string) {
+func inferProject(logger *Logger, path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {
 
 	// Partition program
 
 	f, ast_map := GenerateAst(path, packages)
-	ParseAst(logger, f, dir_name, commit, ast_map)
+	ParseAst(logger, f, dir_name, commit, ast_map,ver)
 
 	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 	if err != nil {
