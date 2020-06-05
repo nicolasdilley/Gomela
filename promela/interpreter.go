@@ -3,6 +3,7 @@ package promela
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -55,7 +56,7 @@ func Print(p *ProjectInfo, m *Model) {
 		stmt += proc.Print(0)
 	}
 
-	folder := "./results/" + p.Project_name
+	folder := "./results/" + filepath.Base(m.Project_name)
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		os.Mkdir(folder, os.ModePerm)
 	}

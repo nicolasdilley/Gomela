@@ -18,6 +18,7 @@ var (
 )
 
 type Model struct {
+	Project_name    string // the full name of  project (eg. "nicolasdilley/Gomela")
 	Package         string // the name of the package
 	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
 	Commit          string // the commit of the project
@@ -35,8 +36,8 @@ type Model struct {
 	For_counter     *ForCounter              // Used to translate the for loop to break out properly out of them
 	Counter         int                      // used to differentiate call expr channels
 	Counters        []Counter                // The information that needs to be logged by the logger
-	Default_lb int
-	Default_ub int
+	Default_lb      int
+	Default_ub      int
 }
 
 type ProjectInfo struct {
@@ -68,9 +69,8 @@ type Counter struct {
 }
 
 // Take a go function and translate it to a Promela module
-func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[string]*packages.Package) {
+func (m *Model) GoToPromela(f *token.FileSet, ast_map map[string]*packages.Package) {
 	project := &ProjectInfo{
-		Project_name: project_name,
 		Fileset:      f,
 		AstMap:       ast_map,
 		Chan_closing: false,
@@ -78,7 +78,7 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 
 	m.Fileset = f // little hack
 	m.Name = m.Package + "_" + m.Fun.Name.String()
-	commPars := m.AnalyseCommParam(f, m.Package, m.Fun, ast_map, true)
+	commPars := m.AnalyseCommParam(f, m.Package, m.Fun, ast_map)
 
 	//. Create a global var for each
 	for _, commPar := range commPars {
@@ -91,10 +91,10 @@ func (m *Model) GoToPromela(project_name string, f *token.FileSet, ast_map map[s
 		m.Defines = append(m.Defines, commPar_decl)
 
 		m.Counters = append(m.Counters, Counter{
-			Proj_name: project.Project_name,
+			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Comm param",
-			Info:      " Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
+			Info:      "Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
 			Line:      commPar_decl.Define.Line,
 			Commit:    m.Commit,
 			Filename:  commPar_decl.Define.Filename,
@@ -153,7 +153,7 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 									block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 								} else {
 									m.Counters = append(m.Counters, Counter{
-										Proj_name: p.Project_name,
+										Proj_name: m.Project_name,
 										Fun:       m.Fun.Name.String(),
 										Name:      "Chan in for",
 										Line:      p.Fileset.Position(ident.Pos()).Line,
@@ -205,7 +205,7 @@ func (m *Model) TranslateBlockStmt(p *ProjectInfo, b *ast.BlockStmt) *promela_as
 												block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 											} else {
 												m.Counters = append(m.Counters, Counter{
-													Proj_name: p.Project_name,
+													Proj_name: m.Project_name,
 													Fun:       m.Fun.Name.String(),
 													Name:      "Chan in for",
 													Line:      p.Fileset.Position(ident.Pos()).Line,
@@ -406,7 +406,7 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 					}
 
 					// Translate the commPar of the function call ignoring the args that are not needed
-					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap) // recover the commPar
 
 					// Add the commparam to the param of the new proc
 					for _, commPar := range commPars {
@@ -437,7 +437,7 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				}
 
 				// Translate the commPar of the function call ignoring the args that are not needed
-				commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+				commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap) // recover the commPar
 
 				for _, commPar := range commPars {
 					prom_call.Args = append(prom_call.Args, m.TranslateArgs(p, call_expr.Args[commPar.Pos]))
@@ -451,7 +451,7 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				if m.For_counter.In_for {
 					m.For_counter.With_go = true
 					m.Counters = append(m.Counters, Counter{
-						Proj_name: p.Project_name,
+						Proj_name: m.Project_name,
 						Fun:       m.Fun.Name.String(),
 						Name:      "Go in for",
 						Line:      p.Fileset.Position(s.Pos()).Line,
@@ -461,7 +461,7 @@ func (m *Model) TranslateGoStmt(p *ProjectInfo, s *ast.GoStmt) *promela_ast.Bloc
 				}
 			}
 		} else {
-			fmt.Print("users_translation.go : Func of go statement not found : " + func_name + "\n Called at :")
+			fmt.Print("promela_translator.go : Func of go statement not found : " + func_name + "\n Called at :")
 			fmt.Println(p.Fileset.Position(call_expr.Fun.Pos()))
 
 			for _, arg := range call_expr.Args {
@@ -949,7 +949,7 @@ func (m *Model) TranslateCallExpr(p *ProjectInfo, call_expr *ast.CallExpr, obj t
 					}
 
 					// Translate the commPar of the function call ignoring the args that are not needed
-					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap, false) // recover the commPar
+					commPars := m.AnalyseCommParam(p.Fileset, pack_name, decl, p.AstMap) // recover the commPar
 
 					for _, commPar := range commPars {
 
@@ -1155,6 +1155,10 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 							for _, rh := range stmt.Rhs {
 								ident := m.lookUp(p, rh)
 								ub.Name = ident.Print(0)
+
+								if cond.Op == token.GTR {
+									ub.Name += "-1"
+								}
 								well_formed = true
 							}
 						}
@@ -1174,6 +1178,10 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 							for _, rh := range stmt.Rhs {
 								ident := m.lookUp(p, rh)
 								lb.Name = ident.Print(0)
+
+								if cond.Op == token.LSS {
+									ub.Name += "-1"
+								}
 								well_formed = true
 							}
 						}
@@ -1209,7 +1217,7 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 		ub = ub_decl.Name
 
 		m.Counters = append(m.Counters, Counter{
-			Proj_name: p.Project_name,
+			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "For loop not well formed",
 			Line:      p.Fileset.Position(s.Pos()).Line,
@@ -1223,7 +1231,36 @@ func (p *ProjectInfo) lookUpFor(s ast.Stmt, m *Model, pack *packages.Package) (l
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
 func (m *Model) lookUp(p *ProjectInfo, expr ast.Expr) promela_ast.Ident {
-	ident := m.TranslateArgs(p, expr)
+
+	var ident promela_ast.Expr
+
+	switch expr := expr.(type) {
+	case *ast.UnaryExpr:
+		if expr.Op == token.ARROW {
+			m.Counters = append(m.Counters, Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "Receive as a bound",
+				Info:      "Name : " + prettyPrint(expr),
+				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			})
+		}
+	case *ast.CallExpr:
+
+		// Function as a comm param
+		m.Counters = append(m.Counters, Counter{
+			Proj_name: m.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Func as a bound",
+			Info:      "Name : " + prettyPrint(expr),
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		})
+	}
+	ident = m.TranslateArgs(p, expr)
 	return promela_ast.Ident{Name: ident.Print(0)}
 }
 
@@ -1331,4 +1368,24 @@ func containsReturn(b *promela_ast.BlockStmt) bool {
 		}
 	}
 	return false
+}
+
+func prettyPrint(expr ast.Expr) string {
+	switch expr := expr.(type) {
+	case *ast.CallExpr:
+
+		name := prettyPrint(expr.Fun) + "("
+
+		for i, arg := range expr.Args {
+			name += prettyPrint(arg)
+
+			if i < len(expr.Args)-1 {
+				name += "."
+			}
+		}
+
+		return name + ")"
+	default:
+		return fmt.Sprint(expr)
+	}
 }

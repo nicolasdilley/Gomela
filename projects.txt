@@ -1,1 +1,2 @@
 rcrowley/go-metrics
+ansible-semaphore/semaphore
