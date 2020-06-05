@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -42,10 +41,11 @@ type VerificationRun struct {
 }
 
 type VerificationInfo struct {
-	multi_projects *bool
-	single_project *bool
-	lb *int
-	ub *int
+	multi_projects *string
+	single_project *string
+	verify         *bool
+	lb             *int
+	ub             *int
 }
 
 func main() {
@@ -60,49 +60,48 @@ func main() {
 
 	ver := &VerificationInfo{}
 
-		ver.multi_projects = flag.Bool("l", false, "a .csv is also given as args and contains a list of github.com projects to parse.")
-		ver.single_project = flag.Bool("s", false, "a single project is given to parse. Format \"creator/project_name\"")
-		ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
-		ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
+	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects to parse.")
+	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
+	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
+	ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
+	ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
 
+	flag.Parse()
 
-		flag.Parse()
+	if *ver.multi_projects != "" {
+		// parse multiple projects
+		if len(os.Args) > 2 {
+			if strings.HasSuffix(*ver.multi_projects, ".txt") {
 
+				// parse each projects
+				data, e := ioutil.ReadFile(*ver.multi_projects)
 
-		if *ver.multi_projects {
-			// parse multiple projects
-			if len(os.Args) > 2 {
-				if strings.HasSuffix(os.Args[2], ".txt") {
-
-					// parse each projects
-					data, e := ioutil.ReadFile(os.Args[2])
-
-					if e != nil {
-						fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", os.Args[2], e)
-						return
-					}
-					proj_listings := strings.Split(string(data), "\n")
-
-					for i, project_name := range proj_listings {
-						if i < len(project_name) {
-							parseProject(logger, project_name,ver)
-						}
-					}
-
-				} else {
-					fmt.Println("Please provide a .txt file containing the list of projects to be parsed")
+				if e != nil {
+					fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_projects, e)
+					return
 				}
-			}
+				proj_listings := strings.Split(string(data), "\n")
 
-		} else if *ver.single_project {
-			// parse project given
-			parseProject(logger, os.Args[1],ver)
-		} else {
+				for i, project_name := range proj_listings {
+					if i < len(project_name) {
+						parseProject(logger, project_name, ver)
+					}
+				}
+
+			} else {
+				fmt.Println("Please provide a .txt file containing the list of projects to be parsed")
+			}
+		}
+
+	} else if *ver.single_project != "" {
+		// parse project given
+		parseProject(logger, *ver.single_project, ver)
+	} else {
 
 		files, e := ioutil.ReadDir(SOURCE_FOLDER)
 
 		if e != nil {
-			fmt.Printf("Could not open folder /source %q: %v\n", os.Args[1], e)
+			fmt.Printf("Could not open folder /source %q: %v\n", *ver.multi_projects, e)
 			return
 		}
 
@@ -123,7 +122,7 @@ func main() {
 					}
 					return nil
 				})
-				inferProject(logger, path, dir.Name(), "", packages,ver)
+				inferProject(logger, path, dir.Name(), "", packages, ver)
 			}
 		}
 	}
@@ -173,8 +172,7 @@ func parseProject(logger *Logger, project_name string, ver *VerificationInfo) {
 		return nil
 	})
 
-
-	inferProject(logger, path_to_dir, path.Base(project_name), commit_hash, packages,ver)
+	inferProject(logger, path_to_dir, project_name, commit_hash, packages, ver)
 	if err != nil {
 		fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
 	}
@@ -186,35 +184,36 @@ func inferProject(logger *Logger, path string, dir_name string, commit string, p
 	// Partition program
 
 	f, ast_map := GenerateAst(path, packages)
-	ParseAst(logger, f, dir_name, commit, ast_map,ver)
-
-	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
+	ParseAst(logger, f, dir_name, commit, ast_map, ver)
+	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
 	if err != nil {
-		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
+		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
 	}
 
-	// verify each model
-	for _, model := range models {
-		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-			fmt.Println("Verifying model : " + model.Name())
-			ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
-			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
-			var output bytes.Buffer
+	if *ver.verify {
+		// verify each model
+		for _, model := range models {
+			if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
+				fmt.Println("Verifying model : " + model.Name())
+				ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
+				path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+				var output bytes.Buffer
 
-			// Verify with SPIN
-			command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
-			command.Stdout = &output
-			command.Run()
+				// Verify with SPIN
+				command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
+				command.Stdout = &output
+				command.Run()
 
-			parseResults(output.String(), &ver)
+				parseResults(output.String(), &ver)
 
-			fmt.Println("-------------------------------")
-			fmt.Println("Result for " + model.Name())
-			fmt.Println("Number of states : ", ver.Num_states)
-			fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-			fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-			fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-			fmt.Println("-------------------------------")
+				fmt.Println("-------------------------------")
+				fmt.Println("Result for " + model.Name())
+				fmt.Println("Number of states : ", ver.Num_states)
+				fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+				fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+				fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+				fmt.Println("-------------------------------")
+			}
 		}
 	}
 }

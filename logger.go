@@ -51,11 +51,12 @@ func (l *Logger) PrintHTML() string {
 }
 
 func (l *Logger) PrintCSV() string {
-	toPrint := "Project,Type, Info, Line Num, Filename, Link,\n"
+	toPrint := "Project, Fun, Type, Info, Line Num, Filename, Link,\n"
 
 	for _, counter := range l.Counters {
 		toPrint +=
 			counter.Proj_name + "," +
+				counter.Fun + "," +
 				counter.Name + "," +
 				counter.Info + "," +
 				strconv.Itoa(counter.Line) + "," +

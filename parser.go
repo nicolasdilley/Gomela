@@ -27,7 +27,25 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
+
+						// ast.Print(fileSet, decl)
+
+						// for _, def := range node.TypesInfo.Defs {
+						// 	fmt.Println(def)
+						// 	if def != nil {
+						// 		fmt.Println(def.Type())
+						// 		switch def := def.Type().(type) {
+						// 		case *types.Named:
+						// 			if def.Obj().Pkg().Name() == "sync" {
+						// 				fmt.Println(" Oh ", def.Obj().Name(), " : ", def.)
+						// 			}
+						// 		case *types.Struct:
+						// 			fmt.Println("its a struct !!")
+						// 		}
+						// 	}
+						// }
 						var m promela.Model = promela.Model{
+							Project_name:   proj_name,
 							Package:        pack_name,
 							Proctypes:      []*promela_ast.Proctype{},
 							Fun:            decl,
@@ -37,14 +55,14 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 							Global_vars:    []promela_ast.Stmt{},
 							For_counter:    &promela.ForCounter{},
 							Counters:       []promela.Counter{},
-							Default_ub: 		*ver.ub,
-							Default_lb: 		*ver.lb,
+							Default_ub:     *ver.ub,
+							Default_lb:     *ver.lb,
 						}
 
 						if file.Name.Name == "main" {
 							fmt.Println("File : ", node.GoFiles)
 						}
-						m.GoToPromela(proj_name, fileSet, ast_map)
+						m.GoToPromela(fileSet, ast_map)
 
 						logger.Counters = append(logger.Counters, m.Counters...)
 					}

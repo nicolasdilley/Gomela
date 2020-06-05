@@ -14,7 +14,7 @@ type CommPar struct {
 }
 
 // Return the parameters that are mandatory and optional
-func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) []*CommPar {
+func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
 	params := []*CommPar{}
 
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
@@ -30,7 +30,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 							case *ast.ChanType:
 								// definitely a new chan
 								if len(rhs.Args) > 1 {
-									params = m.Upgrade(fun, params, m.Vid(fun, rhs.Args[1], true, log)) // m.Upgrade the parameters with the variables contained in the length of the chan.
+									params = m.Upgrade(fun, params, m.Vid(fun, rhs.Args[1], true)) // m.Upgrade the parameters with the variables contained in the length of the chan.
 								}
 							}
 						}
@@ -53,7 +53,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 										case *ast.ChanType:
 											// definitely a new chan
 											if len(call.Args) > 1 {
-												params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true, log)) // m.Upgrade the parameters with the variables contained in the length of the chan.
+												params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true)) // m.Upgrade the parameters with the variables contained in the length of the chan.
 											}
 										}
 									}
@@ -74,7 +74,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 					switch inc := stmt.Post.(type) {
 					case *ast.IncDecStmt:
 						if inc.Tok == token.DEC {
-							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 						}
 					}
 
@@ -82,7 +82,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 					switch inc := stmt.Post.(type) {
 					case *ast.IncDecStmt:
 						if inc.Tok == token.INC {
-							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 						}
 					}
 				}
@@ -94,8 +94,13 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 			case *ast.Ident:
 				fun = f.Name
 			case *ast.SelectorExpr:
-				fun = getIdent(f.X).Name
-				pack = f.Sel.Name
+
+				if getIdent(f.X) != nil {
+					fun = getIdent(f.X).Name
+					pack = f.Sel.Name
+				} else {
+					fun = "UNKNOWN FUNCTION -1"
+				}
 			}
 
 			contains_chan := false
@@ -110,12 +115,12 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 
 				if contains_chan {
 					// look inter procedurally
-					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map, false)
+					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map)
 
 					for _, param := range params_1 { // m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log))
+						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
 					}
 				}
 			}
@@ -143,12 +148,12 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 
 				if contains_chan {
 					// look inter procedurally
-					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map, log)
+					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map)
 
 					for _, param := range params_1 { // m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log))
+						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory))
 					}
 				}
 			}
@@ -196,7 +201,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 	return false, nil
 }
 
-func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) []*CommPar {
+func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool) []*CommPar {
 	params := []*CommPar{}
 
 	switch expr := expr.(type) {
@@ -210,7 +215,7 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			case *ast.CallExpr:
 				// add the arguments
 				for _, arg := range node.Args {
-					params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory, log))
+					params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory))
 				}
 			}
 
@@ -218,38 +223,21 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 		})
 	case *ast.CallExpr:
 		for _, arg := range expr.Args {
-			params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory, log))
+			params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory))
 		}
 
-		// Function as a comm param
-		m.Counters = append(m.Counters, Counter{
-			Name:     "Func as a commParam",
-			Info:     "Name : " + getIdent(expr.Fun).Name,
-			Line:     m.Fileset.Position(expr.Pos()).Line,
-			Commit:   m.Commit,
-			Filename: m.Fileset.Position(expr.Pos()).Filename,
-		})
 	case *ast.BinaryExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log))
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory))
 	case *ast.UnaryExpr:
-		if expr.Op == token.ARROW && log {
-			// have a receive as param
-			m.Counters = append(m.Counters, Counter{
-				Name:     "Receive has a commParam, Name : " + getIdent(expr.X).Name,
-				Line:     m.Fileset.Position(expr.Pos()).Line,
-				Commit:   m.Commit,
-				Filename: m.Fileset.Position(expr.Pos()).Filename,
-			})
-		}
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
 	case *ast.ParenExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
 	case *ast.StarExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
 	case *ast.IndexExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log))
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.Index, mandatory, log))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.Index, mandatory))
 	}
 
 	return params
@@ -273,6 +261,8 @@ func getIdent(expr ast.Expr) *ast.Ident {
 		return &ast.Ident{Name: getIdent(expr.X).Name + "[" + getIdent(expr.Index).Name + "]"}
 	case *ast.BasicLit:
 		return &ast.Ident{Name: expr.Value}
+	case *ast.ParenExpr:
+		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
 	}
 	return nil
 }
