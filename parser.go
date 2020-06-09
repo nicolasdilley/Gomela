@@ -47,6 +47,8 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 						var m promela.Model = promela.Model{
 							Project_name:   proj_name,
 							Package:        pack_name,
+							AstMap:         ast_map,
+							Fileset:        fileSet,
 							Proctypes:      []*promela_ast.Proctype{},
 							Fun:            decl,
 							Chans:          make(map[ast.Expr]*promela.ChanStruct),
@@ -62,7 +64,7 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 						if file.Name.Name == "main" {
 							fmt.Println("File : ", node.GoFiles)
 						}
-						m.GoToPromela(fileSet, ast_map)
+						m.GoToPromela()
 
 						logger.Counters = append(logger.Counters, m.Counters...)
 					}

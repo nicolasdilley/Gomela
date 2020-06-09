@@ -124,7 +124,13 @@ func renameStmt(s ast.Stmt, prev []ast.Expr, n ast.Expr) (s1 ast.Stmt, alias []a
 		s.Init, alias = renameStmt(s.Init, alias, n)
 		s.Body = RenameBlockStmt(s.Body, alias, n)
 		if s.Else != nil {
-			s.Else = RenameBlockStmt(s.Else.(*ast.BlockStmt), alias, n)
+
+			switch els := s.Else.(type) {
+			case *ast.BlockStmt:
+				s.Else = RenameBlockStmt(els, alias, n)
+			default:
+				s.Else, alias = renameStmt(els, alias, n)
+			}
 		}
 	case *ast.ReturnStmt:
 		for i, result := range s.Results {
