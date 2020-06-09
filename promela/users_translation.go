@@ -2,21 +2,22 @@ package promela
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func TranslateIdent(p *ProjectInfo, expr ast.Expr) (expr1 promela_ast.Ident) {
+func TranslateIdent(expr ast.Expr, fileSet *token.FileSet) (expr1 promela_ast.Ident) {
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		expr1 = promela_ast.Ident{Name: expr.Name, Ident: p.Fileset.Position(expr.Pos())}
+		expr1 = promela_ast.Ident{Name: expr.Name, Ident: fileSet.Position(expr.Pos())}
 	case *ast.SelectorExpr:
-		expr1 = promela_ast.Ident{Name: TranslateIdent(p, expr.X).Name + "_" + expr.Sel.Name, Ident: p.Fileset.Position(expr.Pos())}
+		expr1 = promela_ast.Ident{Name: TranslateIdent(expr.X, fileSet).Name + "_" + expr.Sel.Name, Ident: fileSet.Position(expr.Pos())}
 	case *ast.CallExpr:
-		func_name := TranslateIdent(p, expr.Fun).Name + "_"
+		func_name := TranslateIdent(expr.Fun, fileSet).Name + "_"
 
 		for i, arg := range expr.Args {
-			func_name += TranslateIdent(p, arg).Name
+			func_name += TranslateIdent(arg, fileSet).Name
 
 			if i < len(expr.Args)-1 {
 				func_name += "_"

@@ -1,8 +1,10 @@
 package promela
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -10,13 +12,17 @@ import (
 type CommPar struct {
 	Name      *ast.Ident
 	Mandatory bool
+	Type      types.Type
 	Pos       int // the position of the param in the fun decl (i.e, b is 0 and a is 1 in f(b,a))
 }
 
 // Return the parameters that are mandatory and optional
-func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
+func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
 	params := []*CommPar{}
 
+	if fun.Body == nil {
+		return params
+	}
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.AssignStmt:
@@ -115,7 +121,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 
 				if contains_chan {
 					// look inter procedurally
-					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map)
+					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
 
 					for _, param := range params_1 { // m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
@@ -148,7 +154,7 @@ func (m *Model) AnalyseCommParam(fileSet *token.FileSet, pack string, fun *ast.F
 
 				if contains_chan {
 					// look inter procedurally
-					params_1 := m.AnalyseCommParam(fileSet, pack, fun_decl, ast_map)
+					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
 
 					for _, param := range params_1 { // m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
@@ -256,6 +262,7 @@ func getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.BinaryExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name + expr.Op.String() + getIdent(expr.Y).Name, NamePos: expr.Pos()}
 	case *ast.UnaryExpr:
+		fmt.Println(expr.X)
 		return &ast.Ident{Name: expr.Op.String() + getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.IndexExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name + "[" + getIdent(expr.Index).Name + "]"}
@@ -263,7 +270,23 @@ func getIdent(expr ast.Expr) *ast.Ident {
 		return &ast.Ident{Name: expr.Value}
 	case *ast.ParenExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.SliceExpr:
+		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.StarExpr:
+		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.KeyValueExpr:
+		return &ast.Ident{Name: getIdent(expr.Key).Name, NamePos: expr.Pos()}
+	case *ast.CompositeLit:
+		name := "{"
+		for _, elt := range expr.Elts {
+			name += getIdent(elt).Name
+		}
+		name += "}"
+		return &ast.Ident{Name: name, NamePos: expr.Pos()}
+	case *ast.TypeAssertExpr:
+		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
 	}
+
 	return nil
 }
 

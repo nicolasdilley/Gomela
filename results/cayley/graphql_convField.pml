@@ -1,0 +1,75 @@
+
+
+
+
+init { 
+	bool state = false;
+	int i;
+	do
+	:: true -> 
+for10:		
+
+		if
+		:: true -> 
+			
+			if
+			:: true -> 
+				
+				if
+				:: true -> 
+					goto stop_process
+				:: true -> 
+					
+					if
+					:: true -> 
+						goto stop_process
+					:: true -> 
+						
+						if
+						:: true -> 
+							goto stop_process
+						:: true;
+						fi
+					fi
+				fi
+			fi
+		fi
+	od;
+	do
+	:: true -> 
+for20:		
+
+		if
+		:: true -> 
+			
+			if
+			:: true -> 
+				
+				if
+				:: true -> 
+					goto stop_process
+				:: true;
+				fi
+			fi
+		:: true;
+		:: true;
+		:: true;
+		:: true -> 
+			goto stop_process
+		fi
+	od;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	goto stop_process
+stop_process:}
+

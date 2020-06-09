@@ -1,0 +1,64 @@
+#define lb_for106_0  -1
+#define ub_for106_1  -1
+
+
+
+
+init { 
+	bool state = false;
+	int i;
+	
+	if
+	:: lb_for106_0 != -1 && ub_for106_1 != -1 -> 
+				for(i : lb_for106_0.. ub_for106_1) {
+for10:			
+			if
+			:: true -> 
+				break
+			:: true;
+			fi;
+			
+
+			if
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			fi
+		}
+	:: else -> 
+		do
+		:: true -> 
+for10:			
+			if
+			:: true -> 
+				break
+			:: true;
+			fi;
+			
+
+			if
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			:: true;
+			fi
+		:: true -> 
+			break
+		od
+	fi;
+for10_exit:	goto stop_process
+stop_process:}
+

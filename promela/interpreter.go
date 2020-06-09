@@ -17,9 +17,9 @@ type ForCounter struct { // used to create the labels to jump to for for select 
 	With_go bool // true if a go stmt was found inside
 }
 
-func Print(p *ProjectInfo, m *Model) {
+func Print(m *Model) {
 
-	p.checkChanClosing(m)
+	isChanClosing(m)
 	stmt := ""
 
 	// print the bounds
@@ -72,9 +72,9 @@ func Print(p *ProjectInfo, m *Model) {
 
 }
 
-func (p *ProjectInfo) checkChanClosing(m *Model) {
+func isChanClosing(m *Model) {
 
-	if !p.Chan_closing {
+	if !m.Chan_closing {
 		for _, proc := range m.Proctypes {
 			checkChanClosing(proc.Body)
 		}
