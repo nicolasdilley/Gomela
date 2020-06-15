@@ -401,8 +401,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 					}
 
 					// Translate the commPar of the function call ignoring the args that are not needed
+					counters := m.Counters
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
-
+					m.Counters = counters
 					// Add the commparam to the param of the new proc
 					for _, commPar := range commPars {
 						decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
@@ -432,7 +433,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 				}
 
 				// Translate the commPar of the function call ignoring the args that are not needed
+				counters := m.Counters
 				commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
+				m.Counters = counters
 
 				for _, commPar := range commPars {
 					prom_call.Args = append(prom_call.Args, m.TranslateArgs(call_expr.Args[commPar.Pos]))
@@ -948,7 +951,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr, obj types.Object) *pr
 					}
 
 					// Translate the commPar of the function call ignoring the args that are not needed
+					counters := m.Counters
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
+					m.Counters = counters
 
 					for _, commPar := range commPars {
 
@@ -1306,7 +1311,7 @@ func (m *Model) lookUp(expr ast.Expr, is_chan_bound bool, spawning_for_loop bool
 		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr.X)
 
 		if Types == nil {
-			fmt.Println("Could not find type of expr : ", expr, "at pos : ", m.Fileset.Position(expr.Pos()))
+			fmt.Println("Could not find type of expr : ", expr, " at pos : ", m.Fileset.Position(expr.Pos()))
 		} else {
 			switch Types.(type) {
 			case *types.Struct:

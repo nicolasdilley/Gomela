@@ -71,6 +71,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 
 		case *ast.ForStmt:
+
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 			mandatory := spawns(pack, stmt.Body, ast_map)
 
@@ -190,6 +191,19 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar)
 			if !inCommPar { // if its not in the list of commPar yet add it.
 				commPars = append(commPars, param)
 			}
+		} else {
+			if arg.Mandatory {
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Candidate param",
+					Info:      "Name : " + prettyPrint(arg.Name),
+					Line:      m.Fileset.Position(arg.Name.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
+				})
+
+			}
 		}
 	}
 	return commPars
@@ -292,24 +306,24 @@ func getIdent(expr ast.Expr) *ast.Ident {
 
 // check if there is a goroutine spawned in one of the stmts (inter-procedural)
 
-// If unknown function potentially ask userif spawning or not?
+// If unknown function potentially ask user if spawning or not?
 func spawns(pack string, stmts *ast.BlockStmt, ast_map map[string]*packages.Package) bool {
 
 	contains_chan := false
-
-	for _, stmt := range stmts.List {
+	is_spawning := false
+	ast.Inspect(stmts, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
-		case *ast.GoStmt:
+		case *ast.CallExpr:
 			fun := ""
 			// check if the goroutine has a chan as param by looking at func decl
-			switch f := stmt.Call.Fun.(type) {
+			switch f := stmt.Fun.(type) {
 			case *ast.Ident:
 				fun = f.Name
 			case *ast.SelectorExpr:
 				fun = getIdent(f.X).Name
 				pack = f.Sel.Name
 			}
-			found, fun_decl := FindDecl(pack, fun, len(stmt.Call.Args), ast_map)
+			found, fun_decl := FindDecl(pack, fun, len(stmt.Args), ast_map)
 			if found {
 				for _, param := range fun_decl.Type.Params.List {
 					switch param.Type.(type) {
@@ -320,14 +334,20 @@ func spawns(pack string, stmts *ast.BlockStmt, ast_map map[string]*packages.Pack
 
 				if contains_chan {
 					// look inter procedurally
-					return spawns(pack, fun_decl.Body, ast_map)
+					is_spawning = spawns(pack, fun_decl.Body, ast_map)
 				}
 			} else {
 				// what do we do when we can't find decl ?
-				return true
+				is_spawning = true
+				return false
 			}
-		}
-	}
 
-	return false
+		case *ast.GoStmt:
+			is_spawning = true
+			return false
+		}
+
+		return true
+	})
+	return is_spawning
 }
