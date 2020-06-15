@@ -1,5 +1,0 @@
-Project, Fun, Type, Info, Line Num, Filename, Link,
-test,main,Candidate param,Name : b,12,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,
-test,Test,Integer as a spawning for bound,Name : b,12,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,
-test,Test,Integer as a spawning for bound,Name : &{113 INT 0},12,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,
-test,Test,Go in for,,13,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/Gomela/source/test/test.go,
