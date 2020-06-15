@@ -34,7 +34,14 @@ The features analysed in the survey are :
 
 * Chan in for - A channel created in a for loop
 * Go in for - A goroutine is spawned in a for loop
-* CommParam - A function's parameter that is used as either a for loop bound or a channel bound
+* Comm Param - A function's parameter that is used as either a for loop bound or a channel bound
 * For loop not well formed - A for loop that is not well formed (nor infinite)
 * Func as a bound - A for loop has a function as a bound
 * Receive as a bound - A for loop has a receive as a bound
+* len() as a bound - A bound that is the length of a list
+* Struct as a bound - A bound that is of type Struct
+* Elem of a struct as a bound - A bound that is an element of a struct (eg, b.a)
+* Uses an item of a list as a bound - A bound that is an element of a list (eg, a[0])
+* Pointer as a bound - A bound that is a pointer (eg, &a[0], &a)
+* Integer as a bound - A bound that is a constant or an Integer (eg, a -> const a := 10, 10)
+* Var as a bound - A bound that is a variable(eg, a -> a := 10)
