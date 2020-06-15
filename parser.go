@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"log"
 
 	"github.com/nicolasdilley/gomela/promela"
@@ -30,20 +31,28 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 
 						// ast.Print(fileSet, decl)
 
-						// for _, def := range node.TypesInfo.Defs {
-						// 	fmt.Println(def)
-						// 	if def != nil {
-						// 		fmt.Println(def.Type())
-						// 		switch def := def.Type().(type) {
-						// 		case *types.Named:
-						// 			if def.Obj().Pkg().Name() == "sync" {
-						// 				fmt.Println(" Oh ", def.Obj().Name(), " : ", def.)
-						// 			}
-						// 		case *types.Struct:
-						// 			fmt.Println("its a struct !!")
-						// 		}
-						// 	}
-						// }
+						for _, def := range node.TypesInfo.Defs {
+							if def != nil {
+								switch typ := def.Type().(type) {
+								case *types.Named:
+									if typ.Obj() != nil {
+										if typ.Obj().Pkg().Name() == "sync" {
+											if typ.Obj().Name() == "WaitGroup" {
+												logger.Counters = append(logger.Counters, promela.Counter{
+													Proj_name: proj_name,
+													Name:      "Initialisation of WaitGroup",
+													Fun:       decl.Name.Name,
+													Info:      "",
+													Line:      fileSet.Position(def.Pos()).Line,
+													Commit:    commit,
+													Filename:  fileSet.Position(def.Pos()).Filename,
+												})
+											}
+										}
+									}
+								}
+							}
+						}
 						var m promela.Model = promela.Model{
 							Project_name:   proj_name,
 							Package:        pack_name,
@@ -61,12 +70,11 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 							Default_lb:     *ver.lb,
 						}
 
-						if file.Name.Name == "main" {
-							fmt.Println("File : ", node.GoFiles)
-						}
 						m.GoToPromela()
 
-						logger.Counters = append(logger.Counters, m.Counters...)
+						if len(m.Chans) > 0 {
+							logger.Counters = append(logger.Counters, m.Counters...)
+						}
 					}
 				}
 			}

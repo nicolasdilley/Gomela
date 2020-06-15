@@ -95,7 +95,9 @@ func (m *Model) GoToPromela() {
 
 	m.Init = &promela_ast.InitDef{Body: &promela_ast.BlockStmt{List: append(init_block.List, m.Init.Body.List...)}}
 
-	Print(m)
+	if len(m.Chans) > 0 {
+		Print(m)
+	}
 
 }
 
@@ -130,7 +132,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 										chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
 										if len(call.Args) > 1 {
 											channel.Buffered = true
-											channel.Size = m.lookUp(call.Args[1])
+											channel.Size = m.lookUp(call.Args[1], true, false)
 
 										} else {
 											channel.Size = promela_ast.Ident{Name: "0"}
@@ -184,7 +186,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 
 													if len(call.Args) > 1 {
 														channel.Buffered = true
-														channel.Size = m.lookUp(call.Args[1])
+														channel.Size = m.lookUp(call.Args[1], true, false)
 													} else {
 														channel.Size = promela_ast.Ident{Name: "0"}
 													}
@@ -360,7 +362,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 			func_name = filepath.Base(pack_name) + name.Name + strconv.Itoa(len(call_expr.Args))
 			fun = name.Name
 		case *ast.SelectorExpr:
-			ast.Print(m.Fileset, name.X)
 			func_name = TranslateIdent(name.X, m.Fileset).Name + name.Sel.Name + strconv.Itoa(len(call_expr.Args))
 			fun = name.Sel.Name
 			pack_name = TranslateIdent(name.X, m.Fileset).Name
@@ -442,17 +443,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 				stmts.List = append(stmts.List, r)
 
-				if m.For_counter.In_for {
-					m.For_counter.With_go = true
-					m.Counters = append(m.Counters, Counter{
-						Proj_name: m.Project_name,
-						Fun:       m.Fun.Name.String(),
-						Name:      "Go in for",
-						Line:      m.Fileset.Position(s.Pos()).Line,
-						Commit:    m.Commit,
-						Filename:  m.Fileset.Position(s.Pos()).Filename,
-					})
-				}
 			}
 		} else {
 			fmt.Print("promela_translator.go : Func of go statement not found : " + func_name + "\n Called at :")
@@ -468,6 +458,18 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 			}
 		}
 
+	}
+
+	if m.For_counter.In_for {
+		m.For_counter.With_go = true
+		m.Counters = append(m.Counters, Counter{
+			Proj_name: m.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Go in for",
+			Line:      m.Fileset.Position(s.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(s.Pos()).Filename,
+		})
 	}
 
 	return stmts
@@ -525,38 +527,44 @@ func (m *Model) translateForStmt(s *ast.ForStmt) *promela_ast.BlockStmt {
 		})
 
 	} else {
-		// print the with the if
-		if_stmt := promela_ast.IfStmt{If: m.Fileset.Position(s.Pos())}
 
-		lb_not_given := promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
-		ub_not_given := promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
-		then := promela_ast.GuardStmt{
-			Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
-				Rhs: &ub_not_given, Op: "&&"},
-			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: lb, Ub: ub, Body: body}}},
-		}
-		// the else part
 		d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
-
 		d.Guards = append(
 			d.Guards,
 			promela_ast.GuardStmt{
 				Cond: &promela_ast.Ident{Name: "true"},
 				Body: &body},
 		)
+		if s.Cond == nil && s.Post == nil && s.Init == nil {
+			// infinite for loop
+			// Dont add the if statement just the guard just translate it as an infinite for loop
+			b.List = append(b.List, d)
+		} else {
+			// print the for loop  with the if
+			if_stmt := promela_ast.IfStmt{If: m.Fileset.Position(s.Pos())}
 
-		// adding the option to break of the for loop
-		d.Guards = append(d.Guards, promela_ast.GuardStmt{
-			Cond: &promela_ast.Ident{Name: "true"},
-			Body: &promela_ast.BlockStmt{
-				List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}})
-		// b.List = append(b.List, d)
+			lb_not_given := promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
+			ub_not_given := promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
+			then := promela_ast.GuardStmt{
+				Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
+					Rhs: &ub_not_given, Op: "&&"},
+				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: lb, Ub: ub, Body: body}}},
+			}
+			// the else part
 
-		els := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d}}}
+			// adding the option to break of the for loop
+			d.Guards = append(d.Guards, promela_ast.GuardStmt{
+				Cond: &promela_ast.Ident{Name: "true"},
+				Body: &promela_ast.BlockStmt{
+					List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}})
+			// b.List = append(b.List, d)
 
-		if_stmt.Guards = []promela_ast.GuardStmt{then, els}
+			els := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d}}}
 
-		b.List = append(b.List, &if_stmt)
+			if_stmt.Guards = []promela_ast.GuardStmt{then, els}
+
+			b.List = append(b.List, &if_stmt)
+		}
 	}
 
 	b.List = append(b.List, for_label)
@@ -613,7 +621,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 		if m.For_counter.With_go {
 
 			// need to change the for loop into a bounded for loop
-			ub := m.lookUp(s.X)
+			ub := m.lookUp(s.X, false, false)
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
 			d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
@@ -1056,16 +1064,6 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.ParenExpr:
 		e1 = m.TranslateArgs(expr.X)
 	case *ast.CompositeLit:
-
-		m.Counters = append(m.Counters, Counter{
-			Name:      "Uses a struct of a list as arg.",
-			Info:      "Not supported",
-			Fun:       m.Fun.Name.Name,
-			Proj_name: m.Project_name,
-			Line:      m.Fileset.Position(expr.Pos()).Line,
-			Filename:  m.Fileset.Position(expr.Pos()).String(),
-			Commit:    m.Commit,
-		})
 		name := "{"
 		for i, exp := range expr.Elts {
 
@@ -1079,15 +1077,6 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		return &promela_ast.Ident{Name: name, Ident: m.Fileset.Position(expr.Pos())}
 
 	case *ast.IndexExpr:
-		m.Counters = append(m.Counters, Counter{
-			Name:      "Uses an item of a list as arg.",
-			Info:      "Not supported",
-			Fun:       m.Fun.Name.Name,
-			Proj_name: m.Project_name,
-			Line:      m.Fileset.Position(expr.Pos()).Line,
-			Filename:  m.Fileset.Position(expr.Pos()).String(),
-			Commit:    m.Commit,
-		})
 		e1 = m.TranslateArgs(expr.X)
 		// }
 	}
@@ -1167,22 +1156,25 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Ident, ub promela_ast.Ident) {
 
 	well_formed := false
+	var For *ast.ForStmt
+
 	switch s := s.(type) {
 	case *ast.ForStmt:
+		For = s
 		switch cond := s.Cond.(type) {
 		case *ast.BinaryExpr:
 			if cond.Op == token.GEQ || cond.Op == token.GTR {
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.DEC {
-						ident := m.lookUp(cond.Y)
+						ident := m.lookUp(cond.Y, false, m.For_counter.In_for)
 						lb.Name = ident.Print(0)
 
 						// look for upper bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh)
+								ident := m.lookUp(rh, false, m.For_counter.In_for)
 								ub.Name = ident.Print(0)
 
 								if cond.Op == token.GTR {
@@ -1198,14 +1190,14 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.INC {
-						ident := m.lookUp(cond.Y)
+						ident := m.lookUp(cond.Y, false, m.For_counter.In_for)
 						ub.Name = ident.Print(0)
 
 						// look for lower bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh)
+								ident := m.lookUp(rh, false, m.For_counter.In_for)
 								lb.Name = ident.Print(0)
 
 								if cond.Op == token.LSS {
@@ -1222,7 +1214,7 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 
 	case *ast.RangeStmt:
 		lb.Name = "0"
-		ident := m.lookUp(s.X)
+		ident := m.lookUp(s.X, false, m.For_counter.In_for)
 		ub.Name = ident.Print(0)
 		well_formed = true
 
@@ -1234,7 +1226,6 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 		lb_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: strconv.Itoa(m.Default_lb)}}
 		ub_decl := promela_ast.DefineStmt{Rhs: &promela_ast.Ident{Name: strconv.Itoa(m.Default_ub)}}
 
-		fmt.Println("For loop at : ", m.Fileset.Position(s.Pos()), " is badly formed.")
 		// ask user to give lb and ub for the for loop naming the variable according to its line number and unique number
 		lb_decl.Name.Name = fmt.Sprintf("lb_for%d_%d", m.Fileset.Position(s.Pos()).Line, len(m.Defines))
 		m.Defines = append(m.Defines, lb_decl) // adding lb
@@ -1249,6 +1240,7 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "For loop not well formed",
+			Info:      fmt.Sprint("Init : ", For.Init, " Cond : ", For.Cond, " Post : ", For.Post),
 			Line:      m.Fileset.Position(s.Pos()).Line,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(s.Pos()).Filename,
@@ -1259,9 +1251,19 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 }
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (m *Model) lookUp(expr ast.Expr) promela_ast.Ident {
+func (m *Model) lookUp(expr ast.Expr, is_chan_bound bool, spawning_for_loop bool) promela_ast.Ident {
 
 	var ident promela_ast.Expr
+
+	var bound string = "for bound"
+
+	if is_chan_bound {
+		bound = "chan bound"
+	} else if spawning_for_loop {
+		bound = "spawning for bound"
+	}
+
+	ident = m.TranslateArgs(expr)
 
 	switch expr := expr.(type) {
 	case *ast.UnaryExpr:
@@ -1269,7 +1271,7 @@ func (m *Model) lookUp(expr ast.Expr) promela_ast.Ident {
 			m.Counters = append(m.Counters, Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
-				Name:      "Receive as a bound",
+				Name:      "Receive as a " + bound,
 				Info:      "Name : " + prettyPrint(expr),
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
@@ -1277,19 +1279,155 @@ func (m *Model) lookUp(expr ast.Expr) promela_ast.Ident {
 			})
 		}
 	case *ast.CallExpr:
-
 		// Function as a comm param
 		m.Counters = append(m.Counters, Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
-			Name:      "Func as a bound",
+			Name:      "Func as a " + bound,
 			Info:      "Name : " + prettyPrint(expr),
 			Line:      m.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
+		if getIdent(expr.Fun).Name == "len" {
+			m.Counters = append(m.Counters, Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "len() as a " + bound,
+				Info:      "Name : " + prettyPrint(expr),
+				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			})
+
+			ident = m.TranslateArgs(expr.Args[0])
+		}
+	case *ast.SelectorExpr:
+		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr.X)
+
+		if Types == nil {
+			fmt.Println("Could not find type of expr : ", expr, "at pos : ", m.Fileset.Position(expr.Pos()))
+		} else {
+			switch Types.(type) {
+			case *types.Struct:
+				// Struct as a bound
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Struct as a " + bound,
+					Info:      "Name : " + prettyPrint(expr),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			case *types.Named:
+				// Struct as a bound
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Elem of a struct as a " + bound,
+					Info:      "Name : " + prettyPrint(expr),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			}
+		}
+	case *ast.IndexExpr:
+		m.Counters = append(m.Counters, Counter{
+			Name:      "Uses an item of a list as a " + bound,
+			Info:      "Not supported",
+			Fun:       m.Fun.Name.Name,
+			Proj_name: m.Project_name,
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Filename:  m.Fileset.Position(expr.Pos()).String(),
+			Commit:    m.Commit,
+		})
+	case *ast.CompositeLit:
+		m.Counters = append(m.Counters, Counter{
+			Name:      "Uses a struct as a " + bound,
+			Info:      "Not supported",
+			Fun:       m.Fun.Name.Name,
+			Proj_name: m.Project_name,
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Filename:  m.Fileset.Position(expr.Pos()).String(),
+			Commit:    m.Commit,
+		})
+	default:
+
+		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr)
+
+		if Types == nil {
+			fmt.Println("Could not find type of expr : ", expr, "at pos : ", m.Fileset.Position(expr.Pos()))
+		} else {
+			switch Types := Types.(type) {
+			case *types.Struct:
+				// Struct as a bound
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Elem of a struct as a " + bound,
+					Info:      "Name : " + prettyPrint(expr),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			case *types.Pointer:
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Pointer as a " + bound,
+					Info:      "Name : " + Types.String(),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			case *types.Basic:
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Integer as a " + bound,
+					Info:      "Name : " + fmt.Sprint(expr),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+
+			case *types.Slice:
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Slice as a " + bound,
+					Info:      "Name : " + Types.String(),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			case *types.Map:
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Map as a " + bound,
+					Info:      "Name : " + Types.String(),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			case *types.Named:
+				m.Counters = append(m.Counters, Counter{
+					Proj_name: m.Project_name,
+					Fun:       m.Fun.Name.String(),
+					Name:      "Var as a " + bound,
+					Info:      "Name : " + Types.String(),
+					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Commit:    m.Commit,
+					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				})
+			}
+
+		}
 	}
-	ident = m.TranslateArgs(expr)
+
 	return promela_ast.Ident{Name: ident.Print(0)}
 }
 
