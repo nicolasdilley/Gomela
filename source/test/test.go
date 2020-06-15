@@ -1,24 +1,20 @@
 package main
 
-import "sync"
+func main() {
+	a := make(chan int)
 
-type Num struct {
-	num int
+	Test(a)
 }
 
-func main() {
+func Test(a chan int) {
 
-	wg := sync.WaitGroup{}
-	ints := []int{10, 23, 23, 2323, 23232}
-	a := make(chan int, ints[0])
-	num := Num{num: 10}
-	for i := 0; i < len(ints); i++ {
-		go func() {
-			<-a
-		}()
+	var b int = 10
+	for i := 0; i < b; i++ {
+		go Routine(a)
+		<-a
 	}
 }
 
-func (n *Num) Test() {
-	return n.num
+func Routine(a chan int) {
+	a <- 0
 }
