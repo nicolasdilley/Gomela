@@ -1,2 +1,1 @@
-cayleygraph/cayley
-kataras/iris
+openshift/source-to-image
