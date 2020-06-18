@@ -14,7 +14,10 @@ import (
 )
 
 var (
-	CHAN_NAME = "_ch"
+	CHAN_NAME  = "_ch"
+	CHAN_BOUND = 0
+	ADD_BOUND  = 1
+	FOR_BOUND  = 2
 )
 
 type Model struct {
@@ -27,8 +30,7 @@ type Model struct {
 	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
 	Fun             *ast.FuncDecl            // the function being modelled
 	Chans           map[ast.Expr]*ChanStruct // the promela chan used in the module mapped to their go expr
-	Init            *promela_ast.InitDef
-	LTL_Properties  []promela_ast.LTL_property
+	Init            *promela_ast.InitDef     // The proctype consisting of the "main" function of the source program
 	Global_vars     []promela_ast.Stmt       // the global variable used in the ltl properties
 	Defines         []promela_ast.DefineStmt // the communications paramer
 	process_counter int                      // to give unique name to Promela processes
@@ -66,6 +68,7 @@ type Counter struct {
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela() {
 	m.Name = m.Package + "_" + m.Fun.Name.String()
+
 	commPars := m.AnalyseCommParam(m.Package, m.Fun, m.AstMap)
 
 	//. Create a global var for each
@@ -76,17 +79,17 @@ func (m *Model) GoToPromela() {
 			commPar_decl.Rhs = &promela_ast.Ident{Name: "-1"}
 		}
 		m.Defines = append(m.Defines, commPar_decl)
-
 		m.Counters = append(m.Counters, Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Comm param",
-			Info:      "Name :" + commPar.Name.Name + " Mandatory : " + strconv.FormatBool(commPar.Mandatory),
+			Info:      "Name :" + commPar.Name.Name + ", Mandatory : " + strconv.FormatBool(commPar.Mandatory),
 			Line:      commPar_decl.Define.Line,
 			Commit:    m.Commit,
 			Filename:  commPar_decl.Define.Filename,
 		})
 	}
+
 	m.Init = &promela_ast.InitDef{Def: m.Fileset.Position(m.Fun.Pos()), Body: m.TranslateBlockStmt(m.Fun.Body)}
 
 	init_block := &promela_ast.BlockStmt{List: []promela_ast.Stmt{
@@ -98,7 +101,6 @@ func (m *Model) GoToPromela() {
 	if len(m.Chans) > 0 {
 		Print(m)
 	}
-
 }
 
 // take a go block stmt and returns its promela counterpart
@@ -108,7 +110,6 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 	defer_stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	if b != nil {
-
 		block_stmt.Block = m.Fileset.Position(b.Pos())
 		for _, stmt := range b.List {
 			switch stmt := stmt.(type) {
@@ -132,7 +133,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 										chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
 										if len(call.Args) > 1 {
 											channel.Buffered = true
-											channel.Size = m.lookUp(call.Args[1], true, false)
+											channel.Size = m.lookUp(call.Args[1], CHAN_BOUND, false)
 
 										} else {
 											channel.Size = promela_ast.Ident{Name: "0"}
@@ -186,7 +187,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 
 													if len(call.Args) > 1 {
 														channel.Buffered = true
-														channel.Size = m.lookUp(call.Args[1], true, false)
+														channel.Size = m.lookUp(call.Args[1], CHAN_BOUND, false)
 													} else {
 														channel.Size = promela_ast.Ident{Name: "0"}
 													}
@@ -206,8 +207,6 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 														Commit:    m.Commit,
 														Filename:  m.Fileset.Position(ident.Pos()).Filename,
 													})
-													// fmt.Printf("Channel created inside a for loop")
-													// Need to log that
 												}
 											}
 										}
@@ -402,6 +401,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 					// Translate the commPar of the function call ignoring the args that are not needed
 					counters := m.Counters
+
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
 					m.Counters = counters
 					// Add the commparam to the param of the new proc
@@ -434,6 +434,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 				// Translate the commPar of the function call ignoring the args that are not needed
 				counters := m.Counters
+
 				commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
 				m.Counters = counters
 
@@ -624,7 +625,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 		if m.For_counter.With_go {
 
 			// need to change the for loop into a bounded for loop
-			ub := m.lookUp(s.X, false, false)
+			ub := m.lookUp(s.X, FOR_BOUND, false)
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
 			d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
@@ -822,7 +823,6 @@ func (m *Model) TranslateExpr(expr ast.Expr) *promela_ast.BlockStmt {
 		switch name := expr.Fun.(type) {
 		case *ast.Ident:
 			if name.Name == "close" && len(expr.Args) == 1 { // closing a chan
-				// chan_struct := m.getChanStruct(expr.Args[0])
 				send := &promela_ast.SendStmt{Send: m.Fileset.Position(name.Pos())}
 				ch := TranslateIdent(expr.Args[0], m.Fileset)
 				send.Chan = &promela_ast.SelectorExpr{
@@ -834,31 +834,11 @@ func (m *Model) TranslateExpr(expr ast.Expr) *promela_ast.BlockStmt {
 				stmts.List = append(stmts.List, send)
 
 			} else {
-				addBlock(stmts, m.TranslateCallExpr(expr, m.AstMap[m.Package].TypesInfo.ObjectOf(name)))
+				addBlock(stmts, m.TranslateCallExpr(expr))
 			}
 
 		case *ast.SelectorExpr:
-
-			obj := m.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
-			if obj != nil {
-				switch obj.Type().(type) {
-				case *types.Signature:
-					contains := false
-					for _, arg := range expr.Args {
-						switch u := arg.(type) {
-						case *ast.UnaryExpr:
-							if u.Op == token.ARROW {
-								contains = true
-
-							}
-						}
-					}
-
-					if contains {
-						addBlock(stmts, m.TranslateCallExpr(expr, obj))
-					}
-				}
-			}
+			addBlock(stmts, m.TranslateCallExpr(expr))
 
 		case *ast.FuncLit:
 			new_block := name.Body
@@ -901,32 +881,57 @@ func addBlock(b1 *promela_ast.BlockStmt, b2 *promela_ast.BlockStmt) {
 // 3. Translate the body of the function to Promela.
 // 4. Translate arguments that are communication parameters
 
-func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr, obj types.Object) *promela_ast.BlockStmt {
+func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStmt {
+
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	// if obj != nil {
+	var fun string       // The name of the function we are translating
+	var func_name string // The corresponding promela function name consisting of package + fun + num of param
+	var pack_name string = m.Package
+
+	var obj types.Object
+
+	// Find name of function
+	switch name := call_expr.Fun.(type) {
+	case *ast.Ident:
+		obj = m.AstMap[m.Package].TypesInfo.ObjectOf(name)
+	case *ast.SelectorExpr:
+		// Check if its a call a Waitgroup call (Add(x), Done or Wait)
+		sel := m.AstMap[m.Package].TypesInfo.Selections[name]
+		fun = name.Sel.Name
+
+		if sel == nil {
+			obj = m.AstMap[m.Package].TypesInfo.ObjectOf(name.X.(*ast.Ident))
+		} else {
+			obj = sel.Obj()
+		}
+	case *ast.FuncLit:
+		panic("Promela_translator.go : Should not have a funclit here")
+	}
+
 	if obj != nil {
-
-		var fun string       // The name of the function we are translating
-		var func_name string // The corresponding promela function name consisting of package + fun + num of param
-		var pack_name string = m.Package
-
-		// Find name of function
 		switch name := call_expr.Fun.(type) {
 		case *ast.Ident:
 			func_name = filepath.Base(pack_name) + name.Name + strconv.Itoa(len(call_expr.Args))
 			fun = name.Name
 		case *ast.SelectorExpr:
+			// Check if its a call a Waitgroup call (Add(x), Done or Wait)
 			func_name = TranslateIdent(name.X, m.Fileset).Name + name.Sel.Name + strconv.Itoa(len(call_expr.Args))
 			fun = name.Sel.Name
 			pack_name = obj.Pkg().Path()
+
+			if pack_name == "sync" {
+				if name.Sel.Name == "Add" {
+					m.lookUp(call_expr.Args[0], ADD_BOUND, m.For_counter.In_for)
+				}
+			}
 		case *ast.FuncLit:
 			panic("Promela_translator.go : Should not have a funclit here")
 		}
 
 		if !m.CallExists(func_name) {
 			if found, decl := FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
-
 				hasChan := false
-
 				for _, field := range decl.Type.Params.List {
 					switch field.Type.(type) {
 					case *ast.ChanType:
@@ -936,7 +941,11 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr, obj types.Object) *pr
 
 				if hasChan {
 					// Generate a new proctype to model the recursive call
-					proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+					proc := &promela_ast.Proctype{
+						Name: promela_ast.Ident{Name: func_name},
+						Pos:  m.Fileset.Position(call_expr.Pos()), Active: false,
+						Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+					}
 					proc.Params = []promela_ast.Param{}
 
 					var args []promela_ast.Expr = []promela_ast.Expr{} // building the new call's args
@@ -1172,14 +1181,14 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.DEC {
-						ident := m.lookUp(cond.Y, false, m.For_counter.In_for)
+						ident := m.lookUp(cond.Y, FOR_BOUND, m.For_counter.In_for)
 						lb.Name = ident.Print(0)
 
 						// look for upper bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, false, m.For_counter.In_for)
+								ident := m.lookUp(rh, FOR_BOUND, m.For_counter.In_for)
 								ub.Name = ident.Print(0)
 
 								if cond.Op == token.GTR {
@@ -1195,14 +1204,14 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.INC {
-						ident := m.lookUp(cond.Y, false, m.For_counter.In_for)
+						ident := m.lookUp(cond.Y, FOR_BOUND, m.For_counter.In_for)
 						ub.Name = ident.Print(0)
 
 						// look for lower bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, false, m.For_counter.In_for)
+								ident := m.lookUp(rh, FOR_BOUND, m.For_counter.In_for)
 								lb.Name = ident.Print(0)
 
 								if cond.Op == token.LSS {
@@ -1219,7 +1228,7 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 
 	case *ast.RangeStmt:
 		lb.Name = "0"
-		ident := m.lookUp(s.X, false, m.For_counter.In_for)
+		ident := m.lookUp(s.X, FOR_BOUND, m.For_counter.In_for)
 		ub.Name = ident.Print(0)
 		well_formed = true
 
@@ -1256,16 +1265,21 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 }
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (m *Model) lookUp(expr ast.Expr, is_chan_bound bool, spawning_for_loop bool) promela_ast.Ident {
+func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) promela_ast.Ident {
 
 	var ident promela_ast.Expr
 
 	var bound string = "for bound"
 
-	if is_chan_bound {
+	switch bound_type {
+	case CHAN_BOUND:
 		bound = "chan bound"
-	} else if spawning_for_loop {
-		bound = "spawning for bound"
+	case FOR_BOUND:
+		if spawning_for_loop {
+			bound = "spawning for bound"
+		}
+	case ADD_BOUND:
+		bound = "add bound"
 	}
 
 	ident = m.TranslateArgs(expr)

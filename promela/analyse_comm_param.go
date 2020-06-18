@@ -1,10 +1,10 @@
 package promela
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strconv"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -18,11 +18,13 @@ type CommPar struct {
 
 // Return the parameters that are mandatory and optional
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
+
 	params := []*CommPar{}
 
 	if fun.Body == nil {
 		return params
 	}
+
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.AssignStmt:
@@ -71,9 +73,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 
 		case *ast.ForStmt:
-
 			// check if the body of the for loop contains a spawn (inter-procedurally)
-			mandatory := spawns(pack, stmt.Body, ast_map)
+			mandatory := m.spawns(stmt.Body)
 
 			switch cond := stmt.Cond.(type) { // i:= n;i > n;i--
 			case *ast.BinaryExpr:
@@ -95,42 +96,60 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				}
 			}
 		case *ast.CallExpr: // m.Upgrade if the args of the function are mapped to a MP or OP
-			fun := ""
 			// check if the call has a chan as param by looking at func decl
-			switch f := stmt.Fun.(type) {
-			case *ast.Ident:
-				fun = f.Name
-			case *ast.SelectorExpr:
-
-				if getIdent(f.X) != nil {
-					fun = getIdent(f.X).Name
-					pack = f.Sel.Name
-				} else {
-					fun = "UNKNOWN FUNCTION -1"
-				}
-			}
 
 			contains_chan := false
-			found, fun_decl := FindDecl(pack, fun, len(stmt.Args), ast_map)
-			if found {
-				for _, param := range fun_decl.Type.Params.List {
-					switch param.Type.(type) {
-					case *ast.ChanType:
-						contains_chan = true
-					}
-				}
+			for _, arg := range stmt.Args {
+				typ := ast_map[pack].TypesInfo.TypeOf(arg)
 
-				if contains_chan {
-					// look inter procedurally
-					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
-
-					for _, param := range params_1 { // m.upgrade all params with its respective arguments
-						// give only the arguments that are either MP or OP
-						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
-					}
+				switch typ.(type) {
+				case *types.Chan:
+					contains_chan = true
 				}
 			}
+			fun_name := ""
+			fun_pack := pack
+
+			switch f := stmt.Fun.(type) {
+			case *ast.Ident:
+				fun_name = f.Name
+			case *ast.SelectorExpr:
+				fun_name = f.Sel.Name
+
+				obj := ast_map[pack].TypesInfo.ObjectOf(f.Sel)
+				if obj != nil {
+					fun_pack = obj.Pkg().Name()
+					if fun_pack == "sync" && f.Sel.Name == "Add" {
+						params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[0], true)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+					}
+				} else {
+					fun_name = "UNKNOWN FUNCTION"
+				}
+			}
+
+			// contains_chan := false
+			// found, fun_decl := FindDecl(pack, fun, len(stmt.Args), ast_map)
+			// if found {
+			// 	for _, param := range fun_decl.Type.Params.List {
+			// 		switch param.Type.(type) {
+			// 		case *ast.ChanType:
+			// 			contains_chan = true
+			// 		}
+			// 	}
+
+			found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
+
+			if contains_chan && found {
+				// look inter procedurally
+				params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
+
+				for _, param := range params_1 { // m.upgrade all params with its respective arguments
+					// give only the arguments that are either MP or OP
+					// first apply m.Vid to extract all variables of the arguments
+					params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
+				}
+			}
+			// }a
 		case *ast.GoStmt: // m.Upgrade if the args of the function are mapped to a MP or OP
 			fun := ""
 			// check if the call has a chan as param by looking at func decl
@@ -157,7 +176,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					// look inter procedurally
 					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
 
-					for _, param := range params_1 { // m.upgrade all params with its respective arguments
+					for _, param := range params_1 {
+						// m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
 						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory))
@@ -192,18 +212,18 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar)
 				commPars = append(commPars, param)
 			}
 		} else {
-			if arg.Mandatory {
-				m.Counters = append(m.Counters, Counter{
-					Proj_name: m.Project_name,
-					Fun:       m.Fun.Name.String(),
-					Name:      "Candidate param",
-					Info:      "Name : " + prettyPrint(arg.Name),
-					Line:      m.Fileset.Position(arg.Name.Pos()).Line,
-					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
-				})
+			// if arg.Mandatory {
+			m.Counters = append(m.Counters, Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "Candidate param",
+				Info:      "Name : " + prettyPrint(arg.Name) + ", Mandatory : " + strconv.FormatBool(arg.Mandatory),
+				Line:      m.Fileset.Position(arg.Name.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
+			})
 
-			}
+			// }
 		}
 	}
 	return commPars
@@ -276,7 +296,6 @@ func getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.BinaryExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name + expr.Op.String() + getIdent(expr.Y).Name, NamePos: expr.Pos()}
 	case *ast.UnaryExpr:
-		fmt.Println(expr.X)
 		return &ast.Ident{Name: expr.Op.String() + getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.IndexExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name + "[" + getIdent(expr.Index).Name + "]"}
@@ -307,47 +326,87 @@ func getIdent(expr ast.Expr) *ast.Ident {
 // check if there is a goroutine spawned in one of the stmts (inter-procedural)
 
 // If unknown function potentially ask user if spawning or not?
-func spawns(pack string, stmts *ast.BlockStmt, ast_map map[string]*packages.Package) bool {
+func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 
-	contains_chan := false
 	is_spawning := false
 	ast.Inspect(stmts, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.CallExpr:
-			fun := ""
-			// check if the goroutine has a chan as param by looking at func decl
-			switch f := stmt.Fun.(type) {
-			case *ast.Ident:
-				fun = f.Name
-			case *ast.SelectorExpr:
-				fun = getIdent(f.X).Name
-				pack = f.Sel.Name
-			}
-			found, fun_decl := FindDecl(pack, fun, len(stmt.Args), ast_map)
-			if found {
-				for _, param := range fun_decl.Type.Params.List {
-					switch param.Type.(type) {
-					case *ast.ChanType:
-						contains_chan = true
-					}
-				}
-
-				if contains_chan {
-					// look inter procedurally
-					is_spawning = spawns(pack, fun_decl.Body, ast_map)
-				}
-			} else {
-				// what do we do when we can't find decl ?
+			if m.isCallSpawning(stmt) {
 				is_spawning = true
-				return false
 			}
-
 		case *ast.GoStmt:
-			is_spawning = true
+			if m.isCallSpawning(stmt.Call) {
+				is_spawning = true
+			}
 			return false
 		}
 
 		return true
 	})
+	return is_spawning
+}
+
+func (m *Model) isCallSpawning(call_expr *ast.CallExpr) bool {
+	contains_chan := false
+	contains_wg := false
+	is_spawning := false
+
+	fun := ""
+	fun_pack := m.Package
+	// check if the goroutine or the call has a chan as param by looking at func decl
+	switch f := call_expr.Fun.(type) {
+	case *ast.Ident:
+		fun = f.Name
+	case *ast.SelectorExpr:
+		// Check if its a call a Waitgroup call (Add(x))
+		sel := m.AstMap[m.Package].TypesInfo.Selections[f]
+		var obj types.Object
+		if sel == nil {
+			obj = m.AstMap[m.Package].TypesInfo.ObjectOf(f.Sel)
+		} else {
+			obj = sel.Obj()
+		}
+		if obj != nil {
+			if obj.Pkg().Name() == "sync" {
+				if f.Sel.Name == "Add" {
+					return true
+				}
+			}
+
+			fun_pack = obj.Pkg().Name()
+		}
+		fun = f.Sel.Name
+
+	}
+
+	for _, arg := range call_expr.Args {
+		typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
+		switch typ := typ.(type) {
+		case *types.Chan:
+			contains_chan = true
+		case *types.Pointer:
+			switch typ := typ.Elem().(type) {
+			case *types.Named:
+				if typ.String() == "sync.WaitGroup" {
+					contains_wg = true
+				}
+			}
+		}
+	}
+
+	found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
+	if found {
+		if contains_chan || contains_wg {
+			// look inter procedurally
+			is_spawning = m.spawns(fun_decl.Body)
+		}
+	} else {
+		if contains_chan || contains_wg {
+			// what do we do when we can't find decl ?
+			is_spawning = true
+		}
+	}
+
 	return is_spawning
 }
