@@ -4,8 +4,8 @@ To install and use Gomela, follow these steps:
 
 
 * Run ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
-* Put in ``` ./source ``` the folders of the projects that you want Gomela to verify.
-* Run ```  go build && ./gomela```
+* Put in ```./source ``` the folders of the projects that you want Gomela to verify.
+* Run ```go build && ./gomela```
 
 To pass a default lower and upper bound for badly formed for loop (including infinite for loops)
 use the flags ```-lb=value``` and ```-ub=value``` to give a default ```value``` for the lower and upper bound respectively.

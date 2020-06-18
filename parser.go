@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"go/types"
 	"log"
 
 	"github.com/nicolasdilley/gomela/promela"
@@ -31,43 +30,42 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 
 						// ast.Print(fileSet, decl)
 
-						for _, def := range node.TypesInfo.Defs {
-							if def != nil {
-								switch typ := def.Type().(type) {
-								case *types.Named:
-									if typ.Obj() != nil {
-										if typ.Obj().Pkg().Name() == "sync" {
-											if typ.Obj().Name() == "WaitGroup" {
-												logger.Counters = append(logger.Counters, promela.Counter{
-													Proj_name: proj_name,
-													Name:      "Initialisation of WaitGroup",
-													Fun:       decl.Name.Name,
-													Info:      "",
-													Line:      fileSet.Position(def.Pos()).Line,
-													Commit:    commit,
-													Filename:  fileSet.Position(def.Pos()).Filename,
-												})
-											}
-										}
-									}
-								}
-							}
-						}
+						// for _, def := range node.TypesInfo.Defs {
+						// 	if def != nil {
+						// 		switch typ := def.Type().(type) {
+						// 		case *types.Named:
+						// 			if typ.Obj() != nil {
+						// 				if typ.Obj().Pkg().Name() == "sync" {
+						// 					if typ.Obj().Name() == "WaitGroup" {
+						// 						logger.Counters = append(logger.Counters, promela.Counter{
+						// 							Proj_name: proj_name,
+						// 							Name:      "Initialisation of WaitGroup",
+						// 							Fun:       decl.Name.Name,
+						// 							Info:      "",
+						// 							Line:      fileSet.Position(def.Pos()).Line,
+						// 							Commit:    commit,
+						// 							Filename:  fileSet.Position(def.Pos()).Filename,
+						// 						})
+						// 					}
+						// 				}
+						// 			}
+						// 		}
+						// 	}
+						// }
 						var m promela.Model = promela.Model{
-							Project_name:   proj_name,
-							Package:        pack_name,
-							AstMap:         ast_map,
-							Fileset:        fileSet,
-							Proctypes:      []*promela_ast.Proctype{},
-							Fun:            decl,
-							Chans:          make(map[ast.Expr]*promela.ChanStruct),
-							Commit:         commit,
-							LTL_Properties: []promela_ast.LTL_property{},
-							Global_vars:    []promela_ast.Stmt{},
-							For_counter:    &promela.ForCounter{},
-							Counters:       []promela.Counter{},
-							Default_ub:     *ver.ub,
-							Default_lb:     *ver.lb,
+							Project_name: proj_name,
+							Package:      pack_name,
+							AstMap:       ast_map,
+							Fileset:      fileSet,
+							Proctypes:    []*promela_ast.Proctype{},
+							Fun:          decl,
+							Chans:        make(map[ast.Expr]*promela.ChanStruct),
+							Commit:       commit,
+							Global_vars:  []promela_ast.Stmt{},
+							For_counter:  &promela.ForCounter{},
+							Counters:     []promela.Counter{},
+							Default_ub:   *ver.ub,
+							Default_lb:   *ver.lb,
 						}
 
 						m.GoToPromela()
