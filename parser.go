@@ -88,7 +88,7 @@ func GenerateAst(dir string, package_names []string) (*token.FileSet, map[string
 	package_names = append([]string{"."}, package_names...)
 	lpkgs, err := packages.Load(cfg, package_names...)
 	if err != nil {
-		log.Fatal("Error while loading the packages !")
+		log.Fatal("Error while loading the packages ! , err : ", err.Error())
 	}
 
 	for _, pack := range lpkgs {

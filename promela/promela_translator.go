@@ -901,7 +901,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 		fun = name.Sel.Name
 
 		if sel == nil {
-			obj = m.AstMap[m.Package].TypesInfo.ObjectOf(name.X.(*ast.Ident))
+			obj = m.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
 		} else {
 			obj = sel.Obj()
 		}
@@ -918,8 +918,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 			// Check if its a call a Waitgroup call (Add(x), Done or Wait)
 			func_name = TranslateIdent(name.X, m.Fileset).Name + name.Sel.Name + strconv.Itoa(len(call_expr.Args))
 			fun = name.Sel.Name
-			pack_name = obj.Pkg().Path()
-
+			if obj.Pkg() != nil {
+				pack_name = obj.Pkg().Name()
+			}
 			if pack_name == "sync" {
 				if name.Sel.Name == "Add" {
 					m.lookUp(call_expr.Args[0], ADD_BOUND, m.For_counter.In_for)

@@ -100,7 +100,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			contains_chan := false
 			for _, arg := range stmt.Args {
-				typ := ast_map[pack].TypesInfo.TypeOf(arg)
+				typ := ast_map[m.Package].TypesInfo.TypeOf(arg)
 
 				switch typ.(type) {
 				case *types.Chan:
@@ -115,16 +115,21 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				fun_name = f.Name
 			case *ast.SelectorExpr:
 				fun_name = f.Sel.Name
-
-				obj := ast_map[pack].TypesInfo.ObjectOf(f.Sel)
+				obj := ast_map[m.Package].TypesInfo.ObjectOf(f.Sel)
 				if obj != nil {
-					fun_pack = obj.Pkg().Name()
-					if fun_pack == "sync" && f.Sel.Name == "Add" {
-						params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[0], true)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+					if obj.Pkg() != nil {
+						fun_pack = obj.Pkg().Name()
+						if fun_pack == "sync" && f.Sel.Name == "Add" {
+							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[0], true)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+						}
+
+					} else {
+						fun_name = "UNKNOWN FUNCTION"
 					}
 				} else {
 					fun_name = "UNKNOWN FUNCTION"
 				}
+
 			}
 
 			// contains_chan := false
@@ -367,7 +372,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) bool {
 		} else {
 			obj = sel.Obj()
 		}
-		if obj != nil {
+		if obj != nil && obj.Pkg() != nil {
 			if obj.Pkg().Name() == "sync" {
 				if f.Sel.Name == "Add" {
 					return true
