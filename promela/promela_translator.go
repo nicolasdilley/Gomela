@@ -1095,8 +1095,26 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		e1 = m.TranslateArgs(expr.X)
 	case *ast.KeyValueExpr:
 		e1 = m.TranslateArgs(expr.Key)
-	}
+	case *ast.ArrayType:
+		e1 = m.TranslateArgs(&ast.Ident{Name: "Array", NamePos: expr.Pos()})
+	case *ast.StructType:
+		name := "{"
+		for i, exp := range expr.Fields.List {
 
+			name += m.TranslateArgs(exp.Names[0]).Print(0)
+			if i < len(expr.Fields.List) {
+				name += ","
+			}
+		}
+		name += "}"
+	case *ast.ChanType:
+		e1 = m.TranslateArgs(&ast.Ident{Name: "chan", NamePos: expr.Pos()})
+	default:
+		fmt.Println("ici")
+		ast.Print(m.Fileset, expr)
+	}
+	ast.Print(m.Fileset, expr)
+	fmt.Println(e1)
 	return e1
 }
 
@@ -1321,6 +1339,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			})
 
 			ident = m.TranslateArgs(expr.Args[0])
+			fmt.Println(ident)
 		}
 	case *ast.SelectorExpr:
 		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr.X)
