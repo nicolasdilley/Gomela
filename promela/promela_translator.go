@@ -1110,11 +1110,7 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.ChanType:
 		e1 = m.TranslateArgs(&ast.Ident{Name: "chan", NamePos: expr.Pos()})
 	default:
-		fmt.Println("ici")
-		ast.Print(m.Fileset, expr)
 	}
-	ast.Print(m.Fileset, expr)
-	fmt.Println(e1)
 	return e1
 }
 
