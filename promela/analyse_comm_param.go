@@ -142,16 +142,20 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// 		}
 			// 	}
 
-			found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
+			if fun_name != m.Fun.Name.Name {
+				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
-			if contains_chan && found {
-				// look inter procedurally
-				params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
-
-				for _, param := range params_1 { // m.upgrade all params with its respective arguments
-					// give only the arguments that are either MP or OP
-					// first apply m.Vid to extract all variables of the arguments
-					params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
+				if contains_chan && found {
+					// look inter procedurally
+					prev := m.Fun
+					m.Fun = fun_decl
+					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
+					m.Fun = prev
+					for _, param := range params_1 { // m.upgrade all params with its respective arguments
+						// give only the arguments that are either MP or OP
+						// first apply m.Vid to extract all variables of the arguments
+						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
+					}
 				}
 			}
 			// }a

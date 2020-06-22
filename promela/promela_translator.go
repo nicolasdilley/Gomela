@@ -959,7 +959,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 							args = append(args, &m.getChanStruct(arg).Name)
 						}
 					}
-
 					// Translate the commPar of the function call ignoring the args that are not needed
 					counters := m.Counters
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
@@ -975,9 +974,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 
 					prev_decl := *m.Fun
 					m.Fun = decl
+					m.Proctypes = append(m.Proctypes, proc)
 					proc.Body.List = m.TranslateBlockStmt(decl.Body).List
 					proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
-					m.Proctypes = append(m.Proctypes, proc)
 					m.Fun = &prev_decl
 
 					// add call to the proctype
@@ -1037,11 +1036,9 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	var e1 promela_ast.Expr
 	switch expr := expr.(type) {
 	case *ast.Ident:
-
 		e1 = &promela_ast.Ident{Name: expr.Name, Ident: m.Fileset.Position(expr.Pos())}
 
 	case *ast.SelectorExpr:
-
 		e1 = &promela_ast.SelectorExpr{
 			X:   m.TranslateArgs(expr.X),
 			Sel: promela_ast.Ident{Name: expr.Sel.Name, Ident: m.Fileset.Position(expr.Pos())},
@@ -1094,6 +1091,10 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.IndexExpr:
 		e1 = m.TranslateArgs(expr.X)
 		// }
+	case *ast.SliceExpr:
+		e1 = m.TranslateArgs(expr.X)
+	case *ast.KeyValueExpr:
+		e1 = m.TranslateArgs(expr.Key)
 	}
 
 	return e1
@@ -1140,7 +1141,6 @@ func (m *Model) containsChan(expr ast.Expr) bool {
 }
 
 func (m *Model) CallExists(name string) bool {
-
 	for _, proc := range m.Proctypes {
 		if proc.Name.Name == name {
 			return true
