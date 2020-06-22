@@ -1,1 +1,1 @@
-GOARCH=amd64 GOOS=linux go build & mv ./gomela bin/
+GOOS=linux GOARCH=amd64 go build & mv ./gomela bin/
