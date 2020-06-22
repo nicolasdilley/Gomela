@@ -81,9 +81,9 @@ func main() {
 					return
 				}
 				proj_listings := strings.Split(string(data), "\n")
-
+				fmt.Println(len(proj_listings))
 				for i, project_name := range proj_listings {
-					if i < len(project_name) {
+					if i < len(proj_listings) {
 						parseProject(logger, project_name, ver)
 					}
 				}
