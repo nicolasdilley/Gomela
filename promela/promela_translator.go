@@ -1109,7 +1109,10 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		name += "}"
 	case *ast.ChanType:
 		e1 = m.TranslateArgs(&ast.Ident{Name: "chan", NamePos: expr.Pos()})
+	case *ast.TypeAssertExpr:
+		e1 = &promela_ast.Ident{Name: "type_assert", Ident: m.Fileset.Position(expr.Pos())}
 	default:
+		ast.Print(m.Fileset, expr)
 	}
 	return e1
 }
