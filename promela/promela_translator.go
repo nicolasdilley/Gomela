@@ -25,6 +25,7 @@ type Model struct {
 	Package         string // the name of the package
 	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
 	Commit          string // the commit of the project
+	RecFuncs        []RecFunc
 	Fileset         *token.FileSet
 	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
 	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
@@ -42,6 +43,12 @@ type Model struct {
 	Default_ub      int
 	AstMap          map[string]*packages.Package // the map used to find the type of the channels
 	Chan_closing    bool
+}
+
+// Used to represent a function for recursive calls
+type RecFunc struct {
+	Pkg  string
+	Name string
 }
 
 type Chan_info struct {
@@ -68,6 +75,7 @@ type Counter struct {
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela() {
 	m.Name = m.Package + "_" + m.Fun.Name.String()
+	m.AddRecFunc(m.Package, m.Fun.Name.Name)
 
 	commPars := m.AnalyseCommParam(m.Package, m.Fun, m.AstMap)
 
@@ -101,6 +109,8 @@ func (m *Model) GoToPromela() {
 	if len(m.Chans) > 0 {
 		Print(m)
 	}
+
+	m.PopRecFunc()
 }
 
 // take a go block stmt and returns its promela counterpart
@@ -733,21 +743,18 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) *promela_ast.BlockStmt {
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.SendStmt{Send: m.Fileset.Position(s.Pos())}
 
-	channel := m.getChanStruct(s.Chan)
+	chan_name := TranslateIdent(s.Chan, m.Fileset)
+	i.Chan = &promela_ast.SelectorExpr{X: &chan_name, Sel: promela_ast.Ident{Name: "in"}}
 
-	if channel != nil {
-		chan_name := TranslateIdent(s.Chan, m.Fileset)
-		i.Chan = &promela_ast.SelectorExpr{X: &chan_name, Sel: promela_ast.Ident{Name: "in"}}
+	addBlock(b, m.TranslateExpr(s.Value))
 
-		addBlock(b, m.TranslateExpr(s.Value))
+	i.Rhs = &promela_ast.Ident{Name: "0"}
 
-		i.Rhs = &promela_ast.Ident{Name: "0"}
+	b.List = append(b.List, i)
 
-		b.List = append(b.List, i)
+	closed_chan := &promela_ast.SelectorExpr{X: &chan_name, Sel: promela_ast.Ident{Name: "sending"}}
+	b.List = append(b.List, &promela_ast.RcvStmt{Chan: closed_chan, Rhs: &promela_ast.Ident{Name: "state"}})
 
-		closed_chan := &promela_ast.SelectorExpr{X: &chan_name, Sel: promela_ast.Ident{Name: "sending"}}
-		b.List = append(b.List, &promela_ast.RcvStmt{Chan: closed_chan, Rhs: &promela_ast.Ident{Name: "state"}})
-	}
 	return b
 
 }
@@ -908,7 +915,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 	case *ast.FuncLit:
 		panic("Promela_translator.go : Should not have a funclit here")
 	}
-
 	if obj != nil {
 		switch name := call_expr.Fun.(type) {
 		case *ast.Ident:
@@ -929,8 +935,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 		case *ast.FuncLit:
 			panic("Promela_translator.go : Should not have a funclit here")
 		}
+		if m.ContainsRecFunc(pack_name, func_name) {
 
-		if !m.CallExists(func_name) {
+		} else if !m.CallExists(func_name) {
 			if found, decl := FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 				hasChan := false
 				for _, field := range decl.Type.Params.List {
@@ -941,6 +948,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 				}
 
 				if hasChan {
+					m.AddRecFunc(pack_name, fun)
 					// Generate a new proctype to model the recursive call
 					proc := &promela_ast.Proctype{
 						Name: promela_ast.Ident{Name: func_name},
@@ -989,6 +997,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 						&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
 					)
 					m.Counter++
+
+					m.PopRecFunc()
 					// }
 				} else {
 					// fmt.Print("users_translation.go : Func call not found : " + func_name + "\n Called at :")
@@ -1573,6 +1583,27 @@ func containsReturn(b *promela_ast.BlockStmt) bool {
 		}
 	}
 	return false
+}
+
+func (m *Model) ContainsRecFunc(pkg string, name string) bool {
+
+	for _, fun := range m.RecFuncs {
+		if pkg == fun.Pkg && name == fun.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *Model) AddRecFunc(pkg string, name string) {
+	m.RecFuncs = append(m.RecFuncs, RecFunc{Pkg: pkg, Name: name})
+}
+func (m *Model) PopRecFunc() {
+
+	if len(m.RecFuncs) > 0 {
+		m.RecFuncs = m.RecFuncs[:len(m.RecFuncs)-1]
+	}
 }
 
 func prettyPrint(expr ast.Expr) string {

@@ -20,8 +20,9 @@ type CommPar struct {
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
 
 	params := []*CommPar{}
-
+	m.AddRecFunc(pack, fun.Name.Name)
 	if fun.Body == nil {
+		m.PopRecFunc()
 		return params
 	}
 
@@ -142,7 +143,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// 		}
 			// 	}
 
-			if fun_name != m.Fun.Name.Name {
+			if !m.ContainsRecFunc(fun_pack, fun_name) {
 				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
 				if contains_chan && found {
@@ -196,6 +197,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 		}
 		return true
 	})
+
+	m.PopRecFunc()
 
 	return params
 }
@@ -338,29 +341,53 @@ func getIdent(expr ast.Expr) *ast.Ident {
 func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 
 	is_spawning := false
+
+	var call ast.Node
+	recursive := false
 	ast.Inspect(stmts, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.CallExpr:
-			if m.isCallSpawning(stmt) {
+			if recur, call_spawning := m.isCallSpawning(stmt); call_spawning {
 				is_spawning = true
+
+				if recur {
+					recursive = true
+					call = stmt
+				}
 			}
 		case *ast.GoStmt:
-			if m.isCallSpawning(stmt.Call) {
+			if recur, call_spawning := m.isCallSpawning(stmt.Call); call_spawning {
 				is_spawning = true
+
+				if recur {
+					recursive = true
+					call = stmt
+				}
 			}
 			return false
 		}
 
 		return true
 	})
+
+	if recursive {
+		m.Counters = append(m.Counters, Counter{
+			Proj_name: m.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Recursive call",
+			Info:      "Spawning : " + strconv.FormatBool(is_spawning),
+			Line:      m.Fileset.Position(call.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(call.Pos()).Filename,
+		})
+
+	}
 	return is_spawning
 }
 
-func (m *Model) isCallSpawning(call_expr *ast.CallExpr) bool {
+func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_spawning bool) {
 	contains_chan := false
 	contains_wg := false
-	is_spawning := false
-
 	fun := ""
 	fun_pack := m.Package
 	// check if the goroutine or the call has a chan as param by looking at func decl
@@ -379,7 +406,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) bool {
 		if obj != nil && obj.Pkg() != nil {
 			if obj.Pkg().Name() == "sync" {
 				if f.Sel.Name == "Add" {
-					return true
+					return false, true
 				}
 			}
 
@@ -404,18 +431,26 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) bool {
 		}
 	}
 
-	found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
-	if found {
-		if contains_chan || contains_wg {
-			// look inter procedurally
-			is_spawning = m.spawns(fun_decl.Body)
+	if !m.ContainsRecFunc(fun_pack, fun) {
+		found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
+
+		m.AddRecFunc(fun_pack, fun)
+
+		if found {
+			if contains_chan || contains_wg {
+				// look inter procedurally
+				call_spawning = m.spawns(fun_decl.Body)
+			}
+		} else {
+			if contains_chan || contains_wg {
+				// what do we do when we can't find decl ?
+				call_spawning = true
+			}
 		}
+		m.PopRecFunc()
 	} else {
-		if contains_chan || contains_wg {
-			// what do we do when we can't find decl ?
-			is_spawning = true
-		}
+		recursive = true
 	}
 
-	return is_spawning
+	return recursive, call_spawning
 }
