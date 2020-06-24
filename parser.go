@@ -27,7 +27,6 @@ func ParseAst(logger *Logger, fileSet *token.FileSet, proj_name string, commit s
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
-
 						// ast.Print(fileSet, decl)
 
 						// for _, def := range node.TypesInfo.Defs {
