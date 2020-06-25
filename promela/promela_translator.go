@@ -87,7 +87,7 @@ func (m *Model) GoToPromela() {
 			commPar_decl.Rhs = &promela_ast.Ident{Name: "-1"}
 		}
 		m.Defines = append(m.Defines, commPar_decl)
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Comm param",
@@ -110,7 +110,6 @@ func (m *Model) GoToPromela() {
 		Print(m)
 	}
 
-	m.PopRecFunc()
 }
 
 // take a go block stmt and returns its promela counterpart
@@ -157,7 +156,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 										block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 										block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 									} else {
-										m.Counters = append(m.Counters, Counter{
+										PrintCounter(Counter{
 											Proj_name: m.Project_name,
 											Fun:       m.Fun.Name.String(),
 											Name:      "Chan in for",
@@ -209,7 +208,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 													block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 													block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 												} else {
-													m.Counters = append(m.Counters, Counter{
+													PrintCounter(Counter{
 														Proj_name: m.Project_name,
 														Fun:       m.Fun.Name.String(),
 														Name:      "Chan in for",
@@ -476,7 +475,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 	if m.For_counter.In_for {
 		m.For_counter.With_go = true
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Go in for",
@@ -998,7 +997,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) *promela_ast.BlockStm
 					)
 					m.Counter++
 
-					m.PopRecFunc()
 					// }
 				} else {
 					// fmt.Print("users_translation.go : Func call not found : " + func_name + "\n Called at :")
@@ -1278,7 +1276,7 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 		lb = lb_decl.Name // returning the fresh vars
 		ub = ub_decl.Name
 
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "For loop not well formed",
@@ -1315,7 +1313,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 	switch expr := expr.(type) {
 	case *ast.UnaryExpr:
 		if expr.Op == token.ARROW {
-			m.Counters = append(m.Counters, Counter{
+			PrintCounter(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Receive as a " + bound,
@@ -1327,7 +1325,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 		}
 	case *ast.CallExpr:
 		// Function as a comm param
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Func as a " + bound,
@@ -1337,7 +1335,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
 		if getIdent(expr.Fun).Name == "len" {
-			m.Counters = append(m.Counters, Counter{
+			PrintCounter(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "len() as a " + bound,
@@ -1359,7 +1357,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			switch Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Struct as a " + bound,
@@ -1370,7 +1368,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 				})
 			case *types.Named:
 				// Struct as a bound
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Elem of a struct as a " + bound,
@@ -1382,7 +1380,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			}
 		}
 	case *ast.IndexExpr:
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Name:      "Uses an item of a list as a " + bound,
 			Info:      "Not supported",
 			Fun:       m.Fun.Name.Name,
@@ -1392,7 +1390,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			Commit:    m.Commit,
 		})
 	case *ast.CompositeLit:
-		m.Counters = append(m.Counters, Counter{
+		PrintCounter(Counter{
 			Name:      "Uses a struct as a " + bound,
 			Info:      "Not supported",
 			Fun:       m.Fun.Name.Name,
@@ -1411,7 +1409,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			switch Types := Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Elem of a struct as a " + bound,
@@ -1421,7 +1419,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Pointer:
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Pointer as a " + bound,
@@ -1431,7 +1429,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Basic:
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Integer as a " + bound,
@@ -1442,7 +1440,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 				})
 
 			case *types.Slice:
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Slice as a " + bound,
@@ -1452,7 +1450,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Map:
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Map as a " + bound,
@@ -1462,7 +1460,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Named:
-				m.Counters = append(m.Counters, Counter{
+				PrintCounter(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Var as a " + bound,
@@ -1598,12 +1596,6 @@ func (m *Model) ContainsRecFunc(pkg string, name string) bool {
 
 func (m *Model) AddRecFunc(pkg string, name string) {
 	m.RecFuncs = append(m.RecFuncs, RecFunc{Pkg: pkg, Name: name})
-}
-func (m *Model) PopRecFunc() {
-
-	if len(m.RecFuncs) > 0 {
-		m.RecFuncs = m.RecFuncs[:len(m.RecFuncs)-1]
-	}
 }
 
 func prettyPrint(expr ast.Expr) string {

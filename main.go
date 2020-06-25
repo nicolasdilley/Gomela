@@ -50,10 +50,6 @@ type VerificationInfo struct {
 
 func main() {
 
-	logger := &Logger{
-		Counters: []promela.Counter{},
-	}
-
 	// Create the results folder
 	os.RemoveAll(RESULTS_FOLDER)
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
@@ -68,6 +64,7 @@ func main() {
 
 	flag.Parse()
 
+	promela.CreateCSV()
 	if *ver.multi_projects != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
@@ -84,7 +81,7 @@ func main() {
 				fmt.Println(len(proj_listings))
 				for i, project_name := range proj_listings {
 					if i < len(proj_listings) {
-						parseProject(logger, project_name, ver)
+						parseProject(project_name, ver)
 					}
 				}
 
@@ -95,7 +92,7 @@ func main() {
 
 	} else if *ver.single_project != "" {
 		// parse project given
-		parseProject(logger, *ver.single_project, ver)
+		parseProject(*ver.single_project, ver)
 	} else {
 
 		files, e := ioutil.ReadDir(SOURCE_FOLDER)
@@ -122,31 +119,14 @@ func main() {
 					}
 					return nil
 				})
-				inferProject(logger, path, dir.Name(), "", packages, ver)
+				inferProject(path, dir.Name(), "", packages, ver)
 			}
 		}
 	}
 
-	// Print logger
-	d1 := []byte(logger.PrintHTML())
-	fmt.Println("Writing log file.")
-	filename := "./results/log.html"
-	err := ioutil.WriteFile(filename, d1, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	// Print CSV
-	d1 = []byte(logger.PrintCSV())
-	filename = "./results/log.csv"
-	err = ioutil.WriteFile(filename, d1, 0644)
-
-	if err != nil {
-		panic(err)
-	}
 }
 
-func parseProject(logger *Logger, project_name string, ver *VerificationInfo) {
+func parseProject(project_name string, ver *VerificationInfo) {
 
 	fmt.Println("Infering : " + project_name)
 
@@ -172,19 +152,19 @@ func parseProject(logger *Logger, project_name string, ver *VerificationInfo) {
 		return nil
 	})
 
-	inferProject(logger, path_to_dir, project_name, commit_hash, packages, ver)
+	inferProject(path_to_dir, project_name, commit_hash, packages, ver)
 	if err != nil {
 		fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
 	}
 	defer os.RemoveAll(path_to_dir) // clean up
 }
 
-func inferProject(logger *Logger, path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {
+func inferProject(path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {
 
 	// Partition program
 
 	f, ast_map := GenerateAst(path, packages)
-	ParseAst(logger, f, dir_name, commit, ast_map, ver)
+	ParseAst(f, dir_name, commit, ast_map, ver)
 	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
 	if err != nil {
 		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
