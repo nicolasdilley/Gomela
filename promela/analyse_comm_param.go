@@ -22,7 +22,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 	params := []*CommPar{}
 	m.AddRecFunc(pack, fun.Name.Name)
 	if fun.Body == nil {
-		m.PopRecFunc()
 		return params
 	}
 
@@ -197,8 +196,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 		}
 		return true
 	})
-
-	m.PopRecFunc()
 
 	return params
 }
@@ -447,7 +444,6 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_sp
 				call_spawning = true
 			}
 		}
-		m.PopRecFunc()
 	} else {
 		recursive = true
 	}
