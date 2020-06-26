@@ -30,20 +30,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 					if !takeChanAsParam(decl) {
 						// ast.Print(fileSet, decl)
 
-						for _, def := range node.TypesInfo.Defs {
-							if def != nil {
-								switch typ := def.Type().(type) {
-								case *types.Named:
-									if typ.Obj() != nil {
-										if typ.Obj().Pkg().Name() == "sync" {
-											if typ.Obj().Name() == "WaitGroup" {
-												fmt.Println(proj_name, "Initialisation of WaitGroup", decl.Name.Name, "Line", fileSet.Position(def.Pos()).Line)
-											}
-										}
-									}
-								}
-							}
-						}
 						var m promela.Model = promela.Model{
 							Project_name:  proj_name,
 							Package:       pack_name,
@@ -57,9 +43,31 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Commit:        commit,
 							Global_vars:   []promela_ast.Stmt{},
 							For_counter:   &promela.ForCounter{},
-							Counters:      []promela.Counter{},
 							Default_ub:    *ver.ub,
 							Default_lb:    *ver.lb,
+						}
+
+						for _, def := range node.TypesInfo.Defs {
+							if def != nil {
+								switch typ := def.Type().(type) {
+								case *types.Named:
+									if typ.Obj() != nil {
+										if typ.Obj().Pkg().Name() == "sync" {
+											if typ.Obj().Name() == "WaitGroup" {
+												promela.PrintCounter(promela.Counter{
+													Proj_name: proj_name,
+													Fun:       decl.Name.Name,
+													Name:      "Initialisation of WaitGroup",
+													Info:      "",
+													Commit:    commit,
+													Line:      fileSet.Position(def.Pos()).Line,
+													Filename:  fileSet.Position(def.Pos()).Filename,
+												})
+											}
+										}
+									}
+								}
+							}
 						}
 
 						m.GoToPromela()

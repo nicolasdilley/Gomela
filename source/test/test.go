@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 func (e *ServiceRouterConfigEntry) Normalize() error {
+
+	var wg sync.WaitGroup
 	if e == nil {
 		return fmt.Errorf("config entry is nil")
 	}
