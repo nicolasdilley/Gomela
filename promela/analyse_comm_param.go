@@ -17,7 +17,7 @@ type CommPar struct {
 }
 
 // Return the parameters that are mandatory and optional
-func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package) []*CommPar {
+func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) []*CommPar {
 
 	params := []*CommPar{}
 	m.AddRecFunc(pack, fun.Name.Name)
@@ -38,7 +38,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 							case *ast.ChanType:
 								// definitely a new chan
 								if len(rhs.Args) > 1 {
-									params = m.Upgrade(fun, params, m.Vid(fun, rhs.Args[1], true)) // m.Upgrade the parameters with the variables contained in the length of the chan.
+									params = m.Upgrade(fun, params, m.Vid(fun, rhs.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
 								}
 							}
 						}
@@ -61,7 +61,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 										case *ast.ChanType:
 											// definitely a new chan
 											if len(call.Args) > 1 {
-												params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true)) // m.Upgrade the parameters with the variables contained in the length of the chan.
+												params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
 											}
 										}
 									}
@@ -75,7 +75,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
-			mandatory := m.spawns(stmt.Body)
+			mandatory := m.spawns(stmt.Body, log)
 
 			switch cond := stmt.Cond.(type) { // i:= n;i > n;i--
 			case *ast.BinaryExpr:
@@ -83,7 +83,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					switch inc := stmt.Post.(type) {
 					case *ast.IncDecStmt:
 						if inc.Tok == token.DEC {
-							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 						}
 					}
 
@@ -91,7 +91,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					switch inc := stmt.Post.(type) {
 					case *ast.IncDecStmt:
 						if inc.Tok == token.INC {
-							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 						}
 					}
 				}
@@ -121,7 +121,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					if obj.Pkg() != nil {
 						fun_pack = obj.Pkg().Name()
 						if fun_pack == "sync" && f.Sel.Name == "Add" {
-							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[0], true)) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[0], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 						}
 
 					} else {
@@ -150,12 +150,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					// look inter procedurally
 					prev := m.Fun
 					m.Fun = fun_decl
-					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
+					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map, log)
 					m.Fun = prev
 					for _, param := range params_1 { // m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory))
+						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log), log)
 					}
 				}
 			}
@@ -185,13 +185,13 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				if contains_chan && !m.ContainsRecFunc(pack, fun) {
 					m.AddRecFunc(pack, fun)
 					// look inter procedurally
-					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
+					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
 						// m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory))
+						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log), log)
 					}
 				}
 			}
@@ -205,7 +205,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 // Takes a list of parameter (Used to get the position of the commPar in the
 // fun_decl), two list of Commpar and updates the commPar mandatory with the one
 // from args
-func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar) []*CommPar {
+func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar, log bool) []*CommPar {
 	for _, arg := range args {
 		if contains, param := containsArgs(fun.Type.Params.List, arg); contains {
 
@@ -222,9 +222,8 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar)
 			if !inCommPar { // if its not in the list of commPar yet add it.
 				commPars = append(commPars, param)
 			}
-		} else {
-			// if arg.Mandatory {
-			m.Counters = append(m.Counters, Counter{
+		} else if log {
+			PrintCounter(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Candidate param",
@@ -233,8 +232,6 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar)
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
 			})
-
-			// }
 		}
 	}
 	return commPars
@@ -252,21 +249,21 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 	return false, nil
 }
 
-func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool) []*CommPar {
+func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) []*CommPar {
 	params := []*CommPar{}
 
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory}})
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory}}, log)
 	case *ast.SelectorExpr:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: getIdent(expr), Mandatory: mandatory}})
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: getIdent(expr), Mandatory: mandatory}}, log)
 
 		ast.Inspect(expr, func(node ast.Node) bool {
 			switch node := node.(type) {
 			case *ast.CallExpr:
 				// add the arguments
 				for _, arg := range node.Args {
-					params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory))
+					params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory, log), log)
 				}
 			}
 
@@ -274,21 +271,21 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool) []*CommPar
 		})
 	case *ast.CallExpr:
 		for _, arg := range expr.Args {
-			params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory))
+			params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory, log), log)
 		}
 
 	case *ast.BinaryExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log), log)
 	case *ast.UnaryExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 	case *ast.ParenExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 	case *ast.StarExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 	case *ast.IndexExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory))
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.Index, mandatory))
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
+		params = m.Upgrade(fun, params, m.Vid(fun, expr.Index, mandatory, log), log)
 	}
 
 	return params
@@ -337,7 +334,7 @@ func getIdent(expr ast.Expr) *ast.Ident {
 // check if there is a goroutine spawned in one of the stmts (inter-procedural)
 
 // If unknown function potentially ask user if spawning or not?
-func (m *Model) spawns(stmts *ast.BlockStmt) bool {
+func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 
 	is_spawning := false
 
@@ -346,7 +343,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 	ast.Inspect(stmts, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.CallExpr:
-			if recur, call_spawning := m.isCallSpawning(stmt); call_spawning {
+			if recur, call_spawning := m.isCallSpawning(stmt, log); call_spawning {
 				if recur {
 					recursive = true
 					call = stmt
@@ -378,7 +375,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 				is_spawning = true
 			}
 
-			recur, _ := m.isCallSpawning(stmt.Call)
+			recur, _ := m.isCallSpawning(stmt.Call, log)
 			if recur {
 				recursive = true
 				call = stmt
@@ -390,8 +387,8 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 		return true
 	})
 
-	if recursive {
-		m.Counters = append(m.Counters, Counter{
+	if recursive && log {
+		PrintCounter(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",
@@ -406,7 +403,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 	return is_spawning
 }
 
-func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_spawning bool) {
+func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive bool, call_spawning bool) {
 	contains_chan := false
 	contains_wg := false
 	call_spawning = false
@@ -461,7 +458,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_sp
 				// look inter procedurally
 				spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
 				m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
-				call_spawning = m.spawns(fun_decl.Body)
+				call_spawning = m.spawns(fun_decl.Body, log)
 
 				spawning_func.is_spawning = call_spawning
 
