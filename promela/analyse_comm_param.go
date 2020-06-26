@@ -74,6 +74,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
+
 			mandatory := m.spawns(stmt.Body)
 
 			switch cond := stmt.Cond.(type) { // i:= n;i > n;i--
@@ -144,7 +145,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
 				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
-
+				m.AddRecFunc(fun_pack, fun_name)
 				if contains_chan && found {
 					// look inter procedurally
 					prev := m.Fun
@@ -181,7 +182,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					}
 				}
 
-				if contains_chan {
+				if contains_chan && !m.ContainsRecFunc(pack, fun) {
+					m.AddRecFunc(pack, fun)
 					// look inter procedurally
 					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map)
 
@@ -345,22 +347,43 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 		switch stmt := stmt.(type) {
 		case *ast.CallExpr:
 			if recur, call_spawning := m.isCallSpawning(stmt); call_spawning {
-				is_spawning = true
-
 				if recur {
 					recursive = true
 					call = stmt
 				}
+				is_spawning = true
 			}
 		case *ast.GoStmt:
-			if recur, call_spawning := m.isCallSpawning(stmt.Call); call_spawning {
-				is_spawning = true
 
-				if recur {
-					recursive = true
-					call = stmt
+			contains_chan := false
+			contains_wg := false
+			// check if the goroutine has a chan as param by looking at func decl
+
+			for _, arg := range stmt.Call.Args {
+				typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
+				switch typ := typ.(type) {
+				case *types.Chan:
+					contains_chan = true
+				case *types.Pointer:
+					switch typ := typ.Elem().(type) {
+					case *types.Named:
+						if typ.String() == "sync.WaitGroup" {
+							contains_wg = true
+						}
+					}
 				}
 			}
+
+			if contains_chan || contains_wg {
+				is_spawning = true
+			}
+
+			recur, _ := m.isCallSpawning(stmt.Call)
+			if recur {
+				recursive = true
+				call = stmt
+			}
+
 			return false
 		}
 
@@ -379,12 +402,14 @@ func (m *Model) spawns(stmts *ast.BlockStmt) bool {
 		})
 
 	}
+
 	return is_spawning
 }
 
 func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_spawning bool) {
 	contains_chan := false
 	contains_wg := false
+	call_spawning = false
 	fun := ""
 	fun_pack := m.Package
 	// check if the goroutine or the call has a chan as param by looking at func decl
@@ -413,40 +438,54 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr) (recursive bool, call_sp
 
 	}
 
-	for _, arg := range call_expr.Args {
-		typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
-		switch typ := typ.(type) {
-		case *types.Chan:
-			contains_chan = true
-		case *types.Pointer:
-			switch typ := typ.Elem().(type) {
-			case *types.Named:
-				if typ.String() == "sync.WaitGroup" {
-					contains_wg = true
+	if contains, spawning_func := m.ContainsSpawningFunc(fun_pack, fun); !contains {
+		for _, arg := range call_expr.Args {
+			typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
+			switch typ := typ.(type) {
+			case *types.Chan:
+				contains_chan = true
+			case *types.Pointer:
+				switch typ := typ.Elem().(type) {
+				case *types.Named:
+					if typ.String() == "sync.WaitGroup" {
+						contains_wg = true
+					}
 				}
 			}
 		}
-	}
 
-	if !m.ContainsRecFunc(fun_pack, fun) {
-		found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
+		if contains_chan || contains_wg && fun != "len" {
+			found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
 
-		m.AddRecFunc(fun_pack, fun)
-
-		if found {
-			if contains_chan || contains_wg {
+			if found {
 				// look inter procedurally
+				spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
+				m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
 				call_spawning = m.spawns(fun_decl.Body)
-			}
-		} else {
-			if contains_chan || contains_wg {
+
+				spawning_func.is_spawning = call_spawning
+
+				// add the call we have just analysed. to the spawning calls
+			} else {
+
 				// what do we do when we can't find decl ?
 				call_spawning = true
 			}
 		}
 	} else {
 		recursive = true
+		call_spawning = spawning_func.is_spawning
 	}
 
 	return recursive, call_spawning
+}
+
+func (m *Model) ContainsSpawningFunc(pack string, fun_name string) (bool, *SpawningFunc) {
+	for _, fun := range m.SpawningFuncs {
+		if fun.Rec_func.Name == fun_name && fun.Rec_func.Pkg == pack {
+			return true, fun
+		}
+	}
+
+	return false, nil
 }

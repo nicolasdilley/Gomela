@@ -26,6 +26,7 @@ type Model struct {
 	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
 	Commit          string // the commit of the project
 	RecFuncs        []RecFunc
+	SpawningFuncs   []*SpawningFunc
 	Fileset         *token.FileSet
 	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
 	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
@@ -49,6 +50,12 @@ type Model struct {
 type RecFunc struct {
 	Pkg  string
 	Name string
+}
+
+// represent a function and states if it spawns or not
+type SpawningFunc struct {
+	Rec_func    RecFunc
+	is_spawning bool
 }
 
 type Chan_info struct {
@@ -75,8 +82,6 @@ type Counter struct {
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela() {
 	m.Name = m.Package + "_" + m.Fun.Name.String()
-	m.AddRecFunc(m.Package, m.Fun.Name.Name)
-
 	commPars := m.AnalyseCommParam(m.Package, m.Fun, m.AstMap)
 
 	//. Create a global var for each
@@ -385,6 +390,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 			}
 			if hasChan {
 				func_name = "go_" + func_name
+				commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
+
 				if !m.CallExists(func_name) {
 					proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 					proc.Params = []promela_ast.Param{}
@@ -411,7 +418,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 					// Translate the commPar of the function call ignoring the args that are not needed
 					counters := m.Counters
 
-					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
 					m.Counters = counters
 					// Add the commparam to the param of the new proc
 					for _, commPar := range commPars {
@@ -444,7 +450,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 				// Translate the commPar of the function call ignoring the args that are not needed
 				counters := m.Counters
 
-				commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap) // recover the commPar
 				m.Counters = counters
 
 				for _, commPar := range commPars {
@@ -631,10 +636,10 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
 
-		if m.For_counter.With_go {
+		if m.spawns(s.Body) {
 
 			// need to change the for loop into a bounded for loop
-			ub := m.lookUp(s.X, FOR_BOUND, false)
+			ub := m.lookUp(s.X, FOR_BOUND, true)
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
 			d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
@@ -1207,14 +1212,14 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.DEC {
-						ident := m.lookUp(cond.Y, FOR_BOUND, m.For_counter.In_for)
+						ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body))
 						lb.Name = ident.Print(0)
 
 						// look for upper bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, FOR_BOUND, m.For_counter.In_for)
+								ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body))
 								ub.Name = ident.Print(0)
 
 								if cond.Op == token.GTR {
@@ -1230,14 +1235,14 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 				switch inc := s.Post.(type) {
 				case *ast.IncDecStmt:
 					if inc.Tok == token.INC {
-						ident := m.lookUp(cond.Y, FOR_BOUND, m.For_counter.In_for)
+						ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body))
 						ub.Name = ident.Print(0)
 
 						// look for lower bound
 						switch stmt := s.Init.(type) {
 						case *ast.AssignStmt:
 							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, FOR_BOUND, m.For_counter.In_for)
+								ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body))
 								lb.Name = ident.Print(0)
 
 								if cond.Op == token.LSS {
@@ -1254,7 +1259,7 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 
 	case *ast.RangeStmt:
 		lb.Name = "0"
-		ident := m.lookUp(s.X, FOR_BOUND, m.For_counter.In_for)
+		ident := m.lookUp(s.X, FOR_BOUND, m.spawns(s.Body))
 		ub.Name = ident.Print(0)
 		well_formed = true
 

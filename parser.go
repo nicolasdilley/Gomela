@@ -52,19 +52,21 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 						// 	}
 						// }
 						var m promela.Model = promela.Model{
-							Project_name: proj_name,
-							Package:      pack_name,
-							AstMap:       ast_map,
-							Fileset:      fileSet,
-							Proctypes:    []*promela_ast.Proctype{},
-							Fun:          decl,
-							Chans:        make(map[ast.Expr]*promela.ChanStruct),
-							Commit:       commit,
-							Global_vars:  []promela_ast.Stmt{},
-							For_counter:  &promela.ForCounter{},
-							Counters:     []promela.Counter{},
-							Default_ub:   *ver.ub,
-							Default_lb:   *ver.lb,
+							Project_name:  proj_name,
+							Package:       pack_name,
+							AstMap:        ast_map,
+							Fileset:       fileSet,
+							Proctypes:     []*promela_ast.Proctype{},
+							RecFuncs:      []promela.RecFunc{},
+							SpawningFuncs: []*promela.SpawningFunc{},
+							Fun:           decl,
+							Chans:         make(map[ast.Expr]*promela.ChanStruct),
+							Commit:        commit,
+							Global_vars:   []promela_ast.Stmt{},
+							For_counter:   &promela.ForCounter{},
+							Counters:      []promela.Counter{},
+							Default_ub:    *ver.ub,
+							Default_lb:    *ver.lb,
 						}
 
 						m.GoToPromela()
