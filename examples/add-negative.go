@@ -15,11 +15,6 @@ func main() {
 	for i := 0; i < 20; i++ {
 		go Send(a, i, &wg)
 	}
-	go func() {
-		fmt.Println("Entered")
-		wg.Wait()
-		fmt.Println("1.Finishing")
-	}()
 
 	fmt.Println("Entered")
 	wg.Wait()

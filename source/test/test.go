@@ -1,21 +1,36 @@
 package main
 
-func main() {
-	a := make(chan int)
+import (
+	"fmt"
+	"strings"
+)
 
-	for i := 0; i < 10; i++ {
-		b(a)
+func (e *ServiceRouterConfigEntry) Normalize() error {
+	if e == nil {
+		return fmt.Errorf("config entry is nil")
 	}
-}
 
-func b(a chan int) {
-	a <- c(a)
-}
+	e.Kind = ServiceRouter
 
-func c(a chan int) {
-	go d(a)
-}
+	e.EnterpriseMeta.Normalize()
 
-func d(a chan int) {
-	b(a)
+	for _, route := range e.Routes {
+		if route.Match == nil || route.Match.HTTP == nil {
+			continue
+		}
+
+		httpMatch := route.Match.HTTP
+		if len(httpMatch.Methods) == 0 {
+			continue
+		}
+
+		for j := 0; j < len(httpMatch.Methods); j++ {
+			httpMatch.Methods[j] = strings.ToUpper(httpMatch.Methods[j])
+		}
+		if route.Destination != nil && route.Destination.Namespace == "" {
+			route.Destination.Namespace = e.EnterpriseMeta.NamespaceOrDefault()
+		}
+	}
+
+	return nil
 }
