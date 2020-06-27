@@ -28,7 +28,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
-						// ast.Print(fileSet, decl)
 
 						var m promela.Model = promela.Model{
 							Project_name:  proj_name,
@@ -52,17 +51,19 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 								switch typ := def.Type().(type) {
 								case *types.Named:
 									if typ.Obj() != nil {
-										if typ.Obj().Pkg().Name() == "sync" {
-											if typ.Obj().Name() == "WaitGroup" {
-												promela.PrintCounter(promela.Counter{
-													Proj_name: proj_name,
-													Fun:       decl.Name.Name,
-													Name:      "Initialisation of WaitGroup",
-													Info:      "",
-													Commit:    commit,
-													Line:      fileSet.Position(def.Pos()).Line,
-													Filename:  fileSet.Position(def.Pos()).Filename,
-												})
+										if typ.Obj().Pkg() != nil {
+											if typ.Obj().Pkg().Name() == "sync" {
+												if typ.Obj().Name() == "WaitGroup" {
+													promela.PrintCounter(promela.Counter{
+														Proj_name: proj_name,
+														Fun:       decl.Name.Name,
+														Name:      "Initialisation of WaitGroup",
+														Info:      "",
+														Commit:    commit,
+														Line:      fileSet.Position(def.Pos()).Line,
+														Filename:  fileSet.Position(def.Pos()).Filename,
+													})
+												}
 											}
 										}
 									}
