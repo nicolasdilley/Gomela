@@ -1053,7 +1053,9 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		// if found, fun_decl := FindDecl(m.Package, getIdent(expr.Fun), len(expr.Args), m.AstMap); found{
 
 		// } else {
+
 		// create new inline
+		fmt.Println(m.Fileset.Position(expr.Pos()))
 		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
 
 		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
