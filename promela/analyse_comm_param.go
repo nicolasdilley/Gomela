@@ -1,6 +1,7 @@
 package promela
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -326,6 +327,10 @@ func getIdent(expr ast.Expr) *ast.Ident {
 		return &ast.Ident{Name: name, NamePos: expr.Pos()}
 	case *ast.TypeAssertExpr:
 		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.ArrayType:
+		return &ast.Ident{Name: fmt.Sprint(expr.Elt), NamePos: expr.Pos()}
+	case *ast.MapType:
+		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
 	}
 
 	return nil
