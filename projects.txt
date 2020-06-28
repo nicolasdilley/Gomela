@@ -363,7 +363,6 @@ itsabot/itsabot
 go-mgo/mgo
 BurntSushi/toml
 chrislusf/glow
-constabulary/gb
 360EntSecGroup-Skylar/goreporter
 d4l3k/go-pry
 gravitational/teleconsole
