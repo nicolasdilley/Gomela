@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"log"
 
 	"github.com/nicolasdilley/gomela/promela"
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -87,8 +86,10 @@ func GenerateAst(dir string, package_names []string) (*token.FileSet, map[string
 
 	package_names = append([]string{"."}, package_names...)
 	lpkgs, err := packages.Load(cfg, package_names...)
-	if err != nil {
-		log.Fatal("Error while loading the packages ! , err : ", err.Error())
+
+	if a := recover(); a != nil || err != nil {
+		fmt.Println("Error while loading the packages ! , err : ", packages.PrintErrors(lpkgs))
+		return nil, map[string]*packages.Package{}
 	}
 
 	for _, pack := range lpkgs {

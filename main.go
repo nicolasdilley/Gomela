@@ -164,37 +164,45 @@ func inferProject(path string, dir_name string, commit string, packages []string
 	// Partition program
 
 	f, ast_map := GenerateAst(path, packages)
-	ParseAst(f, dir_name, commit, ast_map, ver)
-	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
-	if err != nil {
-		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
-	}
+	if f != nil {
+		ParseAst(f, dir_name, commit, ast_map, ver)
+		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
+		if err != nil {
+			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
+		}
 
-	if *ver.verify {
-		// verify each model
-		for _, model := range models {
-			if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-				fmt.Println("Verifying model : " + model.Name())
-				ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
-				path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
-				var output bytes.Buffer
+		if *ver.verify {
+			// verify each model
+			for _, model := range models {
+				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
+					fmt.Println("Verifying model : " + model.Name())
+					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
+					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+					var output bytes.Buffer
 
-				// Verify with SPIN
-				command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
-				command.Stdout = &output
-				command.Run()
+					// Verify with SPIN
+					command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
+					command.Stdout = &output
+					command.Run()
 
-				parseResults(output.String(), &ver)
+					parseResults(output.String(), &ver)
 
-				fmt.Println("-------------------------------")
-				fmt.Println("Result for " + model.Name())
-				fmt.Println("Number of states : ", ver.Num_states)
-				fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-				fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-				fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-				fmt.Println("-------------------------------")
+					fmt.Println("-------------------------------")
+					fmt.Println("Result for " + model.Name())
+					fmt.Println("Number of states : ", ver.Num_states)
+					fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+					fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+					fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+					fmt.Println("-------------------------------")
+				}
 			}
 		}
+	} else {
+		promela.PrintCounter(promela.Counter{
+			Proj_name: dir_name,
+			Name:      "Error while parsing project",
+		})
+
 	}
 }
 
