@@ -1,4 +1,0 @@
-chrislusf/glow
-constabulary/gb
-360EntSecGroup-Skylar/goreporter
-d4l3k/go-pry
