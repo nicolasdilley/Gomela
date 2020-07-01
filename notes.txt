@@ -1,1 +1,3 @@
 Removed constabulary/gb because would not compile
+Removed golang/crypto because problem downloading the project
+Removed golang/go problem with extraction the types.

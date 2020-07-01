@@ -9,7 +9,7 @@ mozilla/mig
 facette/facette
 Jguer/yay
 ericfreese/rat
-pulumi/pulumi
+pulumßi/pulumi
 gdamore/tcell
 hashicorp/memberlist
 alecthomas/participle

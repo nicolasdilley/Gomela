@@ -752,7 +752,6 @@ glycerine/zygomys
 dop251/goja
 go-ini/ini
 huichen/sego
-golang/crypto
 kryptco/kr
 ory/oathkeeper
 shiyanhui/hero
@@ -860,6 +859,4 @@ dave/jennifer
 cdipaolo/goml
 laurent22/massren
 moby/moby
-golang/go
 kubernetes/kubernetes
-
