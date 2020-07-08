@@ -170,12 +170,16 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					// look inter procedurally
 					prev := m.Fun
 					m.Fun = fun_decl
-					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map, log)
+					params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
 					m.Fun = prev
-					for _, param := range params_1 { // m.upgrade all params with its respective arguments
+
+					for _, param := range params_1 {
+						// m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log), log)
+						if contains, _ := containsArgs(fun_decl.Type.Params.List, param); contains {
+							params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log), log)
+						}
 					}
 				}
 			}
@@ -263,6 +267,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 	for x, field := range fields {
 		for y, name := range field.Names {
 			if name.Name == arg.Name.Name {
+
 				return true, &CommPar{Name: name, Pos: x + y, Mandatory: arg.Mandatory}
 			}
 		}
