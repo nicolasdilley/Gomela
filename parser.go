@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"go/types"
 
 	"github.com/nicolasdilley/gomela/promela"
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -38,6 +37,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							SpawningFuncs: []*promela.SpawningFunc{},
 							Fun:           decl,
 							Chans:         make(map[ast.Expr]*promela.ChanStruct),
+							WaitGroups:    make(map[ast.Expr]*promela.WaitGroupStruct),
 							Commit:        commit,
 							Global_vars:   []promela_ast.Stmt{},
 							For_counter:   &promela.ForCounter{},
@@ -45,30 +45,16 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Default_lb:    *ver.lb,
 						}
 
-						for _, def := range node.TypesInfo.Defs {
-							if def != nil {
-								switch typ := def.Type().(type) {
-								case *types.Named:
-									if typ.Obj() != nil {
-										if typ.Obj().Pkg() != nil {
-											if typ.Obj().Pkg().Name() == "sync" {
-												if typ.Obj().Name() == "WaitGroup" {
-													promela.PrintCounter(promela.Counter{
-														Proj_name: proj_name,
-														Fun:       decl.Name.Name,
-														Name:      "Initialisation of WaitGroup",
-														Info:      "",
-														Commit:    commit,
-														Line:      fileSet.Position(def.Pos()).Line,
-														Filename:  fileSet.Position(def.Pos()).Filename,
-													})
-												}
-											}
-										}
-									}
-								}
-							}
-						}
+						// var obj types.Object
+
+						// for _, def := range node.TypesInfo.Uses {
+						// 	if def != nil {
+						// 		if def.Pos() == obj.Pos() {
+						// 			fmt.Println("We have a match ", def)
+						// 		}
+
+						// 	}
+						// }
 
 						m.GoToPromela()
 

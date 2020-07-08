@@ -85,6 +85,14 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.IncDecStmt:
 						if inc.Tok == token.DEC {
 							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+							// look for upper bound
+							switch stmt := stmt.Init.(type) {
+							case *ast.AssignStmt:
+								for _, rh := range stmt.Rhs {
+									params = m.Upgrade(fun, params, m.Vid(fun, rh, mandatory, log), log)
+								}
+							}
+
 						}
 					}
 
@@ -93,10 +101,21 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.IncDecStmt:
 						if inc.Tok == token.INC {
 							params = m.Upgrade(fun, params, m.Vid(fun, cond.Y, mandatory, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
+
+							// look for lower bound
+							switch stmt := stmt.Init.(type) {
+							case *ast.AssignStmt:
+								for _, rh := range stmt.Rhs {
+									params = m.Upgrade(fun, params, m.Vid(fun, rh, mandatory, log), log)
+								}
+							}
 						}
 					}
 				}
 			}
+		case *ast.RangeStmt:
+			mandatory := m.spawns(stmt.Body, log)
+			params = m.Upgrade(fun, params, m.Vid(fun, stmt.X, mandatory, log), log)
 		case *ast.CallExpr: // m.Upgrade if the args of the function are mapped to a MP or OP
 			// check if the call has a chan as param by looking at func decl
 
@@ -224,11 +243,12 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 				commPars = append(commPars, param)
 			}
 		} else if log {
-			PrintCounter(Counter{
+			PrintBound(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Candidate param",
-				Info:      "Name : " + prettyPrint(arg.Name) + ", Mandatory : " + strconv.FormatBool(arg.Mandatory),
+				Info:      "Name : " + prettyPrint(arg.Name),
+				Mandatory: strconv.FormatBool(arg.Mandatory),
 				Line:      m.Fileset.Position(arg.Name.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
@@ -393,10 +413,11 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 	})
 
 	if recursive && log {
-		PrintCounter(Counter{
+		PrintFeature(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",
+			Mandatory: "false",
 			Info:      "Spawning : " + strconv.FormatBool(is_spawning),
 			Line:      m.Fileset.Position(call.Pos()).Line,
 			Commit:    m.Commit,

@@ -22,9 +22,6 @@ func (gen *PropertyGenerator) GenerateProperties() {
 	}
 
 	gen.Model.Init.Body = gen.parseBlockStmt(gen.Model.Init.Body)
-
-	// gen.Model.LTL_Properties = gen.Properties
-
 }
 
 // Take a BlockStmt, add the LTL properties and return the blockStmt with the LTL properties added

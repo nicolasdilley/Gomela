@@ -15,3 +15,11 @@ type ChanStruct struct {
 	Size     promela_ast.Ident
 	Buffered bool
 }
+
+type WaitGroupStruct struct {
+	Name  promela_ast.Ident
+	Wait  token.Position
+	Chans []promela_ast.Chandef // the chans of the struct (add,done and wait)
+
+	Counter int // The size of the counter
+}

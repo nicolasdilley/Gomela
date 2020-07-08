@@ -154,7 +154,18 @@ func renameExpr(e ast.Expr, prev []ast.Expr, n ast.Expr) ast.Expr {
 
 		switch fun := e.Fun.(type) {
 		case *ast.FuncLit:
-			fun.Body = RenameBlockStmt(fun.Body, prev, n)
+
+			contains := false
+			for _, arg := range e.Args {
+				if translateIdent(arg).Name == translateIdent(e).Name {
+					contains = true
+				}
+			}
+
+			// rename only if not in args
+			if !contains {
+				fun.Body = RenameBlockStmt(fun.Body, prev, n)
+			}
 		}
 		for i, arg := range e.Args {
 			e.Args[i] = renameExpr(arg, prev, n)

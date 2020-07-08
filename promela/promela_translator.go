@@ -28,17 +28,18 @@ type Model struct {
 	RecFuncs        []RecFunc
 	SpawningFuncs   []*SpawningFunc
 	Fileset         *token.FileSet
-	Proctypes       []*promela_ast.Proctype  // the processes representing the users and the recursive function of the model
-	Inlines         []*promela_ast.Inline    // the inlines function that represent the commpar args that are function calls
-	Fun             *ast.FuncDecl            // the function being modelled
-	Chans           map[ast.Expr]*ChanStruct // the promela chan used in the module mapped to their go expr
-	Init            *promela_ast.InitDef     // The proctype consisting of the "main" function of the source program
-	Global_vars     []promela_ast.Stmt       // the global variable used in the ltl properties
-	Defines         []promela_ast.DefineStmt // the communications paramer
-	process_counter int                      // to give unique name to Promela processes
-	func_counter    int                      // to give unique name to inline func call
-	For_counter     *ForCounter              // Used to translate the for loop to break out properly out of them
-	Counter         int                      // used to differentiate call expr channels
+	Proctypes       []*promela_ast.Proctype       // the processes representing the users and the recursive function of the model
+	Inlines         []*promela_ast.Inline         // the inlines function that represent the commpar args that are function calls
+	Fun             *ast.FuncDecl                 // the function being modelled
+	Chans           map[ast.Expr]*ChanStruct      // the promela chan used in the module mapped to their go expr
+	WaitGroups      map[ast.Expr]*WaitGroupStruct // the promela chan used in the module mapped to their go expr
+	Init            *promela_ast.InitDef          // The proctype consisting of the "main" function of the source program
+	Global_vars     []promela_ast.Stmt            // the global variable used in the ltl properties
+	Defines         []promela_ast.DefineStmt      // the communications paramer
+	process_counter int                           // to give unique name to Promela processes
+	func_counter    int                           // to give unique name to inline func call
+	For_counter     *ForCounter                   // Used to translate the for loop to break out properly out of them
+	Counter         int                           // used to differentiate call expr channels
 	Default_lb      int
 	Default_ub      int
 	AstMap          map[string]*packages.Package // the map used to find the type of the channels
@@ -73,6 +74,7 @@ type Counter struct {
 	Fun       string
 	Name      string
 	Info      string
+	Mandatory string
 	Line      int
 	Filename  string
 	Commit    string
@@ -91,11 +93,12 @@ func (m *Model) GoToPromela() {
 			commPar_decl.Rhs = &promela_ast.Ident{Name: "-1"}
 		}
 		m.Defines = append(m.Defines, commPar_decl)
-		PrintCounter(Counter{
+		PrintBound(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Comm param",
-			Info:      "Name :" + commPar.Name.Name + ", Mandatory : " + strconv.FormatBool(commPar.Mandatory),
+			Info:      "Name :" + commPar.Name.Name,
+			Mandatory: strconv.FormatBool(commPar.Mandatory),
 			Line:      commPar_decl.Define.Line,
 			Commit:    m.Commit,
 			Filename:  commPar_decl.Define.Filename,
@@ -110,7 +113,32 @@ func (m *Model) GoToPromela() {
 
 	m.Init = &promela_ast.InitDef{Body: &promela_ast.BlockStmt{List: append(init_block.List, m.Init.Body.List...)}}
 
-	if len(m.Chans) > 0 {
+	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
+
+		for _, ch := range m.Chans {
+			PrintFeature(Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "new channel",
+				Info:      "Name :" + ch.Name.Name,
+				Mandatory: "false",
+				Line:      ch.Chan.Line,
+				Commit:    m.Commit,
+				Filename:  ch.Chan.Filename,
+			})
+		}
+		for _, wg := range m.WaitGroups {
+			PrintFeature(Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "new WaitGroup",
+				Info:      "Name :" + wg.Name.Name,
+				Mandatory: "false",
+				Line:      wg.Wait.Line,
+				Commit:    m.Commit,
+				Filename:  wg.Wait.Filename,
+			})
+		}
 		Print(m)
 	}
 
@@ -127,7 +155,35 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 		for _, stmt := range b.List {
 			switch stmt := stmt.(type) {
 			case *ast.AssignStmt:
+				// look if the struct is a struct that contains the "automatic" declaration of a new WaitGroup
+				for _, l := range stmt.Lhs {
+					switch s := m.AstMap[m.Package].TypesInfo.TypeOf(l).(type) {
+					case *types.Named:
+						switch s := s.Underlying().(type) {
+						case *types.Struct:
+							for i := 0; i < s.NumFields(); i++ {
+								switch field := s.Field(i).Type().(type) {
+								case *types.Named:
+									if field.Obj() != nil {
+										if field.Obj().Pkg() != nil {
+											if field.Obj().Pkg().Name() == "sync" {
+												if field.Obj().Name() == "WaitGroup" {
+													// we have found a waitgroup that is a field
+													m.WaitGroups[l] = &WaitGroupStruct{
+														Name:    promela_ast.Ident{Name: translateIdent(l).Name + "_" + s.Field(i).Name(), Ident: m.Fileset.Position(l.Pos())},
+														Wait:    m.Fileset.Position(l.Pos()),
+														Counter: 0,
+													}
+												}
+											}
+										}
 
+									}
+								}
+							}
+						}
+					}
+				}
 				for i := len(stmt.Rhs) - 1; i >= 0; i-- {
 					switch call := stmt.Rhs[i].(type) {
 					case *ast.CallExpr:
@@ -160,10 +216,11 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 										block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 										block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 									} else {
-										PrintCounter(Counter{
+										PrintFeature(Counter{
 											Proj_name: m.Project_name,
 											Fun:       m.Fun.Name.String(),
 											Name:      "Chan in for",
+											Mandatory: "false",
 											Line:      m.Fileset.Position(ident.Pos()).Line,
 											Commit:    m.Commit,
 											Filename:  m.Fileset.Position(ident.Pos()).Filename,
@@ -172,6 +229,61 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 									}
 								}
 							}
+						}
+
+					case *ast.CompositeLit:
+						for _, elt := range call.Elts {
+							switch elt := elt.(type) {
+							case *ast.KeyValueExpr:
+								switch call := elt.Value.(type) {
+								case *ast.CallExpr:
+									switch ident := call.Fun.(type) {
+									case *ast.Ident:
+										if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
+
+											switch call.Args[0].(type) {
+											case *ast.ChanType:
+												if !m.For_counter.In_for {
+													// a new channel is found lets change its name, rename it in function and add to struct
+													chan_name := ast.Ident{Name: CHAN_NAME + strconv.Itoa(len(m.Chans))}
+
+													b.List = RenameBlockStmt(b, []ast.Expr{stmt.Lhs[i]}, &chan_name).List
+													channel := &ChanStruct{Name: promela_ast.Ident{Name: chan_name.Name, Ident: m.Fileset.Position(ident.Pos())}, Chan: m.Fileset.Position(stmt.Pos())}
+													chan_def := &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: chan_name.Name}, Types: promela_types.Chandef}
+													if len(call.Args) > 1 {
+														channel.Buffered = true
+														channel.Size = m.lookUp(call.Args[1], CHAN_BOUND, false)
+
+													} else {
+														channel.Size = promela_ast.Ident{Name: "0"}
+													}
+													alias_chan := &promela_ast.Chandef{Name: promela_ast.Ident{Name: chan_name.Name + "_in"}, Types: []promela_types.Types{promela_types.Int}, Size: channel.Size}
+													set_chan := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: chan_name.Name + ".in"}, Rhs: &promela_ast.Ident{Name: chan_name.Name + "_in"}}
+													call_monitor := &promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "chanMonitor"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: chan_name.Name}}}}
+
+													m.Chans[stmt.Lhs[i]] = channel
+
+													block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
+													block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
+												} else {
+													PrintFeature(Counter{
+														Proj_name: m.Project_name,
+														Fun:       m.Fun.Name.String(),
+														Name:      "Chan in for",
+														Mandatory: "false",
+														Line:      m.Fileset.Position(ident.Pos()).Line,
+														Commit:    m.Commit,
+														Filename:  m.Fileset.Position(ident.Pos()).Filename,
+													})
+													// panic("Channel created inside a for loop")
+												}
+											}
+										}
+									}
+
+								}
+							}
+
 						}
 					}
 				}
@@ -212,14 +324,35 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) *promela_ast.BlockStmt {
 													block_stmt.List = append([]promela_ast.Stmt{chan_def, alias_chan}, block_stmt.List...)
 													block_stmt.List = append(block_stmt.List, set_chan, call_monitor)
 												} else {
-													PrintCounter(Counter{
+													PrintFeature(Counter{
 														Proj_name: m.Project_name,
 														Fun:       m.Fun.Name.String(),
 														Name:      "Chan in for",
+														Mandatory: "false",
 														Line:      m.Fileset.Position(ident.Pos()).Line,
 														Commit:    m.Commit,
 														Filename:  m.Fileset.Position(ident.Pos()).Filename,
 													})
+												}
+											}
+										}
+									}
+								}
+							}
+
+							// check if its the declaration of a WG
+							switch sel := val.Type.(type) {
+							case *ast.SelectorExpr:
+								if sel.Sel.Name == "WaitGroup" {
+									switch sel := sel.X.(type) {
+									case *ast.Ident:
+										if sel.Name == "sync" {
+											// we have a waitgroup
+											for _, name := range val.Names {
+												m.WaitGroups[name] = &WaitGroupStruct{
+													Name:    promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())},
+													Wait:    m.Fileset.Position(val.Pos()),
+													Counter: 0,
 												}
 											}
 										}
@@ -324,17 +457,15 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 		proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(s.Pos())}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 		prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(s.Pos())}
 		counter := 0
-		for _, field := range m.Fun.Type.Params.List {
+		for i, field := range name.Type.Params.List {
 			for _, n := range field.Names {
 				switch field.Type.(type) {
 				case *ast.ChanType:
 
 					proc.Params = append(proc.Params, promela_ast.Param{Name: n.Name, Types: promela_types.Chandef})
 
-					chan_name := m.TranslateArgs(n)
-
+					chan_name := m.TranslateArgs(call_expr.Args[i])
 					prom_call.Args = append(prom_call.Args, chan_name)
-					m.Chans[n] = &ChanStruct{Name: promela_ast.Ident{Name: n.Name}}
 
 				}
 
@@ -352,17 +483,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 		r := &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())}
 		stmts.List = append(stmts.List, r)
 
-		counter = 0
-		for _, field := range name.Type.Params.List {
-			for _, n := range field.Names {
-				switch field.Type.(type) {
-				case *ast.ChanType:
-					RenameBlockStmt(name.Body, []ast.Expr{n}, call_expr.Args[counter])
-					m.Chans[call_expr.Args[counter]] = &ChanStruct{Name: translateIdent(call_expr.Args[counter])}
-				}
-				counter++
-			}
-		}
 		proc.Body = m.TranslateBlockStmt(name.Body)
 		m.Proctypes = append(m.Proctypes, proc) // adding the new proc type to the list of proctype
 
@@ -404,7 +524,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 									proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 									m.Chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
-								// decl.Body = RenameBlockStmt(decl.Body, []ast.Expr{name}, call_expr.Args[counter])
 								default:
 									// the arg is not a channel therefore we include what it does before the call
 									addBlock(stmts, m.TranslateExpr(call_expr.Args[counter]))
@@ -470,10 +589,11 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 
 	if m.For_counter.In_for {
 		m.For_counter.With_go = true
-		PrintCounter(Counter{
+		PrintFeature(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Go in for",
+			Mandatory: "false",
 			Line:      m.Fileset.Position(s.Pos()).Line,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(s.Pos()).Filename,
@@ -606,6 +726,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 
 	label_name := fmt.Sprintf("for%d%d", m.For_counter.X, m.For_counter.Y)
 
+	ub := m.lookUp(s.X, FOR_BOUND, true)
 	if m.containsChan(s.X) {
 		chan_struct := m.getChanStruct(s.X)
 
@@ -620,8 +741,10 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 		do_guard.Body = body
 		d.Guards = append(d.Guards, do_guard)
 		b.List = append(b.List, d)
+
 	} else {
 
+		// change into (for i:=0; i < len(x);i++)
 		block_stmt := m.TranslateBlockStmt(s.Body)
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
@@ -629,10 +752,13 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 		if m.spawns(s.Body, false) {
 
 			// need to change the for loop into a bounded for loop
-			ub := m.lookUp(s.X, FOR_BOUND, true)
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
-			d.Guards = append(d.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt})
+			break_branch := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+			d.Guards = append(d.Guards,
+				promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt},
+				break_branch,
+			)
 			b.List = append(b.List, d)
 		}
 	}
@@ -1055,7 +1181,6 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		// } else {
 
 		// create new inline
-		fmt.Println(m.Fileset.Position(expr.Pos()))
 		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
 
 		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
@@ -1188,73 +1313,59 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 }
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Ident, ub promela_ast.Ident) {
+func (m *Model) lookUpFor(s *ast.ForStmt, pack *packages.Package) (lb promela_ast.Ident, ub promela_ast.Ident) {
 
 	well_formed := false
-	var For *ast.ForStmt
 
-	switch s := s.(type) {
-	case *ast.ForStmt:
-		For = s
-		switch cond := s.Cond.(type) {
-		case *ast.BinaryExpr:
-			if cond.Op == token.GEQ || cond.Op == token.GTR {
-				switch inc := s.Post.(type) {
-				case *ast.IncDecStmt:
-					if inc.Tok == token.DEC {
-						ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
-						lb.Name = ident.Print(0)
+	switch cond := s.Cond.(type) {
+	case *ast.BinaryExpr:
+		if cond.Op == token.GEQ || cond.Op == token.GTR {
+			switch inc := s.Post.(type) {
+			case *ast.IncDecStmt:
+				if inc.Tok == token.DEC {
+					ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
+					lb.Name = ident.Print(0)
 
-						// look for upper bound
-						switch stmt := s.Init.(type) {
-						case *ast.AssignStmt:
-							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
-								ub.Name = ident.Print(0)
+					// look for upper bound
+					switch stmt := s.Init.(type) {
+					case *ast.AssignStmt:
+						for _, rh := range stmt.Rhs {
+							ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
+							ub.Name = ident.Print(0)
 
-								if cond.Op == token.GTR {
-									ub.Name += "-1"
-								}
-								well_formed = true
+							if cond.Op == token.GTR {
+								ub.Name += "-1"
 							}
-						}
-					}
-				}
-
-			} else if cond.Op == token.LSS || cond.Op == token.LEQ {
-				switch inc := s.Post.(type) {
-				case *ast.IncDecStmt:
-					if inc.Tok == token.INC {
-						ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
-						ub.Name = ident.Print(0)
-
-						// look for lower bound
-						switch stmt := s.Init.(type) {
-						case *ast.AssignStmt:
-							for _, rh := range stmt.Rhs {
-								ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
-								lb.Name = ident.Print(0)
-
-								if cond.Op == token.LSS {
-									ub.Name += "-1"
-								}
-								well_formed = true
-							}
+							well_formed = true
 						}
 					}
 				}
 			}
 
+		} else if cond.Op == token.LSS || cond.Op == token.LEQ {
+			switch inc := s.Post.(type) {
+			case *ast.IncDecStmt:
+				if inc.Tok == token.INC {
+					ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
+					ub.Name = ident.Print(0)
+
+					// look for lower bound
+					switch stmt := s.Init.(type) {
+					case *ast.AssignStmt:
+						for _, rh := range stmt.Rhs {
+							ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
+							lb.Name = ident.Print(0)
+
+							if cond.Op == token.LSS {
+								ub.Name += "-1"
+							}
+							well_formed = true
+						}
+					}
+				}
+			}
 		}
 
-	case *ast.RangeStmt:
-		lb.Name = "0"
-		ident := m.lookUp(s.X, FOR_BOUND, m.spawns(s.Body, false))
-		ub.Name = ident.Print(0)
-		well_formed = true
-
-	default:
-		panic("promela_translator: A loop should be a range or a for and nothing else. Should not happen")
 	}
 
 	if !well_formed {
@@ -1271,12 +1382,13 @@ func (m *Model) lookUpFor(s ast.Stmt, pack *packages.Package) (lb promela_ast.Id
 		lb = lb_decl.Name // returning the fresh vars
 		ub = ub_decl.Name
 
-		if !(For.Init == nil && For.Cond == nil && For.Post == nil) {
-			PrintCounter(Counter{
+		if !(s.Init == nil && s.Cond == nil && s.Post == nil) {
+			PrintFeature(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "For loop not well formed",
-				Info:      fmt.Sprint("Init : ", For.Init, " Cond : ", For.Cond, " Post : ", For.Post),
+				Mandatory: "false",
+				Info:      fmt.Sprint("Init : ", s.Init, " Cond : ", s.Cond, " Post : ", s.Post),
 				Line:      m.Fileset.Position(s.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(s.Pos()).Filename,
@@ -1293,15 +1405,18 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 	var ident promela_ast.Expr
 
 	var bound string = "for bound"
-
+	var mandatory string = "false"
 	switch bound_type {
 	case CHAN_BOUND:
 		bound = "chan bound"
+		mandatory = "true"
 	case FOR_BOUND:
 		if spawning_for_loop {
+			mandatory = "true"
 			bound = "spawning for bound"
 		}
 	case ADD_BOUND:
+		mandatory = "true"
 		bound = "add bound"
 	}
 
@@ -1309,12 +1424,25 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 
 	switch expr := expr.(type) {
 	case *ast.UnaryExpr:
+
 		if expr.Op == token.ARROW {
-			PrintCounter(Counter{
+			PrintBound(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Receive as a " + bound,
-				Info:      "Name : " + prettyPrint(expr),
+				Mandatory: mandatory,
+				Info:      "Name : " + prettyPrint(expr) + " Mandatory : " + mandatory,
+				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			})
+		} else if expr.Op == token.AND {
+			PrintBound(Counter{
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "Pointer as a " + bound,
+				Mandatory: mandatory,
+				Info:      "Name : " + prettyPrint(expr.X),
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -1322,20 +1450,22 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 		}
 	case *ast.CallExpr:
 		// Function as a comm param
-		PrintCounter(Counter{
+		PrintBound(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Func as a " + bound,
+			Mandatory: mandatory,
 			Info:      "Name : " + prettyPrint(expr),
 			Line:      m.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
 		if getIdent(expr.Fun).Name == "len" {
-			PrintCounter(Counter{
+			PrintBound(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "len() as a " + bound,
+				Mandatory: mandatory,
 				Info:      "Name : " + prettyPrint(expr),
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
@@ -1343,7 +1473,6 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			})
 
 			ident = m.TranslateArgs(expr.Args[0])
-			fmt.Println(ident)
 		}
 	case *ast.SelectorExpr:
 		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr.X)
@@ -1354,10 +1483,11 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			switch Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Struct as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + prettyPrint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
@@ -1365,10 +1495,11 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 				})
 			case *types.Named:
 				// Struct as a bound
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Elem of a struct as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + prettyPrint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
@@ -1377,8 +1508,9 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			}
 		}
 	case *ast.IndexExpr:
-		PrintCounter(Counter{
+		PrintBound(Counter{
 			Name:      "Uses an item of a list as a " + bound,
+			Mandatory: mandatory,
 			Info:      "Not supported",
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
@@ -1387,9 +1519,10 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			Commit:    m.Commit,
 		})
 	case *ast.CompositeLit:
-		PrintCounter(Counter{
+		PrintBound(Counter{
 			Name:      "Uses a struct as a " + bound,
 			Info:      "Not supported",
+			Mandatory: mandatory,
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
 			Line:      m.Fileset.Position(expr.Pos()).Line,
@@ -1397,7 +1530,6 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			Commit:    m.Commit,
 		})
 	default:
-
 		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr)
 
 		if Types == nil {
@@ -1406,30 +1538,22 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			switch Types := Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Elem of a struct as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + prettyPrint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
-			case *types.Pointer:
-				PrintCounter(Counter{
-					Proj_name: m.Project_name,
-					Fun:       m.Fun.Name.String(),
-					Name:      "Pointer as a " + bound,
-					Info:      "Name : " + Types.String(),
-					Line:      m.Fileset.Position(expr.Pos()).Line,
-					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
-				})
 			case *types.Basic:
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Integer as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + fmt.Sprint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
@@ -1437,30 +1561,33 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 				})
 
 			case *types.Slice:
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Slice as a " + bound,
-					Info:      "Name : " + Types.String(),
+					Mandatory: mandatory,
+					Info:      "Name : " + prettyPrint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Map:
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Map as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + Types.String(),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Named:
-				PrintCounter(Counter{
+				PrintBound(Counter{
 					Proj_name: m.Project_name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Var as a " + bound,
+					Mandatory: mandatory,
 					Info:      "Name : " + Types.String(),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,

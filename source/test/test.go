@@ -1,39 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"sync"
+	"errors"
+
+	"golang.org/x/crypto/ssh"
 )
 
-func (e *ServiceRouterConfigEntry) Normalize() error {
-
-	var wg sync.WaitGroup
-	if e == nil {
-		return fmt.Errorf("config entry is nil")
+func ForwardToAgent(client *ssh.Client, keyring Agent) error {
+	a := make(chan int)
+	channels := client.HandleChannelOpen(channelType)
+	if channels == nil {
+		return errors.New("Agent: already have handler for " + channelType)
 	}
 
-	e.Kind = ServiceRouter
-
-	e.EnterpriseMeta.Normalize()
-
-	for _, route := range e.Routes {
-		if route.Match == nil || route.Match.HTTP == nil {
-			continue
+	go func() {
+		for ch := range channels {
+			channel, reqs, err := ch.Accept()
+			if err != nil {
+				continue
+			}
+			go ssh.DiscardRequests(reqs)
+			go func() {
+				ServeAgent(keyring, channel)
+				channel.Close()
+			}()
 		}
-
-		httpMatch := route.Match.HTTP
-		if len(httpMatch.Methods) == 0 {
-			continue
-		}
-
-		for j := 0; j < len(httpMatch.Methods); j++ {
-			httpMatch.Methods[j] = strings.ToUpper(httpMatch.Methods[j])
-		}
-		if route.Destination != nil && route.Destination.Namespace == "" {
-			route.Destination.Namespace = e.EnterpriseMeta.NamespaceOrDefault()
-		}
-	}
-
+	}()
 	return nil
 }

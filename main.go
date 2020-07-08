@@ -111,7 +111,7 @@ func main() {
 				packages := []string{}
 				filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
 					if file.IsDir() {
-						if file.Name() != "vendor" && file.Name() != "tests" {
+						if file.Name() != "vendor" && file.Name() != "third_party" {
 							packages = append(packages, path)
 						} else {
 							return filepath.SkipDir
@@ -143,7 +143,7 @@ func parseProject(project_name string, ver *VerificationInfo) {
 
 		if info.IsDir() {
 
-			if info.Name() != "vendor" && info.Name() != "tests" {
+			if info.Name() != "vendor" {
 				packages = append(packages, "."+strings.TrimPrefix(path, path_to_dir))
 			} else {
 				return filepath.SkipDir
@@ -198,9 +198,10 @@ func inferProject(path string, dir_name string, commit string, packages []string
 			}
 		}
 	} else {
-		promela.PrintCounter(promela.Counter{
+		promela.PrintFeature(promela.Counter{
 			Proj_name: dir_name,
 			Name:      "Error while parsing project",
+			Mandatory: "false",
 		})
 
 	}

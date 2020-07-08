@@ -28,6 +28,9 @@ func Print(m *Model) {
 	}
 
 	stmt += "\n"
+
+	stmt += "// " + m.Fileset.Position(m.Fun.Pos()).Filename + "\n"
+
 	// print chandef
 	chan_struct := promela_ast.ChanStructDef{Name: promela_ast.Ident{Name: "Chandef"}, Defs: []promela_ast.Chandef{}} // creating the struct that will represent the go channel
 	in := promela_ast.Chandef{Name: promela_ast.Ident{Name: "in"}, Types: []promela_types.Types{promela_types.Int}, Size: promela_ast.Ident{Name: "0"}}
@@ -38,7 +41,7 @@ func Print(m *Model) {
 
 	b := promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
-	// setting the size of the in chan
+	// setting the size of the int chan
 	for _, c := range m.Global_vars {
 		b.List = append(b.List, c)
 	}
