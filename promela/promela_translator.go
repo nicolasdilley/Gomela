@@ -1206,7 +1206,6 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.CompositeLit:
 		name := "{"
 		for i, exp := range expr.Elts {
-
 			name += m.TranslateArgs(exp).Print(0)
 			if i < len(expr.Elts) {
 				name += ","
@@ -1224,7 +1223,7 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.KeyValueExpr:
 		e1 = m.TranslateArgs(expr.Key)
 	case *ast.ArrayType:
-		e1 = m.TranslateArgs(&ast.Ident{Name: "Array", NamePos: expr.Pos()})
+		e1 = m.TranslateArgs(expr.Elt)
 	case *ast.StructType:
 		name := "{"
 		for i, exp := range expr.Fields.List {
@@ -1239,6 +1238,8 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		e1 = m.TranslateArgs(&ast.Ident{Name: "chan", NamePos: expr.Pos()})
 	case *ast.TypeAssertExpr:
 		e1 = &promela_ast.Ident{Name: "type_assert", Ident: m.Fileset.Position(expr.Pos())}
+	case *ast.FuncLit:
+		e1 = &promela_ast.Ident{Name: "func_lit", Ident: m.Fileset.Position(expr.Pos())}
 	default:
 		ast.Print(m.Fileset, expr)
 	}
