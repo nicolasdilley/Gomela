@@ -1176,12 +1176,13 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		e1 = &promela_ast.ExprStmt{X: m.TranslateArgs(expr.X)}
 	case *ast.CallExpr:
 		// Need to create the call here.
-		// if found, fun_decl := FindDecl(m.Package, getIdent(expr.Fun), len(expr.Args), m.AstMap); found{
+		// if found, fun_decl := FindDecl(m.Package, m.getIdent(expr.Fun), len(expr.Args), m.AstMap); found{
 
 		// } else {
 
 		// create new inline
-		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
+		ast.Print(m.Fileset, expr.Fun)
+		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: m.getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
 
 		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
 
@@ -1192,7 +1193,7 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 			}
 			call.Args = args
 
-			m.Inlines = append(m.Inlines, &promela_ast.Inline{Name: promela_ast.Ident{Name: getIdent(expr.Fun).Name}, Params: args})
+			m.Inlines = append(m.Inlines, &promela_ast.Inline{Name: promela_ast.Ident{Name: m.getIdent(expr.Fun).Name}, Params: args})
 		}
 
 		e1 = &call
@@ -1223,7 +1224,7 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 	case *ast.KeyValueExpr:
 		e1 = m.TranslateArgs(expr.Key)
 	case *ast.ArrayType:
-		e1 = m.TranslateArgs(expr.Elt)
+		e1 = &promela_ast.Ident{Name: "new_array", Ident: m.Fileset.Position(expr.Pos())}
 	case *ast.StructType:
 		name := "{"
 		for i, exp := range expr.Fields.List {
@@ -1461,7 +1462,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
-		if getIdent(expr.Fun).Name == "len" {
+		if m.getIdent(expr.Fun).Name == "len" {
 			PrintBound(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
@@ -1598,7 +1599,6 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 
 		}
 	}
-
 	return promela_ast.Ident{Name: ident.Print(0)}
 }
 
@@ -1690,7 +1690,7 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 }
 func (m *Model) containsInline(expr ast.Expr) bool {
 	for _, inline := range m.Inlines {
-		if inline.Name.Name == getIdent(expr).Name {
+		if inline.Name.Name == m.getIdent(expr).Name {
 			return true
 		}
 	}

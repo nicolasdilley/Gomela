@@ -1,8 +1,0 @@
-Project, Fun, Type, Mandatory, Info, Line Num, Filename, Link,
-test,cleanupSchemaObjects,Candidate param,false,Name : tbNames,36,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,
-test,cleanupSchemaObjects,Candidate param,false,Name : ids_toDelete,89,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,
-test,cleanupSchemaObjects,Candidate param,false,Name : ids_toDelete,100,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,
-test,cleanupSchemaObjects,Integer as a spawning for bound,true,Name : tbNames,36,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,
-test,cleanupSchemaObjects,Uses a struct as a spawning for bound,true,Not supported,64,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go:64:27,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go:64:27,
-test,cleanupSchemaObjects,Struct as a spawning for bound,true,Name : &{toDelete ids},89,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,
-test,cleanupSchemaObjects,Struct as a spawning for bound,true,Name : &{toDelete ids},100,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go,

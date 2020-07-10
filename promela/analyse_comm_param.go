@@ -179,6 +179,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						// first apply m.Vid to extract all variables of the arguments
 						if contains, _ := containsArgs(fun_decl.Type.Params.List, param); contains {
 							params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log), log)
+						} else {
+
 						}
 					}
 				}
@@ -191,7 +193,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			case *ast.Ident:
 				fun = f.Name
 			case *ast.SelectorExpr:
-				fun = getIdent(f.X).Name
+				fun = m.getIdent(f.X).Name
 				pack = f.Sel.Name
 			}
 			contains_chan := false
@@ -282,7 +284,7 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 	case *ast.Ident:
 		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory}}, log)
 	case *ast.SelectorExpr:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: getIdent(expr), Mandatory: mandatory}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory}}, log)
 
 		ast.Inspect(expr, func(node ast.Node) bool {
 			switch node := node.(type) {
@@ -318,40 +320,66 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 }
 
 // takes an ident or a selector or funcall and returns its id
-func getIdent(expr ast.Expr) *ast.Ident {
+func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		return expr
 	case *ast.SelectorExpr:
-		name := expr.Sel.Name + "_" + getIdent(expr.X).Name
+		name := expr.Sel.Name + "_" + m.getIdent(expr.X).Name
 		return &ast.Ident{Name: name, NamePos: expr.Pos()}
 	case *ast.CallExpr:
-		return &ast.Ident{Name: getIdent(expr.Fun).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.Fun).Name, NamePos: expr.Pos()}
 	case *ast.BinaryExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name + expr.Op.String() + getIdent(expr.Y).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name + expr.Op.String() + m.getIdent(expr.Y).Name, NamePos: expr.Pos()}
 	case *ast.UnaryExpr:
-		return &ast.Ident{Name: expr.Op.String() + getIdent(expr.X).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: expr.Op.String() + m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.IndexExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name + "[" + getIdent(expr.Index).Name + "]"}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name + "[" + m.getIdent(expr.Index).Name + "]"}
 	case *ast.BasicLit:
 		return &ast.Ident{Name: expr.Value}
 	case *ast.ParenExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.SliceExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.StarExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}
+	case *ast.ChanType:
+		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
+	case *ast.FuncLit:
+		PrintFeature(Counter{
+			Proj_name: m.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Anonymous function as ident",
+			Mandatory: "false",
+			Info:      "Unsupported",
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		})
+		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
+	case *ast.FuncType:
+		PrintFeature(Counter{
+			Proj_name: m.Project_name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "High order function",
+			Mandatory: "false",
+			Info:      "Unsupported",
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		})
+		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.KeyValueExpr:
-		return &ast.Ident{Name: getIdent(expr.Key).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.Key).Name, NamePos: expr.Pos()}
 	case *ast.CompositeLit:
 		name := "{"
 		for _, elt := range expr.Elts {
-			name += getIdent(elt).Name
+			name += m.getIdent(elt).Name
 		}
 		name += "}"
 		return &ast.Ident{Name: name, NamePos: expr.Pos()}
 	case *ast.TypeAssertExpr:
-		return &ast.Ident{Name: getIdent(expr.X).Name, NamePos: expr.Pos()}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.ArrayType:
 		return &ast.Ident{Name: fmt.Sprint(expr.Elt), NamePos: expr.Pos()}
 	case *ast.MapType:
