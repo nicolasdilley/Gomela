@@ -12,6 +12,7 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 
 	num_chans := []Chan_info{}
 	ast.Inspect(fun.Body, func(n ast.Node) bool {
+
 		switch n := n.(type) {
 		case *ast.AssignStmt:
 			for i, rhs := range n.Rhs {

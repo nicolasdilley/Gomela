@@ -472,6 +472,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) *promela_ast.BlockStmt {
 				counter++
 			}
 		}
+
 		chans := AnalyseFuncCall(m.Fileset, m.Fun, m.AstMap[m.Package]) // Returns the channels that are declared before the call
 
 		for _, ch := range chans {
@@ -1181,7 +1182,6 @@ func (m *Model) TranslateArgs(expr ast.Expr) promela_ast.Expr {
 		// } else {
 
 		// create new inline
-		ast.Print(m.Fileset, expr.Fun)
 		call := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: m.getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
 
 		if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value

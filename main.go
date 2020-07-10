@@ -166,6 +166,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 	f, ast_map := GenerateAst(path, packages)
 	if f != nil {
 		ParseAst(f, dir_name, commit, ast_map, ver)
+
 		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
 		if err != nil {
 			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))

@@ -526,7 +526,6 @@ mailru/easyjson
 achilleasa/gopher-os
 theupdateframework/notary
 jackc/pgx
-gobwas/ws
 RangelReale/osin
 mozilla/sops
 mmcloughlin/globe
