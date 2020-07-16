@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	CHAN_NAME  = "_ch"
-	CHAN_BOUND = 0
-	ADD_BOUND  = 1
-	FOR_BOUND  = 2
+	CHAN_NAME       = "_ch"
+	CHAN_BOUND      = 0
+	ADD_BOUND       = 1
+	LOWER_FOR_BOUND = 2
+	UPPER_FOR_BOUND = 3
 )
 
 type Model struct {
@@ -767,7 +768,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) *promela_ast.BlockStmt {
 
 	label_name := fmt.Sprintf("for%d%d", m.For_counter.X, m.For_counter.Y)
 
-	ub := m.lookUp(s.X, FOR_BOUND, true)
+	ub := m.lookUp(s.X, UPPER_FOR_BOUND, true)
 	if m.containsChan(s.X) {
 		chan_struct := m.getChanStruct(s.X)
 
@@ -1387,14 +1388,14 @@ func (m *Model) lookUpFor(s *ast.ForStmt, pack *packages.Package) (lb promela_as
 			switch inc := s.Post.(type) {
 			case *ast.IncDecStmt:
 				if inc.Tok == token.DEC {
-					ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
+					ident := m.lookUp(cond.Y, LOWER_FOR_BOUND, m.spawns(s.Body, false))
 					lb.Name = ident.Print(0)
 
 					// look for upper bound
 					switch stmt := s.Init.(type) {
 					case *ast.AssignStmt:
 						for _, rh := range stmt.Rhs {
-							ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
+							ident := m.lookUp(rh, UPPER_FOR_BOUND, m.spawns(s.Body, false))
 							ub.Name = ident.Print(0)
 
 							if cond.Op == token.GTR {
@@ -1410,14 +1411,14 @@ func (m *Model) lookUpFor(s *ast.ForStmt, pack *packages.Package) (lb promela_as
 			switch inc := s.Post.(type) {
 			case *ast.IncDecStmt:
 				if inc.Tok == token.INC {
-					ident := m.lookUp(cond.Y, FOR_BOUND, m.spawns(s.Body, false))
+					ident := m.lookUp(cond.Y, UPPER_FOR_BOUND, m.spawns(s.Body, false))
 					ub.Name = ident.Print(0)
 
 					// look for lower bound
 					switch stmt := s.Init.(type) {
 					case *ast.AssignStmt:
 						for _, rh := range stmt.Rhs {
-							ident := m.lookUp(rh, FOR_BOUND, m.spawns(s.Body, false))
+							ident := m.lookUp(rh, LOWER_FOR_BOUND, m.spawns(s.Body, false))
 							lb.Name = ident.Print(0)
 
 							if cond.Op == token.LSS {
@@ -1474,10 +1475,18 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) pr
 	case CHAN_BOUND:
 		bound = "chan bound"
 		mandatory = "true"
-	case FOR_BOUND:
+	case LOWER_FOR_BOUND:
+		bound = "for lower bound"
 		if spawning_for_loop {
 			mandatory = "true"
-			bound = "spawning for bound"
+			bound = "spawning for lower bound"
+		}
+	case UPPER_FOR_BOUND:
+		bound = "for upper bound"
+
+		if spawning_for_loop {
+			mandatory = "true"
+			bound = "spawning for upper bound"
 		}
 	case ADD_BOUND:
 		mandatory = "true"

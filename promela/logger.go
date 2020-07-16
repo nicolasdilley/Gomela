@@ -5,7 +5,7 @@ import (
 )
 
 func CreateCSV() {
-	toPrint := "Project, Model, Fun, Type, Info, Line Num, Filename, Link,\n"
+	toPrint := "Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link,\n"
 
 	// Print CSV
 	d1 := []byte(toPrint)
