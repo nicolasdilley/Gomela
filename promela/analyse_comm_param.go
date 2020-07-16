@@ -14,6 +14,7 @@ type CommPar struct {
 	Name      *ast.Ident
 	Mandatory bool
 	Type      types.Type
+	Expr      ast.Expr
 	Pos       int // the position of the param in the fun decl (i.e, b is 0 and a is 1 in f(b,a))
 }
 
@@ -178,9 +179,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						// give only the arguments that are either MP or OP
 						// first apply m.Vid to extract all variables of the arguments
 						if contains, _ := containsArgs(fun_decl.Type.Params.List, param); contains {
-							params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Args[param.Pos], param.Mandatory, log), log)
-						} else {
-
+							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[param.Pos], param.Mandatory, log), log)
 						}
 					}
 				}
@@ -249,11 +248,12 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 				commPars = append(commPars, param)
 			}
 		} else if log {
-			PrintBound(Counter{
+
+			m.PrintBound(Counter{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Candidate param",
-				Info:      "Name : " + prettyPrint(arg.Name),
+				Info:      isConstant(arg.Expr),
 				Mandatory: strconv.FormatBool(arg.Mandatory),
 				Line:      m.Fileset.Position(arg.Name.Pos()).Line,
 				Commit:    m.Commit,
@@ -270,7 +270,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 		for y, name := range field.Names {
 			if name.Name == arg.Name.Name {
 
-				return true, &CommPar{Name: name, Pos: x + y, Mandatory: arg.Mandatory}
+				return true, &CommPar{Name: name, Pos: x + y, Mandatory: arg.Mandatory, Expr: name}
 			}
 		}
 	}
@@ -282,9 +282,9 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr}}, log)
 	case *ast.SelectorExpr:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory, Expr: expr}}, log)
 
 		ast.Inspect(expr, func(node ast.Node) bool {
 			switch node := node.(type) {
@@ -346,7 +346,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.ChanType:
 		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
 	case *ast.FuncLit:
-		PrintFeature(Counter{
+		m.PrintFeature(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Anonymous function as ident",
@@ -358,7 +358,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.FuncType:
-		PrintFeature(Counter{
+		m.PrintFeature(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "High order function",
@@ -415,6 +415,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 			// check if the goroutine has a chan as param by looking at func decl
 
 			for _, arg := range stmt.Call.Args {
+
 				typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
 				switch typ := typ.(type) {
 				case *types.Chan:
@@ -432,7 +433,6 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 			if contains_chan || contains_wg {
 				is_spawning = true
 			}
-
 			recur, _ := m.isCallSpawning(stmt.Call, log)
 			if recur {
 				recursive = true
@@ -446,11 +446,11 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 	})
 
 	if recursive && log {
-		PrintFeature(Counter{
+		m.PrintFeature(Counter{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",
-			Mandatory: "false",
+			Mandatory: strconv.FormatBool(is_spawning),
 			Info:      "Spawning : " + strconv.FormatBool(is_spawning),
 			Line:      m.Fileset.Position(call.Pos()).Line,
 			Commit:    m.Commit,
@@ -544,4 +544,35 @@ func (m *Model) ContainsSpawningFunc(pack string, fun_name string) (bool, *Spawn
 	}
 
 	return false, nil
+}
+
+func isConstant(expr ast.Expr) string {
+	var value string = "not found"
+	switch ident := expr.(type) {
+	case *ast.Ident:
+		if ident.Obj != nil {
+			if ident.Obj.Kind == ast.Con {
+				switch value_spec := ident.Obj.Decl.(type) {
+				case *ast.ValueSpec:
+
+					if value_spec.Values != nil && len(value_spec.Values) > 0 {
+						switch val := value_spec.Values[0].(type) {
+						case *ast.BasicLit:
+							return val.Value
+						case *ast.Ident:
+							return isConstant(val)
+						}
+					}
+				}
+			}
+		}
+	case *ast.SelectorExpr:
+		return isConstant(ident.Sel)
+	case *ast.BasicLit:
+		if ident.Kind == token.INT {
+			return ident.Value
+		}
+	}
+
+	return value
 }

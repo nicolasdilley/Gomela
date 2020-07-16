@@ -199,12 +199,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 			}
 		}
 	} else {
-		promela.PrintFeature(promela.Counter{
-			Proj_name: dir_name,
-			Name:      "Error while parsing project",
-			Mandatory: "false",
-		})
-
+		fmt.Println("Error while parsing project")
 	}
 }
 

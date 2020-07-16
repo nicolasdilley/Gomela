@@ -30,6 +30,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 						var m promela.Model = promela.Model{
 							Project_name:  proj_name,
 							Package:       pack_name,
+							Model:         decl.Name.Name,
 							AstMap:        ast_map,
 							Fileset:       fileSet,
 							Proctypes:     []*promela_ast.Proctype{},
@@ -44,17 +45,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Default_ub:    *ver.ub,
 							Default_lb:    *ver.lb,
 						}
-
-						// var obj types.Object
-
-						// for _, def := range node.TypesInfo.Uses {
-						// 	if def != nil {
-						// 		if def.Pos() == obj.Pos() {
-						// 			fmt.Println("We have a match ", def)
-						// 		}
-
-						// 	}
-						// }
 
 						m.GoToPromela()
 
