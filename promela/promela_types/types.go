@@ -8,5 +8,6 @@ var (
 	Bool    Types = Types{Name: "bool"}
 	Int     Types = Types{Name: "int"}
 	Chandef Types = Types{Name: "Chandef"}
+	Wgdef   Types = Types{Name: "Wgdef"}
 	Chan    Types = Types{Name: "chan"}
 )

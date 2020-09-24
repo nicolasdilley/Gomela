@@ -5,16 +5,15 @@ import (
 	"sync"
 )
 
-// Works fine goroutine at line 17 and main go routines wait before all Send has been done
+// Works fine goroutine at line 17 and main go routines wait before all Work has been done
 // No broadcast.
 func main() {
 	var wg sync.WaitGroup
 
-	a := make(chan int, 20)
 	wg.Add(20)
 
 	for i := 0; i < 20; i++ {
-		go Send(a, i, &wg)
+		go Work(i, &wg)
 	}
 	go func() {
 		fmt.Println("Anonym Entered")
@@ -32,7 +31,6 @@ func main() {
 	}
 }
 
-func Send(a chan int, i int, wg *sync.WaitGroup) {
-	a <- i
+func Work(i int, wg *sync.WaitGroup) {
 	wg.Done()
 }

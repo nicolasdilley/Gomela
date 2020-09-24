@@ -7,6 +7,7 @@ import (
 	"go/types"
 	"strconv"
 
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -16,6 +17,7 @@ type CommPar struct {
 	Type      types.Type
 	Expr      ast.Expr
 	Pos       int // the position of the param in the fun decl (i.e, b is 0 and a is 1 in f(b,a))
+	Candidate bool
 }
 
 // Return the parameters that are mandatory and optional
@@ -29,50 +31,28 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
-		case *ast.AssignStmt:
-			for _, rhs := range stmt.Rhs {
-				switch rhs := rhs.(type) {
-				case *ast.CallExpr:
-					switch ident := rhs.Fun.(type) {
-					case *ast.Ident:
-						if ident.Name == "make" && len(rhs.Args) > 0 { // possibly a new chan
-							switch rhs.Args[0].(type) {
-							case *ast.ChanType:
-								// definitely a new chan
-								if len(rhs.Args) > 1 {
-									params = m.Upgrade(fun, params, m.Vid(fun, rhs.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
-								}
-							}
-						}
-					}
-				}
-			}
-		case *ast.DeclStmt:
-			switch decl := stmt.Decl.(type) {
-			case *ast.GenDecl:
-				for _, spec := range decl.Specs {
-					switch val := spec.(type) {
-					case *ast.ValueSpec:
-						for _, rhs := range val.Values {
-							switch call := rhs.(type) {
-							case *ast.CallExpr:
-								switch ident := call.Fun.(type) {
-								case *ast.Ident:
-									if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
-										switch call.Args[0].(type) {
-										case *ast.ChanType:
-											// definitely a new chan
-											if len(call.Args) > 1 {
-												params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+
+		// case *ast.CompositeLit:
+		// 	for _, elt := range rhs.Elts {
+		// 		switch elt := elt.(type) {
+		// 		case *ast.KeyValueExpr:
+		// 			switch call := elt.Value.(type) {
+		// 			case *ast.CallExpr:
+		// 				switch ident := call.Fun.(type) {
+		// 				case *ast.Ident:
+		// 					if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
+		// 						switch call.Args[0].(type) {
+		// 						case *ast.ChanType:
+		// 							params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
+
+		// 						}
+		// 					}
+		// 				}
+
+		// 			}
+		// 		}
+
+		// 	}
 
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
@@ -119,7 +99,25 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			params = m.Upgrade(fun, params, m.Vid(fun, stmt.X, mandatory, log), log)
 		case *ast.CallExpr: // m.Upgrade if the args of the function are mapped to a MP or OP
 			// check if the call has a chan as param by looking at func decl
-
+			switch ident := stmt.Fun.(type) {
+			case *ast.Ident:
+				if ident.Name == "make" && len(stmt.Args) > 0 { // possibly a new chan
+					switch stmt.Args[0].(type) {
+					case *ast.ChanType:
+						// definitely a new chan
+						if len(stmt.Args) > 1 {
+							arg, err1 := m.TranslateArgs(stmt.Args[1])
+							if err1 == nil {
+								if con, num := IsConst(stmt.Args[1], m.AstMap[m.Package]); !con {
+									m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: promela_ast.Ident{Name: arg.Print(0)}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+								} else {
+									stmt.Args[1] = &ast.BasicLit{Value: fmt.Sprint(num)}
+								}
+							}
+						}
+					}
+				}
+			}
 			contains_chan := false
 			for _, arg := range stmt.Args {
 				typ := ast_map[m.Package].TypesInfo.TypeOf(arg)
@@ -192,8 +190,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			case *ast.Ident:
 				fun = f.Name
 			case *ast.SelectorExpr:
-				fun = m.getIdent(f.X).Name
-				pack = f.Sel.Name
+				pack = m.getIdent(f.X).Name
+				fun = f.Sel.Name
 			}
 			contains_chan := false
 
@@ -247,18 +245,11 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 			if !inCommPar { // if its not in the list of commPar yet add it.
 				commPars = append(commPars, param)
 			}
-		} else if log {
-
-			m.PrintBound(Counter{
-				Proj_name: m.Project_name,
-				Fun:       m.Fun.Name.String(),
-				Name:      "Candidate param",
-				Info:      isConstant(arg.Expr),
-				Mandatory: strconv.FormatBool(arg.Mandatory),
-				Line:      m.Fileset.Position(arg.Name.Pos()).Line,
-				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(arg.Name.Pos()).Filename,
-			})
+		} else {
+			arg.Candidate = true
+			if !ContainsCommParam(commPars, arg) {
+				commPars = append(commPars, arg)
+			}
 		}
 	}
 	return commPars
@@ -275,6 +266,17 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 		}
 	}
 	return false, nil
+}
+
+// Check if the arg is contained in the list params. Returns if it is and the commPar if it is
+func ContainsCommParam(commPars []*CommPar, commPar *CommPar) bool {
+	for _, param := range commPars {
+		if param.Name.Name == commPar.Name.Name {
+			return true
+		}
+
+	}
+	return false
 }
 
 func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) []*CommPar {
@@ -325,7 +327,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.Ident:
 		return expr
 	case *ast.SelectorExpr:
-		name := expr.Sel.Name + "_" + m.getIdent(expr.X).Name
+		name := m.getIdent(expr.X).Name + "_" + expr.Sel.Name
 		return &ast.Ident{Name: name, NamePos: expr.Pos()}
 	case *ast.CallExpr:
 		return &ast.Ident{Name: m.getIdent(expr.Fun).Name, NamePos: expr.Pos()}
@@ -346,7 +348,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.ChanType:
 		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
 	case *ast.FuncLit:
-		m.PrintFeature(Counter{
+		m.AddFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Anonymous function as ident",
@@ -358,7 +360,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.FuncType:
-		m.PrintFeature(Counter{
+		m.AddFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "High order function",
@@ -446,7 +448,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 	})
 
 	if recursive && log {
-		m.PrintFeature(Counter{
+		m.AddFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",

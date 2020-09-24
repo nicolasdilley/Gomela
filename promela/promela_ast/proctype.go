@@ -46,7 +46,8 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 }
 
 func (p *Proctype) DeclAtStart() {
-	for i, stmt := range p.Body.List {
+	for i := len(p.Body.List) - 1; i >= 0; i-- {
+		stmt := p.Body.List[i]
 		switch stmt.(type) {
 		case *Chandef,
 			*DeclStmt:

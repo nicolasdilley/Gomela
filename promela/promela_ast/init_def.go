@@ -29,6 +29,7 @@ func (d *InitDef) DeclAtStart() {
 		switch stmt.(type) {
 		case *Chandef,
 			*DeclStmt:
+			// fmt.Println(stmt.Print(0))
 			d.Body.List = append(d.Body.List[:i], d.Body.List[i+1:]...)
 			d.Body.List = append([]Stmt{stmt}, d.Body.List...)
 		}

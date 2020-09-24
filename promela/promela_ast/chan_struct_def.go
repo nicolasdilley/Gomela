@@ -7,9 +7,10 @@ import (
 )
 
 type ChanStructDef struct {
-	Name Ident
-	Def  token.Position
-	Defs []Chandef
+	Name  Ident
+	Def   token.Position
+	Defs  []Chandef
+	Decls []DeclStmt
 }
 
 func (c *ChanStructDef) GoNode() token.Position {
@@ -20,6 +21,11 @@ func (c *ChanStructDef) Print(num_tabs int) (stmt string) {
 	stmt += "typedef " + c.Name.Print(num_tabs) + " {\n"
 	for _, channel := range c.Defs {
 		stmt += utils.GetTabs(num_tabs+1) + channel.Print(num_tabs)
+		stmt += ";\n"
+	}
+
+	for _, decl := range c.Decls {
+		stmt += utils.GetTabs(num_tabs+1) + decl.Print(num_tabs)
 		stmt += ";\n"
 	}
 	stmt += "}\n"

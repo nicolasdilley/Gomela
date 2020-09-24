@@ -4,7 +4,7 @@ typedef Waitgroup {
 
 init {
   int i;
-  Waitgroup wg;
+
 
   wg.counter = wg.counter + 20;
   assert(wg.counter >= 0)

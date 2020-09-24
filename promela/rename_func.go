@@ -167,6 +167,8 @@ func renameExpr(e ast.Expr, prev []ast.Expr, n ast.Expr) ast.Expr {
 				fun.Body = RenameBlockStmt(fun.Body, prev, n)
 			}
 		}
+
+		e.Fun = renameExpr(e.Fun, prev, n)
 		for i, arg := range e.Args {
 			e.Args[i] = renameExpr(arg, prev, n)
 		}
@@ -187,6 +189,9 @@ func renameExpr(e ast.Expr, prev []ast.Expr, n ast.Expr) ast.Expr {
 	case *ast.SelectorExpr:
 		if IdenticalExprs(prev, e) {
 			return n
+		}
+		if IdenticalExprs(prev, e.X) {
+			e.X = n
 		}
 	}
 

@@ -1,0 +1,306 @@
+#define lb_for151_0  -1
+#define ub_for151_1  -1
+
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example559960474/cmd/mirror_update.go
+typedef Chandef {
+	chan sync = [0] of {int};
+	chan async_send = [0] of {int};
+	chan async_rcv = [0] of {int};
+	chan sending = [0] of {int};
+	chan closing = [0] of {bool};
+	chan is_closed = [0] of {bool};
+	int size = 0;
+	int num_msgs = 0;
+}
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
+
+
+
+init { 
+	Chandef downloadQueue;
+	int task_Additional = 5;
+	int queue = 5;
+	bool state = false;
+	Wgdef wg;
+	int context_Config_DownloadConcurrency = 5;
+	int i;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	run sync_monitor(downloadQueue);
+	run Anonymous0(downloadQueue,wg);
+	run wgMonitor(wg);
+		for(i : 0.. context_Config_DownloadConcurrency-1) {
+for20:		wg.Add!1;
+		run Anonymous1(downloadQueue,wg)
+	};
+for20_exit:	wg.Wait?0;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	do
+	:: true -> 
+for30:		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi;
+		do
+		:: true -> 
+for31:
+		:: true -> 
+			break
+		od
+	:: true -> 
+		break
+	od;
+	do
+	:: true -> 
+		goto stop_process
+	:: true -> 
+		break
+	od;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	goto stop_process
+stop_process:}
+
+proctype Anonymous0(Chandef downloadQueue;Wgdef wg) {
+	bool closed; 
+	int i;
+	do
+	:: true -> 
+for10:		do
+		:: downloadQueue.async_send!0 -> 
+			break
+		:: downloadQueue.sync!0 -> 
+			downloadQueue.sending?0;
+			break
+		:: true -> 
+			goto stop_process
+		od
+	:: true -> 
+		break
+	od;
+	downloadQueue.closing!true;
+stop_process:
+}
+proctype Anonymous1(Chandef downloadQueue;Wgdef wg) {
+	bool closed; 
+	int i;
+	do
+	:: true -> 
+for21:		do
+		:: true -> 
+			goto stop_process
+		od
+	od;
+for21_exit:	wg.Add!-1;
+stop_process:
+}
+proctype wgMonitor(Wgdef wg) {
+	bool closed; 
+	int i;
+	do
+	:: wg.Add?i -> 
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 -> 
+end:		
+		if
+		:: wg.Add?i -> 
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+		fi
+	od;
+stop_process:
+}
+proctype sync_monitor(Chandef ch) {
+end: if
+    :: ch.sending!false;
+      run sync_monitor(ch)
+    :: ch.closing?true ->
+      run closedChan(ch)
+    :: ch.is_closed!false ->
+      run sync_monitor(ch)
+    fi
+stop_process:
+}
+
+proctype emptyChan(Chandef ch) {
+end: if
+	 :: ch.async_send?0 -> // a message has been received
+    ch.num_msgs = ch.num_msgs + 1
+    if
+    :: ch.num_msgs == ch.size ->
+      run fullChan(ch)
+    :: else ->
+      run neitherChan(ch)
+    fi;
+  :: ch.closing?true -> // closing the channel
+    run closedChan(ch)
+  :: ch.is_closed!false ->
+    run emptyChan(ch) // sending channel is open 
+  :: ch.sending!false ->
+    run emptyChan(ch) // sending channel is open 
+fi;
+}
+
+proctype fullChan(Chandef ch) {
+end: if
+  :: ch.async_rcv!0 ->
+    ch.num_msgs = ch.num_msgs - 1
+    if
+    :: ch.num_msgs == 0 ->
+      run emptyChan(ch)
+    :: else ->
+      run neitherChan(ch)
+    fi;
+  :: ch.closing?true -> // closing the channel
+      run closedChan(ch)
+  :: ch.is_closed!false -> // sending channel is open 
+      run fullChan(ch)
+  :: ch.sending!false ->
+      run fullChan(ch)
+fi;
+}
+
+proctype neitherChan(Chandef ch) {
+end: if
+  :: ch.async_send?0->
+     ch.num_msgs = ch.num_msgs + 1
+     if
+     :: ch.num_msgs == ch.size ->
+        run fullChan(ch)
+     :: else ->
+        run neitherChan(ch)
+    fi;
+  :: ch.async_rcv!0
+     ch.num_msgs = ch.num_msgs - 1
+     if
+     :: ch.num_msgs == 0 ->
+      run emptyChan(ch)
+     :: else ->
+      run neitherChan(ch)
+     fi;
+  :: ch.closing?true -> // closing the channel
+      run closedChan(ch)
+  :: ch.is_closed!false ->  // sending channel is open
+     run neitherChan(ch)
+  :: ch.sending!false ->  // sending channel is open
+     run neitherChan(ch)
+fi;
+}
+
+proctype closedChan(Chandef ch) {
+end: if
+  :: ch.async_send?0-> // cannot send on closed channel
+    assert(false)
+  :: ch.closing?true -> // cannot close twice a channel
+    assert(false)
+  :: ch.is_closed!true -> // sending state of channel (closed)
+    run closedChan(ch)
+  :: ch.sending!true -> // sending state of channel (closed)
+    assert(false)
+  :: ch.sync!0 -> // can always receive on a closed chan
+    run closedChan(ch)
+  fi;
+}
+

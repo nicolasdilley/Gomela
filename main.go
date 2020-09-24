@@ -44,6 +44,7 @@ type VerificationInfo struct {
 	multi_projects *string
 	single_project *string
 	verify         *bool
+	run            *bool
 	lb             *int
 	ub             *int
 }
@@ -59,6 +60,7 @@ func main() {
 	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects to parse.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
+	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
 	ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
 	ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
 
@@ -195,6 +197,33 @@ func inferProject(path string, dir_name string, commit string, packages []string
 					fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
 					fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
 					fmt.Println("-------------------------------")
+				}
+			}
+		}
+
+		// Have a way to give values to individual candidates and unknown parameter
+		if *ver.run {
+
+			fmt.Println("Running the models.")
+			for _, model := range models {
+				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
+					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+					var output bytes.Buffer
+
+					// Verify with SPIN
+					fmt.Println(path)
+					command := exec.Command("timeout", "2", "spin", path)
+					command.Stdout = &output
+					command.Run()
+
+					f, _ := os.OpenFile("./results/run.csv",
+						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					fmt.Println(output.String())
+					first_line := strings.Split(output.String(), "\n")[0]
+
+					// Print CSV
+					toPrint := filepath.Base(dir_name) + "," + first_line + ",\n"
+					f.WriteString(toPrint)
 				}
 			}
 		}

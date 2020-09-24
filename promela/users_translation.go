@@ -13,6 +13,8 @@ func TranslateIdent(expr ast.Expr, fileSet *token.FileSet) (expr1 promela_ast.Id
 		expr1 = promela_ast.Ident{Name: expr.Name, Ident: fileSet.Position(expr.Pos())}
 	case *ast.SelectorExpr:
 		expr1 = promela_ast.Ident{Name: TranslateIdent(expr.X, fileSet).Name + "_" + expr.Sel.Name, Ident: fileSet.Position(expr.Pos())}
+	case *ast.UnaryExpr:
+		expr1 = TranslateIdent(expr.X, fileSet)
 	case *ast.CallExpr:
 		func_name := TranslateIdent(expr.Fun, fileSet).Name + "_"
 
