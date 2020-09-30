@@ -1054,8 +1054,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
 
 		if m.spawns(s.Body, false) {
-			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ub, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
-
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {

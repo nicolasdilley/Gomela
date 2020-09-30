@@ -1,5 +1,30 @@
 # Gomela
 
+Gomela is a full-scale verification tool that verifies message passing
+concurrency in Go programs. Gomela takes either the name of a Go's github
+project or a list of Go files as input and generates Promela models. These
+models are then fed to SPIN to verify that the models are free of global
+deadlocks. Gomela also offers the ability to the user to give bounds to the
+statically unknown communication-related parameters in the modelss to improve
+the accuracy of the verification. These parameters are the variables in the
+program that affects the number of goroutines or the size of channels in the Go
+program.
+
+## Example
+
+In
+[parseFiles](https://github.com/nicolasdilley/gomela/blob/main/examples/parseFiles.go#L9),
+The length of ```files``` determines the length of the channel ```ch``` and the
+number of goroutines ```parseFiles``` that will be created during execution.
+However, ```files``` is not known at compile time. Therefore, Gomela will
+generate a bound with a default value (5) and verify the model with this value.
+This value can easily be changed by the user.
+
+[FindAll](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L29),
+a function that is contained in the code from one of Go's tools, contains a
+global deadlock when the value of ```concurrencyProcesses``` is smaller than the
+value of ```pss```.
+
 To install and use Gomela, follow these steps:
 
 

@@ -417,38 +417,45 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 			}
 		case *ast.GoStmt:
 
-			contains_chan := false
-			contains_wg := false
-			// check if the goroutine has a chan as param by looking at func decl
+			switch stmt.Call.Fun.(type) {
+			case *ast.FuncLit:
+				is_spawning = true
+			default:
 
-			for _, arg := range stmt.Call.Args {
-				typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
-				switch typ := typ.(type) {
-				case *types.Chan:
-					contains_chan = true
-				case *types.Pointer:
-					switch typ := typ.Elem().(type) {
-					case *types.Named:
-						if typ.String() == "sync.WaitGroup" {
-							contains_wg = true
+				contains_chan := false
+				contains_wg := false
+				// check if the goroutine has a chan as param by looking at func decl
+
+				for _, arg := range stmt.Call.Args {
+					typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
+					switch typ := typ.(type) {
+					case *types.Chan:
+						contains_chan = true
+					case *types.Pointer:
+						switch typ := typ.Elem().(type) {
+						case *types.Named:
+							if typ.String() == "sync.WaitGroup" {
+								contains_wg = true
+							}
 						}
 					}
 				}
-			}
 
-			if contains_chan || contains_wg {
-				is_spawning = true
-			}
-			recur, _ := m.isCallSpawning(stmt.Call, log)
-			if recur {
-				recursive = true
-				call = stmt
-			}
+				if contains_chan || contains_wg {
+					is_spawning = true
+				}
+				recur, _ := m.isCallSpawning(stmt.Call, log)
+				if recur {
+					recursive = true
+					call = stmt
+				}
 
-			return false
+				return false
+			}
 		}
 
 		return true
+
 	})
 
 	if recursive && log {
