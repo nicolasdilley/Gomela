@@ -10,14 +10,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/nicolasdilley/gomela/promela"
 )
 
 const (
-	SOURCE_FOLDER  = "./source"  // The folder containing the projects to verify
-	RESULTS_FOLDER = "./results" // The folder where the models of the projects in /source are placed
+	SOURCE_FOLDER = "./source" // The folder containing the projects to verify
 )
 
 type ProjectResult struct {
@@ -49,10 +49,17 @@ type VerificationInfo struct {
 	ub             *int
 }
 
+var (
+	NUM_OF_MODELS            int = 0
+	NUM_OF_EXECUTABLE_MODELS int = 0
+	RESULTS_FOLDER               = "result"
+)
+
 func main() {
 
-	// Create the results folder
-	os.RemoveAll(RESULTS_FOLDER)
+	// add timestamps to name of folder
+	t := time.Now().Local().Format("2006-01-02--15:04:05")
+	RESULTS_FOLDER += t
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
 
 	ver := &VerificationInfo{}
@@ -66,7 +73,7 @@ func main() {
 
 	flag.Parse()
 
-	promela.CreateCSV()
+	promela.CreateCSV(RESULTS_FOLDER)
 	if *ver.multi_projects != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
@@ -86,6 +93,8 @@ func main() {
 						parseProject(project_name, ver)
 					}
 				}
+
+				fmt.Println(NUM_OF_EXECUTABLE_MODELS, "/", NUM_OF_MODELS, " executable models overall.")
 
 			} else {
 				fmt.Println("Please provide a .txt file containing the list of projects to be parsed")
@@ -167,7 +176,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 
 	f, ast_map := GenerateAst(path, packages)
 	if f != nil {
-		ParseAst(f, dir_name, commit, ast_map, ver)
+		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
 
 		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
 		if err != nil {
@@ -205,20 +214,29 @@ func inferProject(path string, dir_name string, commit string, packages []string
 		if *ver.run {
 
 			fmt.Println("Running the models.")
+
+			num_of_models_in_project := 0
+			num_of_executable_models_in_project := 0
+
 			for _, model := range models {
 				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
 					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
 					var output bytes.Buffer
 
 					// Verify with SPIN
-					fmt.Println(path)
 					command := exec.Command("timeout", "2", "spin", path)
 					command.Stdout = &output
 					command.Run()
 
+					NUM_OF_MODELS++
+					num_of_models_in_project++
+					if !strings.Contains(output.String(), "error") && !strings.Contains(output.String(), "Error") {
+						NUM_OF_EXECUTABLE_MODELS++
+						num_of_executable_models_in_project++
+					}
+
 					f, _ := os.OpenFile("./results/run.csv",
 						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					fmt.Println(output.String())
 					first_line := strings.Split(output.String(), "\n")[0]
 
 					// Print CSV
@@ -226,6 +244,8 @@ func inferProject(path string, dir_name string, commit string, packages []string
 					f.WriteString(toPrint)
 				}
 			}
+
+			fmt.Println(num_of_executable_models_in_project, "/", num_of_models_in_project, " executable model")
 		}
 	} else {
 		fmt.Println("Error while parsing project")

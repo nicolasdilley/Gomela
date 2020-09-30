@@ -96,7 +96,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 		case *ast.RangeStmt:
 			mandatory := m.spawns(stmt.Body, log)
-			params = m.Upgrade(fun, params, m.Vid(fun, stmt.X, mandatory, log), log)
+			switch m.AstMap[m.Package].TypesInfo.TypeOf(stmt.X).(type) {
+			case *types.Chan:
+
+			default:
+				params = m.Upgrade(fun, params, m.Vid(fun, stmt.X, mandatory, log), log)
+			}
 		case *ast.CallExpr: // m.Upgrade if the args of the function are mapped to a MP or OP
 			// check if the call has a chan as param by looking at func decl
 			switch ident := stmt.Fun.(type) {
@@ -417,7 +422,6 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 			// check if the goroutine has a chan as param by looking at func decl
 
 			for _, arg := range stmt.Call.Args {
-
 				typ := m.AstMap[m.Package].TypesInfo.TypeOf(arg)
 				switch typ := typ.(type) {
 				case *types.Chan:

@@ -16,16 +16,6 @@ type ForCounter struct { // used to create the labels to jump to for for select 
 	With_go bool // true if a go stmt was found inside
 }
 
-func (m *Model) supported() (supported bool) {
-	supported = true
-	for _, features := range m.Features {
-		if features.Info == "UNSUPPORTED" {
-			supported = false
-		}
-	}
-	return
-}
-
 func Print(m *Model) {
 
 	stmt := ""
@@ -93,7 +83,7 @@ func Print(m *Model) {
 		stmt += generateSyncChanMonitor() + GenerateEmptyChanMonitor() + GenerateFullChanMonitor() + GenerateNeitherChanMonitor() + GenerateClosedChanMonitor()
 	}
 
-	folder := "./results/" + filepath.Base(m.Project_name)
+	folder := "./" + m.Result_fodler + "/" + filepath.Base(m.Project_name)
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		os.Mkdir(folder, os.ModePerm)
 	}

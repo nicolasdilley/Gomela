@@ -24,6 +24,7 @@ var (
 )
 
 type Model struct {
+	Result_fodler   string // the name of the folder where the model need to ne printed
 	Project_name    string // the full name of  project (eg. "nicolasdilley/Gomela")
 	Package         string // the name of the package
 	Model           string // the name of the model
@@ -1008,13 +1009,26 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 	if err1 != nil {
 		err = err1
 	}
-	if m.containsChan(s.X) {
-		chan_struct := m.getChanStruct(s.X)
 
-		do_guard := promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}}
+	if m.containsChan(s.X) {
+		chan_name := m.getChanStruct(s.X)
+
+		do_guard := promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_name.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}}
 		if_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
-		if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_struct.Name.Name + ".in"}, Rhs: &promela_ast.Ident{Name: "0"}}}}}
+		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+		async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+		sync_guard := promela_ast.GuardStmt{
+			Cond: sync_rcv,
+			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+		}
+		i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
+		if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{i}}}
+
 		s1, err1 := m.TranslateBlockStmt(s.Body)
 
 		if err1 != nil {
@@ -1045,6 +1059,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
+
 			break_branch := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 			d.Guards = append(d.Guards,
 				promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt},
@@ -1655,18 +1670,25 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 					// }
 				} else {
-					// fmt.Print("users_translation.go : Func call not found : " + func_name + "\n Called at :")
-					// fmt.Println(m.Fileset.Position(call_expr.Fun.Pos()))
-
+					fmt.Print("check if one of the arg is a receive")
 					for _, arg := range call_expr.Args {
 						switch e := arg.(type) {
 						case *ast.UnaryExpr:
 							if e.Op == token.ARROW {
-								channel := m.getChanStruct(e.X)
-								if channel != nil {
-									chan_name := &channel.Name
+								if m.containsChan(e.X) {
+									chan_name := m.getChanStruct(e.X)
+									async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-									stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: promela_ast.Ident{Name: "in"}}, Rcv: m.Fileset.Position(e.X.Pos()), Rhs: &promela_ast.Ident{Name: "0"}})
+									sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+									async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+									sync_guard := promela_ast.GuardStmt{
+										Cond: sync_rcv,
+										Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+									}
+									i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
+									stmts.List = append(stmts.List, i)
 								}
 							}
 						}

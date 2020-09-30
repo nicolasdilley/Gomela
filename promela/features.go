@@ -19,12 +19,12 @@ type Feature struct {
 	Commit    string
 }
 
-func CreateCSV() {
+func CreateCSV(result_folder string) {
 	toPrint := "Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link,\n"
 
 	// Print CSV
 	d1 := []byte(toPrint)
-	filename := "./results/log.csv"
+	filename := "./" + result_folder + "/log.csv"
 	err := ioutil.WriteFile(filename, d1, 0644)
 
 	if err != nil {
@@ -43,7 +43,7 @@ func (m *Model) AddBound(feature Feature) {
 }
 
 func PrintFeatures(m *Model, features []Feature) {
-	f, err := os.OpenFile("./results/log.csv",
+	f, err := os.OpenFile("./"+m.Result_fodler+"/log.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)

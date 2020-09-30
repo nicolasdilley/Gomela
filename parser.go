@@ -11,7 +11,7 @@ import (
 )
 
 // takes a project name and infer promela models
-func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package, ver *VerificationInfo) {
+func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package, ver *VerificationInfo, result_folder string) {
 
 	if len(ast_map) == 0 {
 		fmt.Println("Program has no packages")
@@ -28,6 +28,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 					if !takeChanAsParam(decl) {
 
 						var m promela.Model = promela.Model{
+							Result_fodler: result_folder,
 							Project_name:  proj_name,
 							Package:       pack_name,
 							Model:         decl.Name.Name,
