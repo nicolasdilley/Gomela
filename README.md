@@ -13,7 +13,7 @@ program.
 ## Example
 
 In
-[parseFiles](https://github.com/nicolasdilley/gomela/blob/main/examples/parseFiles.go#L9),
+[parseFiles](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/parseFiles.go#L9),
 The length of ```files``` determines the length of the channel ```ch``` and the
 number of goroutines ```parseFiles``` that will be created during execution.
 However, ```files``` is not known at compile time. Therefore, Gomela will
