@@ -7,7 +7,6 @@ import (
 	"go/types"
 	"strconv"
 
-	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -111,10 +110,10 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.ChanType:
 						// definitely a new chan
 						if len(stmt.Args) > 1 {
-							arg, err1 := m.TranslateArgs(stmt.Args[1])
+							_, err1 := m.TranslateArgs(stmt.Args[1])
 							if err1 == nil {
 								if con, num := IsConst(stmt.Args[1], m.AstMap[m.Package]); !con {
-									m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: promela_ast.Ident{Name: arg.Print(0)}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+									params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 								} else {
 									stmt.Args[1] = &ast.BasicLit{Value: fmt.Sprint(num)}
 								}

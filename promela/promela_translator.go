@@ -1053,7 +1053,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
 
-		if m.spawns(s.Body, false) {
+		if m.spawns(s.Body, false) || ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: ub.Name}}) {
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
 		} else {
@@ -1668,7 +1668,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 					// }
 				} else {
-					fmt.Print("check if one of the arg is a receive")
 					for _, arg := range call_expr.Args {
 						switch e := arg.(type) {
 						case *ast.UnaryExpr:

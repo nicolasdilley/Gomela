@@ -1,50 +1,31 @@
 package main
 
-import "sync"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
-func FindAll() []P {
-	const concurrencyProcesses = 10 // limit the maximum number of concurrent reading process tasks
-	pss, err := ps.Processes()
-	if err != nil {
-		return nil
+func main() {
+	files := getFiles(os.Args[1])
+	ch := make(chan int, files)
+
+	for _, file := range files {
+		go parseFile(ch, file)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(pss))
-	found := make(chan P)
-	limitCh := make(chan struct{}, concurrencyProcesses)
-
-	for _, pr := range pss {
-		limitCh <- struct{}{}
-		pr := pr
-		go func() {
-			defer func() { <-limitCh }()
-			defer wg.Done()
-
-			path, version, agent, ok, err := isGo(pr)
-			if err != nil {
-				// TODO(jbd): Return a list of errors.
-			}
-			if !ok {
-				return
-			}
-			found <- P{
-				PID:          pr.Pid(),
-				PPID:         pr.PPid(),
-				Exec:         pr.Executable(),
-				Path:         path,
-				BuildVersion: version,
-				Agent:        agent,
-			}
-		}()
+	for range files {
+		<-ch
 	}
-	go func() {
-		wg.Wait()
-		close(found)
-	}()
-	var results []P
-	for p := range found {
-		results = append(results, p)
-	}
-	return results
+}
+
+func getFiles(folder string) []os.FileInfo {
+	files, err := ioutil.ReadDir(folder)
+
+	return files
+}
+
+func parseFile(ch chan int, file os.FileInfo) {
+	fmt.Println(file.Name())
+	ch <- 0
 }
