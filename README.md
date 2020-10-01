@@ -29,6 +29,7 @@ a function that is contained in the code from one of Go's tools, contains a
 global deadlock when the value of ```concurrencyProcesses``` is smaller than the
 value of ```pss```.
 
+## How to use
 To install and use Gomela, follow these steps:
 
 
