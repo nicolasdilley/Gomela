@@ -75,3 +75,153 @@ The features analysed in the survey are :
 * Pointer as a bound - A bound that is a pointer (eg, &a[0], &a)
 * Integer as a bound - A bound that is a constant or an Integer (eg, a -> const a := 10, 10)
 * Var as a bound - A bound that is a variable(eg, a -> a := 10)
+
+
+# Tutorial
+
+[FindAll](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L29)
+is a function that is found in an open source project called
+[gops](https://github.com/google/gops) which is a command line tool to diagnose
+Go processes. This function contains a bug only when a specific criteria is met.
+When the number of ```pss``` in the code is bigger than
+```concurrencyProcesses```, the send at line 42 will block when the capacity of
+the channel is reached causing a global deadlock.
+
+Gomela requires that the Go code that needs to be verified is placed in a folder
+in ```./source```. To verify this function, we will place the code from line 29
+- 74 in a folder called ```source\test``` and invoke ```./gomela```. Gomela will
+automatically generate the Promela model. The promela model generated can be
+found
+[here](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/findAll.pml)
+Gomela will generate a model for every function in the program that does not
+take a channel as a parameter.
+
+`// /Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go
+typedef Chandef {
+  chan sync = [0] of {int};
+  chan async_send = [0] of {int};
+  chan async_rcv = [0] of {int};
+  chan sending = [0] of {int};
+  chan closing = [0] of {bool};
+  chan is_closed = [0] of {bool};
+  int size = 0;
+  int num_msgs = 0;
+
+typedef Wgdef {
+  chan Add = [0] of {int};
+  chan Wait = [0] of {int};
+  int Counter = 0;}
+
+}
+`
+
+The first line shows the location of the original program.The ```typedef
+Chandef``` is the definition of the channel representation's Gomela uses to
+model Go's buffered and unbuffered channel. The ```typedef wg``` defines the
+structure that is used to model sync.WaitGroup in Promela.
+
+This is followed by the definition of the ```init``` process which contains
+the Promela translation of the body of the function ```FindAll```.
+
+`
+  Chandef found;
+  bool state = false;
+  int pss = 5;
+  Wgdef wg;
+  Chandef limitCh;
+  int i;
+`
+
+The ```Chandef``` declaration ```found``` and ```limitCh``` are the Promela
+channel that represent the Go channel found [here](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L38)
+and [here](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L39).
+
+The ```Wgdef``` declaration ```wg``` is the Promela WaitGroup that model the
+sync.WaitGroup initialiased [here](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L36)
+
+```state``` and ```i``` are place holder variables used to hold the value
+received from a channel and to uses as the index of for loops respectively.
+
+
+```
+  if
+  :: true ->
+    goto stop_process
+  :: true;
+  fi;
+```
+
+After that, the call ```ps.Processes()``` is ignored because it does not take a
+channel as a parameter. This means that it won't impact the communication of the
+model unless the call itself is blocking. In that case it is ok because the
+function will be verify seperatly if its definition is given.
+
+```if``` statements in Go are translated as a non-deterministic choice between
+the two branches. So in this case, from line 8 - 10 in the Go program, the
+```if``` statement is translated into a non-deterministic choice between
+returning and continuing with the rest of the function's body. the ```return```
+statement is translated as a ```goto``` statement which points to the end of the
+body of the function.
+
+```
+  run wgMonitor(wg);
+  wg.Add!pss;
+  run sync_monitor(found);
+
+  if
+  :: 10 > 0 ->
+    limitCh.size = 10;
+    run emptyChan(limitCh)
+  :: else ->
+    run sync_monitor(limitCh)
+  fi;
+```
+
+After that, the model spawns a monitor for the WaitGroup to monitor and manage
+the state of the sync.WaitGroup. The next line models the sync.Waitgroup.Add(x)
+which add x to the counter of the WaitGroup by sending that value over the
+channel Add. That value is then receive on line 104, added to the counter on
+line 105 and a check is done on line 106 to verify that the counter is not
+smaller that 0 using the ```assert``` statement in Promela.
+
+To monitor the states of the channels in Promela, we use different monitors
+which varies according to the number of messages that the channel contains, if
+the channel is closed or not and if it is synchronous or not.
+
+A ```sync_monitor``` is spawned to monitor the channel ```found```.
+```sync_monitor``` is used to monitor synchronous channel.
+
+This is followed by an ```if``` statement which spawns a monitor for an
+asynchronous channel if the size of the channel ```limitCh``` is bigger than 0
+or a synchronous channel if its not. Since the size of ```limitCh``` in the
+source code is a constant, the actual value of the constant is given.
+```emptyChan``` is used to monitor an empty asynchronous channel.
+
+```
+    for(i : 1.. pss) {
+for10:
+    if
+    :: limitCh.async_send!0;
+    :: limitCh.sync!0 ->
+      limitCh.sending?0
+    fi;
+    run Anonymous0(found,limitCh,wg)
+  };
+```
+
+Finally, the ```range``` statement which range over each element in ```pss```
+and spawns an anonymous function after sending to limitCh. Since the number of
+threads in a Promela model needs to be known at compile time, the value of
+```pss``` needs to be known. Therefore, ```pss``` is a communication parameter.
+To verify the model with a different value for ```pss```, change the value given
+at line 23.
+
+Send and receive statements are translated as a choice between sending or
+receiving on an async channel and on a sync channel. This is because as stated
+above the size of a channel affects which monitors will be assigned to it.
+Sending or receiving on both channel allows to account for both options.
+
+
+
+
+

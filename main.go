@@ -235,7 +235,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 						num_of_executable_models_in_project++
 					}
 
-					f, _ := os.OpenFile("./results/run.csv",
+					f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/run.csv",
 						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 					first_line := strings.Split(output.String(), "\n")[0]
 

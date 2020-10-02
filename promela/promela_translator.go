@@ -85,15 +85,6 @@ func (m *Model) GoToPromela() {
 		if commPar.Candidate {
 			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Types: promela_types.Int})
 		}
-		// else {
-		// 	commPar_decl := promela_ast.DefineStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Define: m.Fileset.Position(commPar.Name.Pos())}
-
-		// 	if !commPar.Mandatory {
-		// 		// Not given
-		// 		commPar_decl.Rhs = &promela_ast.Ident{Name: "-1"}
-		// 	}
-		// 	m.Defines = append(m.Defines, commPar_decl)
-		// }
 	}
 	m.Init.Body.List = append(m.Init.Body.List,
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "i"}, Types: promela_types.Int},

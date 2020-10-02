@@ -169,7 +169,6 @@ robertkrimen/otto
 coreos/clair
 rqlite/rqlite
 keybase/client
-dgrijalva/jwt-go
 go-chi/chi
 ponzu-cms/ponzu
 wallix/awless
