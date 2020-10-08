@@ -79,12 +79,11 @@ type ParseError struct {
 func (m *Model) GoToPromela() {
 	m.Name = m.Package + "_" + m.Fun.Name.String()
 	m.CommPars = m.AnalyseCommParam(m.Package, m.Fun, m.AstMap, true)
+
 	//. Create a global var for each
 	m.Init = &promela_ast.InitDef{Def: m.Fileset.Position(m.Fun.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	for _, commPar := range m.CommPars {
-		if commPar.Candidate {
-			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Types: promela_types.Int})
-		}
+		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Types: promela_types.Int})
 	}
 	m.Init.Body.List = append(m.Init.Body.List,
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
@@ -155,16 +154,17 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																// we have found a waitgroup that is a field
 
 																prom_wg_name := promela_ast.Ident{Name: translateIdent(l).Name + "_" + s.Field(i).Name(), Ident: m.Fileset.Position(l.Pos())}
+																if !m.containsWaitgroup(wg_name) {
+																	m.WaitGroups[wg_name] = &WaitGroupStruct{
+																		Name:    prom_wg_name,
+																		Wait:    m.Fileset.Position(l.Pos()),
+																		Counter: 0,
+																	}
 
-																m.WaitGroups[wg_name] = &WaitGroupStruct{
-																	Name:    prom_wg_name,
-																	Wait:    m.Fileset.Position(l.Pos()),
-																	Counter: 0,
+																	block_stmt.List = append(block_stmt.List,
+																		&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
+																		&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 																}
-																block_stmt.List = append(block_stmt.List,
-																	&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
-																	&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
-
 															} else {
 																m.AddFeature(Feature{
 																	Proj_name: m.Project_name,
@@ -282,15 +282,17 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 												for _, name := range stmt.Lhs {
 													if !m.For_counter.In_for {
 														prom_wg_name := promela_ast.Ident{Name: translateIdent(name).Name, Ident: m.Fileset.Position(name.Pos())}
-														m.WaitGroups[name] = &WaitGroupStruct{
-															Name:    prom_wg_name,
-															Wait:    m.Fileset.Position(stmt.Pos()),
-															Counter: 0,
-														}
+														if !m.containsWaitgroup(name) {
+															m.WaitGroups[name] = &WaitGroupStruct{
+																Name:    prom_wg_name,
+																Wait:    m.Fileset.Position(stmt.Pos()),
+																Counter: 0,
+															}
 
-														block_stmt.List = append(block_stmt.List,
-															&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
-															&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
+															block_stmt.List = append(block_stmt.List,
+																&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
+																&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
+														}
 													} else {
 														m.AddFeature(Feature{
 															Proj_name: m.Project_name,
@@ -365,16 +367,17 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 													if !m.For_counter.In_for {
 														for _, name := range spec.Names {
 															prom_wg_name := promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}
-															m.WaitGroups[name] = &WaitGroupStruct{
-																Name:    prom_wg_name,
-																Wait:    m.Fileset.Position(spec.Pos()),
-																Counter: 0,
+															if !m.containsWaitgroup(name) {
+																m.WaitGroups[name] = &WaitGroupStruct{
+																	Name:    prom_wg_name,
+																	Wait:    m.Fileset.Position(spec.Pos()),
+																	Counter: 0,
+																}
+
+																block_stmt.List = append(block_stmt.List,
+																	&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
+																	&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 															}
-
-															block_stmt.List = append(block_stmt.List,
-																&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
-																&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
-
 														}
 													} else {
 														m.AddFeature(Feature{
@@ -705,7 +708,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 												wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 												proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 												new_wgs[name] = wg
-
 												arg, err1 := m.TranslateArgs(call_expr.Args[counter])
 												if err1 != nil {
 													err = err1
@@ -729,7 +731,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 											wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 											proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 											new_wgs[name] = wg
-
 											arg, err1 := m.TranslateArgs(call_expr.Args[counter])
 											if err1 != nil {
 												err = err1
@@ -1133,39 +1134,39 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 			}
 			if comm.Comm != nil { // check if default select
 
-				switch com := comm.Comm.(type) {
-				case *ast.SendStmt: // send
-					if m.containsChan(com.Chan) {
-						chan_name := m.getChanStruct(com.Chan)
+				ast.Inspect(comm.Comm, func(com ast.Node) bool {
+					switch com := com.(type) {
+					case *ast.SendStmt: // send
+						if m.containsChan(com.Chan) {
+							chan_name := m.getChanStruct(com.Chan)
 
-						async_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_send"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+							async_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_send"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-						sync_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+							sync_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-						async_guard := promela_ast.GuardStmt{Cond: async_send, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)}
-						sending_chan := &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sending"}}
+							async_guard := promela_ast.GuardStmt{Cond: async_send, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)}
+							sending_chan := &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sending"}}
 
-						sync_guard := promela_ast.GuardStmt{
-							Cond: sync_send,
-							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-								&promela_ast.RcvStmt{
-									Chan: sending_chan,
-									Rhs:  &promela_ast.Ident{Name: "0"}}}},
-							Guard: m.Fileset.Position(s.Pos())}
+							sync_guard := promela_ast.GuardStmt{
+								Cond: sync_send,
+								Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+									&promela_ast.RcvStmt{
+										Chan: sending_chan,
+										Rhs:  &promela_ast.Ident{Name: "0"}}}},
+								Guard: m.Fileset.Position(s.Pos())}
 
-						sync_guard.Body.List = append(sync_guard.Body.List, body.List...)
+							sync_guard.Body.List = append(sync_guard.Body.List, body.List...)
 
-						sync_guard.Body = m.checkForBreak(*sync_guard.Body)
-						i.Guards = append(i.Guards, async_guard, sync_guard)
-					} else {
-						i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
-					}
-				case *ast.ExprStmt:
-					switch una := com.X.(type) {
+							sync_guard.Body = m.checkForBreak(*sync_guard.Body)
+							i.Guards = append(i.Guards, async_guard, sync_guard)
+						} else {
+							i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
+						}
+
 					case *ast.UnaryExpr: //receive
-						if una.Op == token.ARROW {
-							if m.containsChan(una.X) {
-								chan_name := m.getChanStruct(una.X)
+						if com.Op == token.ARROW {
+							if m.containsChan(com.X) {
+								chan_name := m.getChanStruct(com.X)
 								async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
 								sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
@@ -1181,8 +1182,10 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 								i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
 							}
 						}
+
 					}
-				}
+					return true
+				})
 
 			} else { // it is default
 				i.Has_default = true
@@ -1536,6 +1539,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 										if sel.Sel.Name == "WaitGroup" {
 											hasChan = true
 											wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
+
 											params = append(params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 											new_wg[name] = wg
 											if m.containsWaitgroup(call_expr.Args[x+y]) {

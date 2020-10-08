@@ -1,5 +1,5 @@
 
-// /Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go
+// /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef {
   chan sync = [0] of {int};
   chan async_send = [0] of {int};

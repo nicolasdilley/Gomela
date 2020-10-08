@@ -1,3 +1,9 @@
+- Explain how to install and run hello.
+- Find your first bug (FindAll)
+- Fix bug
+- General explaination of what we produce.
+
+
 # Gomela
 
 Gomela is a full-scale verification tool that verifies message passing
@@ -5,10 +11,81 @@ concurrency in Go programs. Gomela takes either the name of a Go's github
 project or a list of Go files as input and generates Promela models. These
 models are then fed to SPIN to verify that the models are free of global
 deadlocks. Gomela also offers the ability to the user to give bounds to the
-statically unknown communication-related parameters in the modelss to improve
+statically unknown communication-related parameters in the models to improve
 the accuracy of the verification. These parameters are the variables in the
 program that affects the number of goroutines or the size of channels in the Go
 program.
+
+# Installing
+(This tutorial is primarly intended at Linux/MacOs users)
+To use Gomela, there are two main requirement:
+
+The first one is Go, which can downloaded [here](https://golang.org/dl/).
+After running the installation, Go will be installed in your home folder.
+The second requirement is SPIN. The manual for installation on various OS
+can be found [here](http://spinroot.com/spin/Man/README.html#S2).
+
+To install Gomela you need to run to run a few commands in the terminal:
+* Run ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
+
+This will download the Gomela project and fetch all the dependencies and library
+that it needs to compile.
+
+You then need to compile it by running:
+* ```go build```
+
+This will generate an executable called ```gomela```. Now, we are ready to run
+Gomela.
+
+# Hello world example
+To start of we are going to verify a simple concurrent hello world example.
+
+Here is the code:
+
+`
+package test
+
+import "fmt"
+
+func main() {
+  ch := make(chan string) // creates a channel
+
+  go printHello(ch, "hello") // spawns a goroutine that will send 'hello' on ch
+
+  fmt.Println(<-ch) // prints what is received from ch
+
+  go printWorld(ch, "world ") // spawns a goroutine that will send 'world' on ch
+
+  fmt.Println(<-ch) // prints what is received from ch
+}
+
+func print(ch chan string, toSend string) {
+  ch <- toSend // send the value of toSend on ch
+}
+`
+
+To verify this example, create a file called "hello.go" and paste the code above
+in it. Place this file in a newly created folder that you place in ```./source
+```. The name of the folder does not matter as long as it is in the source
+folder of the Gomela folder which should located at
+```~/go/src/github.com/nicolasdilley/gomela```.
+
+When this steps is done, run ```./gomela -v``` which tells Gomela to generate
+promela models from the Go source and to verify them using SPIN.
+
+The output of the command line should tell you that there is no error. Meaning
+that no global deadlocks where found in the Go source files you have placed
+under a folder in the ```source``` folder.
+
+If we tweak the code to introduce a global deadlock by removing one or both of
+the receives on line 10 and 14 and rerun the command ```./gomela -v```. The
+output of the command line should tell you that a global deadlock was found in
+the model test_main.pml. This file is named from the concatenation of the name
+of the package and the name of the function being modelled. The extension of the
+file ```.pml``` is used to specify that it is a Promela file. In the code above,
+we have specified that the name of the package was test and the name of the
+function is main hence ```main_test.pml```.
+
 
 ## Example
 
@@ -29,54 +106,6 @@ a function that is contained in the code from one of Go's tools, contains a
 global deadlock when the value of ```concurrencyProcesses``` is smaller than the
 value of ```pss```.
 
-## How to use
-To install and use Gomela, follow these steps:
-
-
-* Run ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
-* Put in ```./source ``` the folders of the projects that you want Gomela to verify.
-* Run ```go build && ./gomela```
-
-To pass a default lower and upper bound for badly formed for loop (including infinite for loops)
-use the flags ```-lb=value``` and ```-ub=value``` to give a default ```value``` for the lower and upper bound respectively.
-
-To verify the benchmarks:
-
-* Run  ```git clone http://git.cs.kent.ac.uk/nicolasdilley/gomela && cd gomela && go install && go build```
-* Run  ```cp benchmarks/* source && ./gomela```
-
-To verify a list of projects:
-
-* Create a .txt file containing all the github projects that you want to verify with each project name (in the form "creator/project_name") on a seperate line. (see [projects.txt](https://www.github.com/nicolasdilley/Gomela/projects.txt))
-* Run ```./gomela -l projects.txt -r```
-* The results of the survey (log.html and log.csv) will be contained in ./results with a folder per project containing the Promela models.
-
-To verify a single github repository:
-
-* Run ```./gomela -s creator/project_name -r``` ig. ```./gomela -s nicolasdilley/Gomela -r``` will verify this project.
-* The result of the survey will be in ./result and the Promela models under ./results/project_name/\*.pml.
-
-
-The name of the Promela models are as follow: model_nameOfFuction.pml
-
-
-The features analysed in the survey are :
-
-* Chan in for - A channel created in a for loop
-* Go in for - A goroutine is spawned in a for loop
-* Comm Param - A function's parameter that is used as either a for loop bound or a channel bound
-* For loop not well formed - A for loop that is not well formed (nor infinite)
-* Func as a bound - A for loop has a function as a bound
-* Receive as a bound - A for loop has a receive as a bound
-* len() as a bound - A bound that is the length of a list
-* Struct as a bound - A bound that is of type Struct
-* Elem of a struct as a bound - A bound that is an element of a struct (eg, b.a)
-* Uses an item of a list as a bound - A bound that is an element of a list (eg, a[0])
-* Pointer as a bound - A bound that is a pointer (eg, &a[0], &a)
-* Integer as a bound - A bound that is a constant or an Integer (eg, a -> const a := 10, 10)
-* Var as a bound - A bound that is a variable(eg, a -> a := 10)
-
-
 # Tutorial
 
 [FindAll](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L29)
@@ -87,25 +116,40 @@ When the number of ```pss``` in the code is bigger than
 ```concurrencyProcesses```, the send at line 42 will block when the capacity of
 the channel is reached causing a global deadlock.
 
-Gomela requires that the Go code that needs to be verified is placed in a folder
-in ```./source```. To verify this function, we will place the code from line 29
-- 74 in a folder called ```source\test``` and invoke ```./gomela```. Gomela will
-automatically generate the Promela model. The promela model generated can be
+To verify this function, we will place the code from line 29 - 74 in a folder
+called ```source\test``` and invoke ```./gomela -v```. Gomela will automatically
+generate the Promela model and verify it. The promela model generated can be
 found
 [here](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/findAll.pml)
 Gomela will generate a model for every function in the program that does not
-take a channel as a parameter.
+take a channel as a parameter. In this case, there is only one function that
+does not take at least one channel as a parameter and its ```FindAll```. So only
+one model will be generated.
 
-`// /Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go
-typedef Chandef {
-  chan sync = [0] of {int};
-  chan async_send = [0] of {int};
-  chan async_rcv = [0] of {int};
-  chan sending = [0] of {int};
-  chan closing = [0] of {bool};
-  chan is_closed = [0] of {bool};
-  int size = 0;
-  int num_msgs = 0;
+As opposed to ```concurrencyProcesses```, the value of ```pss``` (defined at
+line 31) in the source code cannot be determined at compile time. As a result,
+Gomela gives ```pss``` a default value of 5 to make the model executable. In
+this particular example, the default value turns out to be less than
+```concurrencyProcesses``` and, therefore, SPIN reports that the model generated
+does not result in any global deadlocks. However, if we want to verify the model
+with a different value for ```pss```, we can specify to Gomela to give a
+different value to ```pss``` by passing a special flag. If we invoke Gomela,
+with this command ```./gomela -v -pss=11```. The value of pss will now be 11 and
+Gomela will reports that there is a global deadlock in the model.
+
+
+# Detailed explanations of the model generated.
+
+To understand how Gomela generates Promela models from Go code, here is
+an explaination of the model generated by Gomela when invoking ```./gomela```
+with the Go code from
+[FindAll](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L29).
+The Promela code can be found [here](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/findAll.pml)
+
+`// /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
+typedef Chandef { chan sync = [0] of {int}; chan async_send = [0] of {int}; chan
+async_rcv = [0] of {int}; chan sending = [0] of {int}; chan closing = [0] of
+{bool}; chan is_closed = [0] of {bool}; int size = 0; int num_msgs = 0;
 
 typedef Wgdef {
   chan Add = [0] of {int};
@@ -115,7 +159,7 @@ typedef Wgdef {
 }
 `
 
-The first line shows the location of the original program.The ```typedef
+The first line shows the location of the original Go program.The ```typedef
 Chandef``` is the definition of the channel representation's Gomela uses to
 model Go's buffered and unbuffered channel. The ```typedef wg``` defines the
 structure that is used to model sync.WaitGroup in Promela.
@@ -140,7 +184,7 @@ The ```Wgdef``` declaration ```wg``` is the Promela WaitGroup that model the
 sync.WaitGroup initialiased [here](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L36)
 
 ```state``` and ```i``` are place holder variables used to hold the value
-received from a channel and to uses as the index of for loops respectively.
+received from a channel and to uses as the index of ```for``` loops respectively.
 
 
 ```
@@ -221,7 +265,46 @@ receiving on an async channel and on a sync channel. This is because as stated
 above the size of a channel affects which monitors will be assigned to it.
 Sending or receiving on both channel allows to account for both options.
 
+The rest of the models is translated similarly to what has been explained above.
 
+
+# Further functionalities of Gomela
+
+To pass a default lower and upper bound for badly formed for loop (including infinite for loops)
+use the flags ```-lb=value``` and ```-ub=value``` to give a default ```value``` for the lower and upper bound respectively.
+
+To verify the benchmarks:
+
+* Run  ```git clone http://git.cs.kent.ac.uk/nicolasdilley/gomela && cd gomela && go install && go build```
+* Run  ```cp benchmarks/* source && ./gomela```
+
+To verify a list of projects:
+
+* Create a .txt file containing all the github projects that you want to verify with each project name (in the form "creator/project_name") on a seperate line. (see [projects.txt](https://www.github.com/nicolasdilley/Gomela/projects.txt))
+* Run ```./gomela -l projects.txt -r```
+* The results of the survey (log.html and log.csv) will be contained in ./results with a folder per project containing the Promela models.
+
+To verify a single github repository:
+
+* Run ```./gomela -s creator/project_name -r``` ig. ```./gomela -s nicolasdilley/Gomela -r``` will verify this project.
+* The result of the survey will be in ./result and the Promela models under ./results/project_name/\*.pml.
+
+
+The features analysed in the survey are :
+
+* Chan in for - A channel created in a for loop
+* Go in for - A goroutine is spawned in a for loop
+* Comm Param - A function's parameter that is used as either a for loop bound or a channel bound
+* For loop not well formed - A for loop that is not well formed (nor infinite)
+* Func as a bound - A for loop has a function as a bound
+* Receive as a bound - A for loop has a receive as a bound
+* len() as a bound - A bound that is the length of a list
+* Struct as a bound - A bound that is of type Struct
+* Elem of a struct as a bound - A bound that is an element of a struct (eg, b.a)
+* Uses an item of a list as a bound - A bound that is an element of a list (eg, a[0])
+* Pointer as a bound - A bound that is a pointer (eg, &a[0], &a)
+* Integer as a bound - A bound that is a constant or an Integer (eg, a -> const a := 10, 10)
+* Var as a bound - A bound that is a variable(eg, a -> a := 10)
 
 
 

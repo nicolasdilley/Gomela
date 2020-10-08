@@ -141,33 +141,37 @@ func parseProject(project_name string, ver *VerificationInfo) {
 
 	fmt.Println("Infering : " + project_name)
 
-	path_to_dir, commit_hash := CloneRepo(project_name)
+	path_to_dir, commit_hash, err := CloneRepo(project_name)
 
-	packages := []string{}
+	if err == nil {
+		packages := []string{}
 
-	err := filepath.Walk(path_to_dir, func(path string, info os.FileInfo, err error) error {
+		err = filepath.Walk(path_to_dir, func(path string, info os.FileInfo, err error) error {
 
-		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path_to_dir, err)
-			return err
-		}
-
-		if info.IsDir() {
-
-			if info.Name() != "vendor" {
-				packages = append(packages, "."+strings.TrimPrefix(path, path_to_dir))
-			} else {
-				return filepath.SkipDir
+			if err != nil {
+				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path_to_dir, err)
+				return err
 			}
-		}
-		return nil
-	})
 
-	inferProject(path_to_dir, project_name, commit_hash, packages, ver)
-	if err != nil {
-		fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
+			if info.IsDir() {
+
+				if info.Name() != "vendor" {
+					packages = append(packages, "."+strings.TrimPrefix(path, path_to_dir))
+				} else {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		})
+
+		inferProject(path_to_dir, project_name, commit_hash, packages, ver)
+		if err != nil {
+			fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
+		}
+		defer os.RemoveAll(path_to_dir) // clean up
+	} else {
+		fmt.Println("Could not download project ", project_name)
 	}
-	defer os.RemoveAll(path_to_dir) // clean up
 }
 
 func inferProject(path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {

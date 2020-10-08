@@ -7,3 +7,9 @@ Removed gobwas/ws problem while parsing the tree.
 compare use of waitgroup and make chan
 
 look for cmd uptime
+
+
+5309/ 6875 executable models.
+
+Interesting patterns found in https://github.com/perkeep/perkeep/blob/master/pkg/test/dockertest/docker.go#L114
+where channels are selected to see if they return any error.
