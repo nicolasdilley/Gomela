@@ -1,9 +1,3 @@
-- Explain how to install and run hello.
-- Find your first bug (FindAll)
-- Fix bug
-- General explaination of what we produce.
-
-
 # Gomela
 
 Gomela is a full-scale verification tool that verifies message passing
@@ -42,7 +36,7 @@ To start of we are going to verify a simple concurrent hello world example.
 
 Here is the code:
 
-`
+```
 package test
 
 import "fmt"
@@ -62,7 +56,7 @@ func main() {
 func print(ch chan string, toSend string) {
   ch <- toSend // send the value of toSend on ch
 }
-`
+```
 
 To verify this example, create a file called "hello.go" and paste the code above
 in it. Place this file in a newly created folder that you place in ```./source
@@ -146,7 +140,7 @@ with the Go code from
 [FindAll](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L29).
 The Promela code can be found [here](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/findAll.pml)
 
-`// /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
+```// /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef { chan sync = [0] of {int}; chan async_send = [0] of {int}; chan
 async_rcv = [0] of {int}; chan sending = [0] of {int}; chan closing = [0] of
 {bool}; chan is_closed = [0] of {bool}; int size = 0; int num_msgs = 0;
@@ -157,7 +151,7 @@ typedef Wgdef {
   int Counter = 0;}
 
 }
-`
+```
 
 The first line shows the location of the original Go program.The ```typedef
 Chandef``` is the definition of the channel representation's Gomela uses to
@@ -167,14 +161,14 @@ structure that is used to model sync.WaitGroup in Promela.
 This is followed by the definition of the ```init``` process which contains
 the Promela translation of the body of the function ```FindAll```.
 
-`
+```
   Chandef found;
   bool state = false;
   int pss = 5;
   Wgdef wg;
   Chandef limitCh;
   int i;
-`
+````
 
 The ```Chandef``` declaration ```found``` and ```limitCh``` are the Promela
 channel that represent the Go channel found [here](https://github.com/google/gops/blob/6fb0d860e5fa50629405d9e77e255cd32795967e/goprocess/gp.go#L38)
