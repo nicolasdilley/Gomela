@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	a := make(chan int)
+	a := make(chan int, unknown)
 
 	select {
 	case <-a:
