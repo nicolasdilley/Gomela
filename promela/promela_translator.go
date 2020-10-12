@@ -2265,7 +2265,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 
 // Takes a commPar and genrate a define stmt out of the name of the commPar and the function under analysis
 func (m *Model) GenerateDefine(commPar *CommPar) string {
-	name := m.Name + "_" + commPar.Name.Name
+	name := m.Fun.Name.Name + "_" + commPar.Name.Name
 	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: promela_ast.Ident{Name: name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
 
 	return name

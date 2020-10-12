@@ -1,4 +1,4 @@
-#define test_main_unknown  5
+#define main_unknown  5
 
 // /Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef {
@@ -17,7 +17,7 @@ typedef Chandef {
 init { 
 	Chandef a;
 	int i;
-	int unknown = test_main_unknown;
+	int unknown = main_unknown;
 	bool state = false;
 	
 	if
