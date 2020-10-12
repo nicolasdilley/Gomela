@@ -13,3 +13,7 @@ look for cmd uptime
 
 Interesting patterns found in https://github.com/perkeep/perkeep/blob/master/pkg/test/dockertest/docker.go#L114
 where channels are selected to see if they return any error.
+
+
+translate <-time.After translate to true branch
+name of function + name of variable.

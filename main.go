@@ -57,6 +57,7 @@ var (
 
 func main() {
 
+	// connecting to github to parse all git projects
 	// add timestamps to name of folder
 	t := time.Now().Local().Format("2006-01-02--15:04:05")
 	RESULTS_FOLDER += t

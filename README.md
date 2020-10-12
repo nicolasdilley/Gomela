@@ -46,11 +46,11 @@ import "fmt"
 func main() {
   ch := make(chan string) // creates a channel
 
-  go printHello(ch, "hello") // spawns a goroutine that will send 'hello' on ch
+  go print(ch, "hello") // spawns a goroutine that will send 'hello' on ch
 
   fmt.Println(<-ch) // prints what is received from ch
 
-  go printWorld(ch, "world ") // spawns a goroutine that will send 'world' on ch
+  go print(ch, "world ") // spawns a goroutine that will send 'world' on ch
 
   fmt.Println(<-ch) // prints what is received from ch
 }

@@ -1160,7 +1160,8 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 							sync_guard.Body = m.checkForBreak(*sync_guard.Body)
 							i.Guards = append(i.Guards, async_guard, sync_guard)
 						} else {
-							i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
+							// check if the channel is a time.After
+							err = &ParseError{err: errors.New("A send on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(com.Chan.Pos()).String() + " was found.")}
 						}
 
 					case *ast.UnaryExpr: //receive
@@ -1179,7 +1180,26 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 								}
 								i.Guards = append(i.Guards, async_guard, sync_guard)
 							} else {
-								i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
+
+								switch call := com.X.(type) {
+								case *ast.CallExpr:
+									switch sel := call.Fun.(type) {
+									case *ast.SelectorExpr:
+										switch ident := sel.X.(type) {
+										case *ast.Ident:
+											if ident.Name == "time" && sel.Sel.Name == "After" {
+												i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
+											}
+										default:
+											err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
+										}
+									default:
+										fmt.Println("ci1")
+										err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
+									}
+								default:
+									err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(call.Pos()).String() + " was found.")}
+								}
 							}
 						}
 

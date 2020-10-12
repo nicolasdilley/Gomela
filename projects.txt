@@ -169,7 +169,6 @@ robertkrimen/otto
 coreos/clair
 rqlite/rqlite
 keybase/client
-go-chi/chi
 ponzu-cms/ponzu
 wallix/awless
 google/git-appraise
