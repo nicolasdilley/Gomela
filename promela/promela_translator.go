@@ -83,7 +83,8 @@ func (m *Model) GoToPromela() {
 	//. Create a global var for each
 	m.Init = &promela_ast.InitDef{Def: m.Fileset.Position(m.Fun.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	for _, commPar := range m.CommPars {
-		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Types: promela_types.Int})
+		def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
 	}
 	m.Init.Body.List = append(m.Init.Body.List,
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
@@ -761,7 +762,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 					// Add the commparam to the param of the new proc
 					for _, commPar := range commPars {
 						if commPar.Candidate {
-							proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
+							name := m.GenerateDefine(commPar)
+							proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: name}, Types: promela_types.Int}}, proc.Body.List...)
 						} else {
 							// decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
 							// RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
@@ -2259,6 +2261,14 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 		return promela_ast.Ident{Name: ident.Print(0)}, nil
 	}
 	return promela_ast.Ident{Name: "null"}, err
+}
+
+// Takes a commPar and genrate a define stmt out of the name of the commPar and the function under analysis
+func (m *Model) GenerateDefine(commPar *CommPar) string {
+	name := m.Name + "_" + commPar.Name.Name
+	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: promela_ast.Ident{Name: name}})
+
+	return name
 }
 
 func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
