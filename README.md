@@ -13,6 +13,7 @@ program.
 # Installing
 
 (This tutorial is primarly intended at Linux/MacOs users)
+
 To use Gomela, there are two main requirement:
 
 The first one is Go, which can downloaded [here](https://golang.org/dl/).
@@ -39,7 +40,7 @@ To start of we are going to verify a simple concurrent hello world example.
 Here is the code:
 
 ```
-package test
+package main
 
 import "fmt"
 
@@ -61,9 +62,10 @@ func print(ch chan string, toSend string) {
 ```
 
 To verify this example, create a file called "hello.go" and paste the code above
-in it. Place this file in a newly created folder that you place in ```./source```.
-The name of the folder does not matter as long as it is in the source
-folder of the Gomela folder which should located at
+in it. Place this file in a newly created folder that you place in
+```./source``` by running ```mkdir source/test && mv hello.go source/test```.
+The name of the folder (```test``` in this case) does not matter as long as it
+is in the ```source``` folder of the Gomela folder which should located at
 ```~/go/src/github.com/nicolasdilley/gomela```.
 
 When this steps is done, run ```./gomela -v``` which tells Gomela to generate

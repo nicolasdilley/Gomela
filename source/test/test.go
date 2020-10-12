@@ -1,17 +1,9 @@
-package test
-
-import (
-	"fmt"
-	"time"
-)
+package main
 
 func main() {
-	a := make(chan int, unknown)
+  a := make(chan int)
 
-	select {
-	case <-a:
-		fmt.Println("A")
-	case <-time.After(1000):
-		fmt.Println("b")
-	}
+  for _, ch := range a {
+
+  }
 }

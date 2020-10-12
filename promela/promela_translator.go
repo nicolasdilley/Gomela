@@ -96,15 +96,28 @@ func (m *Model) GoToPromela() {
 
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
 
-		PrintFeatures(m, m.Features)
+
 
 		// generate the model only if it contains only supported features
 		if err == nil {
 			Print(m) // print the model
+
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
-			fmt.Println(err)
+			fmt.Println(err.err.Error())
+
+			m.AddFeature(Feature{
+										Proj_name: m.Project_name,
+										Fun:       m.Fun.Name.String(),
+										Name:      fmt.Sprintf(err.err.Error()),
+										Mandatory: "false",
+										Line:      0,
+										Commit:    m.Commit,
+										Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+									})
 		}
+
+		PrintFeatures(m, m.Features)
 	}
 
 }
@@ -1440,6 +1453,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 			channel := m.getChanStruct(expr.X)
 			if channel != nil {
+
 				chan_name := &channel.Name
 
 				if_stmt := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{}}
@@ -1453,6 +1467,8 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 				if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
 
 				stmts.List = append(stmts.List, if_stmt)
+			} else {
+				err = &ParseError{err: errors.New("A receive was found on a channel that could not be parsed : "+ m.Fileset.Position(expr.Pos()).String())}
 			}
 		}
 

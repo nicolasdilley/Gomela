@@ -17,3 +17,6 @@ where channels are selected to see if they return any error.
 
 translate <-time.After translate to true branch
 name of function + name of variable.
+
+
+Log when chnnale not found and their position to see what is their type

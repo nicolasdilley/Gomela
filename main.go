@@ -43,10 +43,11 @@ type VerificationRun struct {
 type VerificationInfo struct {
 	multi_projects *string
 	single_project *string
-	verify         *bool
-	run            *bool
-	lb             *int
-	ub             *int
+	// single_file    *string
+	verify *bool
+	run    *bool
+	lb     *int
+	ub     *int
 }
 
 var (
@@ -67,6 +68,7 @@ func main() {
 
 	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects to parse.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
+	// ver.single_file = flag.String("f", "", "a single file is given to parse.")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
 	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
 	ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
@@ -88,7 +90,7 @@ func main() {
 					return
 				}
 				proj_listings := strings.Split(string(data), "\n")
-				fmt.Println(len(proj_listings))
+				fmt.Println(len(proj_listings), " projects to parse")
 				for i, project_name := range proj_listings {
 					if i < len(proj_listings) {
 						parseProject(project_name, ver)
@@ -105,15 +107,27 @@ func main() {
 	} else if *ver.single_project != "" {
 		// parse project given
 		parseProject(*ver.single_project, ver)
+
 	} else {
 
 		files, e := ioutil.ReadDir(SOURCE_FOLDER)
 
 		if e != nil {
-			fmt.Printf("Could not open folder /source %q: %v\n", *ver.multi_projects, e)
+			fmt.Printf("Could not open folder /source : %v\n", e)
 			return
 		}
 
+		var dirs []os.FileInfo
+		for _, dir := range files {
+			if dir.IsDir() {
+				dirs = append(dirs, dir)
+			}
+		}
+
+		if len(dirs) == 0 {
+			fmt.Println("There is no project to parse inside ./source")
+			return
+		}
 		for _, dir := range files {
 			if dir.IsDir() {
 				fmt.Println("Infering : " + dir.Name())
@@ -188,32 +202,6 @@ func inferProject(path string, dir_name string, commit string, packages []string
 			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
 		}
 
-		if *ver.verify {
-			// verify each model
-			for _, model := range models {
-				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-					fmt.Println("Verifying model : " + model.Name())
-					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
-					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
-					var output bytes.Buffer
-
-					// Verify with SPIN
-					command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
-					command.Stdout = &output
-					command.Run()
-
-					parseResults(output.String(), &ver)
-
-					fmt.Println("-------------------------------")
-					fmt.Println("Result for " + model.Name())
-					fmt.Println("Number of states : ", ver.Num_states)
-					fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-					fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-					fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-					fmt.Println("-------------------------------")
-				}
-			}
-		}
 
 		// Have a way to give values to individual candidates and unknown parameter
 		if *ver.run {
@@ -252,6 +240,35 @@ func inferProject(path string, dir_name string, commit string, packages []string
 
 			fmt.Println(num_of_executable_models_in_project, "/", num_of_models_in_project, " executable model")
 		}
+		if *ver.verify {
+			// verify each model
+			for _, model := range models {
+				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
+					fmt.Println("Verifying model : " + model.Name())
+					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
+					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+					var output bytes.Buffer
+
+					// Verify with SPIN
+					command := exec.Command("spin", "-run", "-m1000000", "-w26", path, "-f")
+					command.Stdout = &output
+					command.Run()
+
+					executable := parseResults(output.String(), &ver)
+
+					if executable {
+					fmt.Println("-------------------------------")
+					fmt.Println("Result for " + model.Name())
+					fmt.Println("Number of states : ", ver.Num_states)
+					fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+					fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+					fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+					fmt.Println("-------------------------------")
+				}
+				}
+			}
+		}
+
 	} else {
 		fmt.Println("Error while parsing project")
 	}
@@ -269,7 +286,7 @@ func colorise(flag bool) string {
 	return green("false")
 }
 
-func parseResults(result string, ver *VerificationRun) {
+func parseResults(result string, ver *VerificationRun) bool {
 
 	if !strings.Contains(result, "assertion violated") {
 		ver.Safety_error = false
@@ -280,7 +297,14 @@ func parseResults(result string, ver *VerificationRun) {
 
 	// Calculates the number of states
 
+
 	splitted := strings.Split(result, "\n")
+
+	if strings.Contains(splitted[0], "error") && strings.Contains(splitted[0], "Error") {
+		fmt.Println("The model is not executable : ")
+		fmt.Println(splitted[0])
+		return false
+	}
 	for _, line := range splitted {
 		if strings.Contains(line, "states, stored") {
 
@@ -295,6 +319,8 @@ func parseResults(result string, ver *VerificationRun) {
 			ver.Num_states = states
 		}
 	}
+
+	return true
 }
 
 func tickIt(tick bool) string {
