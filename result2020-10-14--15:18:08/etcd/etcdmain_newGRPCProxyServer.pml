@@ -1,0 +1,53 @@
+#define lb_for380_0  -1
+#define ub_for380_1  -1
+
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example136822689/etcdmain/grpc_proxy.go
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
+
+
+
+init { 
+	Wgdef server_serveWG;
+	bool state = false;
+	int i;
+	
+	if
+	:: true -> 
+		do
+		:: true -> 
+for10:			
+			if
+			:: true -> 
+				break
+			:: true;
+			fi
+		od;
+for10_exit:
+	:: true;
+	fi;
+	run wgMonitor(server_serveWG);
+	goto stop_process
+stop_process:}
+
+proctype wgMonitor(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	do
+	:: wg.Add?i -> 
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 -> 
+end:		
+		if
+		:: wg.Add?i -> 
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+		fi
+	od;
+stop_process:
+}

@@ -16,7 +16,7 @@ import (
 
 var (
 	CHAN_NAME       = "_ch"
-	DEFAULT_BOUND   = "5"
+	DEFAULT_BOUND   = "60"
 	CHAN_BOUND      = 0
 	ADD_BOUND       = 1
 	LOWER_FOR_BOUND = 2
@@ -461,7 +461,6 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 		channel.Buffered = true
 		var size promela_ast.Ident
 		size, err = m.lookUp(args[1], CHAN_BOUND, false)
-
 		async_guard := promela_ast.GuardStmt{
 			Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
@@ -686,7 +685,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 			new_chans := make(map[ast.Expr]*ChanStruct)
 			new_wgs := make(map[ast.Expr]*WaitGroupStruct)
 
-			if !m.CallExists(func_name) {
+
 				proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 				proc.Params = []promela_ast.Param{}
 
@@ -783,6 +782,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
 						}
 					}
+
+					if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
 					m.Chans = new_chans
 					m.WaitGroups = new_wgs
 					m.Proctypes = append(m.Proctypes, proc)
@@ -797,6 +798,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 					m.WaitGroups = prev_wg
 					m.Package = prev_pack
 					m.CommPars = prev_comm
+				}
 					// need to reset Model because its used in m.TranslateArgs
 					for _, commPar := range commPars {
 						if !commPar.Candidate {
@@ -813,16 +815,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 					r := &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())}
 
 					b.List = append(b.List, r)
-				}
-
-				// need to reset Model
-
-				m.Fun = prev_decl
-				m.Chans = prev_chans
-				m.WaitGroups = prev_wg
-				m.Package = prev_pack
-				m.CommPars = prev_comm
-
 			}
 		} else {
 			fmt.Print("promela_translator.go : Func of go statement not found : " + func_name + "\n Called at :")
@@ -1555,8 +1547,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 		case *ast.FuncLit:
 			panic("Promela_translator.go : Should not have a funclit here")
 		}
-		if !m.ContainsRecFunc(pack_name, func_name) && !m.CallExists(func_name) {
 
+		if !m.ContainsRecFunc(pack_name, func_name) && !m.CallExists(func_name) {
 			if found, decl := FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 				hasChan := false
 				known := true                                      // Do we know all the channel that it might take as args ?? (if time.After() given as arg then we dont translate the call)
@@ -1700,27 +1692,29 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					m.Counter++
 
 					// }
-				} else {
-					for _, arg := range call_expr.Args {
-						switch e := arg.(type) {
-						case *ast.UnaryExpr:
-							if e.Op == token.ARROW {
-								if m.containsChan(e.X) {
-									chan_name := m.getChanStruct(e.X)
-									async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-									sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+					}
+				}
+				for _, arg := range call_expr.Args {
+					switch e := arg.(type) {
+					case *ast.UnaryExpr:
+						if e.Op == token.ARROW {
 
-									async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+							if m.containsChan(e.X) {
+								chan_name := m.getChanStruct(e.X)
+								async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-									sync_guard := promela_ast.GuardStmt{
-										Cond: sync_rcv,
-										Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
-									}
-									i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
-									stmts.List = append(stmts.List, i)
+								sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+								async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+								sync_guard := promela_ast.GuardStmt{
+									Cond: sync_rcv,
+									Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
 								}
-							}
+								i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
+								stmts.List = append(stmts.List, i)
+
 						}
 					}
 				}
@@ -2337,7 +2331,6 @@ func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {
 			}
 		}
 	}
-
 	return false, -1
 }
 

@@ -21,17 +21,16 @@ After running the installation, Go will be installed in your home folder.
 The second requirement is SPIN. The manual for installation on various OS
 can be found [here](http://spinroot.com/spin/Man/README.html#S2).
 
-To install Gomela you need to run to run a few commands in the terminal:
-* Run ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
+To install Gomela you need to run to run a few commands in the terminal by running :
+* ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
 
-This will download the Gomela project and fetch all the dependencies and library
-that it needs to compile.
+  * This downloads the Gomela project
+  * Fetchs all the dependencies and library that it needs to compile.
 
 You then need to compile it by running:
 * ```go build```
 
-This will generate an executable called ```gomela```. Now, we are ready to run
-Gomela.
+  * This command generates an executable called ```gomela```. Now, we are ready to run Gomela.
 
 # Hello world example
 
@@ -62,21 +61,19 @@ func print(ch chan string, toSend string) {
 ```
 
 To verify this example, create a file called "hello.go" and paste the code above
-in it. Place this file in a newly created folder that you place in
-```./source``` by running ```mkdir source/test && mv hello.go source/test```.
-The name of the folder (```test``` in this case) does not matter as long as it
-is in the ```source``` folder of the Gomela folder which should located at
-```~/go/src/github.com/nicolasdilley/gomela```.
+in it. Place this file in a newly created folder ```./source``` by running:
+* ```mkdir source && mv hello.go source```.
+  * The name of the folder (```source``` in this case) does not matter.
 
-When this steps is done, run ```./gomela -v``` which tells Gomela to generate
-promela models from the Go source and to verify them using SPIN.
+When this steps is done, to generate promela models from the Go source and to verify them using SPIN run :
+* ```./gomela ./source -v```
 
 The output of the command line should tell you that there is no error. Meaning
 that no global deadlocks where found in the Go source files you have placed
-under a folder in the ```source``` folder.
+under the ```source``` folder.
 
 If we tweak the code to introduce a global deadlock by removing one or both of
-the receives on line 10 and 14 and rerun the command ```./gomela -v```. The
+the receives on line 10 and 14 and rerun the command ```./gomela ./source -v```. The
 output of the command line should tell you that a global deadlock was found in
 the model test_main.pml. This file is named from the concatenation of the name
 of the package and the name of the function being modelled. The extension of the
@@ -108,7 +105,7 @@ When the number of ```pss``` in the code is bigger than
 the channel is reached causing a global deadlock.
 
 To verify this function, we will place the code from line 29 - 74 in a folder
-called ```source\test``` and invoke ```./gomela -v```. Gomela will automatically
+called ```source``` and invoke ```./gomela ./source -v```. Gomela will automatically
 generate the Promela model and verify it. The promela model generated can be
 found [here](https://github.com/nicolasdilley/Gomela/blob/rewrite/examples/findAll.pml) Gomela will generate a model for every function in the program that does not
 take a channel as a parameter. In this case, there is only one function that
@@ -153,8 +150,8 @@ typedef Wgdef {
 }
 ```
 
-The first line shows the location of the original Go program.The ```typedef
-Chandef``` is the definition of the channel representation's Gomela uses to model Go's buffered and unbuffered channel. The ```typedef wg``` defines the
+The first line shows the location of the original Go program.The ```typedef Chandef```
+is the definition of the channel representation's Gomela uses to model Go's buffered and unbuffered channel. The ```typedef wg``` defines the
 structure that is used to model sync.WaitGroup in Promela.
 
 This is followed by the definition of the ```init``` process which contains
