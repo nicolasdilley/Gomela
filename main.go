@@ -238,7 +238,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 					var output bytes.Buffer
 
 					// Verify with SPIN
-					command := exec.Command("timeout", "2", "spin", "-run","-DVECTORSZ=8200", "-m10000000", "-w26", path, "-f")
+					command := exec.Command("timeout", "120", "spin", "-run","-DVECTORSZ=4500", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
 					command.Run()
 
@@ -308,7 +308,7 @@ func parseResults(result string, ver *VerificationRun) bool {
 
 	splitted := strings.Split(result, "\n")
 
-	if strings.Contains(splitted[0], "error") && strings.Contains(splitted[0], "Error") {
+	if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
 		fmt.Println("The model is not executable : ")
 		fmt.Println(splitted[0])
 		ver.Err = splitted[0]

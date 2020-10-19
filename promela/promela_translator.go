@@ -16,7 +16,7 @@ import (
 
 var (
 	CHAN_NAME       = "_ch"
-	DEFAULT_BOUND   = "60"
+	DEFAULT_BOUND   = "5"
 	CHAN_BOUND      = 0
 	ADD_BOUND       = 1
 	LOWER_FOR_BOUND = 2

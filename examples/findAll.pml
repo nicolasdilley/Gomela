@@ -1,3 +1,7 @@
+#define pss 5
+#define num_processes 2
+#define found_size 2
+
 
 // /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef {
@@ -21,7 +25,6 @@ typedef Wgdef {
 init {
   Chandef found;
   bool state = false;
-  int pss = 5;
   Wgdef wg;
   Chandef limitCh;
   int i;
@@ -33,16 +36,24 @@ init {
   fi;
   run wgMonitor(wg);
   wg.Add!pss;
-  run sync_monitor(found);
+
+
+ if
+  :: found_size > 0 ->
+    found.size = found_size;
+    run emptyChan(found)
+  :: else ->
+    run sync_monitor(found)
+  fi;
 
   if
-  :: 10 > 0 ->
-    limitCh.size = 10;
+  :: num_processes > 0 ->
+    limitCh.size = num_processes;
     run emptyChan(limitCh)
   :: else ->
     run sync_monitor(limitCh)
   fi;
-    for(i : 1.. pss) {
+    for(i : 0.. pss-1) {
 for10:
     if
     :: limitCh.async_send!0;

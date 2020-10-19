@@ -1,0 +1,226 @@
+#define executeBulkSetRowAttrs_calls  60
+#define executeBulkSetRowAttrs_attrs  60
+#define executeBulkSetRowAttrs_m  60
+#define executeBulkSetRowAttrs_nodes  60
+
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example953798272/executor.go
+typedef Chandef {
+	chan sync = [0] of {int};
+	chan async_send = [0] of {int};
+	chan async_rcv = [0] of {int};
+	chan sending = [0] of {int};
+	chan closing = [0] of {bool};
+	chan is_closed = [0] of {bool};
+	int size = 0;
+	int num_msgs = 0;
+}
+
+
+
+init { 
+	Chandef resp;
+	int nodes = executeBulkSetRowAttrs_nodes;
+	int attrs = executeBulkSetRowAttrs_attrs;
+	bool state = false;
+	int calls = executeBulkSetRowAttrs_calls;
+	int m = executeBulkSetRowAttrs_m;
+	int i;
+		for(i : 1.. calls) {
+for10:		
+		if
+		:: true -> 
+			
+			if
+			:: true -> 
+				goto stop_process
+			:: true;
+			fi
+		:: true;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true -> 
+			
+			if
+			:: true -> 
+				goto stop_process
+			:: true;
+			fi
+		fi;
+		
+		if
+		:: true -> 
+						for(i : 1.. attrs) {
+for11:
+			}
+		:: true -> 
+						for(i : 1.. attrs) {
+for11:
+			}
+		fi
+	};
+		for(i : 1.. m) {
+for20:		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi
+	};
+	
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+	if
+	:: nodes > 0 -> 
+		resp.size = nodes;
+		run emptyChan(resp)
+	:: else -> 
+		run sync_monitor(resp)
+	fi;
+		for(i : 1.. nodes) {
+for30:		run Anonymous0(resp)
+	};
+		for(i : 1.. nodes) {
+for40:		
+		if
+		:: resp.async_rcv?0;
+		:: resp.sync?0;
+		fi;
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi
+	};
+	goto stop_process
+stop_process:}
+
+proctype Anonymous0(Chandef resp) {
+	bool closed; 
+	int i;
+	bool state;
+	
+	if
+	:: resp.async_send!0;
+	:: resp.sync!0 -> 
+		resp.sending?0
+	fi;
+stop_process:
+}
+proctype sync_monitor(Chandef ch) {
+end: if
+    :: ch.sending!false;
+      run sync_monitor(ch)
+    :: ch.closing?true ->
+      run closedChan(ch)
+    :: ch.is_closed!false ->
+      run sync_monitor(ch)
+    fi
+stop_process:
+}
+
+proctype emptyChan(Chandef ch) {
+end: if
+	 :: ch.async_send?0 -> // a message has been received
+    ch.num_msgs = ch.num_msgs + 1
+    if
+    :: ch.num_msgs == ch.size ->
+      run fullChan(ch)
+    :: else ->
+      run neitherChan(ch)
+    fi;
+  :: ch.closing?true -> // closing the channel
+    run closedChan(ch)
+  :: ch.is_closed!false ->
+    run emptyChan(ch) // sending channel is open 
+  :: ch.sending!false ->
+    run emptyChan(ch) // sending channel is open 
+fi;
+}
+
+proctype fullChan(Chandef ch) {
+end: if
+  :: ch.async_rcv!0 ->
+    ch.num_msgs = ch.num_msgs - 1
+    if
+    :: ch.num_msgs == 0 ->
+      run emptyChan(ch)
+    :: else ->
+      run neitherChan(ch)
+    fi;
+  :: ch.closing?true -> // closing the channel
+      run closedChan(ch)
+  :: ch.is_closed!false -> // sending channel is open 
+      run fullChan(ch)
+  :: ch.sending!false ->
+      run fullChan(ch)
+fi;
+}
+
+proctype neitherChan(Chandef ch) {
+end: if
+  :: ch.async_send?0->
+     ch.num_msgs = ch.num_msgs + 1
+     if
+     :: ch.num_msgs == ch.size ->
+        run fullChan(ch)
+     :: else ->
+        run neitherChan(ch)
+    fi;
+  :: ch.async_rcv!0
+     ch.num_msgs = ch.num_msgs - 1
+     if
+     :: ch.num_msgs == 0 ->
+      run emptyChan(ch)
+     :: else ->
+      run neitherChan(ch)
+     fi;
+  :: ch.closing?true -> // closing the channel
+      run closedChan(ch)
+  :: ch.is_closed!false ->  // sending channel is open
+     run neitherChan(ch)
+  :: ch.sending!false ->  // sending channel is open
+     run neitherChan(ch)
+fi;
+}
+
+proctype closedChan(Chandef ch) {
+end: if
+  :: ch.async_send?0-> // cannot send on closed channel
+    assert(false)
+  :: ch.closing?true -> // cannot close twice a channel
+    assert(false)
+  :: ch.is_closed!true -> // sending state of channel (closed)
+    run closedChan(ch)
+  :: ch.sending!true -> // sending state of channel (closed)
+    assert(false)
+  :: ch.sync!0 -> // can always receive on a closed chan
+    run closedChan(ch)
+  fi;
+}
+

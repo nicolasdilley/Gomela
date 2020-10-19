@@ -20,3 +20,54 @@ name of function + name of variable.
 
 
 Log when chnnale not found and their position to see what is their type
+
+
+test iwth bounds 0 -1 and rabdom
+
+
+check clusterinfo_GetLookupdTopics.pml
+
+read about fuzzing
+
+
+Automated Whitebox Fuzz Testing
+
+- Improve on blackbox fusing because it uses the grammar to improve coverage -
+When if(a == 10) then there is 2^32 chance that 'a' will have the value 10 - In
+whitebox they execute 'symbolically' the program with an input of 0 and look for
+all if cases and create constraints where they negate and solve the if
+statement. In this case, this results in a constraint of a != 10 which is solved
+by a = 10.
+- They also several improvement to reduce the search space.
+
+Testing
+
+FindAll when pss > 5 and currentProcesses > 5 much slower to verify. (Should use small values?)
+FindAll when pss == 5, currentProcesses == 2 and found_size == 2  quick to say there is an error.
+FindAll when pss == 5, currentProcesses == 3 and found_size == 2  much slower to verify. (Should use small values?)
+However when FindAll when pss == 3, currentProcesses == 2 and found_size == 1  quick to say there is no error.
+
+The slower speed might be because we spawn different monitor for each chan size ?
+
+
+---
+What to do with signal.Notify(sigtermChan, syscall.SIGTERM)
+Should we model it as a receive?
+---
+
+---
+worker := func() {
+    defer wg.Done()
+    partial := make([]float64, len(cache.Nodes))
+
+    // Consume the next node, update centrality
+    // parital to avoid unnecessary synchronizaton.
+    for node := range work {
+      betweennessCentrality(cache, node, partial)
+    }
+    partials <- partial
+  }
+
+
+  Should I had that we dont support this ??
+---

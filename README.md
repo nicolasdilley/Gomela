@@ -68,18 +68,41 @@ in it. Place this file in a newly created folder ```./source``` by running:
 When this steps is done, to generate promela models from the Go source and to verify them using SPIN run :
 * ```./gomela ./source -v```
 
-The output of the command line should tell you that there is no error. Meaning
-that no global deadlocks where found in the Go source files you have placed
-under the ```source``` folder.
+The output of the command line should be:
+```
+-------------------------------
+Result for main_main.pml
+Number of states :  29
+Time to verify model :  0  ms
+Channel safety error : false.
+Global deadlock : false.
+-------------------------------
+```
+
+This tells you that there is neither a safety or a global deadlock in the model.
+This also means that there are no safety errors or global deadlocks in the Go
+source file ```source/hello.go```.
 
 If we tweak the code to introduce a global deadlock by removing one or both of
-the receives on line 10 and 14 and rerun the command ```./gomela ./source -v```. The
-output of the command line should tell you that a global deadlock was found in
-the model test_main.pml. This file is named from the concatenation of the name
-of the package and the name of the function being modelled. The extension of the
-file ```.pml``` is used to specify that it is a Promela file. In the code above,
-we have specified that the name of the package was test and the name of the
-function is main hence ```main_test.pml```.
+the receives on line 10 and 14 and rerun the command ```./gomela ./source -v```.
+The output of the command line should be :
+
+```
+-------------------------------
+Result for main_main.pml
+Number of states :  9
+Time to verify model :  0  ms
+Channel safety error : false.
+Global deadlock : true.
+-------------------------------
+```
+
+This tells you that a global deadlock was found in the model main_main.pml. This
+file is named from the concatenation of the name of the package and the name of
+the function being modelled. The extension of the file ```.pml``` is used to
+specify that it is a Promela file. In the code above, we have specified that the
+name of the package was test and the name of the function is main hence
+```main_main.pml```.
 
 
 # Example

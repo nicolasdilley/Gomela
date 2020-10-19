@@ -1,0 +1,76 @@
+#define Gather_m_masterURLs  60
+#define Gather_m_slaveURLs  60
+
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example985353586/plugins/inputs/mesos/mesos.go
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
+
+
+
+init { 
+	int m_slaveURLs = Gather_m_slaveURLs;
+	Wgdef wg;
+	bool state = false;
+	int m_masterURLs = Gather_m_masterURLs;
+	int i;
+	
+	if
+	:: true -> 
+		
+		if
+		:: true -> 
+			goto stop_process
+		:: true;
+		fi
+	:: true;
+	fi;
+	run wgMonitor(wg);
+		for(i : 1.. m_masterURLs) {
+for10:		wg.Add!1;
+		run Anonymous0(wg)
+	};
+		for(i : 1.. m_slaveURLs) {
+for20:		wg.Add!1;
+		run Anonymous1(wg)
+	};
+	wg.Wait?0;
+	goto stop_process
+stop_process:}
+
+proctype Anonymous0(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	wg.Add!-1;
+	goto stop_process;
+stop_process:
+}
+proctype Anonymous1(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	wg.Add!-1;
+	goto stop_process;
+stop_process:
+}
+proctype wgMonitor(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	do
+	:: wg.Add?i -> 
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 -> 
+end:		
+		if
+		:: wg.Add?i -> 
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+		fi
+	od;
+stop_process:
+}

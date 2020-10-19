@@ -1,4 +1,4 @@
-
+#define files 1
 // /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef {
   chan sync = [0] of {int};
@@ -16,7 +16,6 @@ typedef Chandef {
 init {
   Chandef ch;
   int i;
-  int files = 5;
   bool state = false;
 
   if
