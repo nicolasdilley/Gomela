@@ -1023,6 +1023,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 }
 
 func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
@@ -1095,7 +1096,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "0"}, Ub: promela_ast.Ident{Name: ub.Name + "-1"}, Body: *block_stmt})
 		} else {
-
 			break_branch := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 			d.Guards = append(d.Guards,
 				promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: block_stmt},
@@ -1140,7 +1140,6 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 	for _, stmt := range s.Body.List {
 		switch stmt := stmt.(type) {
 		case *ast.CaseClause:
-
 			for _, e := range stmt.List {
 
 				expr, err1 := m.TranslateExpr(e)
@@ -1150,17 +1149,22 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 				}
 				addBlock(b, expr)
 			}
+			for _, stmt := range stmt.Body {
+				switch stmt := stmt.(type) {
+				case *ast.BlockStmt:
+					body, d2, err1 := m.TranslateBlockStmt(stmt)
 
-			body, d2, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: stmt.Body})
-			if len(d2.List) > 0 {
-				return b, d2, &ParseError{err: errors.New("Defer stmt in switch statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+					if len(d2.List) > 0 {
+						return b, d2, &ParseError{err: errors.New("Defer stmt in switch statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+					}
+					if err1 != nil {
+						err = err1
+					}
+					guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}
+					i.Guards = append(i.Guards, guard)
+				}
 			}
-			if err1 != nil {
-				err = err1
-			}
-			guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}
 
-			i.Guards = append(i.Guards, *guard)
 		default:
 			fmt.Println("Promela_translator.go: in a switch and its not a case clause or a default")
 		}
