@@ -8,7 +8,7 @@ import (
 
 func main() {
 	files := getFiles(os.Args[1])
-	ch := make(chan int, files)
+	ch := make(chan int, len(files))
 
 	for _, file := range files {
 		go parseFile(ch, file)

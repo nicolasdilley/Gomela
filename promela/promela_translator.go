@@ -819,7 +819,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					if err1 != nil {
 						err = err1
 					}
-					proc.Body = stmt
+					proc.Body.List = append(proc.Body.List, stmt.List...)
 					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 					proc.Body.List = append(proc.Body.List, d1.List...)
 					m.Fun = prev_decl

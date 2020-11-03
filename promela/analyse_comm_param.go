@@ -249,10 +249,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
-						// m.upgrade all params with its respective arguments
-						// give only the arguments that are either MP or OP
-						// first apply m.Vid to extract all variables of the arguments
-						params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log), log)
+						if !param.Candidate {
+							// m.upgrade all params with its respective arguments
+							// give only the arguments that are either MP or OP
+							// first apply m.Vid to extract all variables of the arguments
+							params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log), log)
+						}
 					}
 				}
 			}
