@@ -37,7 +37,6 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 	decl := &DeclStmt{Name: Ident{Name: "i"}, Types: promela_types.Int}
 	state := &DeclStmt{Name: Ident{Name: "state"}, Types: promela_types.Bool}
 	p.Body.List = append([]Stmt{decl, state}, p.Body.List...)
-	p.Body.List = append(p.Body.List, &LabelStmt{Name: "stop_process"})
 	stmt += ") {\n"
 	stmt += "\tbool closed; \n"
 	stmt += p.Body.Print(num_tabs + 1)

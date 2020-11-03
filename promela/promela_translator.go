@@ -16,7 +16,7 @@ import (
 
 var (
 	CHAN_NAME       = "_ch"
-	DEFAULT_BOUND   = "5"
+	DEFAULT_BOUND   = "??"
 	CHAN_BOUND      = 0
 	ADD_BOUND       = 1
 	LOWER_FOR_BOUND = 2
@@ -80,41 +80,49 @@ func (m *Model) GoToPromela() {
 	m.Name = m.Package + "_" + m.Fun.Name.String()
 	m.CommPars = m.AnalyseCommParam(m.Package, m.Fun, m.AstMap, true)
 
-	//. Create a global var for each
+	//. Create a define for each mandatory param
 	m.Init = &promela_ast.InitDef{Def: m.Fileset.Position(m.Fun.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 	for _, commPar := range m.CommPars {
-		def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
-		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
+		if commPar.Mandatory {
+			def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
+		} else {
+			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: "-1"}, Types: promela_types.Int})
+		}
 	}
+
 	m.Init.Body.List = append(m.Init.Body.List,
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
 		&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "state"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}})
-	s1, err := m.TranslateBlockStmt(m.Fun.Body)
+	s1, defers, err := m.TranslateBlockStmt(m.Fun.Body)
 
 	m.Init.Body.List = append(m.Init.Body.List,
 		s1.List...)
 
+	for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
+		defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
+	} // reverse defer stmts
+
+	m.Init.Body.List = append(m.Init.Body.List,
+		defers.List...)
+
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
-
-
-
 		// generate the model only if it contains only supported features
 		if err == nil {
 			Print(m) // print the model
-
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
 			fmt.Println(err.err.Error())
 
 			m.AddFeature(Feature{
-										Proj_name: m.Project_name,
-										Fun:       m.Fun.Name.String(),
-										Name:      fmt.Sprintf(err.err.Error()),
-										Mandatory: "false",
-										Line:      0,
-										Commit:    m.Commit,
-										Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-									})
+				Proj_name: m.Project_name,
+				Fun:       m.Fun.Name.String(),
+				Name:      fmt.Sprintf(err.err.Error()),
+				Mandatory: "false",
+				Line:      0,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+			})
 		}
 
 		PrintFeatures(m, m.Features)
@@ -123,10 +131,10 @@ func (m *Model) GoToPromela() {
 }
 
 // take a go block stmt and returns its promela counterpart
-func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.BlockStmt, defer_stmts *promela_ast.BlockStmt, err *ParseError) {
 
 	block_stmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	defer_stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defer_stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if b != nil {
 		block_stmt.Block = m.Fileset.Position(b.Pos())
 		for _, stmt := range b.List {
@@ -142,6 +150,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 					addBlock(defer_stmts, s1)
 				default:
 					var s1 *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+					var defers *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 					var err1 *ParseError
 					switch stmt := stmt.(type) {
 					case *ast.AssignStmt:
@@ -326,9 +335,9 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 								}
 							}
 						}
-						s1, err1 = m.translateAssignStmt(stmt)
-					case *ast.DeclStmt:
+						s1, defers, err1 = m.translateAssignStmt(stmt)
 
+					case *ast.DeclStmt:
 						switch decl := stmt.Decl.(type) {
 						case *ast.GenDecl:
 							for _, spec := range decl.Specs {
@@ -368,9 +377,13 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 											}
 										}
 									}
-
+									var expr ast.Expr = spec.Type
 									// check if its the declaration of a WG
 									switch sel := spec.Type.(type) {
+									case *ast.StarExpr:
+										expr = sel.X
+									}
+									switch sel := expr.(type) {
 									case *ast.SelectorExpr:
 										if sel.Sel.Name == "WaitGroup" {
 											switch sel := sel.X.(type) {
@@ -412,43 +425,43 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 								}
 							}
 						}
-						s1, err1 = m.translateDeclStmt(stmt)
-					case *ast.GoStmt:
-						s1, err1 = m.TranslateGoStmt(stmt)
-					case *ast.ExprStmt:
-						s1, err1 = m.translateExprStmt(stmt)
-					case *ast.ForStmt:
-						s1, err1 = m.translateForStmt(stmt)
+						s1, defers, err1 = m.translateDeclStmt(stmt)
 					case *ast.SendStmt:
-						s1, err1 = m.translateSendStmt(stmt)
-					case *ast.RangeStmt:
-						s1, err1 = m.translateRangeStmt(stmt)
+						s1, defers, err1 = m.translateSendStmt(stmt)
+					case *ast.GoStmt:
+						s1, defers, err1 = m.TranslateGoStmt(stmt)
 					case *ast.ReturnStmt:
-						s1, err1 = m.translateReturnStmt(stmt)
-					case *ast.SelectStmt:
-						s1, err1 = m.translateSelectStmt(stmt)
-					case *ast.SwitchStmt:
-						s1, err1 = m.translateSwitchStmt(stmt)
+						s1, defers, err1 = m.translateReturnStmt(stmt)
+					case *ast.ExprStmt:
+						s1, defers, err1 = m.translateExprStmt(stmt)
 					case *ast.LabeledStmt:
-						s1, err1 = m.translateLabeledStmt(stmt)
+						s1, defers, err1 = m.translateLabeledStmt(stmt)
+					case *ast.ForStmt:
+						s1, defers, err1 = m.translateForStmt(stmt)
+					case *ast.RangeStmt:
+						s1, defers, err1 = m.translateRangeStmt(stmt)
+					case *ast.SelectStmt:
+						s1, defers, err1 = m.translateSelectStmt(stmt)
+					case *ast.SwitchStmt:
+						s1, defers, err1 = m.translateSwitchStmt(stmt)
 					case *ast.BranchStmt:
-						s1, err1 = m.translateBranchStmt(stmt)
+						s1, defers, err1 = m.translateBranchStmt(stmt)
 					case *ast.IfStmt:
-						s1, err1 = m.translateIfStmt(stmt)
+						s1, defers, err1 = m.translateIfStmt(stmt)
 					}
 
 					if err1 != nil {
 						err = err1
 					} else {
 						addBlock(block_stmt, s1)
+						addBlock(defer_stmts, defers)
 					}
 				}
 			}
 		}
 	}
 
-	addBlock(block_stmt, defer_stmts)
-	return block_stmt, err
+	return block_stmt, defer_stmts, err
 }
 func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	prom_chan_name := translateIdent(go_chan_name)
@@ -479,17 +492,23 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 
 	return block_stmt, err
 }
-func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos())}
 
-	stmts, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
+	stmts, defer_stmts, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
 	if err1 != nil {
 		err = err1
 	}
 	addBlock(b, stmts)
+	addBlock(defers, defer_stmts)
 
-	body, err1 := m.TranslateBlockStmt(s.Body)
+	body, defer_stmts2, err1 := m.TranslateBlockStmt(s.Body)
+
+	if len(defer_stmts2.List) > 0 {
+		return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in then branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+	}
 	if err1 != nil {
 		err = err1
 	}
@@ -503,7 +522,10 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, err *P
 		stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 		switch els := s.Else.(type) {
 		case *ast.BlockStmt:
-			s1, err1 := m.TranslateBlockStmt(els)
+			s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
+			if len(defer_stmts3.List) > 0 {
+				return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in else branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			}
 			if err1 != nil {
 				err = err1
 			}
@@ -513,7 +535,10 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, err *P
 				i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
 			}
 		default:
-			s1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
+			s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
+			if len(defers.List) > 0 {
+				return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in else branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			}
 			if err1 != nil {
 				err = err1
 			}
@@ -530,12 +555,13 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, err *P
 	if contains {
 		b.List = append(b.List, i)
 	}
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	// Find the declaration of the call
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	var fun string       // The name of the function we are translating
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param + len(proctypes)
@@ -636,11 +662,13 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 
 		m.Chans = new_chans
 		m.WaitGroups = new_wgs
-		stmt, err1 := m.TranslateBlockStmt(name.Body)
+		stmt, defers, err1 := m.TranslateBlockStmt(name.Body)
 		if err1 != nil {
 			err = err1
 		}
 		proc.Body = stmt
+		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
+		proc.Body.List = append(proc.Body.List, defers.List...)
 		m.Chans = old_chans
 		m.WaitGroups = old_wgs
 		m.Proctypes = append(m.Proctypes, proc) // adding the new proc type to the list of proctype
@@ -685,55 +713,31 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 			new_chans := make(map[ast.Expr]*ChanStruct)
 			new_wgs := make(map[ast.Expr]*WaitGroupStruct)
 
+			proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+			proc.Params = []promela_ast.Param{}
 
-				proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-				proc.Params = []promela_ast.Param{}
+			counter := 0
+			for _, field := range decl.Type.Params.List {
+				for _, name := range field.Names {
+					switch sel := field.Type.(type) {
+					case *ast.ChanType:
+						hasChan = true
 
-				counter := 0
-				for _, field := range decl.Type.Params.List {
-					for _, name := range field.Names {
-						switch sel := field.Type.(type) {
-						case *ast.ChanType:
-							hasChan = true
+						if m.containsChan(call_expr.Args[counter]) {
+							proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
+							new_chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
 
-							if m.containsChan(call_expr.Args[counter]) {
-								proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
-								new_chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
-
-								arg, err1 := m.TranslateArgs(call_expr.Args[counter])
-								if err1 != nil {
-									err = err1
-								}
-								prom_call.Args = append(prom_call.Args, arg)
-								known = true
-							} else {
-								known = false
+							arg, err1 := m.TranslateArgs(call_expr.Args[counter])
+							if err1 != nil {
+								err = err1
 							}
-						case *ast.StarExpr:
-							switch sel := sel.X.(type) {
-							case *ast.SelectorExpr:
-								switch ident := sel.X.(type) {
-								case *ast.Ident:
-									if ident.Name == "sync" {
-										if sel.Sel.Name == "WaitGroup" {
-											hasChan = true
-											if m.containsWaitgroup(call_expr.Args[counter]) {
-												wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
-												proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
-												new_wgs[name] = wg
-												arg, err1 := m.TranslateArgs(call_expr.Args[counter])
-												if err1 != nil {
-													err = err1
-												}
-												prom_call.Args = append(prom_call.Args, arg)
-												known = true
-											} else {
-												known = false
-											}
-										}
-									}
-								}
-							}
+							prom_call.Args = append(prom_call.Args, arg)
+							known = true
+						} else {
+							known = false
+						}
+					case *ast.StarExpr:
+						switch sel := sel.X.(type) {
 						case *ast.SelectorExpr:
 							switch ident := sel.X.(type) {
 							case *ast.Ident:
@@ -756,65 +760,90 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 									}
 								}
 							}
-						default:
-							// the arg is not a channel therefore we include what it does before the call
-
-							stmt, err1 := m.TranslateExpr(call_expr.Args[counter])
-							if err1 != nil {
-								err = err1
-							}
-							addBlock(b, stmt)
 						}
+					case *ast.SelectorExpr:
+						switch ident := sel.X.(type) {
+						case *ast.Ident:
+							if ident.Name == "sync" {
+								if sel.Sel.Name == "WaitGroup" {
+									hasChan = true
+									if m.containsWaitgroup(call_expr.Args[counter]) {
+										wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
+										proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
+										new_wgs[name] = wg
+										arg, err1 := m.TranslateArgs(call_expr.Args[counter])
+										if err1 != nil {
+											err = err1
+										}
+										prom_call.Args = append(prom_call.Args, arg)
+										known = true
+									} else {
+										known = false
+									}
+								}
+							}
+						}
+					default:
+						// the arg is not a channel therefore we include what it does before the call
 
-						counter++
+						stmt, err1 := m.TranslateExpr(call_expr.Args[counter])
+						if err1 != nil {
+							err = err1
+						}
+						addBlock(b, stmt)
+					}
+
+					counter++
+				}
+			}
+
+			if hasChan && known {
+				// Add the commparam to the param of the new proc
+				for _, commPar := range commPars {
+					if commPar.Candidate {
+						name := m.GenerateDefine(commPar)
+						proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: name}, Types: promela_types.Int}}, proc.Body.List...)
+					} else {
+						// decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
+						// RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
+						proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
 					}
 				}
 
-				if hasChan && known {
-					// Add the commparam to the param of the new proc
-					for _, commPar := range commPars {
-						if commPar.Candidate {
-							name := m.GenerateDefine(commPar)
-							proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: name}, Types: promela_types.Int}}, proc.Body.List...)
-						} else {
-							// decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
-							// RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
-							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
-						}
-					}
-
-					if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
+				if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
 					m.Chans = new_chans
 					m.WaitGroups = new_wgs
 					m.Proctypes = append(m.Proctypes, proc)
-					stmt, err1 := m.TranslateBlockStmt(decl.Body)
+					stmt, d1, err1 := m.TranslateBlockStmt(decl.Body)
 
 					if err1 != nil {
 						err = err1
 					}
 					proc.Body = stmt
+					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
+					proc.Body.List = append(proc.Body.List, d1.List...)
 					m.Fun = prev_decl
 					m.Chans = prev_chans
 					m.WaitGroups = prev_wg
 					m.Package = prev_pack
 					m.CommPars = prev_comm
 				}
-					// need to reset Model because its used in m.TranslateArgs
-					for _, commPar := range commPars {
-						if !commPar.Candidate {
-							arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
-							if err1 != nil {
-								err = err1
-							}
-							prom_call.Args = append(prom_call.Args, arg)
+				// need to reset Model because its used in m.TranslateArgs
+				for _, commPar := range commPars {
+					if !commPar.Candidate {
+						arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
+						if err1 != nil {
+							err = err1
 						}
+						prom_call.Args = append(prom_call.Args, arg)
 					}
+				}
 
-					prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
+				prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
 
-					r := &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())}
+				r := &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())}
 
-					b.List = append(b.List, r)
+				b.List = append(b.List, r)
 			}
 		} else {
 			fmt.Print("promela_translator.go : Func of go statement not found : " + func_name + "\n Called at :")
@@ -850,11 +879,12 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, err *P
 		})
 	}
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, spec := range s.Rhs {
 
 		expr, err1 := m.TranslateExpr(spec)
@@ -865,11 +895,12 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 		addBlock(b, expr)
 	}
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
 	had_go := m.For_counter.With_go
@@ -891,14 +922,16 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, err 
 		err = err1
 	}
 	addBlock(b, cond) // translating the condition in case there is a <-a
-	init, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
+	init, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
 	if err1 != nil {
 		err = err1
 	}
 	addBlock(b, init)
+	addBlock(defers, d1)
 
-	post, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Post}})
+	post, d2, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Post}})
 	addBlock(b, post)
+	addBlock(defers, d2)
 
 	if err1 != nil {
 		err = err1
@@ -912,8 +945,10 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, err 
 		err = err1
 	}
 	// Translated body of for loop
-	stmts, err1 := m.TranslateBlockStmt(s.Body)
-
+	stmts, d3, err1 := m.TranslateBlockStmt(s.Body)
+	if len(d3.List) > 0 {
+		return b, d3, &ParseError{err: errors.New("Defer stmt in for statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+	}
 	if err1 != nil {
 		err = err1
 	}
@@ -984,11 +1019,12 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, err 
 		m.For_counter.With_go = true
 	}
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
 
 	had_go := m.For_counter.With_go
@@ -1028,13 +1064,14 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
 		if_not_closed_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{i}}}
 
-		s1, err1 := m.TranslateBlockStmt(s.Body)
-
+		s1, d1, err1 := m.TranslateBlockStmt(s.Body)
+		if len(d1.List) > 0 {
+			return b, d1, &ParseError{err: errors.New("Defer stmt in range statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+		}
 		if err1 != nil {
 			err = err1
 		}
 		if_not_closed_guard.Body.List = append(if_not_closed_guard.Body.List, s1.List...)
-
 		body := &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.CondStmt{Guards: []promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard}}}}
 		do_guard.Body = body
 		d.Guards = append(d.Guards, do_guard)
@@ -1043,7 +1080,10 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 	} else {
 
 		// change into (for i:=0; i < len(x);i++)
-		s1, err1 := m.TranslateBlockStmt(s.Body)
+		s1, d2, err1 := m.TranslateBlockStmt(s.Body)
+		if len(d2.List) > 0 {
+			return b, d2, &ParseError{err: errors.New("Defer stmt in range statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+		}
 		block_stmt := s1
 
 		if err1 != nil {
@@ -1051,10 +1091,9 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		}
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
-
 		if m.spawns(s.Body, false) || ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: ub.Name}}) {
 			// need to change the for loop into a bounded for loop
-			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "1"}, Ub: ub, Body: *block_stmt})
+			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "0"}, Ub: promela_ast.Ident{Name: ub.Name + "-1"}, Body: *block_stmt})
 		} else {
 
 			break_branch := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
@@ -1076,11 +1115,12 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		m.For_counter.With_go = true
 	}
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 	tag, err1 := m.TranslateExpr(s.Tag)
@@ -1089,11 +1129,13 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 	}
 	i.Init = tag
 
-	init, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
+	init, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
+
 	if err1 != nil {
 		err = err1
 	}
 	addBlock(i.Init, init)
+	addBlock(defers, d1)
 
 	for _, stmt := range s.Body.List {
 		switch stmt := stmt.(type) {
@@ -1109,8 +1151,10 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 				addBlock(b, expr)
 			}
 
-			body, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: stmt.Body})
-
+			body, d2, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: stmt.Body})
+			if len(d2.List) > 0 {
+				return b, d2, &ParseError{err: errors.New("Defer stmt in switch statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			}
 			if err1 != nil {
 				err = err1
 			}
@@ -1124,18 +1168,21 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 
 	b.List = append(b.List, i)
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos())}
 
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
-			body, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
-
+			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
+			if len(d1.List) > 0 {
+				return b, d1, &ParseError{err: errors.New("Defer stmt in select statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			}
 			if err1 != nil {
 				err = err1
 			}
@@ -1201,7 +1248,6 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 											err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
 										}
 									default:
-										fmt.Println("ci1")
 										err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
 									}
 								default:
@@ -1224,7 +1270,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 
 	b.List = append(b.List, i)
 
-	return b, err
+	return b, defers, err
 }
 
 // takes a promela body and add break if there are no breaks at the end or if there is
@@ -1243,8 +1289,9 @@ func (m *Model) checkForBreak(body promela_ast.BlockStmt) *promela_ast.BlockStmt
 	return &body
 }
 
-func (m *Model) translateExprStmt(s *ast.ExprStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateExprStmt(s *ast.ExprStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	expr, err1 := m.TranslateExpr(s.X)
 
@@ -1252,11 +1299,12 @@ func (m *Model) translateExprStmt(s *ast.ExprStmt) (b *promela_ast.BlockStmt, er
 		err = err1
 	}
 	addBlock(b, expr)
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	if m.containsChan(s.Chan) {
 		chan_name := m.getChanStruct(s.Chan)
@@ -1295,12 +1343,13 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 		b.List = append(b.List, if_stmt)
 	}
 
-	return b, err
+	return b, defers, err
 
 }
 
-func (m *Model) translateDeclStmt(s *ast.DeclStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateDeclStmt(s *ast.DeclStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	switch d := s.Decl.(type) {
 	case *ast.GenDecl:
 		for _, spec := range d.Specs {
@@ -1317,11 +1366,12 @@ func (m *Model) translateDeclStmt(s *ast.DeclStmt) (b *promela_ast.BlockStmt, er
 
 		}
 	}
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateReturnStmt(s *ast.ReturnStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateReturnStmt(s *ast.ReturnStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, spec := range s.Results {
 
 		expr, err1 := m.TranslateExpr(spec)
@@ -1335,11 +1385,12 @@ func (m *Model) translateReturnStmt(s *ast.ReturnStmt) (b *promela_ast.BlockStmt
 		&promela_ast.GotoStmt{
 			Goto:  m.Fileset.Position(s.Pos()),
 			Label: "stop_process"})
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateBranchStmt(s *ast.BranchStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateBranchStmt(s *ast.BranchStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	br := &promela_ast.GotoStmt{
 		Goto: m.Fileset.Position(s.Pos()),
 	}
@@ -1357,20 +1408,22 @@ func (m *Model) translateBranchStmt(s *ast.BranchStmt) (b *promela_ast.BlockStmt
 		b.List = append(b.List, br)
 	}
 
-	return b, err
+	return b, defers, err
 }
 
-func (m *Model) translateLabeledStmt(s *ast.LabeledStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateLabeledStmt(s *ast.LabeledStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	label := &promela_ast.LabelStmt{Label: m.Fileset.Position(s.Pos()), Name: s.Label.Name}
 
-	stmts, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Stmt}})
+	stmts, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Stmt}})
+	addBlock(defers, d1)
 	if err1 != nil {
 		err = err1
 	}
 	b.List = append(b.List, label, stmts)
 
-	return b, err
+	return b, defers, err
 }
 
 func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
@@ -1434,8 +1487,10 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 					new_block = RenameBlockStmt(new_block, []ast.Expr{name}, arg)
 				}
 			}
+			stmts, d1, err1 := m.TranslateBlockStmt(new_block)
 
-			return m.TranslateBlockStmt(new_block)
+			stmts.List = append(stmts.List, d1.List...)
+			return stmts, err1
 
 		}
 
@@ -1460,7 +1515,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 				stmts.List = append(stmts.List, if_stmt)
 			} else {
-				err = &ParseError{err: errors.New("A receive was found on a channel that could not be parsed : "+ m.Fileset.Position(expr.Pos()).String())}
+				err = &ParseError{err: errors.New("A receive was found on a channel that could not be parsed : " + m.Fileset.Position(expr.Pos()).String())}
 			}
 		}
 
@@ -1647,7 +1702,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					m.Fun = decl
 
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-
 					for _, commPar := range commPars {
 						if !commPar.Candidate {
 							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
@@ -1670,13 +1724,16 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 					m.Proctypes = append(m.Proctypes, proc)
 
-					s1, err1 := m.TranslateBlockStmt(decl.Body)
+					s1, d1, err1 := m.TranslateBlockStmt(decl.Body)
 
 					if err1 != nil {
 						err = err1
 					}
 
 					proc.Body.List = s1.List
+					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
+					proc.Body.List = append(proc.Body.List, d1.List...)
+
 					proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
 					m.Fun = &prev_decl
 					m.Chans = prev_chans
@@ -1693,27 +1750,54 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 					// }
 
-					}
 				}
-				for _, arg := range call_expr.Args {
-					switch e := arg.(type) {
-					case *ast.UnaryExpr:
-						if e.Op == token.ARROW {
+			} else {
 
-							if m.containsChan(e.X) {
-								chan_name := m.getChanStruct(e.X)
-								async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+				switch name := call_expr.Fun.(type) {
+				case *ast.SelectorExpr:
+					switch ident := name.X.(type) {
+					case *ast.Ident:
+						if ident.Name == "signal" {
+							if name.Sel.Name == "Notify" {
 
-								sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+								if ch := m.getChanStruct(call_expr.Args[0]); ch != nil {
+									// Send guard
+									send := &promela_ast.SendStmt{Chan: &ch.Name, Rhs: &promela_ast.Ident{Name: "0"}}
+									send_guard := promela_ast.GuardStmt{Cond: send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+									// true guard
+									true_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
-								async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+									select_stmt := &promela_ast.SelectStmt{Guards: []promela_ast.GuardStmt{send_guard, true_guard}, Select: m.Fileset.Position(name.Pos())}
 
-								sync_guard := promela_ast.GuardStmt{
-									Cond: sync_rcv,
-									Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+									stmts.List = append(stmts.List, select_stmt)
+								} else {
+									err = &ParseError{err: errors.New("There was a signal.Notify call on a channel that could not be found : " + m.Fileset.Position(name.Pos()).String())}
 								}
-								i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
-								stmts.List = append(stmts.List, i)
+							}
+						}
+					}
+
+				}
+			}
+			for _, arg := range call_expr.Args {
+				switch e := arg.(type) {
+				case *ast.UnaryExpr:
+					if e.Op == token.ARROW {
+
+						if m.containsChan(e.X) {
+							chan_name := m.getChanStruct(e.X)
+							async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+							sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+							async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+							sync_guard := promela_ast.GuardStmt{
+								Cond: sync_rcv,
+								Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+							}
+							i := &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{async_guard, sync_guard}}
+							stmts.List = append(stmts.List, i)
 
 						}
 					}

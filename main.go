@@ -8,14 +8,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/nicolasdilley/gomela/promela"
 )
-
 
 type ProjectResult struct {
 	Name             string            // the name of the project
@@ -30,12 +28,12 @@ type ProjectResult struct {
 }
 
 type VerificationRun struct {
-	Spin_timing      int  // time in milli to verify the program
-	Safety_error     bool // is there any safety errors
-	Global_deadlock  bool // is there any global deadlock
-	Partial_deadlock bool // is there any partial deadlock
-	Num_states       int  // the number of states in the model
-	Err       string  // if there is another error
+	Spin_timing      int    // time in milli to verify the program
+	Safety_error     bool   // is there any safety errors
+	Global_deadlock  bool   // is there any global deadlock
+	Partial_deadlock bool   // is there any partial deadlock
+	Num_states       int    // the number of states in the model
+	Err              string // if there is another error
 }
 
 type VerificationInfo struct {
@@ -74,6 +72,23 @@ func main() {
 	flag.Parse()
 
 	promela.CreateCSV(RESULTS_FOLDER)
+
+	if *ver.verify {
+		toPrint := "Model, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info,\n"
+
+		// Print CSV
+		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+		if err != nil {
+			fmt.Println("Could not create file verification.csv")
+			return
+		}
+		if _, err := f.WriteString(toPrint); err != nil {
+			panic(err)
+		}
+
+	}
 	if *ver.multi_projects != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
@@ -109,23 +124,23 @@ func main() {
 
 		path := os.Args[len(os.Args)-1]
 
-		_,err := ioutil.ReadDir(path)
+		_, err := ioutil.ReadDir(path)
 
 		if err != nil {
 			fmt.Println("please give a valid folder to parse.")
 		}
-				packages := []string{}
-				filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
-					if file.IsDir() {
-						if file.Name() != "vendor" && file.Name() != "third_party" {
-							packages = append(packages, path)
-						} else {
-							return filepath.SkipDir
-						}
-					}
-					return nil
-				})
-				inferProject(path, filepath.Base(path), "", packages, ver)
+		packages := []string{}
+		filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
+			if file.IsDir() {
+				if file.Name() != "vendor" && file.Name() != "third_party" {
+					packages = append(packages, path)
+				} else {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		})
+		inferProject(path, filepath.Base(path), "", packages, ver)
 
 	}
 
@@ -181,7 +196,6 @@ func inferProject(path string, dir_name string, commit string, packages []string
 			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
 		}
 
-
 		// Have a way to give values to individual candidates and unknown parameter
 		if *ver.run {
 
@@ -221,55 +235,8 @@ func inferProject(path string, dir_name string, commit string, packages []string
 		}
 		if *ver.verify {
 
-		toPrint := "Model, #states, Time (ms), Channel Safety Error, Global Deadlock, Error,\n"
+			VerifyModels(models, dir_name)
 
-		// Print CSV
-		f, err := os.OpenFile("./" + RESULTS_FOLDER + "/verification.csv",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if _,err := f.WriteString(toPrint); err != nil {
-			panic(err)
-		}
-			// verify each model
-			for _, model := range models {
-				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-					fmt.Println("Verifying model : " + model.Name())
-					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
-					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
-					var output bytes.Buffer
-
-					// Verify with SPIN
-					command := exec.Command("timeout", "120", "spin", "-run","-DVECTORSZ=4500", "-m10000000", "-w26", path, "-f")
-					command.Stdout = &output
-					command.Run()
-
-					if output.String() == ""{
-						toPrint = model.Name() + ",timeout,timeout,timeout,timeout,timeout,\n"
-					if _,err = f.WriteString(toPrint); err != nil {
-						panic(err)
-					}
-					} else {
-					executable := parseResults(output.String(), &ver)
-					if executable {
-					fmt.Println("-------------------------------")
-					fmt.Println("Result for " + model.Name())
-					fmt.Println("Number of states : ", ver.Num_states)
-					fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-					fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-					fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-					if ver.Err != "" {
-						red := color.New(color.FgRed).SprintFunc()
-						fmt.Printf("Error : %s.\n", red(ver.Err))
-					}
-					fmt.Println("-------------------------------")
-
-					toPrint = model.Name() + "," + fmt.Sprintf("%d",ver.Num_states) + "," + fmt.Sprintf("%d",ver.Spin_timing) + "," + fmt.Sprintf("%t",ver.Safety_error) + "," + fmt.Sprintf("%t",ver.Global_deadlock) + "," + ver.Err + ",\n"
-					if _,err = f.WriteString(toPrint); err != nil {
-						panic(err)
-					}
-				}
-				}
-				}
-			}
 		}
 
 	} else {
@@ -287,55 +254,4 @@ func colorise(flag bool) string {
 	}
 
 	return green("false")
-}
-
-func parseResults(result string, ver *VerificationRun) bool {
-
-	if !strings.Contains(result, "assertion violated") {
-		ver.Safety_error = false
-	}
-	if strings.Contains(result, "errors: 0") {
-		ver.Global_deadlock = false
-	}
-	if strings.Contains(result, "too many processes") {
-		ver.Err = "too many processes"
-		ver.Global_deadlock = false
-	}
-
-
-	// Calculates the number of states
-
-
-	splitted := strings.Split(result, "\n")
-
-	if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
-		fmt.Println("The model is not executable : ")
-		fmt.Println(splitted[0])
-		ver.Err = splitted[0]
-		return false
-	}
-	for _, line := range splitted {
-		if strings.Contains(line, "states, stored") {
-
-			lines := strings.Split(line, "states, stored")
-			r := strings.Replace(lines[0], " ", "", -1)
-
-			states, err := strconv.Atoi(r)
-			if err != nil {
-				fmt.Println("There was an error in parsing the number of states : ", r)
-			}
-
-			ver.Num_states = states
-		}
-	}
-
-	return true
-}
-
-func tickIt(tick bool) string {
-	if !tick {
-		return "\\cmark"
-	} else {
-		return "\\xmark"
-	}
 }

@@ -126,9 +126,30 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			for _, arg := range stmt.Args {
 				typ := ast_map[m.Package].TypesInfo.TypeOf(arg)
 
-				switch typ.(type) {
+				switch typ := typ.(type) {
 				case *types.Chan:
 					contains_chan = true
+				case *types.Pointer:
+					switch s := typ.Elem().(type) {
+					case *types.Named:
+						switch s := s.Underlying().(type) {
+						case *types.Struct:
+							for i := 0; i < s.NumFields(); i++ {
+								switch field := s.Field(i).Type().(type) {
+								case *types.Named:
+									if field.Obj() != nil {
+										if field.Obj().Pkg() != nil {
+											if field.Obj().Pkg().Name() == "sync" {
+												if field.Obj().Name() == "WaitGroup" {
+													contains_chan = true
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			fun_name := ""
@@ -203,15 +224,28 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			if found {
 				for _, param := range fun_decl.Type.Params.List {
-					switch param.Type.(type) {
+					switch typ := param.Type.(type) {
 					case *ast.ChanType:
 						contains_chan = true
+					case *ast.StarExpr:
+						switch sel := typ.X.(type) {
+						case *ast.SelectorExpr:
+							if sel.Sel.Name == "WaitGroup" {
+								switch sel := sel.X.(type) {
+								case *ast.Ident:
+									if sel.Name == "sync" {
+										contains_chan = true
+									}
+								}
+							}
+						}
 					}
 				}
 
 				if contains_chan && !m.ContainsRecFunc(pack, fun) {
 					m.AddRecFunc(pack, fun)
 					// look inter procedurally
+
 					params_1 := m.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
@@ -247,6 +281,7 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 				}
 			}
 			if !inCommPar { // if its not in the list of commPar yet add it.
+
 				commPars = append(commPars, param)
 			}
 		} else {

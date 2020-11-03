@@ -22,7 +22,7 @@ name of function + name of variable.
 Log when chnnale not found and their position to see what is their type
 
 
-test iwth bounds 0 -1 and rabdom
+test iwth bounds 0 -1 and random
 
 
 check clusterinfo_GetLookupdTopics.pml
@@ -40,6 +40,8 @@ statement. In this case, this results in a constraint of a != 10 which is solved
 by a = 10.
 - They also several improvement to reduce the search space.
 
+- They say that the`y report and continue when they find a divergence (the model doesnt reflect the code
+precisely)
 Testing
 
 FindAll when pss > 5 and currentProcesses > 5 much slower to verify. (Should use small values?)
@@ -49,11 +51,10 @@ However when FindAll when pss == 3, currentProcesses == 2 and found_size == 1  q
 
 The slower speed might be because we spawn different monitor for each chan size ?
 
+---
+Modelling signal.Notify as a select
+---
 
----
-What to do with signal.Notify(sigtermChan, syscall.SIGTERM)
-Should we model it as a receive?
----
 
 ---
 worker := func() {
@@ -66,8 +67,42 @@ worker := func() {
       betweennessCentrality(cache, node, partial)
     }
     partials <- partial
-  }
+}
 
-
-  Should I had that we dont support this ??
+  Should I had that we dont support this ?? Yes
 ---
+check thqt findall doesnt report an error when returning.
+
+
+Read :
+https://dl.acm.org/doi/abs/10.1145/1375581.1375607
+https://static.usenix.org/events/osdi08/tech/full_papers/cadar/cadar.pdf
+
+implement signals.
+try all values from 0 to 3
+
+Plan the PLAS talks
+reports which values triggered the bug.
+
+
+
+
+how we use previous but how we improve
+
+
+
+Abort if defer with chan or wg
+
+
+
+If defer in if or for etc abort and report it otherwise.
+Use a stack for defer stmts.
+
+Reqd paper at ISSTA and check the structure and evaluation.
+
+
+When channel is full, shouldnt allow sync channel to send ??
+
+https://github.com/vitessio/vitess/blob/master/go/vt/orchestrator/app/cli.go#L157 way too complex
+
+Talk about Gopherlyzer paper snippet

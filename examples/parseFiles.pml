@@ -1,4 +1,4 @@
-#define files 1
+#define files 10
 // /Users/***/go/src/github.com/nicolasdilley/gomela/source/test/test.go
 typedef Chandef {
   chan sync = [0] of {int};
