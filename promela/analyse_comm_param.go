@@ -185,27 +185,32 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			// if !m.ContainsRecFunc(fun_pack, fun_name) {
 			found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
-			m.AddRecFunc(fun_pack, fun_name)
-			if contains_chan && found {
-				// look inter procedurally
-				prev := m.Fun
-				m.Fun = fun_decl
-				prev_params := m.CommPars
-				m.CommPars = []*CommPar{}
-				params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
-				m.CommPars = prev_params
-				m.Fun = prev
-				for _, param := range params_1 {
-					// m.upgrade all params with its respective arguments
-					// give only the arguments that are either MP or OP
-					// first apply m.Vid to extract all variables of the arguments
-					if !param.Candidate {
-						params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[param.Pos], param.Mandatory, log), log)
+
+			if !m.ContainsRecFunc(fun_pack, fun_name) {
+
+				m.AddRecFunc(fun_pack, fun_name)
+
+				if contains_chan && found {
+					// look inter procedurally
+					prev := m.Fun
+					m.Fun = fun_decl
+					prev_params := m.CommPars
+					m.CommPars = []*CommPar{}
+					params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
+					m.CommPars = prev_params
+					m.RecFuncs = []RecFunc{}
+					m.Fun = prev
+					for _, param := range params_1 {
+						// m.upgrade all params with its respective arguments
+						// give only the arguments that are either MP or OP
+						// first apply m.Vid to extract all variables of the arguments
+						if !param.Candidate {
+							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[param.Pos], param.Mandatory, log), log)
+						}
 					}
+					// }
 				}
-				// }
 			}
-			// }a
 		case *ast.GoStmt: // m.Upgrade if the args of the function are mapped to a MP or OP
 			fun := ""
 			// check if the call has a chan as param by looking at func decl
