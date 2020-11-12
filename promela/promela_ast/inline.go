@@ -2,8 +2,6 @@ package promela_ast
 
 import (
 	"go/token"
-
-	"github.com/nicolasdilley/gomela/promela/utils"
 )
 
 type Inline struct {
@@ -29,7 +27,6 @@ func (p *Inline) Print(num_tabs int) (stmt string) {
 	}
 	stmt += ") {\n"
 	stmt += p.Body.Print(num_tabs + 1)
-	stmt += "\n " + utils.GetTabs(num_tabs+1) + "stop_process:"
 	stmt += "\n}\n"
 
 	return

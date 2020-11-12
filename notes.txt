@@ -100,9 +100,8 @@ Use a stack for defer stmts.
 
 Reqd paper at ISSTA and check the structure and evaluation.
 
-
-When channel is full, shouldnt allow sync channel to send ??
-
 https://github.com/vitessio/vitess/blob/master/go/vt/orchestrator/app/cli.go#L157 way too complex
 
 Talk about Gopherlyzer paper snippet
+
+Listening to Julius talk, could we apply Symbolic Execution to remove the overapproximation of if

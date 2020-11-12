@@ -8,20 +8,14 @@ import (
 )
 
 func main() {
-	files := getFiles(os.Args[1])
+	files := ioutil.ReadDir(folder)
 	var wg *sync.WaitGroup
 
-	wg.Add(len(files))
 	for _, file := range files {
-		go parseFile(ch, file)
+		wg.Add(1)
+		go parseFile(wg, file)
 	}
 	wg.Wait()
-}
-
-func getFiles(folder string) []os.FileInfo {
-	files, err := ioutil.ReadDir(folder)
-
-	return files
 }
 
 func parseFile(wg *sync.WaitGroup, file os.FileInfo) {

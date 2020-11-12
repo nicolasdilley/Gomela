@@ -2,30 +2,23 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
 func main() {
-	files := getFiles(os.Args[1])
-	ch := make(chan int, len(files))
+	files := getFiles()
+	ch := make(chan string, len(files))
 
-	for _, file := range files {
-		go parseFile(ch, file)
+	for i := 0; i < len(files); i++ {
+		go readFile(ch, file)
 	}
 
-	for range files {
-		<-ch
+	for i := 0; i < len(files); i++ {
+		file_content := <-ch
+		fmt.Println(file_content)
 	}
 }
 
-func getFiles(folder string) []os.FileInfo {
-	files, err := ioutil.ReadDir(folder)
-
-	return files
-}
-
-func parseFile(ch chan int, file os.FileInfo) {
-	fmt.Println(file.Name())
-	ch <- 0
+func readFile(ch chan string, file os.FileInfo) {
+	ch <- parseFile(file)
 }

@@ -112,11 +112,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						if len(stmt.Args) > 1 {
 							_, err1 := m.TranslateArgs(stmt.Args[1])
 							if err1 == nil {
-								if con, num := IsConst(stmt.Args[1], m.AstMap[m.Package]); !con {
-									params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
-								} else {
-									stmt.Args[1] = &ast.BasicLit{Value: fmt.Sprint(num)}
-								}
+								params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 							}
 						}
 					}
@@ -187,25 +183,27 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// 		}
 			// 	}
 
-			if !m.ContainsRecFunc(fun_pack, fun_name) {
-				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
-				m.AddRecFunc(fun_pack, fun_name)
-				if contains_chan && found {
-					// look inter procedurally
-					prev := m.Fun
-					m.Fun = fun_decl
-					params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
-					m.Fun = prev
-
-					for _, param := range params_1 {
-						// m.upgrade all params with its respective arguments
-						// give only the arguments that are either MP or OP
-						// first apply m.Vid to extract all variables of the arguments
-						if contains, _ := containsArgs(fun_decl.Type.Params.List, param); contains {
-							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[param.Pos], param.Mandatory, log), log)
-						}
+			// if !m.ContainsRecFunc(fun_pack, fun_name) {
+			found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
+			m.AddRecFunc(fun_pack, fun_name)
+			if contains_chan && found {
+				// look inter procedurally
+				prev := m.Fun
+				m.Fun = fun_decl
+				prev_params := m.CommPars
+				m.CommPars = []*CommPar{}
+				params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
+				m.CommPars = prev_params
+				m.Fun = prev
+				for _, param := range params_1 {
+					// m.upgrade all params with its respective arguments
+					// give only the arguments that are either MP or OP
+					// first apply m.Vid to extract all variables of the arguments
+					if !param.Candidate {
+						params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[param.Pos], param.Mandatory, log), log)
 					}
 				}
+				// }
 			}
 			// }a
 		case *ast.GoStmt: // m.Upgrade if the args of the function are mapped to a MP or OP
@@ -288,8 +286,12 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 			}
 		} else {
 			arg.Candidate = true
-			if !ContainsCommParam(commPars, arg) {
+			if found, param := ContainsCommParam(commPars, arg); !found {
 				commPars = append(commPars, arg)
+			} else {
+				if arg.Mandatory {
+					param.Mandatory = true
+				}
 			}
 		}
 	}
@@ -310,19 +312,21 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 }
 
 // Check if the arg is contained in the list params. Returns if it is and the commPar if it is
-func ContainsCommParam(commPars []*CommPar, commPar *CommPar) bool {
+func ContainsCommParam(commPars []*CommPar, commPar *CommPar) (found bool, p *CommPar) {
 	for _, param := range commPars {
 		if param.Name.Name == commPar.Name.Name {
-			return true
+			return true, param
 		}
 
 	}
-	return false
+	return false, nil
 }
 
 func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) []*CommPar {
 	params := []*CommPar{}
-
+	if con, _ := IsConst(expr, m.AstMap[m.Package]); con {
+		return params
+	}
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr}}, log)
@@ -341,10 +345,17 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			return true
 		})
 	case *ast.CallExpr:
-		for _, arg := range expr.Args {
-			params = m.Upgrade(fun, params, m.Vid(fun, arg, mandatory, log), log)
+		switch ident := expr.Fun.(type) {
+		case *ast.Ident:
+			if ident.Name == "len" {
+				if len(expr.Args) > 0 {
+					params = m.Upgrade(fun, params, m.Vid(fun, expr.Args[0], mandatory, log), log)
+					return params
+				}
+			}
 		}
-
+		name := &ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), NamePos: expr.Pos()}
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: name}}, log)
 	case *ast.BinaryExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log), log)

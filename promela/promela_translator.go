@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"github.com/nicolasdilley/gomela/promela/promela_types"
@@ -17,6 +18,7 @@ import (
 var (
 	CHAN_NAME       = "_ch"
 	DEFAULT_BOUND   = "??"
+	OPTIONAL_BOUND  = "-2"
 	CHAN_BOUND      = 0
 	ADD_BOUND       = 1
 	LOWER_FOR_BOUND = 2
@@ -87,7 +89,7 @@ func (m *Model) GoToPromela() {
 			def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
 			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
 		} else {
-			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: "-1"}, Types: promela_types.Int})
+			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
 		}
 	}
 
@@ -701,10 +703,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			known := false
 			func_name = "go_" + func_name
 
-			commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-
 			prev_comm := m.CommPars
-			m.CommPars = commPars
+
 			prev_decl := m.Fun
 			m.Fun = decl
 			prev_wg := m.WaitGroups
@@ -712,7 +712,10 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			prev_pack := m.Package
 			new_chans := make(map[ast.Expr]*ChanStruct)
 			new_wgs := make(map[ast.Expr]*WaitGroupStruct)
+			commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
+			//. Create a define for each mandatory param
 
+			m.CommPars = commPars
 			proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 			proc.Params = []promela_ast.Param{}
 
@@ -801,8 +804,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				// Add the commparam to the param of the new proc
 				for _, commPar := range commPars {
 					if commPar.Candidate {
-						name := m.GenerateDefine(commPar)
-						proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: name}, Types: promela_types.Int}}, proc.Body.List...)
+						// name := m.GenerateDefine(commPar)
+						proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 					} else {
 						// decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
 						// RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
@@ -810,16 +813,47 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					}
 				}
 
+				candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+				// need to reset Model because its used in m.TranslateArgs
+				for _, commPar := range commPars {
+
+					if !commPar.Candidate {
+						arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
+						if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
+							prom_call.Args = append(prom_call.Args, arg)
+						} else { // the arguments passed as a commparam cannot be translated
+							ident := promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Args[commPar.Pos].Pos()).Line)}
+							if commPar.Mandatory {
+								m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+							} else {
+								m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
+							}
+							prom_call.Args = append(prom_call.Args, &ident)
+						}
+					}
+				}
+
 				if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
 					m.Chans = new_chans
 					m.WaitGroups = new_wgs
 					m.Proctypes = append(m.Proctypes, proc)
+
+					for _, commPar := range m.CommPars {
+						if commPar.Candidate {
+							if commPar.Mandatory {
+								def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+								candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
+							} else {
+								candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
+							}
+						}
+					}
 					stmt, d1, err1 := m.TranslateBlockStmt(decl.Body)
 
 					if err1 != nil {
 						err = err1
 					}
-					proc.Body.List = append(proc.Body.List, stmt.List...)
+					proc.Body.List = append(candidatesParams.List, stmt.List...)
 					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 					proc.Body.List = append(proc.Body.List, d1.List...)
 					m.Fun = prev_decl
@@ -827,16 +861,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					m.WaitGroups = prev_wg
 					m.Package = prev_pack
 					m.CommPars = prev_comm
-				}
-				// need to reset Model because its used in m.TranslateArgs
-				for _, commPar := range commPars {
-					if !commPar.Candidate {
-						arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
-						if err1 != nil {
-							err = err1
-						}
-						prom_call.Args = append(prom_call.Args, arg)
-					}
 				}
 
 				prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
@@ -983,8 +1007,15 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 			// print the for loop  with the if
 			if_stmt := promela_ast.IfStmt{If: m.Fileset.Position(s.Pos())}
 
-			lb_not_given := promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
-			ub_not_given := promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: "-1"}, Op: "!="}
+			lb_not_given := promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Op: "!="}
+			ub_not_given := promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Op: "!="}
+
+			if strings.Contains(lb.Name, "-1") {
+				lb_not_given = promela_ast.BinaryExpr{Lhs: &lb, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
+			}
+			if strings.Contains(ub.Name, "-1") {
+				ub_not_given = promela_ast.BinaryExpr{Lhs: &ub, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
+			}
 			then := promela_ast.GuardStmt{
 				Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
 					Rhs: &ub_not_given, Op: "&&"},
@@ -1092,7 +1123,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		}
 		// add the 'for' label
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
-		if m.spawns(s.Body, false) || ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: ub.Name}}) {
+		if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: ub.Name}}); found || m.spawns(s.Body, false) {
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "0"}, Ub: promela_ast.Ident{Name: ub.Name + "-1"}, Body: *block_stmt})
 		} else {
@@ -1607,7 +1638,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 			panic("Promela_translator.go : Should not have a funclit here")
 		}
 
-		if !m.ContainsRecFunc(pack_name, func_name) && !m.CallExists(func_name) {
+		if !m.ContainsRecFunc(pack_name, func_name) {
 			if found, decl := FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 				hasChan := false
 				known := true                                      // Do we know all the channel that it might take as args ?? (if time.After() given as arg then we dont translate the call)
@@ -1686,7 +1717,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 				if hasChan && known {
 					m.AddRecFunc(pack_name, fun)
-					// Generate a new proctype to model the recursive call
+					// Generate a new proctype to model the call
 					proc := &promela_ast.Proctype{
 						Name: promela_ast.Ident{Name: func_name},
 						Pos:  m.Fileset.Position(call_expr.Pos()), Active: false,
@@ -1704,8 +1735,13 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					m.Chans = new_chans
 					m.WaitGroups = new_wg
 					m.Fun = decl
-
+					prev_commPars := m.CommPars
+					m.CommPars = []*CommPar{}
 					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
+					m.CommPars = commPars
+
+					candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
 					for _, commPar := range commPars {
 						if !commPar.Candidate {
 							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
@@ -1714,35 +1750,49 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 								args = append(args, arg)
 							} else { // the arguments passed as a commparam cannot be translated
 								ident := promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Args[commPar.Pos].Pos()).Line)}
-								m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+								if commPar.Mandatory {
+									m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+								} else {
+									m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
+								}
 								args = append(args, &ident)
 							}
+						} else {
+							bound := ""
+							if commPar.Mandatory {
+								bound = DEFAULT_BOUND
+							} else {
+								bound = OPTIONAL_BOUND
+							}
+
+							candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: bound}, Types: promela_types.Int})
 						}
 					}
 
+					args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
 					// add child param
 					proc.Params = append(proc.Params, promela_ast.Param{Name: "child", Types: promela_types.Chan})
 
 					// add child chan as arg to the call
-					args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
+					if !m.CallExists(func_name) {
+						m.Proctypes = append(m.Proctypes, proc)
 
-					m.Proctypes = append(m.Proctypes, proc)
+						s1, d1, err1 := m.TranslateBlockStmt(decl.Body)
 
-					s1, d1, err1 := m.TranslateBlockStmt(decl.Body)
+						if err1 != nil {
+							err = err1
+						}
 
-					if err1 != nil {
-						err = err1
+						proc.Body.List = append(candidatesParams.List, s1.List...)
+						proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
+						proc.Body.List = append(proc.Body.List, d1.List...)
+						proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
 					}
-
-					proc.Body.List = s1.List
-					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
-					proc.Body.List = append(proc.Body.List, d1.List...)
-
-					proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
 					m.Fun = &prev_decl
 					m.Chans = prev_chans
 					m.WaitGroups = prev_wg
 					m.Package = prev_pack
+					m.CommPars = prev_commPars
 
 					// add a call to it
 					stmts.List = append(stmts.List,
@@ -1807,27 +1857,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					}
 				}
 			}
-
-		} else {
-			if m.CallExists(func_name) { // have we translated this call already?
-
-				// add call to the proctype
-				var args []promela_ast.Expr = []promela_ast.Expr{}
-				for _, arg := range call_expr.Args {
-					if m.containsChan(arg) {
-						args = append(args, &m.getChanStruct(arg).Name)
-					}
-				}
-				args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
-
-				// add a call to it
-				stmts.List = append(stmts.List,
-					&promela_ast.Chandef{Name: promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Size: promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
-					&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: func_name}, Args: args}},
-					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
-				)
-				m.Counter++
-			}
 		}
 	}
 
@@ -1838,7 +1867,10 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 func (m *Model) TranslateArgs(expr ast.Expr) (e promela_ast.Expr, err *ParseError) {
 
 	var e1 promela_ast.Expr = nil
-
+	if con, num := IsConst(expr, m.AstMap[m.Package]); con {
+		e1 = &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}
+		return e1, nil
+	}
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		e1 = &promela_ast.Ident{Name: expr.Name, Ident: m.Fileset.Position(expr.Pos())}
@@ -1875,37 +1907,11 @@ func (m *Model) TranslateArgs(expr ast.Expr) (e promela_ast.Expr, err *ParseErro
 
 		arg, err1 := m.TranslateArgs(expr.Fun)
 
-		if err1 != nil {
+		if err1 == nil {
 			err = err1
 
-			call := &promela_ast.CallExpr{Fun: promela_ast.Ident{Name: m.getIdent(expr.Fun).Name}, Call: m.Fileset.Position(expr.Pos())}
+			e1 = &promela_ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), Ident: m.Fileset.Position(expr.Pos())}
 
-			args := []promela_ast.Expr{}
-
-			for i, arg := range expr.Args {
-
-				if ContainsCommParam(m.CommPars, &CommPar{Name: m.getIdent(arg)}) {
-					arg1, err1 := m.TranslateArgs(arg)
-
-					if err1 != nil {
-						err = err1
-					}
-
-					args = append(args, arg1)
-				} else {
-
-					ident := &promela_ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + "_arg" + strconv.Itoa(i)}
-					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: *ident, Rhs: &promela_ast.Ident{Name: "-1"}})
-					args = append(args, ident)
-					// }
-				}
-			}
-			call.Args = args
-			// create new inline if not seen before
-			if !m.containsInline(expr.Fun) { // if the function has not been seen previously lets ask the user for its value
-				m.Inlines = append(m.Inlines, &promela_ast.Inline{Name: promela_ast.Ident{Name: m.getIdent(expr.Fun).Name}, Params: args, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "return 0"}}}})
-			}
-			e1 = call
 		} else {
 			return arg, &ParseError{err: errors.New("Could not parse the name of the function at pos " + m.Fileset.Position(expr.Pos()).String())}
 		}

@@ -1,17 +1,24 @@
 package main
 
+import (
+	"fmt"
+)
+
 func main() {
-	b := make(chan int, test)
+	files := getFiles()
 
-	go a(b)
-}
+	ch := make(chan string, len(files))
 
-func a(d chan int) {
-	c := make(chan int, len(files))
-
-	for range files {
-		d <- 0
+	for i := 0; i < len(files); i++ {
+		go readFile(ch, files[i])
 	}
 
-	<-c
+	for i := 0; i < 3; i++ {
+		file_content := <-ch
+		fmt.Println(file_content)
+	}
+}
+
+func readFile(ch chan string, file string) {
+	ch <- parseFile(file)
 }
