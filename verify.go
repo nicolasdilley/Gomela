@@ -15,6 +15,16 @@ import (
 	cartesian "github.com/schwarmco/go-cartesian-product"
 )
 
+type VerificationRun struct {
+	Spin_timing      int    // time in milli to verify the program
+	Safety_error     bool   // is there any safety errors
+	Global_deadlock  bool   // is there any global deadlock
+	Partial_deadlock bool   // is there any partial deadlock
+	Num_states       int    // the number of states in the model
+	Timeout          bool   // Has the verification timedout
+	Err              string // if there is another error
+}
+
 func VerifyModels(models []os.FileInfo, dir_name string) {
 	// Print CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
@@ -37,22 +47,32 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 			if err != nil {
 				fmt.Println("Could not read content of : ", path, err)
 			} else {
-
-				lines := strings.Split(string(content), "\n")
+				file_content := string(content)
+				lines := strings.Split(file_content, "\n")
 
 				bounds_to_check := []interface{}{0, 1, 3}
 				bounds := [][]interface{}{}
-				comm_params := []string{} // a map containing all the comm par
+				comm_params := []string{} // the name of the mandatory param
+
+				optional_params := 0 // number of optional parameters
 				for _, line := range lines {
 					if strings.Contains(line, "??") {
 						define := strings.Split(line, " ")
 						comm_params = append(comm_params, define[1])
 						bounds = append(bounds, bounds_to_check)
 					}
+					if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
+						optional_params += 1
+					}
 				}
 
+				model_name := filepath.Base(dir_name) + ":" + model.Name()
+				fmt.Println("there is ", optional_params, " optionnal params.")
 				if len(comm_params) == 0 {
-					verifyModel(path, filepath.Base(dir_name)+":"+model.Name(), f, []string{}, []string{})
+					ver := verifyModel(path, model_name, f, []string{}, []string{})
+					if optional_params > 0 {
+						verifyWithOptParams(ver, path, model_name, lines, f, []string{}, []string{})
+					}
 				} else if len(comm_params) > 5 {
 					toPrint := filepath.Base(dir_name) + ":" + model.Name() + ",too many comm params : " + strconv.Itoa(len(comm_params)) + ",,,,,\n"
 					if _, err := f.WriteString(toPrint); err != nil {
@@ -62,29 +82,28 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 					d := cartesian.Iter(bounds...)
 
-					lines = lines[len(comm_params):]
 					for bound := range d {
-						defines := ""
-						for i, param := range comm_params {
-							defines += "#define " + param + " " + fmt.Sprint(bound[i]) + "\n"
+
+						toPrint := file_content
+						for _, b := range bound {
+							toPrint = strings.Replace(toPrint, "??", fmt.Sprint(b), 1)
 						}
 
-						toPrint := defines
-
-						for _, line := range lines {
-							toPrint += line + "\n"
-						}
 						err := os.Remove(path)
 						if err != nil {
 							log.Fatal(err)
 						}
 						ioutil.WriteFile(path, []byte(toPrint), 0644)
 
+						lines = strings.Split(toPrint, "\n")
 						bound_str := []string{}
 						for _, b := range bound {
 							bound_str = append(bound_str, fmt.Sprint(b))
 						}
-						verifyModel(path, filepath.Base(dir_name)+":"+model.Name(), f, comm_params, bound_str)
+						ver := verifyModel(path, model_name, f, comm_params, bound_str)
+						if optional_params > 0 {
+							verifyWithOptParams(ver, path, model_name, lines, f, comm_params, bound_str)
+						}
 					}
 				}
 			}
@@ -93,9 +112,9 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 }
 
-func verifyModel(path string, model_name string, f *os.File, comm_params []string, bound []string) {
+func verifyModel(path string, model_name string, f *os.File, comm_params []string, bound []string) *VerificationRun {
 
-	ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true}
+	ver := &VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
 	var output bytes.Buffer
 
 	// Verify with SPIN
@@ -109,7 +128,8 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 			panic(err)
 		}
 	} else {
-		executable := parseResults(output.String(), &ver)
+		ver.Timeout = false
+		executable := parseResults(output.String(), ver)
 		if executable {
 			comm_par_info := ""
 			fmt.Println("-------------------------------")
@@ -128,10 +148,104 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 			}
 			fmt.Println("-------------------------------")
 
-			toPrint := model_name + "," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+			toPrint := model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
 			if _, err := f.WriteString(toPrint); err != nil {
 				panic(err)
 			}
+		}
+	}
+	return ver
+}
+
+func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, f *os.File, comm_params []string, bound []string) {
+	if ver.Global_deadlock && !ver.Timeout {
+		// add values to the candidates param
+		bounds_to_check := []interface{}{0, 1, 3}
+
+		false_alarm := false
+		fixed_bound := ""
+
+		for i, line := range lines {
+
+			if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
+				// we found an optional param
+				for _, b := range bounds_to_check {
+					new_lines := make([]string, len(lines))
+					copy(new_lines, lines)
+					new_lines[i] = strings.Replace(line, "-2", fmt.Sprint(b), 1)
+					fmt.Println(new_lines[i])
+					fmt.Println(lines[i])
+					fixed_bound = strings.Trim(new_lines[i], "\t")
+
+					err := os.Remove(path) // delete previous model
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					toPrint := ""
+
+					for _, l1 := range new_lines { // generate new content of file with updated value for opt param
+						toPrint += l1 + "\n"
+					}
+					ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
+
+					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
+					var output bytes.Buffer
+
+					// Verify with SPIN
+					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4500", "-m10000000", "-w26", path, "-f")
+					command.Stdout = &output
+					command.Run()
+
+					if output.String() == "" {
+						toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
+						if _, err := f.WriteString(toPrint); err != nil {
+							panic(err)
+						}
+					} else {
+						ver.Timeout = false
+						executable := parseResults(output.String(), &ver)
+						if executable {
+							comm_par_info := ""
+							fmt.Println("-------------------------------")
+							fmt.Println("Result for " + model_name + " with optional params")
+							for i, param := range comm_params {
+								comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
+								comm_par_info += fixed_bound + ","
+								fmt.Println(param, " = ", bound[i])
+								fmt.Println(fixed_bound)
+							}
+
+							fmt.Println("Number of states : ", ver.Num_states)
+							fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+							fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+							fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+							if ver.Err != "" {
+								red := color.New(color.FgRed).SprintFunc()
+								fmt.Printf("Error : %s.\n", red(ver.Err))
+							}
+							fmt.Println("-------------------------------")
+
+							toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+							if _, err := f.WriteString(toPrint); err != nil {
+								panic(err)
+							}
+						}
+					}
+
+					if !ver.Global_deadlock {
+						false_alarm = true
+					}
+
+					if false_alarm {
+						break
+					}
+				}
+			}
+		}
+
+		if false_alarm {
+			fmt.Println("Fixed with opt bound")
 		}
 	}
 }

@@ -27,15 +27,6 @@ type ProjectResult struct {
 	Migoinfer_timing int               // time in milli to model the program with migoinfer
 }
 
-type VerificationRun struct {
-	Spin_timing      int    // time in milli to verify the program
-	Safety_error     bool   // is there any safety errors
-	Global_deadlock  bool   // is there any global deadlock
-	Partial_deadlock bool   // is there any partial deadlock
-	Num_states       int    // the number of states in the model
-	Err              string // if there is another error
-}
-
 type VerificationInfo struct {
 	multi_projects *string
 	single_project *string
@@ -74,7 +65,7 @@ func main() {
 	promela.CreateCSV(RESULTS_FOLDER)
 
 	if *ver.verify {
-		toPrint := "Model, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info,\n"
+		toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info,\n"
 
 		// Print CSV
 		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",

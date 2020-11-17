@@ -105,3 +105,17 @@ https://github.com/vitessio/vitess/blob/master/go/vt/orchestrator/app/cli.go#L15
 Talk about Gopherlyzer paper snippet
 
 Listening to Julius talk, could we apply Symbolic Execution to remove the overapproximation of if
+
+
+not sound with goroutine leaks. because of asynchronous
+
+
+
+
+
+
+
+
+for conditional parameters -
+Verify program with values for mandatory parameteres
+if Bug -> additional tests with conditional parameters.
