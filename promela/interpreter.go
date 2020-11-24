@@ -40,14 +40,15 @@ func Print(m *Model) {
 	async_send := promela_ast.Chandef{Name: promela_ast.Ident{Name: "async_send"}, Types: []promela_types.Types{promela_types.Int}, Size: promela_ast.Ident{Name: "0"}}
 	async_rcv := promela_ast.Chandef{Name: promela_ast.Ident{Name: "async_rcv"}, Types: []promela_types.Types{promela_types.Int}, Size: promela_ast.Ident{Name: "0"}}
 	sending := promela_ast.Chandef{Name: promela_ast.Ident{Name: "sending"}, Types: []promela_types.Types{promela_types.Int}, Size: promela_ast.Ident{Name: "0"}}
-	closed := promela_ast.Chandef{Name: promela_ast.Ident{Name: "closing"}, Types: []promela_types.Types{promela_types.Bool}, Size: promela_ast.Ident{Name: "0"}}
+	closing := promela_ast.Chandef{Name: promela_ast.Ident{Name: "closing"}, Types: []promela_types.Types{promela_types.Bool}, Size: promela_ast.Ident{Name: "0"}}
 	is_closed := promela_ast.Chandef{Name: promela_ast.Ident{Name: "is_closed"}, Types: []promela_types.Types{promela_types.Bool}, Size: promela_ast.Ident{Name: "0"}}
-	chan_struct.Defs = append(chan_struct.Defs, sync, async_send, async_rcv, sending, closed, is_closed)
+	chan_struct.Defs = append(chan_struct.Defs, sync, async_send, async_rcv, sending, closing, is_closed)
 
 	// add attributes to the chandef
 	size := promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "size"}, Rhs: &promela_ast.Ident{Name: "0"}, Types: promela_types.Int}
 	num_msgs := promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "num_msgs"}, Rhs: &promela_ast.Ident{Name: "0"}, Types: promela_types.Int}
-	chan_struct.Decls = append(chan_struct.Decls, size, num_msgs)
+	closed := promela_ast.DeclStmt{Name: promela_ast.Ident{Name: "closed"}, Rhs: &promela_ast.Ident{Name: "false"}, Types: promela_types.Bool}
+	chan_struct.Decls = append(chan_struct.Decls, size, num_msgs, closed)
 
 	// print Wgdef
 	wg_struct := promela_ast.WgStructDef{Name: promela_ast.Ident{Name: "Wgdef"}, Defs: []promela_ast.Chandef{}} // creating the struct that will represent the go channel
@@ -80,7 +81,7 @@ func Print(m *Model) {
 	}
 
 	if len(m.Chans) > 0 {
-		stmt += generateSyncChanMonitor() + GenerateEmptyChanMonitor() + GenerateFullChanMonitor() + GenerateNeitherChanMonitor() + GenerateClosedChanMonitor()
+		stmt += GenerateAsyncMonitor() + generateSyncChanMonitor()
 	}
 
 	folder := "./" + m.Result_fodler + "/" + filepath.Base(m.Project_name)

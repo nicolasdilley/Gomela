@@ -118,4 +118,11 @@ not sound with goroutine leaks. because of asynchronous
 
 for conditional parameters -
 Verify program with values for mandatory parameteres
-if Bug -> additional tests with conditional parameters.
+if Bug -> additional tests with conditional parameters. (0,1,3) (compute false alarms rates)
+
+
+
+
+
+
+Example -> Try to use FindAll with Waitgroup (if supported)

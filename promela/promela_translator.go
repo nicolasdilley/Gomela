@@ -480,7 +480,7 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 			Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 				&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: &prom_chan_name, Sel: promela_ast.Ident{Name: "size"}}, Rhs: &size},
-				&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "emptyChan"}, Args: []promela_ast.Expr{&prom_chan_name}}},
+				&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "AsyncChan"}, Args: []promela_ast.Expr{&prom_chan_name}}},
 			}}}
 		sync_guard := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"},
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{sync_monitor}}}
@@ -703,19 +703,11 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			known := false
 			func_name = "go_" + func_name
 
-			prev_comm := m.CommPars
+			new_mod := m.newModel(pack_name, decl)
+			new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 
-			prev_decl := m.Fun
-			m.Fun = decl
-			prev_wg := m.WaitGroups
-			prev_chans := m.Chans
-			prev_pack := m.Package
-			new_chans := make(map[ast.Expr]*ChanStruct)
-			new_wgs := make(map[ast.Expr]*WaitGroupStruct)
-			commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 			//. Create a define for each mandatory param
 
-			m.CommPars = commPars
 			proc := &promela_ast.Proctype{Name: promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 			proc.Params = []promela_ast.Param{}
 
@@ -728,7 +720,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 						if m.containsChan(call_expr.Args[counter]) {
 							proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
-							new_chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
+							new_mod.Chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
 
 							arg, err1 := m.TranslateArgs(call_expr.Args[counter])
 							if err1 != nil {
@@ -750,7 +742,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 										if m.containsWaitgroup(call_expr.Args[counter]) {
 											wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 											proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
-											new_wgs[name] = wg
+											new_mod.WaitGroups[name] = wg
 											arg, err1 := m.TranslateArgs(call_expr.Args[counter])
 											if err1 != nil {
 												err = err1
@@ -773,7 +765,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 									if m.containsWaitgroup(call_expr.Args[counter]) {
 										wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 										proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
-										new_wgs[name] = wg
+										new_mod.WaitGroups[name] = wg
 										arg, err1 := m.TranslateArgs(call_expr.Args[counter])
 										if err1 != nil {
 											err = err1
@@ -802,7 +794,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 			if hasChan && known {
 				// Add the commparam to the param of the new proc
-				for _, commPar := range commPars {
+				for _, commPar := range new_mod.CommPars {
 					if commPar.Candidate {
 						// name := m.GenerateDefine(commPar)
 						proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
@@ -815,7 +807,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 				candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 				// need to reset Model because its used in m.TranslateArgs
-				for _, commPar := range commPars {
+				for _, commPar := range new_mod.CommPars {
 
 					if !commPar.Candidate {
 						arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
@@ -834,11 +826,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				}
 
 				if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
-					m.Chans = new_chans
-					m.WaitGroups = new_wgs
 					m.Proctypes = append(m.Proctypes, proc)
-
-					for _, commPar := range m.CommPars {
+					new_mod.Proctypes = append(new_mod.Proctypes, proc)
+					for _, commPar := range new_mod.CommPars {
 						if commPar.Candidate {
 							if commPar.Mandatory {
 								def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
@@ -848,7 +838,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 							}
 						}
 					}
-					stmt, d1, err1 := m.TranslateBlockStmt(decl.Body)
+					stmt, d1, err1 := new_mod.TranslateBlockStmt(decl.Body)
 
 					if err1 != nil {
 						err = err1
@@ -856,11 +846,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					proc.Body.List = append(candidatesParams.List, stmt.List...)
 					proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 					proc.Body.List = append(proc.Body.List, d1.List...)
-					m.Fun = prev_decl
-					m.Chans = prev_chans
-					m.WaitGroups = prev_wg
-					m.Package = prev_pack
-					m.CommPars = prev_comm
+
 				}
 
 				prom_call.Fun = promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
@@ -1727,22 +1713,12 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					proc.Params = params
 					// Translate the commPar of the function call ignoring the args that are not needed
 
-					prev_decl := *m.Fun
-					prev_pack := m.Package
-					m.Package = pack_name
-					prev_chans := m.Chans
-					prev_wg := m.WaitGroups
-					m.Chans = new_chans
-					m.WaitGroups = new_wg
-					m.Fun = decl
-					prev_commPars := m.CommPars
-					m.CommPars = []*CommPar{}
-					commPars := m.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-					m.CommPars = commPars
+					new_model := m.newModel(pack_name, decl)
+					new_model.CommPars = new_model.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 
 					candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
-					for _, commPar := range commPars {
+					for _, commPar := range new_model.CommPars {
 						if !commPar.Candidate {
 							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
 							arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
@@ -1777,7 +1753,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					if !m.CallExists(func_name) {
 						m.Proctypes = append(m.Proctypes, proc)
 
-						s1, d1, err1 := m.TranslateBlockStmt(decl.Body)
+						s1, d1, err1 := new_model.TranslateBlockStmt(decl.Body)
 
 						if err1 != nil {
 							err = err1
@@ -1788,11 +1764,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 						proc.Body.List = append(proc.Body.List, d1.List...)
 						proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
 					}
-					m.Fun = &prev_decl
-					m.Chans = prev_chans
-					m.WaitGroups = prev_wg
-					m.Package = prev_pack
-					m.CommPars = prev_commPars
 
 					// add a call to it
 					stmts.List = append(stmts.List,
@@ -2513,6 +2484,37 @@ func (m *Model) notDefine(name string) bool {
 		}
 	}
 	return found
+}
+
+func (m *Model) newModel(pack string, fun *ast.FuncDecl) Model {
+	return Model{
+		Result_fodler:   m.Result_fodler,
+		Project_name:    m.Project_name,
+		Package:         pack,
+		Model:           m.Model,
+		Name:            m.Commit,
+		RecFuncs:        []RecFunc{},
+		SpawningFuncs:   []*SpawningFunc{},
+		Fileset:         m.Fileset,
+		Proctypes:       m.Proctypes,
+		Inlines:         m.Inlines,
+		Fun:             fun,
+		Chans:           make(map[ast.Expr]*ChanStruct),
+		WaitGroups:      make(map[ast.Expr]*WaitGroupStruct),
+		Init:            m.Init,
+		Global_vars:     m.Global_vars,
+		Defines:         m.Defines,
+		CommPars:        []*CommPar{},
+		Features:        []Feature{},
+		process_counter: 0,
+		func_counter:    0,
+		For_counter:     m.For_counter,
+		Counter:         m.Counter,
+		Default_lb:      m.Default_lb,
+		Default_ub:      m.Default_lb,
+		AstMap:          m.AstMap,
+		Chan_closing:    m.Chan_closing,
+	}
 }
 
 func prettyPrint(expr ast.Expr) string {
