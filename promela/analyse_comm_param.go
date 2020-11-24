@@ -188,18 +188,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
 
-				m.AddRecFunc(fun_pack, fun_name)
-
 				if contains_chan && found {
 					// look inter procedurally
-					prev := m.Fun
-					m.Fun = fun_decl
-					prev_params := m.CommPars
-					m.CommPars = []*CommPar{}
-					params_1 := m.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
-					m.CommPars = prev_params
-					m.RecFuncs = []RecFunc{}
-					m.Fun = prev
+					new_model := m.newModel(fun_pack, fun_decl)
+					new_model.AddRecFunc(fun_pack, fun_name)
+					params_1 := new_model.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
+
 					for _, param := range params_1 {
 						// m.upgrade all params with its respective arguments
 						// give only the arguments that are either MP or OP
