@@ -61,8 +61,7 @@ func (gen *PropertyGenerator) parseBlockStmt(b *promela_ast.BlockStmt) *promela_
 				new_b.List = append(new_b.List, &new_do)
 			case *promela_ast.ForStmt:
 
-				new_body := gen.parseBlockStmt(&stmt.Body)
-				stmt.Body = *new_body
+				stmt.Body = gen.parseBlockStmt(stmt.Body)
 
 				new_b.List = append(new_b.List, stmt)
 

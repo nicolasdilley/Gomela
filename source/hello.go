@@ -1,46 +1,24 @@
 package main
 
-import "sync"
+func test() {
+	ch := make(chan int, n)
 
-func FindAll() []P {
-	const concurrencyProcesses = 1 // limit the maximum number of concurrent reading process tasks
-	pss, err := ps.Processes()
-	if err != nil {
-		return nil
+	for _, c := range files {
+		go f(ch)
+	}
+}
+
+func f(ch chan int) {
+	for _, i := range files {
+		<-ch
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(pss))
-	found := make(chan P)
-	limitCh := make(chan struct{}, concurrencyProcesses)
+	for _, i := range files2 {
+		for _, f3 := range files3 {
 
-	for _, pr := range pss {
-		limitCh <- struct{}{}
-		pr := pr
-		go func() {
-			defer func() { <-limitCh }()
-			if !ok {
-
-				defer wg.Done()
-				return
-			}
-			found <- P{
-				PID:          pr.Pid(),
-				PPID:         pr.PPid(),
-				Exec:         pr.Executable(),
-				Path:         path,
-				BuildVersion: version,
-				Agent:        agent,
-			}
-		}()
+		}
+		for _, f4 := range files4 {
+			ch <- 0
+		}
 	}
-	go func() {
-		wg.Wait()
-		close(found)
-	}()
-	var results []P
-	for p := range found {
-		results = append(results, p)
-	}
-	return results
 }

@@ -13,7 +13,7 @@ type ForStmt struct {
 	For  token.Position
 	Lb   Ident // the lower bound
 	Ub   Ident // the upper bound of the for loop
-	Body BlockStmt
+	Body *BlockStmt
 }
 
 func (s *ForStmt) GoNode() token.Position {

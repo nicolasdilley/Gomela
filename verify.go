@@ -26,6 +26,10 @@ type VerificationRun struct {
 	Err              string // if there is another error
 }
 
+const (
+	MAX_NUMBER_TESTS = 256
+)
+
 func VerifyModels(models []os.FileInfo, dir_name string) {
 	// Print CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
@@ -164,92 +168,97 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 		opt_bounds := generateOptBounds(num_optionnal)
 
+		num_tests := 0
 		false_alarm_bounds := [][]interface{}{}
 		for _, opt_bound := range opt_bounds {
-			fixed_bound := ""
-			// check if the bound has been checked previously
-			if !isSuperSeededBy(opt_bound, false_alarm_bounds) {
-				new_lines := make([]string, len(lines))
-				copy(new_lines, lines)
 
-				for _, b := range opt_bound {
-					for i, line := range new_lines {
-						if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
-							fmt.Println(i, " : ", line, " to ", b)
-							// we found an optional param
-							line = strings.Replace(line, "-2", fmt.Sprint(b), 1)
-							new_lines[i] = strings.Replace(line, " = ", "=", 1)
-							fmt.Println(new_lines[i])
-							fixed_bound += strings.Trim(new_lines[i]+" ", "\t")
-							break
+			if num_tests < MAX_NUMBER_TESTS {
+				fixed_bound := ""
+				// check if the bound has been checked previously
+				if !isSuperSeededBy(opt_bound, false_alarm_bounds) {
+					new_lines := make([]string, len(lines))
+					copy(new_lines, lines)
+
+					for _, b := range opt_bound {
+						for i, line := range new_lines {
+							if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
+								fmt.Println(i, " : ", line, " to ", b)
+								// we found an optional param
+								line = strings.Replace(line, "-2", fmt.Sprint(b), 1)
+								new_lines[i] = strings.Replace(line, " = ", "=", 1)
+								fmt.Println(new_lines[i])
+								fixed_bound += strings.Trim(new_lines[i]+" ", "\t")
+								break
+							}
 						}
 					}
-				}
 
-				err := os.Remove(path) // delete previous model
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				toPrint := ""
-
-				for _, l1 := range new_lines { // generate new content of file with updated value for opt param
-					toPrint += l1 + "\n"
-				}
-
-				ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
-
-				ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
-				var output bytes.Buffer
-
-				// Verify with SPIN
-				command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
-				command.Stdout = &output
-				command.Run()
-
-				if output.String() == "" {
-					toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
-					if _, err := f.WriteString(toPrint); err != nil {
-						panic(err)
+					err := os.Remove(path) // delete previous model
+					if err != nil {
+						log.Fatal(err)
 					}
-				} else {
-					ver.Timeout = false
-					executable := parseResults(output.String(), &ver)
-					if executable {
-						comm_par_info := ""
-						fmt.Println("-------------------------------")
-						fmt.Println("Result for " + model_name + " with optional params")
-						for i, param := range comm_params {
-							comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
-							fmt.Println(param, " = ", bound[i])
-						}
-						comm_par_info += fixed_bound + ","
-						fmt.Println(fixed_bound)
 
-						fmt.Println("Number of states : ", ver.Num_states)
-						fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-						fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-						fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-						if ver.Err != "" {
-							red := color.New(color.FgRed).SprintFunc()
-							fmt.Printf("Error : %s.\n", red(ver.Err))
-						}
-						fmt.Println("-------------------------------")
+					toPrint := ""
 
-						toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+					for _, l1 := range new_lines { // generate new content of file with updated value for opt param
+						toPrint += l1 + "\n"
+					}
+
+					ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
+
+					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
+					var output bytes.Buffer
+
+					// Verify with SPIN
+					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
+					command.Stdout = &output
+					command.Run()
+					num_tests++
+					if output.String() == "" {
+						toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
+					} else {
+						ver.Timeout = false
+						executable := parseResults(output.String(), &ver)
+						if executable {
+							comm_par_info := ""
+							fmt.Println("-------------------------------")
+							fmt.Println("Result for " + model_name + " with optional params")
+							for i, param := range comm_params {
+								comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
+								fmt.Println(param, " = ", bound[i])
+							}
+							comm_par_info += fixed_bound + ","
+							fmt.Println(fixed_bound)
 
-						// add if there is no bug to false alarm bounds
-						if !ver.Global_deadlock {
-							false_alarm_bounds = append(false_alarm_bounds, opt_bound)
+							fmt.Println("Number of states : ", ver.Num_states)
+							fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+							fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+							fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+							if ver.Err != "" {
+								red := color.New(color.FgRed).SprintFunc()
+								fmt.Printf("Error : %s.\n", red(ver.Err))
+							}
+							fmt.Println("-------------------------------")
+
+							toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+							if _, err := f.WriteString(toPrint); err != nil {
+								panic(err)
+							}
+
+							// add if there is no bug to false alarm bounds
+							if !ver.Global_deadlock {
+								false_alarm_bounds = append(false_alarm_bounds, opt_bound)
+							}
 						}
 					}
+
 				}
 
 			} else {
-				fmt.Println("Is superseeded : ", bound)
+				break
 			}
 		}
 	}

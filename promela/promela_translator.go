@@ -111,6 +111,8 @@ func (m *Model) GoToPromela() {
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
 		// generate the model only if it contains only supported features
 		if err == nil {
+			// clean the model by removing empty for loops and unused opt param
+			Clean(m)
 			Print(m) // print the model
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
@@ -962,7 +964,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	if err1 != nil {
 		err = err1
 	}
-	body := promela_ast.BlockStmt{List: append(
+	body := &promela_ast.BlockStmt{List: append(
 		[]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}},
 		stmts.List...)}
 
@@ -983,7 +985,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 			d.Guards,
 			promela_ast.GuardStmt{
 				Cond: &promela_ast.Ident{Name: "true"},
-				Body: &body},
+				Body: body},
 		)
 		if s.Cond == nil && s.Post == nil && s.Init == nil {
 			// infinite for loop
@@ -1111,7 +1113,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		block_stmt.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}}, block_stmt.List...)
 		if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: ub.Name}}); found || m.spawns(s.Body, false) {
 			// need to change the for loop into a bounded for loop
-			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "0"}, Ub: promela_ast.Ident{Name: ub.Name + "-1"}, Body: *block_stmt})
+			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: promela_ast.Ident{Name: "0"}, Ub: promela_ast.Ident{Name: ub.Name + "-1"}, Body: block_stmt})
 		} else {
 			break_branch := promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 			d.Guards = append(d.Guards,
