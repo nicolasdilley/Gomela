@@ -621,6 +621,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 		for _, wg := range wgs {
 
+			fmt.Println("looking at ", wg)
 			var exprs []ast.Expr
 
 			for _, arg := range s.Call.Args {
@@ -632,6 +633,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				}
 			}
 			if !containsExpr(exprs, wg) {
+				fmt.Println("Ainsi")
 				proc.Params = append(proc.Params, promela_ast.Param{Name: TranslateIdent(wg, m.Fileset).Name, Types: promela_types.Wgdef})
 
 				arg, err1 := m.TranslateArgs(wg)

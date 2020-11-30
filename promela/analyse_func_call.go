@@ -41,6 +41,12 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 			}
 			for i, rhs := range n.Rhs {
 				switch rhs := rhs.(type) {
+				case *ast.UnaryExpr:
+					n.Rhs[i] = rhs.X
+				}
+			}
+			for i, rhs := range n.Rhs {
+				switch rhs := rhs.(type) {
 				case *ast.CallExpr:
 					switch ident := rhs.Fun.(type) {
 					case *ast.Ident:
@@ -48,6 +54,33 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 							switch rhs.Args[0].(type) {
 							case *ast.ChanType:
 								chans = append(chans, n.Lhs[i])
+							}
+						}
+					case *ast.SelectorExpr:
+						if ident.Sel.Name == "WaitGroup" {
+							switch sel := ident.X.(type) {
+							case *ast.Ident:
+								if sel.Name == "sync" {
+									// we have a waitgroup
+									if len(n.Lhs) > i {
+										wgs = append(wgs, n.Lhs[i])
+									}
+								}
+							}
+						}
+					}
+				case *ast.CompositeLit:
+					switch sel := rhs.Type.(type) {
+					case *ast.SelectorExpr:
+						if sel.Sel.Name == "WaitGroup" {
+							switch sel := sel.X.(type) {
+							case *ast.Ident:
+								if sel.Name == "sync" {
+									// we have a waitgroup
+									for _, name := range n.Lhs {
+										wgs = append(wgs, name)
+									}
+								}
 							}
 						}
 					}
@@ -61,6 +94,7 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, pack *packages.P
 					case *ast.ValueSpec:
 						for i, rhs := range spec.Values {
 							switch call := rhs.(type) {
+
 							case *ast.CallExpr:
 								switch ident := call.Fun.(type) {
 								case *ast.Ident:
