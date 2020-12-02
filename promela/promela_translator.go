@@ -121,7 +121,7 @@ func (m *Model) GoToPromela() {
 			m.AddFeature(Feature{
 				Proj_name: m.Project_name,
 				Fun:       m.Fun.Name.String(),
-				Name:      fmt.Sprintf(err.err.Error()),
+				Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
 				Mandatory: "false",
 				Line:      0,
 				Commit:    m.Commit,
@@ -621,7 +621,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 		for _, wg := range wgs {
 
-			fmt.Println("looking at ", wg)
 			var exprs []ast.Expr
 
 			for _, arg := range s.Call.Args {
@@ -633,7 +632,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				}
 			}
 			if !containsExpr(exprs, wg) {
-				fmt.Println("Ainsi")
 				proc.Params = append(proc.Params, promela_ast.Param{Name: TranslateIdent(wg, m.Fileset).Name, Types: promela_types.Wgdef})
 
 				arg, err1 := m.TranslateArgs(wg)
@@ -663,20 +661,18 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			}
 		}
 
-		old_chans := m.Chans
-		old_wgs := m.WaitGroups
+		new_mod := m.newModel(pack_name, m.Fun)
+		new_mod.Chans = new_chans
+		new_mod.WaitGroups = new_wgs
 
-		m.Chans = new_chans
-		m.WaitGroups = new_wgs
-		stmt, defers, err1 := m.TranslateBlockStmt(name.Body)
+		new_mod.RecFuncs = m.RecFuncs
+		stmt, defers, err1 := new_mod.TranslateBlockStmt(name.Body)
 		if err1 != nil {
 			err = err1
 		}
 		proc.Body = stmt
 		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 		proc.Body.List = append(proc.Body.List, defers.List...)
-		m.Chans = old_chans
-		m.WaitGroups = old_wgs
 		m.Proctypes = append(m.Proctypes, proc) // adding the new proc type to the list of proctype
 
 	default:
@@ -697,7 +693,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					}
 				}
 			}
-			func_name = TranslateIdent(name.X, m.Fileset).Name + name.Sel.Name
+			func_name = name.Sel.Name
 			fun = name.Sel.Name
 		}
 
@@ -980,7 +976,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 			Body: body,
 		})
 
-	} else {
+	} else if len(stmts.List) > 0 {
 
 		d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
 		d.Guards = append(
@@ -1212,79 +1208,64 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				err = err1
 			}
 			if comm.Comm != nil { // check if default select
+				switch com := comm.Comm.(type) {
+				case *ast.SendStmt: // send
+					if m.containsChan(com.Chan) {
+						chan_name := m.getChanStruct(com.Chan)
 
-				ast.Inspect(comm.Comm, func(com ast.Node) bool {
-					switch com := com.(type) {
-					case *ast.SendStmt: // send
-						if m.containsChan(com.Chan) {
-							chan_name := m.getChanStruct(com.Chan)
+						async_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_send"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-							async_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_send"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+						sync_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
 
-							sync_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+						async_guard := promela_ast.GuardStmt{Cond: async_send, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)}
+						sending_chan := &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sending"}}
 
-							async_guard := promela_ast.GuardStmt{Cond: async_send, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)}
-							sending_chan := &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sending"}}
+						sync_guard := promela_ast.GuardStmt{
+							Cond: sync_send,
+							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+								&promela_ast.RcvStmt{
+									Chan: sending_chan,
+									Rhs:  &promela_ast.Ident{Name: "0"}}}},
+							Guard: m.Fileset.Position(s.Pos())}
 
-							sync_guard := promela_ast.GuardStmt{
-								Cond: sync_send,
-								Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-									&promela_ast.RcvStmt{
-										Chan: sending_chan,
-										Rhs:  &promela_ast.Ident{Name: "0"}}}},
-								Guard: m.Fileset.Position(s.Pos())}
+						sync_guard.Body.List = append(sync_guard.Body.List, body.List...)
 
-							sync_guard.Body.List = append(sync_guard.Body.List, body.List...)
-
-							sync_guard.Body = m.checkForBreak(*sync_guard.Body)
-							i.Guards = append(i.Guards, async_guard, sync_guard)
-						} else {
-							// check if the channel is a time.After
-							err = &ParseError{err: errors.New("A send on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(com.Chan.Pos()).String() + " was found.")}
-						}
-
-					case *ast.UnaryExpr: //receive
-						if com.Op == token.ARROW {
-							if m.containsChan(com.X) {
-								chan_name := m.getChanStruct(com.X)
-								async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
-
-								sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
-
-								async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)}
-
-								sync_guard := promela_ast.GuardStmt{
-									Cond: sync_rcv,
-									Body: m.checkForBreak(*body),
-								}
-								i.Guards = append(i.Guards, async_guard, sync_guard)
-							} else {
-
-								switch call := com.X.(type) {
-								case *ast.CallExpr:
-									switch sel := call.Fun.(type) {
-									case *ast.SelectorExpr:
-										switch ident := sel.X.(type) {
-										case *ast.Ident:
-											if ident.Name == "time" && sel.Sel.Name == "After" {
-												i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body})
-											}
-										default:
-											err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
-										}
-									default:
-										err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
-									}
-								default:
-									err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(call.Pos()).String() + " was found.")}
-								}
-							}
-						}
-
+						sync_guard.Body = m.checkForBreak(*sync_guard.Body)
+						i.Guards = append(i.Guards, async_guard, sync_guard)
+					} else {
+						// check if the channel is a time.After
+						err = &ParseError{err: errors.New("A send on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(com.Chan.Pos()).String() + " was found.")}
 					}
-					return true
-				})
 
+				case *ast.AssignStmt: //receive
+					for _, rh := range com.Rhs {
+						switch com := rh.(type) {
+						case *ast.UnaryExpr:
+							if com.Op == token.ARROW {
+								var guards []promela_ast.GuardStmt
+								guards, err = m.translateRcvStmt(com.X, body)
+								i.Guards = append(i.Guards, guards...)
+							}
+						case *ast.Ident:
+							var guards []promela_ast.GuardStmt
+							guards, err = m.translateRcvStmt(com, body)
+							i.Guards = append(i.Guards, guards...)
+						case *ast.SelectorExpr:
+							var guards []promela_ast.GuardStmt
+							guards, err = m.translateRcvStmt(com, body)
+							i.Guards = append(i.Guards, guards...)
+						}
+					}
+				case *ast.ExprStmt:
+					switch com := com.X.(type) {
+					case *ast.UnaryExpr:
+						if com.Op == token.ARROW {
+							var guards []promela_ast.GuardStmt
+							guards, err = m.translateRcvStmt(com.X, body)
+							i.Guards = append(i.Guards, guards...)
+						}
+					}
+				}
 			} else { // it is default
 				i.Has_default = true
 				i.Guards = append(i.Guards, promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: m.checkForBreak(*body)})
@@ -1293,7 +1274,11 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 		}
 	}
 
-	b.List = append(b.List, i)
+	if len(i.Guards) > 0 {
+		b.List = append(b.List, i)
+	} else {
+		return nil, nil, &ParseError{err: errors.New("Found a select with no branches at " + m.Fileset.Position(s.Pos()).String())}
+	}
 
 	return b, defers, err
 }
@@ -1325,6 +1310,48 @@ func (m *Model) translateExprStmt(s *ast.ExprStmt) (b *promela_ast.BlockStmt, de
 	}
 	addBlock(b, expr)
 	return b, defers, err
+}
+
+func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt) ([]promela_ast.GuardStmt, *ParseError) {
+	guards := []promela_ast.GuardStmt{}
+	var err *ParseError
+
+	if m.containsChan(e) {
+		chan_name := m.getChanStruct(e)
+		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name.Name, Sel: promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+
+		async_guard := promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(e.Pos()), Body: m.checkForBreak(*body)}
+
+		sync_guard := promela_ast.GuardStmt{
+			Cond: sync_rcv,
+			Body: m.checkForBreak(*body),
+		}
+		guards = []promela_ast.GuardStmt{async_guard, sync_guard}
+	} else {
+
+		switch call := e.(type) {
+		case *ast.CallExpr:
+			switch sel := call.Fun.(type) {
+			case *ast.SelectorExpr:
+				switch ident := sel.X.(type) {
+				case *ast.Ident:
+					if ident.Name == "time" && sel.Sel.Name == "After" {
+						guards = []promela_ast.GuardStmt{promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}}
+					}
+				default:
+					err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
+				}
+			default:
+				err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
+			}
+		default:
+			err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(call.Pos()).String() + " was found.")}
+		}
+	}
+
+	return guards, err
 }
 
 func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
@@ -1566,7 +1593,6 @@ func addBlock(b1 *promela_ast.BlockStmt, b2 *promela_ast.BlockStmt) {
 // 4. Translate arguments that are communication parameters
 
 func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.BlockStmt, err *ParseError) {
-
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	// if obj != nil {
 	var fun string       // The name of the function we are translating
@@ -1599,7 +1625,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 			fun = name.Name
 		case *ast.SelectorExpr:
 			// Check if its a call a Waitgroup call (Add(x), Done or Wait)
-			func_name = TranslateIdent(name.X, m.Fileset).Name + name.Sel.Name
+			func_name = name.Sel.Name
 			fun = name.Sel.Name
 			if obj.Pkg() != nil {
 				pack_name = obj.Pkg().Name()

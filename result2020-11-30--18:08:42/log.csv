@@ -1,3 +1,0 @@
-Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link,
-source,Lint,Lint,Integer as a add bound,true,1,13,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,
-source,Lint,Lint,Go in for,false,,14,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,

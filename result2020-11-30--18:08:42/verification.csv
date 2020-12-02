@@ -1,4 +1,0 @@
-Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info,
-source:main_Lint.pml,0,8,0,false,false,,Lint_jobs = 0,,
-source:main_Lint.pml,0,19,0,false,false,,Lint_jobs = 1,,
-source:main_Lint.pml,0,89,0,false,false,,Lint_jobs = 3,,

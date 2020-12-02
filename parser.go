@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"os"
 
 	"github.com/nicolasdilley/gomela/promela"
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -26,7 +27,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
-
 						var m promela.Model = promela.Model{
 							Result_fodler: result_folder,
 							Project_name:  proj_name,
@@ -65,7 +65,15 @@ func GenerateAst(dir string, package_names []string) (*token.FileSet, map[string
 	lpkgs, err := packages.Load(cfg, package_names...)
 
 	if a := recover(); a != nil || err != nil {
-		fmt.Println("Error while loading the packages ! , err : ", packages.PrintErrors(lpkgs))
+		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/log.csv",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+		toPrint := dir + ",Could not parse project, " + err.Error()
+
+		if _, err1 := f.WriteString(toPrint); err1 != nil {
+			panic(err1)
+		}
+		fmt.Println("Error while loading the packages ! , err : ", packages.PrintErrors(lpkgs), err)
 		return nil, map[string]*packages.Package{}
 	}
 

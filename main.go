@@ -225,9 +225,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 			fmt.Println(num_of_executable_models_in_project, "/", num_of_models_in_project, " executable model")
 		}
 		if *ver.verify {
-
 			VerifyModels(models, dir_name)
-
 		}
 
 	} else {
