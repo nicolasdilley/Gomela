@@ -24,10 +24,6 @@ func (s *IfStmt) Print(num_tabs int) (stmt string) {
 	}
 	stmt += utils.GetTabs(num_tabs) + "if\n"
 
-	length_zero := len(s.Guards) == 0
-	if length_zero {
-		s.Guards = append(s.Guards, GuardStmt{Cond: &Ident{Name: "true"}, Body: &BlockStmt{List: []Stmt{&Ident{Name: "break"}}}})
-	}
 	for _, guard := range s.Guards {
 		// if !length_zero {
 		// 	guard.Body.List = append(guard.Body.List, &Ident{Name: "break"})

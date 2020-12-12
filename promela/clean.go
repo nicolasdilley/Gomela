@@ -16,6 +16,7 @@ func Clean(m *Model) {
 		for _, commPar := range params {
 			if !used(commPar, proc.Body) {
 				removeDecl(commPar, proc.Body)
+				removeFeatures(commPar, m)
 			}
 		}
 	}
@@ -86,6 +87,14 @@ func used(commPar *CommPar, b *promela_ast.BlockStmt) bool {
 	promela_ast.Inspect(b, isUsed)
 
 	return is_used
+}
+
+func removeFeatures(commPar *CommPar, m *Model) {
+	for i := len(m.Features) - 1; i >= 0; i-- {
+		if m.Features[i].Info == commPar.Name.Name {
+			m.Features = append(m.Features[:i], m.Features[i+1:]...)
+		}
+	}
 }
 
 // remove decleration of commPar in model

@@ -31,7 +31,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Result_fodler: result_folder,
 							Project_name:  proj_name,
 							Package:       pack_name,
-							Model:         decl.Name.Name,
+							Name:          pack_name + "_" + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
 							AstMap:        ast_map,
 							Fileset:       fileSet,
 							Proctypes:     []*promela_ast.Proctype{},
@@ -57,23 +57,30 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 }
 
 // Generate the GO ast for each packages in packages_names
-func GenerateAst(dir string, package_names []string) (*token.FileSet, map[string]*packages.Package) {
+func GenerateAst(dir string, package_names []string, dir_name string) (*token.FileSet, map[string]*packages.Package) {
 	var ast_map map[string]*packages.Package = make(map[string]*packages.Package)
 	var cfg *packages.Config = &packages.Config{Mode: packages.LoadAllSyntax, Fset: &token.FileSet{}, Dir: dir}
 
 	package_names = append([]string{"."}, package_names...)
 	lpkgs, err := packages.Load(cfg, package_names...)
 
-	if a := recover(); a != nil || err != nil {
+	if a := recover(); a != nil || err != nil || cfg.Fset == nil {
 		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/log.csv",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
-		toPrint := dir + ",Could not parse project, " + err.Error()
+		toPrint := dir_name + ",Could not parse project"
+
+		if err != nil {
+			toPrint += ", " + err.Error()
+		}
+
+		toPrint += "\n"
+		packages.PrintErrors(lpkgs)
 
 		if _, err1 := f.WriteString(toPrint); err1 != nil {
 			panic(err1)
 		}
-		fmt.Println("Error while loading the packages ! , err : ", packages.PrintErrors(lpkgs), err)
+		fmt.Println("Error while loading the packages !")
 		return nil, map[string]*packages.Package{}
 	}
 

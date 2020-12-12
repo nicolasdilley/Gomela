@@ -1,7 +1,6 @@
 package promela
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -20,85 +19,44 @@ type Feature struct {
 }
 
 func CreateCSV(result_folder string) {
-	toPrint := "Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link,\n"
+
+	log_file, _ := os.OpenFile("./"+result_folder+"/log.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	log.SetOutput(log_file)
+	log.SetPrefix("")
+	log.SetFlags(0)
+	// defer log_file.Close()
 
 	// Print CSV
-	d1 := []byte(toPrint)
-	filename := "./" + result_folder + "/log.csv"
-	err := ioutil.WriteFile(filename, d1, 0644)
-
-	if err != nil {
-		panic(err)
-	}
+	log.Printf("Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link")
 
 }
-func (m *Model) AddFeature(feature Feature) {
-	feature.Model = m.Model
-	m.Features = append(m.Features, feature)
+
+func logFeature(feature Feature) {
+	toPrint :=
+		feature.Proj_name + "," +
+			feature.Model + "," +
+			feature.Fun + "," +
+			feature.Name + "," +
+			feature.Mandatory + "," +
+			feature.Info + "," +
+			strconv.Itoa(feature.Line) + "," +
+			feature.Filename + ","
+
+	if feature.Commit != "" {
+		toPrint += "https://github.com/" +
+			feature.Proj_name + "/blob/" +
+			feature.Commit + "/" +
+			feature.Filename + "#L" +
+			strconv.Itoa(feature.Line)
+	} else {
+		toPrint += feature.Filename
+	}
+	log.Println(toPrint)
 }
 
-func (m *Model) AddBound(feature Feature) {
-	feature.Model = m.Model
-	m.Features = append(m.Features, feature)
-}
-
-func PrintFeatures(m *Model, features []Feature) {
-	f, err := os.OpenFile("./"+m.Result_fodler+"/log.csv",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-	for _, ch := range m.Chans {
-		m.AddFeature(Feature{
-			Proj_name: m.Project_name,
-			Fun:       m.Fun.Name.String(),
-			Name:      "new channel",
-			Info:      "Name :" + ch.Name.Name,
-			Mandatory: "false",
-			Line:      ch.Chan.Line,
-			Commit:    m.Commit,
-			Filename:  ch.Chan.Filename,
-		})
-	}
-	for _, wg := range m.WaitGroups {
-		m.AddFeature(Feature{
-			Proj_name: m.Project_name,
-			Fun:       m.Fun.Name.String(),
-			Name:      "new WaitGroup",
-			Info:      "Name :" + wg.Name.Name,
-			Mandatory: "false",
-			Line:      wg.Wait.Line,
-			Commit:    m.Commit,
-			Filename:  wg.Wait.Filename,
-		})
-	}
-
+func PrintFeatures(features []Feature) {
 	for _, feature := range features {
-		// open file
-		toPrint :=
-			feature.Proj_name + "," +
-				feature.Model + "," +
-				feature.Fun + "," +
-				feature.Name + "," +
-				feature.Mandatory + "," +
-				feature.Info + "," +
-				strconv.Itoa(feature.Line) + "," +
-				feature.Filename + ","
-
-		if feature.Commit != "" {
-			toPrint += "https://github.com/" +
-				feature.Proj_name + "/blob/" +
-				feature.Commit + "/" +
-				feature.Filename + "#L" +
-				strconv.Itoa(feature.Line)
-		} else {
-			toPrint += feature.Filename
-		}
-		toPrint += ",\n"
-
-		if _, err := f.WriteString(toPrint); err != nil {
-			log.Println(err)
-		}
+		logFeature(feature)
 	}
 }

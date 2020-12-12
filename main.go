@@ -50,6 +50,10 @@ func main() {
 	t := time.Now().Local().Format("2006-01-02--15:04:05")
 	RESULTS_FOLDER += t
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
+	f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/package_errors.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	os.Stderr = f
+	defer f.Close()
 
 	ver := &VerificationInfo{}
 
@@ -178,7 +182,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 
 	// Partition program
 
-	f, ast_map := GenerateAst(path, packages)
+	f, ast_map := GenerateAst(path, packages, dir_name)
 	if f != nil {
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
 

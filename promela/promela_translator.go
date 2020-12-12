@@ -23,14 +23,16 @@ var (
 	ADD_BOUND       = 1
 	LOWER_FOR_BOUND = 2
 	UPPER_FOR_BOUND = 3
+	RANGE_BOUND     = 4
+
+	Features = []Feature{}
 )
 
 type Model struct {
 	Result_fodler   string // the name of the folder where the model need to ne printed
 	Project_name    string // the full name of  project (eg. "nicolasdilley/Gomela")
 	Package         string // the name of the package
-	Model           string // the name of the model
-	Name            string // the name of the file that will be generated. (Composed of "pack_functionName_numOfParam")
+	Name            string // the name of the file that will be generated. (Composed of "pack_functionName")
 	Commit          string // the commit of the project
 	RecFuncs        []RecFunc
 	SpawningFuncs   []*SpawningFunc
@@ -79,7 +81,7 @@ type ParseError struct {
 
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela() {
-	m.Name = m.Package + "_" + m.Fun.Name.String()
+	Features = []Feature{}
 	m.CommPars = m.AnalyseCommParam(m.Package, m.Fun, m.AstMap, true)
 
 	//. Create a define for each mandatory param
@@ -91,6 +93,21 @@ func (m *Model) GoToPromela() {
 		} else {
 			m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
 		}
+
+		name := "Actual Param"
+		if commPar.Candidate {
+			name = "Candidate Param"
+		}
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      name,
+			Mandatory: fmt.Sprint(commPar.Mandatory),
+			Line:      0,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+		})
 	}
 
 	m.Init.Body.List = append(m.Init.Body.List,
@@ -112,14 +129,17 @@ func (m *Model) GoToPromela() {
 		// generate the model only if it contains only supported features
 		if err == nil {
 			// clean the model by removing empty for loops and unused opt param
+			m.Features = Features
 			Clean(m)
 			Print(m) // print the model
+			PrintFeatures(m.Features)
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
 			fmt.Println(err.err.Error())
 
-			m.AddFeature(Feature{
+			logFeature(Feature{
 				Proj_name: m.Project_name,
+				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
 				Mandatory: "false",
@@ -129,7 +149,6 @@ func (m *Model) GoToPromela() {
 			})
 		}
 
-		PrintFeatures(m, m.Features)
 	}
 
 }
@@ -188,13 +207,26 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																		Counter: 0,
 																	}
 
+																	Features = append(Features, Feature{
+																		Proj_name: m.Project_name,
+																		Model:     m.Name,
+																		Fun:       m.Fun.Name.String(),
+																		Name:      "new WaitGroup",
+																		Info:      "Name :" + prom_wg_name.Name,
+																		Mandatory: "false",
+																		Line:      m.Fileset.Position(l.Pos()).Line,
+																		Commit:    m.Commit,
+																		Filename:  m.Fileset.Position(l.Pos()).Filename,
+																	})
+
 																	block_stmt.List = append(block_stmt.List,
 																		&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
 																		&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 																}
 															} else {
-																m.AddFeature(Feature{
+																Features = append(Features, Feature{
 																	Proj_name: m.Project_name,
+																	Model:     m.Name,
 																	Fun:       m.Fun.Name.String(),
 																	Name:      "WaitGroup in for",
 																	Mandatory: "false",
@@ -239,8 +271,9 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 												}
 												addBlock(block_stmt, ch)
 											} else {
-												m.AddFeature(Feature{
+												Features = append(Features, Feature{
 													Proj_name: m.Project_name,
+													Model:     m.Name,
 													Fun:       m.Fun.Name.String(),
 													Name:      "Chan in for",
 													Mandatory: "false",
@@ -277,8 +310,9 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 															addBlock(block_stmt, ch)
 
 														} else {
-															m.AddFeature(Feature{
+															Features = append(Features, Feature{
 																Proj_name: m.Project_name,
+																Model:     m.Name,
 																Fun:       m.Fun.Name.String(),
 																Name:      "Chan in for",
 																Mandatory: "false",
@@ -316,13 +350,26 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																Counter: 0,
 															}
 
+															Features = append(Features, Feature{
+																Proj_name: m.Project_name,
+																Model:     m.Name,
+																Fun:       m.Fun.Name.String(),
+																Name:      "new WaitGroup",
+																Info:      "Name :" + prom_wg_name.Name,
+																Mandatory: "false",
+																Line:      m.Fileset.Position(stmt.Pos()).Line,
+																Commit:    m.Commit,
+																Filename:  m.Fileset.Position(stmt.Pos()).Filename,
+															})
+
 															block_stmt.List = append(block_stmt.List,
 																&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
 																&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 														}
 													} else {
-														m.AddFeature(Feature{
+														Features = append(Features, Feature{
 															Proj_name: m.Project_name,
+															Model:     m.Name,
 															Fun:       m.Fun.Name.String(),
 															Name:      "WaitGroup in for",
 															Mandatory: "false",
@@ -366,8 +413,9 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 														} else {
 															err = &ParseError{err: errors.New("Channel created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
 
-															m.AddFeature(Feature{
+															Features = append(Features, Feature{
 																Proj_name: m.Project_name,
+																Model:     m.Name,
 																Fun:       m.Fun.Name.String(),
 																Name:      "Chan in for",
 																Mandatory: "false",
@@ -405,14 +453,27 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																	Counter: 0,
 																}
 
+																Features = append(Features, Feature{
+																	Proj_name: m.Project_name,
+																	Model:     m.Name,
+																	Fun:       m.Fun.Name.String(),
+																	Name:      "new WaitGroup",
+																	Info:      "Name :" + prom_wg_name.Name,
+																	Mandatory: "false",
+																	Line:      m.Fileset.Position(spec.Pos()).Line,
+																	Commit:    m.Commit,
+																	Filename:  m.Fileset.Position(spec.Pos()).Filename,
+																})
+
 																block_stmt.List = append(block_stmt.List,
 																	&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
 																	&promela_ast.RunStmt{X: promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 															}
 														}
 													} else {
-														m.AddFeature(Feature{
+														Features = append(Features, Feature{
 															Proj_name: m.Project_name,
+															Model:     m.Name,
 															Fun:       m.Fun.Name.String(),
 															Name:      "WaitGroup in for",
 															Mandatory: "false",
@@ -492,8 +553,19 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 	} else {
 		block_stmt.List = append(block_stmt.List, sync_monitor)
 	}
-	m.Chans[go_chan_name] = channel
 
+	m.Chans[go_chan_name] = channel
+	Features = append(Features, Feature{
+		Proj_name: m.Project_name,
+		Model:     m.Name,
+		Fun:       m.Fun.Name.String(),
+		Name:      "new channel",
+		Info:      "Name :" + channel.Name.Name,
+		Mandatory: "false",
+		Line:      channel.Chan.Line,
+		Commit:    m.Commit,
+		Filename:  channel.Chan.Filename,
+	})
 	return block_stmt, err
 }
 func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
@@ -634,7 +706,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			if !containsExpr(exprs, wg) {
 				proc.Params = append(proc.Params, promela_ast.Param{Name: TranslateIdent(wg, m.Fileset).Name, Types: promela_types.Wgdef})
 
-				arg, err1 := m.TranslateArgs(wg)
+				arg, _, err1 := m.TranslateArgs(wg)
 
 				if err1 != nil {
 					err = err1
@@ -722,7 +794,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 							proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 							new_mod.Chans[name] = &ChanStruct{Name: promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
 
-							arg, err1 := m.TranslateArgs(call_expr.Args[counter])
+							arg, _, err1 := m.TranslateArgs(call_expr.Args[counter])
 							if err1 != nil {
 								err = err1
 							}
@@ -743,7 +815,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 											wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 											proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 											new_mod.WaitGroups[name] = wg
-											arg, err1 := m.TranslateArgs(call_expr.Args[counter])
+											arg, _, err1 := m.TranslateArgs(call_expr.Args[counter])
 											if err1 != nil {
 												err = err1
 											}
@@ -766,7 +838,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 										wg := &WaitGroupStruct{Name: promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 										proc.Params = append(proc.Params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 										new_mod.WaitGroups[name] = wg
-										arg, err1 := m.TranslateArgs(call_expr.Args[counter])
+										arg, _, err1 := m.TranslateArgs(call_expr.Args[counter])
 										if err1 != nil {
 											err = err1
 										}
@@ -810,7 +882,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				for _, commPar := range new_mod.CommPars {
 
 					if !commPar.Candidate {
-						arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
+						arg, _, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
 						if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
 							prom_call.Args = append(prom_call.Args, arg)
 						} else { // the arguments passed as a commparam cannot be translated
@@ -829,7 +901,11 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					m.Proctypes = append(m.Proctypes, proc)
 					new_mod.Proctypes = append(new_mod.Proctypes, proc)
 					for _, commPar := range new_mod.CommPars {
+
+						name := "Actual Param"
 						if commPar.Candidate {
+							name = "Candidate Param"
+
 							if commPar.Mandatory {
 								def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
 								candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
@@ -837,6 +913,17 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 								candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
 							}
 						}
+
+						Features = append(Features, Feature{
+							Proj_name: m.Project_name,
+							Model:     m.Name,
+							Fun:       new_mod.Fun.Name.String(),
+							Name:      name,
+							Mandatory: fmt.Sprint(commPar.Mandatory),
+							Line:      0,
+							Commit:    m.Commit,
+							Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+						})
 					}
 					stmt, d1, err1 := new_mod.TranslateBlockStmt(decl.Body)
 
@@ -878,8 +965,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 	if m.For_counter.In_for {
 		m.For_counter.With_go = true
-		m.AddFeature(Feature{
+		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
+			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Go in for",
 			Mandatory: "false",
@@ -1057,13 +1145,18 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 	label_name := fmt.Sprintf("for%d%d", m.For_counter.X, m.For_counter.Y)
 
-	ub, err1 := m.lookUp(s.X, UPPER_FOR_BOUND, true)
-
-	if err1 != nil {
-		err = err1
-	}
-
 	if m.containsChan(s.X) {
+
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Range over Chan",
+			Mandatory: "",
+			Line:      0,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(s.X.Pos()).Filename,
+		})
 		chan_name := m.getChanStruct(s.X)
 
 		do_guard := promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_name.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}}
@@ -1096,7 +1189,11 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		b.List = append(b.List, d)
 
 	} else {
+		ub, err1 := m.lookUp(s.X, RANGE_BOUND, m.spawns(s.Body, false))
 
+		if err1 != nil {
+			err = err1
+		}
 		// change into (for i:=0; i < len(x);i++)
 		s1, d2, err1 := m.TranslateBlockStmt(s.Body)
 		if len(d2.List) > 0 {
@@ -1187,8 +1284,9 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 		}
 	}
 
-	b.List = append(b.List, i)
-
+	if len(i.Guards) > 0 {
+		b.List = append(b.List, i)
+	}
 	return b, defers, err
 }
 
@@ -1338,7 +1436,7 @@ func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt) ([]pro
 				switch ident := sel.X.(type) {
 				case *ast.Ident:
 					if ident.Name == "time" && sel.Sel.Name == "After" {
-						guards = []promela_ast.GuardStmt{promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}}
+						guards = []promela_ast.GuardStmt{promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: m.checkForBreak(*body)}}
 					}
 				default:
 					err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(sel.Pos()).String() + " was found.")}
@@ -1679,7 +1777,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 											params = append(params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 											new_wg[name] = wg
 											if m.containsWaitgroup(call_expr.Args[x+y]) {
-												arg, err1 := m.TranslateArgs(call_expr.Args[x+y])
+												arg, _, err1 := m.TranslateArgs(call_expr.Args[x+y])
 												if err1 != nil {
 													err = err1
 												}
@@ -1698,7 +1796,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 							params = append(params, promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 							new_chans[name] = ch
 							if m.getChanStruct(call_expr.Args[x+y]) != nil {
-								arg, err1 := m.TranslateArgs(call_expr.Args[x+y])
+								arg, _, err1 := m.TranslateArgs(call_expr.Args[x+y])
 								if err1 != nil {
 									err = err1
 								}
@@ -1716,7 +1814,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 										params = append(params, promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 										new_wg[name] = wg
 										if m.containsWaitgroup(call_expr.Args[x+y]) {
-											arg, err1 := m.TranslateArgs(call_expr.Args[x+y])
+											arg, _, err1 := m.TranslateArgs(call_expr.Args[x+y])
 											if err1 != nil {
 												err = err1
 											}
@@ -1732,7 +1830,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 				}
 
 				if hasChan && known {
-					m.AddRecFunc(pack_name, fun)
 					// Generate a new proctype to model the call
 					proc := &promela_ast.Proctype{
 						Name: promela_ast.Ident{Name: func_name},
@@ -1749,9 +1846,11 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 					candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 					for _, commPar := range new_model.CommPars {
+						name := "Candidate Param"
 						if !commPar.Candidate {
+							name = "Actual Param"
 							proc.Params = append(proc.Params, promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
-							arg, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
+							arg, _, err1 := m.TranslateArgs(call_expr.Args[commPar.Pos])
 							if err1 == nil {
 								args = append(args, arg)
 							} else { // the arguments passed as a commparam cannot be translated
@@ -1764,6 +1863,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 								args = append(args, &ident)
 							}
 						} else {
+							// candidate param
 							bound := ""
 							if commPar.Mandatory {
 								bound = DEFAULT_BOUND
@@ -1773,6 +1873,17 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 
 							candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: bound}, Types: promela_types.Int})
 						}
+
+						Features = append(Features, Feature{
+							Proj_name: m.Project_name,
+							Model:     m.Name,
+							Fun:       new_model.Fun.Name.String(),
+							Name:      name,
+							Mandatory: fmt.Sprint(commPar.Mandatory),
+							Line:      0,
+							Commit:    m.Commit,
+							Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+						})
 					}
 
 					args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
@@ -1788,7 +1899,6 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 						if err1 != nil {
 							err = err1
 						}
-
 						proc.Body.List = append(candidatesParams.List, s1.List...)
 						proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 						proc.Body.List = append(proc.Body.List, d1.List...)
@@ -1865,26 +1975,33 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (b *promela_ast.Block
 }
 
 // Return if the expr given could be translated to a var or not and if it can its promela expr.
-func (m *Model) TranslateArgs(expr ast.Expr) (e promela_ast.Expr, err *ParseError) {
+func (m *Model) TranslateArgs(expr ast.Expr) (e promela_ast.Expr, bounds []promela_ast.Ident, err *ParseError) {
+	bounds = []promela_ast.Ident{}
 
 	var e1 promela_ast.Expr = nil
 	if con, num := IsConst(expr, m.AstMap[m.Package]); con {
-		e1 = &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}
-		return e1, nil
+		name := promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}
+		e1 = &name
+		return e1, []promela_ast.Ident{name}, nil
 	}
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		e1 = &promela_ast.Ident{Name: expr.Name, Ident: m.Fileset.Position(expr.Pos())}
+		name := promela_ast.Ident{Name: expr.Name, Ident: m.Fileset.Position(expr.Pos())}
+		e1 = &name
+		bounds = append(bounds, name)
 	case *ast.SelectorExpr:
-		e1 = &promela_ast.Ident{Name: m.getIdent(expr.X).Name + "_" + expr.Sel.Name,
+		name := promela_ast.Ident{Name: m.getIdent(expr.X).Name + "_" + expr.Sel.Name,
 			Ident: m.Fileset.Position(expr.Pos())}
+		e1 = &name
+		bounds = append(bounds, name)
+
 	case *ast.BinaryExpr:
-		lhs, err1 := m.TranslateArgs(expr.X)
+		lhs, names, err1 := m.TranslateArgs(expr.X)
 
 		if err1 != nil {
 			err = err1
 		}
-		rhs, err2 := m.TranslateArgs(expr.Y)
+		rhs, names2, err2 := m.TranslateArgs(expr.Y)
 
 		if err2 != nil {
 			err = err2
@@ -1893,68 +2010,54 @@ func (m *Model) TranslateArgs(expr ast.Expr) (e promela_ast.Expr, err *ParseErro
 
 			e1 = &promela_ast.BinaryExpr{Lhs: lhs, Op: expr.Op.String(), Rhs: rhs}
 		}
+		for _, name := range append(names, names2...) {
+
+			bounds = append(bounds, name)
+		}
+
 	case *ast.UnaryExpr:
-		unary, err1 := m.TranslateArgs(expr.X)
+		unary, names, err1 := m.TranslateArgs(expr.X)
 
 		if err1 != nil {
 			err = err1
 		} else {
 			e1 = &promela_ast.ExprStmt{X: unary}
 		}
+
+		bounds = append(bounds, names...)
 	case *ast.CallExpr:
 		if TranslateIdent(expr.Fun, m.Fileset).Name == "len" {
 			return m.TranslateArgs(expr.Args[0]) // if its len just return the translation of the first args which is the list
 		}
 
-		arg, err1 := m.TranslateArgs(expr.Fun)
+		arg, _, err1 := m.TranslateArgs(expr.Fun)
 
 		if err1 == nil {
 			err = err1
 
-			e1 = &promela_ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), Ident: m.Fileset.Position(expr.Pos())}
-
+			name := promela_ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), Ident: m.Fileset.Position(expr.Pos())}
+			e1 = &name
+			bounds = append(bounds, name)
 		} else {
-			return arg, &ParseError{err: errors.New("Could not parse the name of the function at pos " + m.Fileset.Position(expr.Pos()).String())}
+			return arg, bounds, &ParseError{err: errors.New("Could not parse the name of the function at pos " + m.Fileset.Position(expr.Pos()).String())}
 		}
 	case *ast.BasicLit:
-		e1 = &promela_ast.Ident{Name: expr.Value}
+		name := promela_ast.Ident{Name: expr.Value}
+		e1 = &name
+		bounds = append(bounds, name)
 	case *ast.StarExpr:
 		return m.TranslateArgs(expr.X)
 	case *ast.ParenExpr:
 		return m.TranslateArgs(expr.X)
 	case *ast.CompositeLit:
-		return &promela_ast.Ident{Name: strconv.Itoa(len(expr.Elts))}, nil
+		name := promela_ast.Ident{Name: strconv.Itoa(len(expr.Elts))}
+		e1 := &name
+		return e1, []promela_ast.Ident{name}, nil
 	default:
 		err = &ParseError{err: errors.New("Could not parse an arguments at line " + m.Fileset.Position(expr.Pos()).String())}
-		// e1 := &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(len(m.Defines)), Ident: m.Fileset.Position(expr.Pos())}
 
-		// case *ast.IndexExpr:
-		// 	e1 = m.TranslateArgs(expr.X)
-		// 	// }
-		// case *ast.SliceExpr:
-		// 	e1 = m.TranslateArgs(expr.X)
-		// case *ast.KeyValueExpr:
-		// 	e1 = m.TranslateArgs(expr.Key)
-		// case *ast.ArrayType:
-		// 	anonym := &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(len(m.Defines)), Ident: m.Fileset.Position(expr.Pos())}
-		// 	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: *anonym, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
-		// 	return anonym
-		// case *ast.StructType:
-		// 	anonym := &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(len(m.Defines)), Ident: m.Fileset.Position(expr.Pos())}
-		// 	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: *anonym, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
-		// 	return anonym
-		// case *ast.ChanType:
-		// 	anonym := &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(len(m.Defines)), Ident: m.Fileset.Position(expr.Pos())}
-		// 	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: *anonym, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
-		// 	return anonym
-		// case *ast.TypeAssertExpr:
-		// 	e1 = &promela_ast.Ident{Name: "type_assert", Ident: m.Fileset.Position(expr.Pos())}
-		// case *ast.FuncLit:
-		// 	e1 = &promela_ast.Ident{Name: "func_lit", Ident: m.Fileset.Position(expr.Pos())}
-		// default:
-		// 	ast.Print(m.Fileset, expr)
 	}
-	return e1, err
+	return e1, bounds, err
 }
 
 func (m *Model) getChanStruct(expr ast.Expr) *ChanStruct {
@@ -2122,8 +2225,9 @@ func (m *Model) lookUpFor(s *ast.ForStmt, pack *packages.Package) (lb promela_as
 		ub = ub_decl.Name
 
 		if !(s.Init == nil && s.Cond == nil && s.Post == nil) {
-			m.AddFeature(Feature{
+			Features = append(Features, Feature{
 				Proj_name: m.Project_name,
+				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "For loop not well formed",
 				Mandatory: "false",
@@ -2155,6 +2259,12 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 			mandatory = "true"
 			bound = "spawning for lower bound"
 		}
+	case RANGE_BOUND:
+		bound = "range bound"
+		if spawning_for_loop {
+			mandatory = "true"
+			bound = "spawning range bound"
+		}
 	case UPPER_FOR_BOUND:
 		bound = "for upper bound"
 		if spawning_for_loop {
@@ -2165,9 +2275,22 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 		mandatory = "true"
 		bound = "add bound"
 	}
-	i1, err1 := m.TranslateArgs(expr)
+	i1, names, err1 := m.TranslateArgs(expr)
 	if err1 != nil {
 		err = err1
+	}
+	for _, name := range names {
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Comm Param",
+			Mandatory: mandatory,
+			Info:      name.Name,
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		})
 	}
 
 	ident = i1
@@ -2175,23 +2298,25 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 	case *ast.UnaryExpr:
 
 		if expr.Op == token.ARROW {
-			m.AddBound(Feature{
+			Features = append(Features, Feature{
 				Proj_name: m.Project_name,
+				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Receive as a " + bound,
 				Mandatory: mandatory,
-				Info:      "Name : " + prettyPrint(expr) + " Mandatory : " + mandatory,
+				Info:      prettyPrint(expr) + " Mandatory : " + mandatory,
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(expr.Pos()).Filename,
 			})
 		} else if expr.Op == token.AND {
-			m.AddBound(Feature{
+			Features = append(Features, Feature{
 				Proj_name: m.Project_name,
+				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "Pointer as a " + bound,
 				Mandatory: mandatory,
-				Info:      "Name : " + prettyPrint(expr.X),
+				Info:      prettyPrint(expr.X),
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -2200,23 +2325,25 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 
 	case *ast.CallExpr:
 		// Function as a comm param
-		m.AddBound(Feature{
+		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
+			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Func as a " + bound,
 			Mandatory: mandatory,
-			Info:      "Name : " + prettyPrint(expr),
+			Info:      prettyPrint(expr),
 			Line:      m.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
 		if m.getIdent(expr.Fun).Name == "len" {
-			m.AddBound(Feature{
+			Features = append(Features, Feature{
 				Proj_name: m.Project_name,
+				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
 				Name:      "len() as a " + bound,
 				Mandatory: mandatory,
-				Info:      "Name : " + prettyPrint(expr),
+				Info:      prettyPrint(expr),
 				Line:      m.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
 				Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -2224,59 +2351,40 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 
 		}
 	case *ast.SelectorExpr:
-		Types := m.AstMap[m.Package].TypesInfo.Selections[expr]
 
-		if Types == nil {
-			fmt.Println("Could not find type of expr : ", expr, " at pos : ", m.Fileset.Position(expr.Pos()))
-		} else {
-			switch Types.Type().(type) {
-			case *types.Struct:
-				// Struct as a bound
-				m.AddBound(Feature{
-					Proj_name: m.Project_name,
-					Fun:       m.Fun.Name.String(),
-					Name:      "Struct as a " + bound,
-					Mandatory: mandatory,
-					Info:      "UNSUPPORTED",
-					Line:      m.Fileset.Position(expr.Pos()).Line,
-					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
-				})
-
-			case *types.Named:
-				// Struct as a bound
-				m.AddBound(Feature{
-					Proj_name: m.Project_name,
-					Fun:       m.Fun.Name.String(),
-					Name:      "UNSUPPORTED",
-					Mandatory: mandatory,
-					Info:      "Name : " + prettyPrint(expr),
-					Line:      m.Fileset.Position(expr.Pos()).Line,
-					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
-				})
-
-			}
-		}
+		// Struct as a bound
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Struct as a " + bound,
+			Mandatory: mandatory,
+			Info:      "UNSUPPORTED",
+			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		})
 	case *ast.IndexExpr:
-		m.AddBound(Feature{
+		Features = append(Features, Feature{
 			Name:      "Uses an item of a list as a " + bound,
 			Mandatory: mandatory,
 			Info:      "UNSUPPORTED",
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
+			Model:     m.Name,
 			Line:      m.Fileset.Position(expr.Pos()).Line,
 			Filename:  m.Fileset.Position(expr.Pos()).String(),
 			Commit:    m.Commit,
 		})
 
 	case *ast.CompositeLit:
-		m.AddBound(Feature{
+		Features = append(Features, Feature{
 			Name:      "List as a " + bound,
-			Info:      fmt.Sprint(expr.Type),
+			Info:      "Name :" + fmt.Sprint(expr.Type),
 			Mandatory: mandatory,
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
+			Model:     m.Name,
 			Line:      m.Fileset.Position(expr.Pos()).Line,
 			Filename:  m.Fileset.Position(expr.Pos()).String(),
 			Commit:    m.Commit,
@@ -2289,12 +2397,13 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 			switch Types := Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				m.AddBound(Feature{
+				Features = append(Features, Feature{
 					Proj_name: m.Project_name,
+					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Field of a struct as a " + bound,
 					Mandatory: mandatory,
-					Info:      "Name : " + prettyPrint(expr),
+					Info:      "UNSUPPORTED",
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -2303,8 +2412,9 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 			case *types.Basic:
 
 				if isConstant(expr) != "not found" {
-					m.AddBound(Feature{
+					Features = append(Features, Feature{
 						Proj_name: m.Project_name,
+						Model:     m.Name,
 						Fun:       m.Fun.Name.String(),
 						Name:      "Integer as a " + bound,
 						Mandatory: mandatory,
@@ -2314,12 +2424,13 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 						Filename:  m.Fileset.Position(expr.Pos()).Filename,
 					})
 				} else {
-					m.AddBound(Feature{
+					Features = append(Features, Feature{
 						Proj_name: m.Project_name,
+						Model:     m.Name,
 						Fun:       m.Fun.Name.String(),
 						Name:      "Var as a " + bound,
 						Mandatory: mandatory,
-						Info:      fmt.Sprint(expr),
+						Info:      "Name :" + fmt.Sprint(expr),
 						Line:      m.Fileset.Position(expr.Pos()).Line,
 						Commit:    m.Commit,
 						Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -2327,34 +2438,37 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (p
 				}
 
 			case *types.Slice:
-				m.AddBound(Feature{
+				Features = append(Features, Feature{
 					Proj_name: m.Project_name,
+					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Slice as a " + bound,
 					Mandatory: mandatory,
-					Info:      "Name : " + prettyPrint(expr),
+					Info:      prettyPrint(expr),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Map:
-				m.AddBound(Feature{
+				Features = append(Features, Feature{
 					Proj_name: m.Project_name,
+					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Map as a " + bound,
 					Mandatory: mandatory,
-					Info:      "Name : " + Types.String(),
+					Info:      Types.String(),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Named:
-				m.AddBound(Feature{
+				Features = append(Features, Feature{
 					Proj_name: m.Project_name,
+					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
 					Name:      "Var as a " + bound,
 					Mandatory: mandatory,
-					Info:      "Name : " + Types.String(),
+					Info:      Types.String(),
 					Line:      m.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
@@ -2521,10 +2635,9 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) Model {
 		Result_fodler:   m.Result_fodler,
 		Project_name:    m.Project_name,
 		Package:         pack,
-		Model:           m.Model,
-		Name:            m.Commit,
+		Name:            m.Name,
 		RecFuncs:        []RecFunc{},
-		SpawningFuncs:   []*SpawningFunc{},
+		SpawningFuncs:   m.SpawningFuncs,
 		Fileset:         m.Fileset,
 		Proctypes:       m.Proctypes,
 		Inlines:         m.Inlines,

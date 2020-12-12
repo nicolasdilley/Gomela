@@ -88,7 +88,6 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 					d := cartesian.Iter(bounds...)
 
 					for bound := range d {
-						fmt.Println(bound)
 						toPrint := file_content
 						for _, b := range bound {
 							toPrint = strings.Replace(toPrint, "??", fmt.Sprint(b), 1)

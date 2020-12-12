@@ -57,7 +57,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
 			mandatory := m.spawns(stmt.Body, log)
-
 			switch cond := stmt.Cond.(type) { // i:= n;i > n;i--
 			case *ast.BinaryExpr:
 				if cond.Op == token.GEQ || cond.Op == token.GTR {
@@ -110,7 +109,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.ChanType:
 						// definitely a new chan
 						if len(stmt.Args) > 1 {
-							_, err1 := m.TranslateArgs(stmt.Args[1])
+							_, _, err1 := m.TranslateArgs(stmt.Args[1])
 							if err1 == nil {
 								params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 							}
@@ -183,15 +182,14 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// 		}
 			// 	}
 
-			// if !m.ContainsRecFunc(fun_pack, fun_name) {
-			found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
-
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
+				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
 				if contains_chan && found {
 					// look inter procedurally
 					new_model := m.newModel(fun_pack, fun_decl)
-					new_model.AddRecFunc(fun_pack, fun_name)
+					new_model.RecFuncs = m.RecFuncs
+					// new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 					params_1 := new_model.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
@@ -241,9 +239,11 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 				if contains_chan {
 					if !m.ContainsRecFunc(pack, fun) {
+
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
-						new_model.AddRecFunc(pack, fun)
+						new_model.RecFuncs = m.RecFuncs
+						// new_model.AddRecFunc(pack, fun) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 						params_1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 						for _, param := range params_1 {
@@ -401,7 +401,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.ChanType:
 		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
 	case *ast.FuncLit:
-		m.AddFeature(Feature{
+		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Anonymous function as ident",
@@ -413,7 +413,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.FuncType:
-		m.AddFeature(Feature{
+		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "High order function",
@@ -507,7 +507,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 	})
 
 	if recursive && log {
-		m.AddFeature(Feature{
+		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",
@@ -571,13 +571,13 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 			}
 		}
 
+		spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
+		m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
 		if contains_chan || contains_wg && fun != "len" {
 			found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
 
 			if found {
 				// look inter procedurally
-				spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
-				m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
 				call_spawning = m.spawns(fun_decl.Body, log)
 
 				spawning_func.is_spawning = call_spawning
@@ -588,6 +588,8 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 				// what do we do when we can't find decl ?
 				call_spawning = true
 			}
+		} else {
+			spawning_func.is_spawning = false
 		}
 	} else {
 		recursive = true
