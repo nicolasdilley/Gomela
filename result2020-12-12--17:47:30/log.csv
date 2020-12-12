@@ -1,0 +1,29 @@
+Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
+source,v2_Fetch11,Fetch,Comm Param,true,2,13,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a chan bound,true,2,13,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,new channel,false,Name :results,13,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,new WaitGroup,false,Name :wg,14,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,true,3,15,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a spawning for upper bound,true,3,15,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,true,0,15,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a spawning for lower bound,true,0,15,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,true,1,16,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a add bound,true,1,16,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,false,3,19,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a for upper bound,false,3,19,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,false,0,19,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a for lower bound,false,0,19,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,false,3,22,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a for upper bound,false,3,22,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Comm Param,false,0,22,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,Fetch,Integer as a for lower bound,false,0,22,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Candidate Param,false,,0,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Candidate Param,false,,0,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Func as a for upper bound,false,test(),34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Comm Param,false,0,34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Integer as a for lower bound,false,0,34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Candidate Param,false,,0,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Candidate Param,false,,0,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Func as a for upper bound,false,test(),34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Comm Param,false,0,34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
+source,v2_Fetch11,a,Integer as a for lower bound,false,0,34,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go,/Users/redfloyd/go/src/github.com/nicolasdilley/gomela/source/hello.go
