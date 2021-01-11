@@ -6,7 +6,7 @@ import "go/token"
 type SelectorExpr struct {
 	Pos token.Position
 	X   Expr
-	Sel Ident
+	Sel *Ident
 }
 
 func (s *SelectorExpr) GoNode() token.Position {
@@ -15,4 +15,8 @@ func (s *SelectorExpr) GoNode() token.Position {
 
 func (s *SelectorExpr) Print(num_tabs int) string {
 	return s.X.Print(num_tabs) + "." + s.Sel.Print(num_tabs)
+}
+func (s *SelectorExpr) Clone() Stmt {
+	s1 := &SelectorExpr{Pos: s.Pos, X: s.X.Clone(), Sel: s.Sel.Clone().(*Ident)}
+	return s1
 }

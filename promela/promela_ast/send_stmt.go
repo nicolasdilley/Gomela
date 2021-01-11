@@ -18,3 +18,8 @@ func (s *SendStmt) GoNode() token.Position {
 func (s *SendStmt) Print(num_tabs int) string {
 	return s.Chan.Print(num_tabs) + "!" + s.Rhs.Print(num_tabs)
 }
+
+func (s *SendStmt) Clone() Stmt {
+	s1 := &SendStmt{Send: s.Send, Chan: s.Chan.Clone(), Rhs: s.Rhs.Clone()}
+	return s1
+}

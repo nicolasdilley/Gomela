@@ -8,7 +8,7 @@ import (
 
 type DeclStmt struct {
 	Decl  token.Position
-	Name  Ident
+	Name  *Ident
 	Types promela_types.Types
 	Rhs   Expr // can be null if not assigned
 }
@@ -24,4 +24,12 @@ func (s *DeclStmt) Print(num_tabs int) (stmt string) {
 		stmt += " = " + s.Rhs.Print(num_tabs)
 	}
 	return
+}
+
+func (s *DeclStmt) Clone() Stmt {
+	s1 := &DeclStmt{Decl: s.Decl, Name: s.Name.Clone().(*Ident), Types: s.Types}
+	if s.Rhs != nil {
+		s1.Rhs = s.Rhs.Clone()
+	}
+	return s1
 }

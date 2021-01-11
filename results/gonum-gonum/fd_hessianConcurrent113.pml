@@ -1,0 +1,628 @@
+#define hessianConcurrent_evals  3
+#define hessianConcurrent_nWorkers  1
+
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example291430900/diff/fd/hessian.go
+typedef Chandef {
+	chan sync = [0] of {int};
+	chan async_send = [0] of {int};
+	chan async_rcv = [0] of {int};
+	chan sending = [0] of {int};
+	chan closing = [0] of {bool};
+	chan is_closed = [0] of {bool};
+	int size = 0;
+	int num_msgs = 0;
+	bool closed = false;
+}
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
+
+
+
+init { 
+	Wgdef workerWG;
+	Wgdef originWG;
+	Chandef ans;
+	Chandef send;
+	bool state = false;
+	int i;
+	int nWorkers = hessianConcurrent_nWorkers;
+	int evals = hessianConcurrent_evals;
+	
+
+	if
+	:: evals > 0 -> 
+		send.size = evals;
+		run AsyncChan(send)
+	:: else -> 
+		run sync_monitor(send)
+	fi;
+	
+
+	if
+	:: evals > 0 -> 
+		ans.size = evals;
+		run AsyncChan(ans)
+	:: else -> 
+		run sync_monitor(ans)
+	fi;
+	run wgMonitor(originWG);
+	
+
+	if
+	:: true -> 
+		originWG.Add!1
+	:: true;
+	fi;
+	run wgMonitor(workerWG);
+		for(i : 0.. nWorkers-1) {
+		for10: skip;
+		workerWG.Add!1;
+		run go_Anonymous0(send,ans,originWG,workerWG);
+		for10_end: skip
+	};
+	for10_exit: skip;
+	run go_Anonymous1(send,ans,originWG,workerWG);
+	do
+	:: ans.is_closed?state -> 
+		if
+		:: state -> 
+			break
+		:: else -> 
+			
+
+			if
+			:: ans.async_rcv?0;
+			:: ans.sync?0;
+			fi;
+			for30: skip;
+			for30_end: skip
+		fi
+	od;
+	for30_exit: skip
+stop_process:skip
+}
+
+proctype go_Anonymous0(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
+	bool closed; 
+	int i;
+	bool state;
+	do
+	:: send.is_closed?state -> 
+		if
+		:: state -> 
+			break
+		:: else -> 
+			
+
+			if
+			:: send.async_rcv?0;
+			:: send.sync?0;
+			fi;
+			for11: skip;
+			
+
+			if
+			:: true -> 
+				originWG.Wait?0
+			fi;
+			
+
+			if
+			:: ans.async_send!0;
+			:: ans.sync!0 -> 
+				ans.sending?0
+			fi;
+			for11_end: skip
+		fi
+	od;
+	for11_exit: skip;
+	stop_process: skip;
+	workerWG.Add!-1
+}
+proctype go_Anonymous1(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
+	bool closed; 
+	int i;
+	bool state;
+	int stencil = -2;
+	int i = -2;
+	int n = -2;
+	
+
+	if
+	:: 0 != -2 && n-1 != -3 -> 
+				for(i : 0.. n-1) {
+			for201454: skip;
+			
+
+			if
+			:: i != -2 && n-1 != -3 -> 
+								for(i : i.. n-1) {
+					for2114531454: skip;
+					
+
+					if
+					:: stencil-1 != -3 -> 
+												for(i : 0.. stencil-1) {
+							for2214531454: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for2314531454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14531454: skip
+								};
+								for23_exit14531454: skip
+							:: else -> 
+								do
+								:: true -> 
+									for23145114531454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end145114531454: skip
+								:: true -> 
+									break
+								od;
+								for23_exit145114531454: skip
+							fi;
+							for22_end14531454: skip
+						};
+						for22_exit14531454: skip
+					:: else -> 
+						do
+						:: true -> 
+							for22145214531454: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for23145214531454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end145214531454: skip
+								};
+								for23_exit145214531454: skip
+							:: else -> 
+								do
+								:: true -> 
+									for231451145214531454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end1451145214531454: skip
+								:: true -> 
+									break
+								od;
+								for23_exit1451145214531454: skip
+							fi;
+							for22_end145214531454: skip
+						:: true -> 
+							break
+						od;
+						for22_exit145214531454: skip
+					fi;
+					for21_end14531454: skip
+				};
+				for21_exit14531454: skip
+			:: else -> 
+				do
+				:: true -> 
+					for211454: skip;
+					
+
+					if
+					:: stencil-1 != -3 -> 
+												for(i : 0.. stencil-1) {
+							for221454: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for231454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end1454: skip
+								};
+								for23_exit1454: skip
+							:: else -> 
+								do
+								:: true -> 
+									for2314511454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14511454: skip
+								:: true -> 
+									break
+								od;
+								for23_exit14511454: skip
+							fi;
+							for22_end1454: skip
+						};
+						for22_exit1454: skip
+					:: else -> 
+						do
+						:: true -> 
+							for2214521454: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for2314521454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14521454: skip
+								};
+								for23_exit14521454: skip
+							:: else -> 
+								do
+								:: true -> 
+									for23145114521454: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end145114521454: skip
+								:: true -> 
+									break
+								od;
+								for23_exit145114521454: skip
+							fi;
+							for22_end14521454: skip
+						:: true -> 
+							break
+						od;
+						for22_exit14521454: skip
+					fi;
+					for21_end1454: skip
+				:: true -> 
+					break
+				od;
+				for21_exit1454: skip
+			fi;
+			for20_end1454: skip
+		};
+		for20_exit1454: skip
+	:: else -> 
+		do
+		:: true -> 
+			for20: skip;
+			
+
+			if
+			:: i != -2 && n-1 != -3 -> 
+								for(i : i.. n-1) {
+					for211453: skip;
+					
+
+					if
+					:: stencil-1 != -3 -> 
+												for(i : 0.. stencil-1) {
+							for221453: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for231453: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end1453: skip
+								};
+								for23_exit1453: skip
+							:: else -> 
+								do
+								:: true -> 
+									for2314511453: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14511453: skip
+								:: true -> 
+									break
+								od;
+								for23_exit14511453: skip
+							fi;
+							for22_end1453: skip
+						};
+						for22_exit1453: skip
+					:: else -> 
+						do
+						:: true -> 
+							for2214521453: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for2314521453: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14521453: skip
+								};
+								for23_exit14521453: skip
+							:: else -> 
+								do
+								:: true -> 
+									for23145114521453: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end145114521453: skip
+								:: true -> 
+									break
+								od;
+								for23_exit145114521453: skip
+							fi;
+							for22_end14521453: skip
+						:: true -> 
+							break
+						od;
+						for22_exit14521453: skip
+					fi;
+					for21_end1453: skip
+				};
+				for21_exit1453: skip
+			:: else -> 
+				do
+				:: true -> 
+					for21: skip;
+					
+
+					if
+					:: stencil-1 != -3 -> 
+												for(i : 0.. stencil-1) {
+							for22: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for23: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end: skip
+								};
+								for23_exit: skip
+							:: else -> 
+								do
+								:: true -> 
+									for231451: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end1451: skip
+								:: true -> 
+									break
+								od;
+								for23_exit1451: skip
+							fi;
+							for22_end: skip
+						};
+						for22_exit: skip
+					:: else -> 
+						do
+						:: true -> 
+							for221452: skip;
+							
+
+							if
+							:: stencil-1 != -3 -> 
+																for(i : 0.. stencil-1) {
+									for231452: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end1452: skip
+								};
+								for23_exit1452: skip
+							:: else -> 
+								do
+								:: true -> 
+									for2314511452: skip;
+									
+
+									if
+									:: send.async_send!0;
+									:: send.sync!0 -> 
+										send.sending?0
+									fi;
+									for23_end14511452: skip
+								:: true -> 
+									break
+								od;
+								for23_exit14511452: skip
+							fi;
+							for22_end1452: skip
+						:: true -> 
+							break
+						od;
+						for22_exit1452: skip
+					fi;
+					for21_end: skip
+				:: true -> 
+					break
+				od;
+				for21_exit: skip
+			fi;
+			for20_end: skip
+		:: true -> 
+			break
+		od;
+		for20_exit: skip
+	fi;
+	send.closing!true;
+	workerWG.Wait?0;
+	ans.closing!true;
+	stop_process: skip
+}
+proctype AsyncChan(Chandef ch) {
+do
+:: true ->
+if
+:: ch.closed -> 
+end: if
+  :: ch.async_send?0-> // cannot send on closed channel
+    assert(false)
+  :: ch.closing?true -> // cannot close twice a channel
+    assert(false)
+  :: ch.is_closed!true; // sending state of channel (closed)
+  :: ch.sending!true -> // sending state of channel (closed)
+    assert(false)
+  :: ch.sync!0; // can always receive on a closed chan
+  fi;
+:: else ->
+	if
+	:: ch.num_msgs == ch.size ->
+		end1: if
+		  :: ch.async_rcv!0 ->
+		    ch.num_msgs = ch.num_msgs - 1
+		  :: ch.closing?true -> // closing the channel
+		      ch.closed = true
+		  :: ch.is_closed!false; // sending channel is open 
+		  :: ch.sending!false;
+		fi;
+	:: ch.num_msgs == 0 -> 
+end2:		if
+		:: ch.async_send?0 -> // a message has been received
+			ch.num_msgs = ch.num_msgs + 1
+		:: ch.closing?true -> // closing the channel
+			ch.closed = true
+		:: ch.is_closed!false;
+		:: ch.sending!false;
+		fi;
+		:: else -> 
+		end3: if
+		  :: ch.async_send?0->
+		     ch.num_msgs = ch.num_msgs + 1
+		  :: ch.async_rcv!0
+		     ch.num_msgs = ch.num_msgs - 1
+		  :: ch.closing?true -> // closing the channel
+		      ch.closed = true
+		  :: ch.is_closed!false;  // sending channel is open
+		  :: ch.sending!false;  // sending channel is open
+		fi;
+	fi;
+fi;
+od;
+}
+
+proctype sync_monitor(Chandef ch) {
+do
+:: true
+if
+:: ch.closed ->
+end: if
+  :: ch.async_send?0-> // cannot send on closed channel
+    assert(false)
+  :: ch.closing?true -> // cannot close twice a channel
+    assert(false)
+  :: ch.is_closed!true; // sending state of channel (closed)
+  :: ch.sending!true -> // sending state of channel (closed)
+    assert(false)
+  :: ch.sync!0; // can always receive on a closed chan
+  fi;
+:: else -> 
+end1: if
+    :: ch.sending!false;
+    :: ch.closing?true ->
+      ch.closed = true
+    :: ch.is_closed!false ->
+    fi;
+fi;
+od
+stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
+}
+

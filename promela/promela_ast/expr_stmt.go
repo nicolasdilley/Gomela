@@ -17,3 +17,7 @@ func (s *ExprStmt) GoNode() token.Position {
 func (s *ExprStmt) Print(num_tabs int) string {
 	return s.X.Print(num_tabs)
 }
+func (s *ExprStmt) Clone() Stmt {
+	s1 := &ExprStmt{Pos: s.Pos, X: s.X.Clone()}
+	return s1
+}

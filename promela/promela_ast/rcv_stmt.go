@@ -16,3 +16,7 @@ func (s *RcvStmt) GoNode() token.Position {
 func (s *RcvStmt) Print(num_tabs int) string {
 	return s.Chan.Print(num_tabs) + "?" + s.Rhs.Print(num_tabs)
 }
+func (s *RcvStmt) Clone() Stmt {
+	s1 := &RcvStmt{Rcv: s.Rcv, Chan: s.Chan.Clone(), Rhs: s.Rhs.Clone()}
+	return s1
+}

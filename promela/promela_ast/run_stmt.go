@@ -8,7 +8,7 @@ import (
 // Guard stmt in promela : (cond) -> body
 type RunStmt struct {
 	Run token.Position
-	X   CallExpr
+	X   *CallExpr
 }
 
 func (s *RunStmt) GoNode() token.Position {
@@ -16,4 +16,8 @@ func (s *RunStmt) GoNode() token.Position {
 }
 func (s *RunStmt) Print(num_tabs int) string {
 	return "run " + s.X.Print(num_tabs)
+}
+func (s *RunStmt) Clone() Stmt {
+	s1 := &RunStmt{Run: s.Run, X: s.X.Clone().(*CallExpr)}
+	return s1
 }

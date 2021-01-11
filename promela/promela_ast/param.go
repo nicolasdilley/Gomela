@@ -20,3 +20,8 @@ func (p *Param) Print(num_tabs int) (stmt string) {
 	stmt += p.Types.Name + " " + p.Name
 	return
 }
+
+func (s *Param) Clone() Stmt {
+	s1 := &Param{Pos: s.Pos, Name: s.Name, Types: s.Types}
+	return s1
+}

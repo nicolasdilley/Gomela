@@ -18,20 +18,15 @@ func (c *InitDef) Print(num_tabs int) (stmt string) {
 
 	c.DeclAtStart()
 	stmt += c.Body.Print(num_tabs + 1)
-	stmt += "\nstop_process:}\n"
+	stmt += "\nstop_process:skip\n}\n"
 	return stmt
 }
 
 func (d *InitDef) DeclAtStart() {
+	d.Body.List = append(DeclInBlock(d.Body), d.Body.List...)
+}
 
-	for i := len(d.Body.List) - 1; i >= 0; i-- {
-		stmt := d.Body.List[i]
-		switch stmt.(type) {
-		case *Chandef,
-			*DeclStmt:
-			// fmt.Println(stmt.Print(0))
-			d.Body.List = append(d.Body.List[:i], d.Body.List[i+1:]...)
-			d.Body.List = append([]Stmt{stmt}, d.Body.List...)
-		}
-	}
+func (s *InitDef) Clone() Stmt {
+	s1 := &InitDef{Def: s.Def, Body: s.Body.Clone().(*BlockStmt)}
+	return s1
 }

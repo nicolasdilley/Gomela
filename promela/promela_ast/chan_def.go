@@ -8,9 +8,9 @@ import (
 )
 
 type Chandef struct {
-	Name  Ident
+	Name  *Ident
 	Def   token.Position
-	Size  Ident
+	Size  *Ident
 	Types []promela_types.Types
 }
 
@@ -31,4 +31,9 @@ func (c *Chandef) Print(num_tabs int) (stmt string) {
 
 	stmt += "}"
 	return
+}
+
+func (s *Chandef) Clone() Stmt {
+	s1 := &Chandef{Def: s.Def, Name: s.Name.Clone().(*Ident), Size: s.Size.Clone().(*Ident), Types: s.Types}
+	return s1
 }

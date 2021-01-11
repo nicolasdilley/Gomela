@@ -11,13 +11,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	cartesian "github.com/schwarmco/go-cartesian-product"
 )
 
 type VerificationRun struct {
-	Spin_timing      int    // time in milli to verify the program
+	Spin_timing      int64  // time in milli to verify the program
 	Safety_error     bool   // is there any safety errors
 	Global_deadlock  bool   // is there any global deadlock
 	Partial_deadlock bool   // is there any partial deadlock
@@ -45,7 +46,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 	for _, model := range models {
 		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
 			fmt.Println("Verifying model : " + model.Name())
-			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
 
 			content, err := ioutil.ReadFile(path)
 
@@ -122,9 +123,13 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 	var output bytes.Buffer
 
 	// Verify with SPIN
-	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
+	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m100000000", "-w26", path, "-f")
 	command.Stdout = &output
+	pre := time.Now()
 	command.Run()
+	after := time.Now()
+
+	ver.Spin_timing = after.Sub(pre).Milliseconds()
 
 	if output.String() == "" {
 		toPrint := model_name + ",timeout,timeout,timeout,timeout,timeout,\n"
@@ -134,6 +139,7 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 	} else {
 		ver.Timeout = false
 		executable := parseResults(output.String(), ver)
+		toPrint := model_name + ",0,the model is not executable,,,,,\n"
 		if executable {
 			comm_par_info := ""
 			fmt.Println("-------------------------------")
@@ -152,10 +158,12 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 			}
 			fmt.Println("-------------------------------")
 
-			toPrint := model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
-			if _, err := f.WriteString(toPrint); err != nil {
-				panic(err)
-			}
+			toPrint = model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+
+		}
+
+		if _, err := f.WriteString(toPrint); err != nil {
+			panic(err)
 		}
 	}
 	return ver
@@ -181,11 +189,9 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					for _, b := range opt_bound {
 						for i, line := range new_lines {
 							if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
-								fmt.Println(i, " : ", line, " to ", b)
 								// we found an optional param
 								line = strings.Replace(line, "-2", fmt.Sprint(b), 1)
 								new_lines[i] = strings.Replace(line, " = ", "=", 1)
-								fmt.Println(new_lines[i])
 								fixed_bound += strings.Trim(new_lines[i]+" ", "\t")
 								break
 							}
@@ -211,7 +217,12 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					// Verify with SPIN
 					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
+					pre := time.Now()
 					command.Run()
+					after := time.Now()
+
+					ver.Spin_timing = after.Sub(pre).Milliseconds()
+
 					num_tests++
 					if output.String() == "" {
 						toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
@@ -221,6 +232,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					} else {
 						ver.Timeout = false
 						executable := parseResults(output.String(), &ver)
+
 						if executable {
 							comm_par_info := ""
 							fmt.Println("-------------------------------")
@@ -283,7 +295,10 @@ func parseResults(result string, ver *VerificationRun) bool {
 
 	if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
 		fmt.Println("The model is not executable : ")
-		fmt.Println(splitted[0])
+
+		for _, line := range splitted {
+			fmt.Println(line)
+		}
 		ver.Err = splitted[0]
 		return false
 	}

@@ -1,6 +1,7 @@
 package promela
 
 import (
+	"fmt"
 	"go/ast"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -15,6 +16,7 @@ func Clean(m *Model) {
 
 		for _, commPar := range params {
 			if !used(commPar, proc.Body) {
+
 				removeDecl(commPar, proc.Body)
 				removeFeatures(commPar, m)
 			}
@@ -22,7 +24,6 @@ func Clean(m *Model) {
 	}
 
 	for _, commPar := range m.CommPars {
-
 		if !used(commPar, m.Init.Body) {
 			for i := len(m.Defines) - 1; i >= 0; i-- {
 				if m.Defines[i].Name.Name == commPar.Name.Name {
@@ -30,6 +31,24 @@ func Clean(m *Model) {
 				}
 			}
 			removeDecl(commPar, m.Init.Body)
+			removeFeatures(commPar, m)
+		}
+	}
+
+	for i := len(m.Defines) - 1; i >= 0; i-- {
+		commPar := &CommPar{Name: &ast.Ident{Name: m.Defines[i].Name.Name}}
+
+		is_used := used(commPar, m.Init.Body)
+
+		for _, proc := range m.Proctypes {
+			if used(commPar, proc.Body) {
+				is_used = true
+			}
+		}
+
+		if !is_used {
+			fmt.Println(commPar.Name.Name)
+			m.Defines = append(m.Defines[:i], m.Defines[i+1:]...)
 		}
 	}
 
@@ -43,6 +62,7 @@ func findOptParams(b *promela_ast.BlockStmt) []*CommPar {
 			switch ident := s.Rhs.(type) {
 			case *promela_ast.Ident:
 				if ident.Name == "-2" {
+					fmt.Println("icii")
 					params = append(params, &CommPar{Name: &ast.Ident{Name: s.Name.Name}, Mandatory: false, Candidate: true})
 				}
 			}
@@ -78,12 +98,46 @@ func used(commPar *CommPar, b *promela_ast.BlockStmt) bool {
 			if s.Ub.Name == commPar.Name.Name+"-1" {
 				is_used = true
 			}
+			if s.Ub.Name == commPar.Name.Name {
+				is_used = true
+			}
 			if s.Lb.Name == commPar.Name.Name {
+				is_used = true
+			}
+		case *promela_ast.CallExpr:
+			for _, arg := range s.Args {
+				switch arg := arg.(type) {
+				case *promela_ast.Ident:
+					if arg.Name == commPar.Name.Name {
+						is_used = true
+					}
+				}
+			}
+		case *promela_ast.RunStmt:
+			for _, arg := range s.X.Args {
+				switch arg := arg.(type) {
+				case *promela_ast.Ident:
+					if arg.Name == commPar.Name.Name {
+						is_used = true
+					}
+				}
+			}
+		case *promela_ast.DeclStmt:
+			switch s := s.Rhs.(type) {
+			case *promela_ast.Ident:
+				if s.Name == commPar.Name.Name {
+					is_used = true
+				}
+			}
+			return false
+		case *promela_ast.Ident:
+			if s.Name == commPar.Name.Name {
 				is_used = true
 			}
 		}
 		return !is_used
 	}
+
 	promela_ast.Inspect(b, isUsed)
 
 	return is_used
@@ -99,7 +153,6 @@ func removeFeatures(commPar *CommPar, m *Model) {
 
 // remove decleration of commPar in model
 func removeDecl(commPar *CommPar, b *promela_ast.BlockStmt) {
-
 	for i := len(b.List) - 1; i >= 0; i-- {
 		switch s := b.List[i].(type) {
 		case *promela_ast.DeclStmt:
@@ -116,7 +169,7 @@ func containsMSP(b *promela_ast.BlockStmt) bool {
 
 	promela_ast.Inspect(b, func(s promela_ast.Stmt) bool {
 		switch s.(type) {
-		case *promela_ast.RcvStmt, *promela_ast.SendStmt:
+		case *promela_ast.RcvStmt, *promela_ast.SendStmt, *promela_ast.RunStmt:
 			contains = true
 		}
 		return true

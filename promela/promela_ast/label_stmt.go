@@ -13,5 +13,10 @@ func (b *LabelStmt) GoNode() token.Position {
 }
 
 func (b *LabelStmt) Print(num_tabs int) string {
-	return b.Name + ":"
+	return b.Name + ": skip"
+}
+
+func (s *LabelStmt) Clone() Stmt {
+	s1 := &LabelStmt{Label: s.Label, Name: s.Name}
+	return s1
 }

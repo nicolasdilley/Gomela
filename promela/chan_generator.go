@@ -1,10 +1,5 @@
 package promela
 
-import (
-	"github.com/nicolasdilley/gomela/promela/promela_ast"
-	"github.com/nicolasdilley/gomela/promela/promela_types"
-)
-
 // // Return the Promela AST of a chan monitor proctype
 // func GenerateSyncChanMonitor() *promela_ast.Proctype {
 
@@ -217,25 +212,24 @@ func GenerateClosedChanMonitor() string {
 //     fi
 //   od
 // }
-func GenerateStructMonitor() *promela_ast.Proctype {
+func GenerateStructMonitor() string {
 
-	procType := &promela_ast.Proctype{Name: promela_ast.Ident{Name: "wgMonitor"}, Active: false}
-	procType.Params = []promela_ast.Param{promela_ast.Param{Name: "wg", Types: promela_types.Wgdef}}
-
-	assert_counter := promela_ast.CallExpr{Fun: promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "wg.Counter >= 0"}}}
-	add_counter := promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "wg.Counter"}, Rhs: &promela_ast.Ident{Name: "wg.Counter + i"}}
-	add := promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "wg.Add"}, Rhs: &promela_ast.Ident{Name: "i"}}
-	add_guard := promela_ast.GuardStmt{Cond: &add, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&add_counter, &assert_counter}}}
-
-	wait := promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "wg.Wait"}, Rhs: &promela_ast.Ident{Name: "0"}}
-	wait_guard := promela_ast.GuardStmt{Cond: &wait, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-	counter := promela_ast.Ident{Name: "wg.Counter == 0"}
-	if_counter := promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{add_guard, wait_guard}}
-	counter_guard := promela_ast.GuardStmt{Cond: &counter, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.LabelStmt{Name: "end"}, &if_counter}}}
-
-	do_stmt := &promela_ast.DoStmt{Guards: []promela_ast.GuardStmt{add_guard, counter_guard}}
-
-	procType.Body = &promela_ast.BlockStmt{List: []promela_ast.Stmt{do_stmt}}
-	return procType
+	return "proctype wgMonitor(Wgdef wg) {\n" +
+		"bool closed;\n" +
+		"int i;\n" +
+		"bool state;\n" +
+		"do\n" +
+		"	:: wg.Add?i ->\n" +
+		"		wg.Counter = wg.Counter + i;\n" +
+		"		assert(wg.Counter >= 0)\n" +
+		"	:: wg.Counter == 0 ->\n" +
+		"end: if\n" +
+		"		:: wg.Add?i ->\n" +
+		"			wg.Counter = wg.Counter + i;\n" +
+		"			assert(wg.Counter >= 0)\n" +
+		"		:: wg.Wait!0;\n" +
+		"	fi\n" +
+		"od\n" +
+		"}\n\n"
 
 }

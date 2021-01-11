@@ -1,37 +1,55 @@
-package v2
+package main
 
-import (
-	"sync"
-)
+func (d *hierarchicDiffer) Run(root string, from *Graph, to *Graph) (*Diff, error) {
+	diff := &Diff{fromGraph: from, toGraph: to}
 
-const (
-	Lis int = 3
-)
+	fromSnap := from.store.Snapshot()
+	toSnap := to.store.Snapshot()
 
-func Fetch() {
+	maxCount := max(uint32(fromSnap.Count()), uint32(toSnap.Count()))
+	processing := make(chan string, maxCount)
 
-	results := make(chan int, 2)
-	var wg sync.WaitGroup
-	for x := 0; x < Lis; x++ {
-		wg.Add(1)
-		<-results
-	}
-	for x := 0; x < Lis; x++ {
-		<-results
-	}
-	for x := 0; x < Lis; x++ {
-		<-results
-	}
-	a(results)
-	go a(results)
-}
-
-func a(ch chan int) {
-	for range iou {
-
+	if maxCount < 1 {
+		return diff, nil
 	}
 
-	for x := 0; x < test(); x++ {
+	processing <- root
 
+	for len(processing) > 0 {
+		select {
+		case current := <-processing:
+			extras, missings, commons, err := compareChildTriplesOf(d.predicate, current, fromSnap, toSnap)
+			if err != nil {
+				return diff, err
+			}
+
+			for _, extra := range extras {
+				res, ok := extra.Object().Resource()
+				if ok {
+					diff.hasDiffs = true
+					diff.toGraph.store.Add(tstore.SubjPred(res, MetaPredicate).StringLiteral(extraLit))
+					processing <- res
+				}
+			}
+
+			for _, missing := range missings {
+				res, ok := missing.Object().Resource()
+				if ok {
+					diff.hasDiffs = true
+					diff.fromGraph.store.Add(tstore.SubjPred(res, MetaPredicate).StringLiteral(extraLit))
+					processing <- res
+					break
+				}
+			}
+			break
+			for _, nextNodeToProcess := range commons {
+				res, ok := nextNodeToProcess.Object().Resource()
+				if ok {
+					processing <- res
+				}
+			}
+		}
 	}
+
+	return diff, nil
 }

@@ -7,19 +7,19 @@ import (
 )
 
 type ChanStruct struct {
-	Name   promela_ast.Ident
+	Name   *promela_ast.Ident
 	Chan   token.Position
-	Chans  []promela_ast.Chandef // the chans of the struct (in,out and closed)
-	Closed bool                  // Does the channel get closed at some point ?
+	Chans  []*promela_ast.Chandef // the chans of the struct (in,out and closed)
+	Closed bool                   // Does the channel get closed at some point ?
 
 	Size     promela_ast.Ident
 	Buffered bool
 }
 
 type WaitGroupStruct struct {
-	Name  promela_ast.Ident
+	Name  *promela_ast.Ident
 	Wait  token.Position
-	Chans []promela_ast.Chandef // the chans of the struct (add,done and wait)
+	Chans []*promela_ast.Chandef // the chans of the struct (add,done and wait)
 
 	Counter int // The size of the counter
 }

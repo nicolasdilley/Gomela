@@ -28,3 +28,8 @@ func (s *GuardStmt) Print(num_tabs int) (stmt string) {
 	}
 	return
 }
+
+func (s *GuardStmt) Clone() Stmt {
+	s1 := &GuardStmt{Guard: s.Guard, Cond: s.Cond.Clone(), Body: s.Body.Clone().(*BlockStmt)}
+	return s1
+}

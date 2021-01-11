@@ -15,3 +15,8 @@ func (i *Ident) GoNode() token.Position {
 func (i *Ident) Print(num_tabs int) string {
 	return i.Name
 }
+
+func (s *Ident) Clone() Stmt {
+	s1 := &Ident{Ident: s.Ident, Name: s.Name}
+	return s1
+}

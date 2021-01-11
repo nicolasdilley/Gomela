@@ -131,3 +131,32 @@ Example -> Try to use FindAll with Waitgroup (if supported)
 
 
 Cool real life example : https://github.com/360EntSecGroup-Skylar/goreporter/blob/master/linters/simpler/lint/lint.go#L482
+
+
+
+
+for range was translated to non=deter
+( what if range over Chan spawns ? )
+Added support fully for anonymous function
+
+Found 4 bugs
+
+Could add support for func := func() {} by attaching it to the tree
+
+found bug where if a commpar is given as arg, it is deleted.
+
+
+
+awsservices_Fetch376 contains 61 comm params
+lint_Lint138 contains 11 params but just one that is actually used
+
+
+
+
+False alarm with select : https://github.com/rancher/os/blob/master/cmd/cloudinitsave/cloudinitsave.go#L313
+
+
+Done() in For : 560 Lots of them because they are called in goroutines that are spawned in Go.
+
+Uses division for channel size throws, "[1]    58409 floating point exception"
+https://github.com/dropbox/godropbox/blob/master/cinterop/buffered_work.go#L55

@@ -18,3 +18,8 @@ func (b *BinaryExpr) Print(num_tabs int) string {
 	return b.Lhs.Print(num_tabs) + " " +
 		b.Op + " " + b.Rhs.Print(num_tabs)
 }
+
+func (s *BinaryExpr) Clone() Stmt {
+	s1 := &BinaryExpr{Pos: s.Pos, Lhs: s.Lhs.Clone(), Rhs: s.Rhs.Clone(), Op: s.Op}
+	return s1
+}

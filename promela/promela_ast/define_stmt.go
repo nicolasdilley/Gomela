@@ -8,7 +8,7 @@ import (
 // Guard stmt in promela : (cond) -> body
 type DefineStmt struct {
 	Define token.Position
-	Name   Ident
+	Name   *Ident
 	Rhs    Expr
 }
 
@@ -19,4 +19,9 @@ func (s *DefineStmt) Print(num_tabs int) string {
 	toPrint := "#define " + s.Name.Print(num_tabs) + "  "
 	toPrint += s.Rhs.Print(num_tabs)
 	return toPrint
+}
+
+func (s *DefineStmt) Clone() Stmt {
+	s1 := &DefineStmt{Define: s.Define, Name: s.Name.Clone().(*Ident), Rhs: s.Rhs.Clone()}
+	return s1
 }

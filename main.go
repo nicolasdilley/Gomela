@@ -181,14 +181,14 @@ func parseProject(project_name string, ver *VerificationInfo) {
 func inferProject(path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {
 
 	// Partition program
-
 	f, ast_map := GenerateAst(path, packages, dir_name)
 	if f != nil {
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
+		dir_name = strings.Replace(dir_name, "/", "-", -1)
 
-		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + filepath.Base(dir_name))
+		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 		if err != nil {
-			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+filepath.Base(dir_name))
+			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
 		}
 
 		// Have a way to give values to individual candidates and unknown parameter
@@ -201,7 +201,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 
 			for _, model := range models {
 				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + filepath.Base(dir_name) + "/" + model.Name())
+					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
 					var output bytes.Buffer
 
 					// Verify with SPIN
@@ -221,7 +221,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 					first_line := strings.Split(output.String(), "\n")[0]
 
 					// Print CSV
-					toPrint := filepath.Base(dir_name) + "," + first_line + ",\n"
+					toPrint := dir_name + "," + first_line + ",\n"
 					f.WriteString(toPrint)
 				}
 			}

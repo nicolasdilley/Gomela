@@ -7,10 +7,10 @@ import (
 )
 
 type ChanStructDef struct {
-	Name  Ident
+	Name  *Ident
 	Def   token.Position
-	Defs  []Chandef
-	Decls []DeclStmt
+	Defs  []*Chandef
+	Decls []*DeclStmt
 }
 
 func (c *ChanStructDef) GoNode() token.Position {
@@ -30,4 +30,16 @@ func (c *ChanStructDef) Print(num_tabs int) (stmt string) {
 	}
 	stmt += "}\n"
 	return
+}
+
+func (s *ChanStructDef) Clone() Stmt {
+	s1 := &ChanStructDef{Def: s.Def, Name: s.Name.Clone().(*Ident), Defs: []*Chandef{}, Decls: []*DeclStmt{}}
+
+	for _, d := range s.Defs {
+		s1.Defs = append(s1.Defs, d.Clone().(*Chandef))
+	}
+	for _, d := range s.Decls {
+		s1.Decls = append(s1.Decls, d.Clone().(*DeclStmt))
+	}
+	return s1
 }

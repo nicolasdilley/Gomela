@@ -18,3 +18,7 @@ func (s *AssignStmt) GoNode() token.Position {
 func (s *AssignStmt) Print(num_tabs int) string {
 	return s.Lhs.Print(num_tabs) + " = " + s.Rhs.Print(num_tabs)
 }
+func (s *AssignStmt) Clone() Stmt {
+	s1 := &AssignStmt{Assign: s.Assign, Lhs: s.Lhs.Clone(), Rhs: s.Rhs.Clone()}
+	return s1
+}

@@ -7,9 +7,9 @@ import (
 )
 
 type WgStructDef struct {
-	Name Ident
+	Name *Ident
 	Def  token.Position
-	Defs []Chandef
+	Defs []*Chandef
 }
 
 func (c *WgStructDef) GoNode() token.Position {
@@ -25,4 +25,13 @@ func (c *WgStructDef) Print(num_tabs int) (stmt string) {
 	stmt += utils.GetTabs(num_tabs+1) + "int Counter = 0;"
 	stmt += "}\n"
 	return
+}
+
+func (s *WgStructDef) Clone() Stmt {
+	s1 := &WgStructDef{Def: s.Def, Name: s.Name.Clone().(*Ident), Defs: []*Chandef{}}
+
+	for _, d := range s.Defs {
+		s1.Defs = append(s1.Defs, d.Clone().(*Chandef))
+	}
+	return s1
 }

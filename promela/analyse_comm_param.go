@@ -94,9 +94,10 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 		case *ast.RangeStmt:
 			mandatory := m.spawns(stmt.Body, log)
+
 			switch m.AstMap[m.Package].TypesInfo.TypeOf(stmt.X).(type) {
 			case *types.Chan:
-
+				break
 			default:
 				params = m.Upgrade(fun, params, m.Vid(fun, stmt.X, mandatory, log), log)
 			}
@@ -109,7 +110,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.ChanType:
 						// definitely a new chan
 						if len(stmt.Args) > 1 {
-							_, _, err1 := m.TranslateArgs(stmt.Args[1])
+							_, _, err1 := m.TranslateArg(stmt.Args[1])
 							if err1 == nil {
 								params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 							}
@@ -173,7 +174,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 
 			// contains_chan := false
-			// found, fun_decl := FindDecl(pack, fun, len(stmt.Args), ast_map)
+			// found, fun_decl := m.FindDecl(pack, fun, len(stmt.Args), ast_map)
 			// if found {
 			// 	for _, param := range fun_decl.Type.Params.List {
 			// 		switch param.Type.(type) {
@@ -183,7 +184,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			// 	}
 
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
-				found, fun_decl := FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
+				found, fun_decl := m.FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
 				if contains_chan && found {
 					// look inter procedurally
@@ -215,7 +216,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 			contains_chan := false
 
-			found, fun_decl := FindDecl(pack, fun, len(stmt.Call.Args), ast_map)
+			found, fun_decl := m.FindDecl(pack, fun, len(stmt.Call.Args), ast_map)
 
 			if found {
 				for _, param := range fun_decl.Type.Params.List {
@@ -257,6 +258,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					}
 				}
 			}
+
+			return false
 		}
 		return true
 	})
@@ -301,12 +304,14 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 
 // Check if the arg is contained in the list params. Returns if it is and the commPar if it is
 func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
-	for x, field := range fields {
-		for y, name := range field.Names {
+	pos := 0
+	for _, field := range fields {
+		for _, name := range field.Names {
 			if name.Name == arg.Name.Name {
 
-				return true, &CommPar{Name: name, Pos: x + y, Mandatory: arg.Mandatory, Expr: name}
+				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name}
 			}
+			pos++
 		}
 	}
 	return false, nil
@@ -366,9 +371,6 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 	case *ast.StarExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
-	case *ast.IndexExpr:
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
-		params = m.Upgrade(fun, params, m.Vid(fun, expr.Index, mandatory, log), log)
 	}
 
 	return params
@@ -389,7 +391,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.UnaryExpr:
 		return &ast.Ident{Name: expr.Op.String() + m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.IndexExpr:
-		return &ast.Ident{Name: m.getIdent(expr.X).Name + "[" + m.getIdent(expr.Index).Name + "]"}
+		return &ast.Ident{Name: m.getIdent(expr.X).Name + "L" + m.getIdent(expr.Index).Name + "L"}
 	case *ast.BasicLit:
 		return &ast.Ident{Name: expr.Value}
 	case *ast.ParenExpr:
@@ -464,12 +466,10 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 				is_spawning = true
 			}
 		case *ast.GoStmt:
-
 			switch stmt.Call.Fun.(type) {
 			case *ast.FuncLit:
 				is_spawning = true
 			default:
-
 				contains_chan := false
 				contains_wg := false
 				// check if the goroutine has a chan as param by looking at func decl
@@ -574,7 +574,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 		spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
 		m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
 		if contains_chan || contains_wg && fun != "len" {
-			found, fun_decl := FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
+			found, fun_decl := m.FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
 
 			if found {
 				// look inter procedurally

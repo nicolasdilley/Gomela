@@ -34,6 +34,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Name:          pack_name + "_" + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
 							AstMap:        ast_map,
 							Fileset:       fileSet,
+							FuncDecls:     []*ast.FuncDecl{},
 							Proctypes:     []*promela_ast.Proctype{},
 							RecFuncs:      []promela.RecFunc{},
 							SpawningFuncs: []*promela.SpawningFunc{},

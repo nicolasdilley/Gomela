@@ -7,4 +7,5 @@ import "go/token"
 type Node interface {
 	GoNode() token.Position // The go node to which this promela node refers to
 	Print(tabs int) string
+	Clone() Stmt
 }
