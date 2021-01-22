@@ -1,14 +1,13 @@
 #define DeleteChart_qSize  0
 #define DeleteChart_allVersions  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example335058053/src/chartserver/handler_utility.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example269990677/src/chartserver/handler_utility.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -20,6 +19,7 @@ init {
 	Chandef errWrapper;
 	Chandef errChan;
 	Chandef tokenQueue;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int allVersions = DeleteChart_allVersions;
@@ -75,17 +75,17 @@ init {
 	if
 	:: 0 != -2 && qSize-1 != -3 -> 
 				for(i : 0.. qSize-1) {
-			for10658: skip;
+			for10678: skip;
 			
 
 			if
 			:: tokenQueue.async_send!0;
-			:: tokenQueue.sync!0 -> 
-				tokenQueue.sending?0
+			:: tokenQueue.sync!false,0 -> 
+				tokenQueue.sending?state
 			fi;
-			for10_end658: skip
+			for10_end678: skip
 		};
-		for10_exit658: skip
+		for10_exit678: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -94,8 +94,8 @@ init {
 
 			if
 			:: tokenQueue.async_send!0;
-			:: tokenQueue.sync!0 -> 
-				tokenQueue.sending?0
+			:: tokenQueue.sync!false,0 -> 
+				tokenQueue.sending?state
 			fi;
 			for10_end: skip
 		:: true -> 
@@ -118,8 +118,8 @@ init {
 		
 
 		if
-		:: tokenQueue.async_rcv?0;
-		:: tokenQueue.sync?0;
+		:: tokenQueue.async_rcv?state,num_msgs;
+		:: tokenQueue.sync?state,num_msgs;
 		fi;
 		run go_Anonymous1(tokenQueue,errChan,errWrapper);
 		for30_end: skip
@@ -134,18 +134,21 @@ proctype go_Anonymous0(Chandef tokenQueue;Chandef errChan;Chandef errWrapper) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: errChan.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: errChan.async_rcv?state,num_msgs;
+		:: errChan.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: errChan.async_rcv?0;
-			:: errChan.sync?0;
-			fi;
 			for20: skip;
 			for20_end: skip
 		fi
@@ -161,8 +164,8 @@ proctype go_Anonymous0(Chandef tokenQueue;Chandef errChan;Chandef errWrapper) {
 
 		if
 		:: errWrapper.async_send!0;
-		:: errWrapper.sync!0 -> 
-			errWrapper.sending?0
+		:: errWrapper.sync!false,0 -> 
+			errWrapper.sending?state
 		fi
 	:: true;
 	fi
@@ -171,6 +174,7 @@ proctype go_Anonymous1(Chandef tokenQueue;Chandef errChan;Chandef errWrapper) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -179,8 +183,8 @@ proctype go_Anonymous1(Chandef tokenQueue;Chandef errChan;Chandef errWrapper) {
 
 		if
 		:: errChan.async_send!0;
-		:: errChan.sync!0 -> 
-			errChan.sending?0
+		:: errChan.sync!false,0 -> 
+			errChan.sending?state
 		fi
 	:: true;
 	fi;
@@ -189,10 +193,14 @@ proctype go_Anonymous1(Chandef tokenQueue;Chandef errChan;Chandef errWrapper) {
 
 	if
 	:: tokenQueue.async_send!0;
-	:: tokenQueue.sync!0 -> 
-		tokenQueue.sending?0
+	:: tokenQueue.sync!false,0 -> 
+		tokenQueue.sending?state
 	fi
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -203,20 +211,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -225,18 +232,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -254,17 +259,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

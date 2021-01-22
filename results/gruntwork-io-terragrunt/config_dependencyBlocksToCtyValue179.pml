@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example765408886/config/dependency.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example883888966/config/dependency.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef dependencyErrGroup_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(dependencyErrGroup_wg);
@@ -23,6 +24,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

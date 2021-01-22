@@ -16,11 +16,12 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param + len(proctypes)
-	var pack_name string = m.Package
+	var pack_name string
 	call_expr := s.Call
 
 	// First generate list of params (ParamList) and arguments to the run stmt
-	decl, err1 := m.findFunDecl(s.Call)
+	decl, pack, err1 := m.findFunDecl(s.Call)
+	pack_name = pack
 
 	if err1 != nil {
 		return b, defers, err1
@@ -121,25 +122,14 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				counter++
 			}
 		}
-
 		if hasChan && known {
 			// Add the commparam to the param of the new proc
 			for _, commPar := range new_mod.CommPars {
 				if commPar.Candidate {
-					// name := m.GenerateDefine(commPar)
 					proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 				} else {
-					// decl.Type.Params.List[commPar.Pos].Names[0] = &ast.Ident{Name: commPar.Name.Name + "_1"}
-					// RenameBlockStmt(decl.Body, []ast.Expr{commPar.Name}, &ast.Ident{Name: commPar.Name.Name + "_1"})
 					proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
-				}
-			}
 
-			candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-			// need to reset Model because its used in m.TranslateArg
-			for _, commPar := range new_mod.CommPars {
-
-				if !commPar.Candidate {
 					arg, _, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
 					if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
 						prom_call.Args = append(prom_call.Args, arg)
@@ -154,6 +144,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 					}
 				}
 			}
+
+			candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 			if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
 				m.Proctypes = append(m.Proctypes, proc)
@@ -232,7 +224,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 	return b, defers, err
 }
 
-func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ParseError) {
+func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *ParseError) {
+	pack_name := m.Package
 
 	switch name := call_expr.Fun.(type) {
 	case *ast.FuncLit: // in the case we have an anonymous func call
@@ -242,8 +235,8 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ParseError
 		fun_decl.Name = ident
 		fun_decl.Type = name.Type
 		fun_decl.Body = name.Body
-		chans, wgs := AnalyseFuncCall(m.Fileset, m.Fun, m.AstMap[m.Package]) // Returns the channels that are declared before the call
-		names := []*ast.Ident{}                                              // the names of the chans
+		chans, wgs := AnalyseFuncCall(m.Fileset, m.Fun, call_expr, m.AstMap[m.Package]) // Returns the channels that are declared before the call
+		names := []*ast.Ident{}                                                         // the names of the chans
 		for _, ch := range chans {
 			if !containsExpr(call_expr.Args, ch) {
 				chan_name := TranslateIdent(ch, m.Fileset)
@@ -290,12 +283,11 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ParseError
 			fun_decl.Type.Params.List = append(fun_decl.Type.Params.List, field)
 		}
 
-		return fun_decl, nil
+		return fun_decl, pack_name, nil
 
 	default:
 
 		fun := ""
-		pack_name := m.Package
 		// Find the decl of the function
 		switch name := call_expr.Fun.(type) {
 		case *ast.Ident:
@@ -317,7 +309,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ParseError
 		}
 
 		if found, decl := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
-			return decl, nil
+			return decl, pack_name, nil
 		} else { // The declaration of the function could not be found
 			// If the goroutines takes one of our channel as input return an error
 			// Otherwise check if the args are a receive on a channel
@@ -329,12 +321,10 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ParseError
 			}
 
 			if hasChan {
-				fmt.Println(call_expr)
-				fmt.Println(fun)
-				return nil, &ParseError{err: errors.New("promela_translator.go : Func of go statement not found : " + fun + " => Called at :" + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
+				return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_GO_FUNC + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
 			}
 		}
 	}
 
-	return nil, nil
+	return nil, pack_name, nil
 }

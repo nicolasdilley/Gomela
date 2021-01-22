@@ -1,6 +1,6 @@
-#define NewMultiWait_num  0
+#define NewMultiWait_num  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example930502695/multierr/multiwait.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example855454519/multierr/multiwait.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef mw_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int num = NewMultiWait_num;
@@ -19,6 +20,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

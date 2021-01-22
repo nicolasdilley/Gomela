@@ -1,6 +1,6 @@
-#define eachSliceP_s_Len10218  0
+#define eachSliceP_s_Len10218  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example782440359/each.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example132923063/each.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef done;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_Len10218 = eachSliceP_s_Len10218;
@@ -29,9 +30,14 @@ proctype go_Anonymous0(Wgdef done) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	done.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

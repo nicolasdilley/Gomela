@@ -57,7 +57,7 @@ func main() {
 
 	ver := &VerificationInfo{}
 
-	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects to parse.")
+	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
 	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
@@ -87,7 +87,7 @@ func main() {
 	if *ver.multi_projects != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
-			if strings.HasSuffix(*ver.multi_projects, ".txt") {
+			if strings.HasSuffix(*ver.multi_projects, ".csv") {
 
 				// parse each projects
 				data, e := ioutil.ReadFile(*ver.multi_projects)
@@ -98,22 +98,23 @@ func main() {
 				}
 				proj_listings := strings.Split(string(data), "\n")
 				fmt.Println(len(proj_listings), " projects to parse")
-				for i, project_name := range proj_listings {
+				for i, project := range proj_listings {
+					project_info := strings.Split(project, ",")
 					if i < len(proj_listings) {
-						parseProject(project_name, ver)
+						parseProject(project_info[0], project_info[1], ver)
 					}
 				}
 
 				fmt.Println(NUM_OF_EXECUTABLE_MODELS, "/", NUM_OF_MODELS, " executable models overall.")
 
 			} else {
-				fmt.Println("Please provide a .txt file containing the list of projects to be parsed")
+				fmt.Println("Please provide a .csv file containing the list of projects to be parsed")
 			}
 		}
 
 	} else if *ver.single_project != "" {
 		// parse project given
-		parseProject(*ver.single_project, ver)
+		parseProject(*ver.single_project, "master", ver)
 
 	} else {
 
@@ -141,11 +142,11 @@ func main() {
 
 }
 
-func parseProject(project_name string, ver *VerificationInfo) {
+func parseProject(project_name string, commit string, ver *VerificationInfo) {
 
 	fmt.Println("Infering : " + project_name)
 
-	path_to_dir, commit_hash, err := CloneRepo(project_name)
+	path_to_dir, commit_hash, err := CloneRepo(project_name, commit)
 
 	if err == nil {
 		packages := []string{}

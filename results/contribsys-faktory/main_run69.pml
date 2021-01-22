@@ -1,7 +1,7 @@
-#define run_threads  1
+#define run_threads  3
 #define run_int647211  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example702399325/test/load/main.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example704239085/test/load/main.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef waiter;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int int647211 = run_int647211;
@@ -31,9 +32,14 @@ proctype go_Anonymous0(Wgdef waiter) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	waiter.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

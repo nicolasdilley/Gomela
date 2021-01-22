@@ -1,7 +1,7 @@
-#define main_loop  3
+#define main_loop  0
 #define main_group  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example289484162/socket/example/socket_client_ab.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example402197842/socket/example/socket_client_ab.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef count;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int group = main_group;
@@ -36,6 +37,7 @@ proctype go_Anonymous0(Wgdef count) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -46,6 +48,10 @@ proctype go_Anonymous0(Wgdef count) {
 	stop_process: skip;
 	count.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

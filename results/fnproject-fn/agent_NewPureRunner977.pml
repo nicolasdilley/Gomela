@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example296217023/api/agent/pure_runner.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example050890959/api/agent/pure_runner.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef pr_gRPCServer_serveWG;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(pr_gRPCServer_serveWG);
@@ -16,6 +17,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

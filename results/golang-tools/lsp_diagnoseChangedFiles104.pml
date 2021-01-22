@@ -1,6 +1,6 @@
-#define diagnoseChangedFiles_packages  3
+#define diagnoseChangedFiles_packages  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example911677120/internal/lsp/diagnostics.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example381107728/internal/lsp/diagnostics.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int packages = diagnoseChangedFiles_packages;
@@ -29,9 +30,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

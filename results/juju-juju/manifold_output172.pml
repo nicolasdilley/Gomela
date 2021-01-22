@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example616394530/worker/lease/manifold/manifold.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example113662194/worker/lease/manifold/manifold.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef manager_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(manager_wg);
@@ -22,6 +23,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example684198978/agent/csi/mod_csi.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example312024082/agent/csi/mod_csi.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef m_gs_serveWG;
 	Wgdef m_waitForCancel;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -32,6 +33,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

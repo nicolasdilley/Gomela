@@ -1,6 +1,6 @@
-#define RunDatasetInStandAloneMode_d_Shards  3
+#define RunDatasetInStandAloneMode_d_Shards  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example955981196/flow/dataset_run.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example193874908/flow/dataset_run.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 init { 
 	chan child_connectExternalInputChansToRead0 = [0] of {int};
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int d_Shards = RunDatasetInStandAloneMode_d_Shards;
@@ -29,14 +30,6 @@ init {
 			for30_end: skip
 		};
 		for30_exit: skip
-	:: true -> 
-				for(i : 0.. d_Shards-1) {
-			for30: skip;
-			wg.Add!1;
-			run go_Anonymous1(wg);
-			for30_end: skip
-		};
-		for30_exit: skip
 	fi;
 	wg.Wait?0;
 	goto stop_process
@@ -47,7 +40,8 @@ proctype connectExternalInputChansToRead(Wgdef wg;chan child) {
 	bool closed; 
 	int i;
 	bool state;
-	int d_ExternalInputChans = 1;
+	int num_msgs;
+	int d_ExternalInputChans = 3;
 		for(i : 0.. d_ExternalInputChans-1) {
 		for10: skip;
 		wg.Add!1;
@@ -61,9 +55,14 @@ proctype go_Anonymous1(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

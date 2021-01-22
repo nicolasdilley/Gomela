@@ -1,6 +1,6 @@
-#define Series_s_stores23722  3
+#define Series_s_stores23722  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example023686894/pkg/store/proxy.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example651932606/pkg/store/proxy.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef g_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_stores23722 = Series_s_stores23722;
@@ -46,6 +47,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

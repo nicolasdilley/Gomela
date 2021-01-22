@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example692793594/libbeat/publisher/pipeline/pipeline.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example262710474/libbeat/publisher/pipeline/pipeline.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,12 +9,17 @@ typedef Wgdef {
 
 init { 
 	Wgdef wc_events;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(wc_events)
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example090143928/testonly/integration/mapenv.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example780332040/testonly/integration/mapenv.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef grpcServer_serveWG;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -30,6 +31,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

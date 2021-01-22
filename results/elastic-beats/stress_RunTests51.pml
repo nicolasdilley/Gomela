@@ -1,6 +1,6 @@
 #define RunTests_config_Generate_Worker  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example692793594/libbeat/publisher/pipeline/stress/run.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example262710474/libbeat/publisher/pipeline/stress/run.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 init { 
 	chan child_stresswithWG0 = [0] of {int};
 	Wgdef genWG;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int config_Generate_Worker = RunTests_config_Generate_Worker;
@@ -59,6 +60,7 @@ proctype stresswithWG(Wgdef wg;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!1;
 	stop_process: skip;
 	child!0
@@ -67,8 +69,13 @@ proctype go_Anonymous1(Wgdef genWG) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

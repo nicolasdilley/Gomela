@@ -1,7 +1,7 @@
-#define workJobs_prs  1
-#define workJobs_pus  1
+#define workJobs_prs  3
+#define workJobs_pus  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example954442152/scheduler/workflow.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example847869176/scheduler/workflow.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int pus = workJobs_pus;
@@ -45,6 +46,7 @@ proctype go_submitProcessJob(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -66,6 +68,7 @@ proctype go_submitPublishJob(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -83,6 +86,10 @@ proctype go_submitPublishJob(Wgdef wg) {
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

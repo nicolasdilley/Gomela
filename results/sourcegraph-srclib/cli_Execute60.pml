@@ -1,14 +1,13 @@
-#define Execute_c_Args_Paths  3
-#define ub_for86_1  1
+#define Execute_c_Args_Paths  1
+#define ub_for86_1  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example995147381/cli/lint_cmd.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example155233029/cli/lint_cmd.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -24,6 +23,7 @@ init {
 	Wgdef wg;
 	Chandef quitc;
 	Chandef issuec;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int c_Args_Paths = Execute_c_Args_Paths;
@@ -111,6 +111,7 @@ proctype go_Anonymous0(Chandef issuec;Chandef quitc;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	int prependLabelToStrings15429=0;
 	
 
@@ -122,8 +123,8 @@ proctype go_Anonymous0(Chandef issuec;Chandef quitc;Wgdef wg) {
 
 			if
 			:: issuec.async_send!0;
-			:: issuec.sync!0 -> 
-				issuec.sending?0
+			:: issuec.sync!false,0 -> 
+				issuec.sending?state
 			fi;
 			for14_end: skip
 		};
@@ -131,23 +132,27 @@ proctype go_Anonymous0(Chandef issuec;Chandef quitc;Wgdef wg) {
 	:: else -> 
 		do
 		:: true -> 
-			for142259: skip;
+			for142273: skip;
 			
 
 			if
 			:: issuec.async_send!0;
-			:: issuec.sync!0 -> 
-				issuec.sending?0
+			:: issuec.sync!false,0 -> 
+				issuec.sending?state
 			fi;
-			for14_end2259: skip
+			for14_end2273: skip
 		:: true -> 
 			break
 		od;
-		for14_exit2259: skip
+		for14_exit2273: skip
 	fi;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -158,20 +163,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -180,18 +184,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -209,17 +211,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

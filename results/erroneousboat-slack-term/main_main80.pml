@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example920458531/main.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example085899571/main.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef termui_DefaultEvtStream_wg;
 	Wgdef customEvtStream_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(customEvtStream_wg);
@@ -17,6 +18,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

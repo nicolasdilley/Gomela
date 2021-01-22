@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example935553075/graceful/listener/listener.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example585677891/graceful/listener/listener.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef shard_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -30,6 +31,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

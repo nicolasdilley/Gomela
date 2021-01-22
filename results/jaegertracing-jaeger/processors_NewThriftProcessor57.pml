@@ -1,6 +1,6 @@
 #define NewThriftProcessor_res_numProcessors  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example685148456/cmd/agent/app/processors/thrift_processor.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example891529336/cmd/agent/app/processors/thrift_processor.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef res_processing;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int res_numProcessors = NewThriftProcessor_res_numProcessors;
@@ -27,6 +28,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

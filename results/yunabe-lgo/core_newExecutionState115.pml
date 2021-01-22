@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example036108642/core/core.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example809067826/core/core.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef e_routineWait;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(e_routineWait);
@@ -16,6 +17,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

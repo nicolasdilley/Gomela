@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example485971155/server/cmd_migrate.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example734730979/server/cmd_migrate.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef _wg;
 	Wgdef mc_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(mc_wg);
@@ -24,6 +25,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

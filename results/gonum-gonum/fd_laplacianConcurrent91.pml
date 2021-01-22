@@ -1,14 +1,13 @@
-#define laplacianConcurrent_evals  3
-#define laplacianConcurrent_nWorkers  3
+#define laplacianConcurrent_evals  0
+#define laplacianConcurrent_nWorkers  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example291430900/diff/fd/laplacian.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example570632772/diff/fd/laplacian.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -25,6 +24,7 @@ init {
 	Wgdef originWG;
 	Chandef ans;
 	Chandef send;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int nWorkers = laplacianConcurrent_nWorkers;
@@ -65,17 +65,19 @@ init {
 	for10_exit: skip;
 	run go_Anonymous1(send,ans,originWG,workerWG);
 	do
-	:: ans.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: ans.async_rcv?state,num_msgs;
+		:: ans.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: ans.async_rcv?0;
-			:: ans.sync?0;
-			fi;
 			for30: skip;
 			for30_end: skip
 		fi
@@ -89,18 +91,21 @@ proctype go_Anonymous0(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: send.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: send.async_rcv?state,num_msgs;
+		:: send.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: send.async_rcv?0;
-			:: send.sync?0;
-			fi;
 			for11: skip;
 			
 
@@ -112,8 +117,8 @@ proctype go_Anonymous0(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 
 			if
 			:: ans.async_send!0;
-			:: ans.sync!0 -> 
-				ans.sending?0
+			:: ans.sync!false,0 -> 
+				ans.sending?state
 			fi;
 			for11_end: skip
 		fi
@@ -126,50 +131,51 @@ proctype go_Anonymous1(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	int stencil=3;
-	int n=1;
+	int n=3;
 	
 
 	if
 	:: 0 != -2 && n-1 != -3 -> 
 				for(i : 0.. n-1) {
-			for201458: skip;
+			for201477: skip;
 			
 
 			if
 			:: stencil-1 != -3 -> 
 								for(i : 0.. stencil-1) {
-					for211458: skip;
+					for211477: skip;
 					
 
 					if
 					:: send.async_send!0;
-					:: send.sync!0 -> 
-						send.sending?0
+					:: send.sync!false,0 -> 
+						send.sending?state
 					fi;
-					for21_end1458: skip
+					for21_end1477: skip
 				};
-				for21_exit1458: skip
+				for21_exit1477: skip
 			:: else -> 
 				do
 				:: true -> 
-					for2114571458: skip;
+					for2114761477: skip;
 					
 
 					if
 					:: send.async_send!0;
-					:: send.sync!0 -> 
-						send.sending?0
+					:: send.sync!false,0 -> 
+						send.sending?state
 					fi;
-					for21_end14571458: skip
+					for21_end14761477: skip
 				:: true -> 
 					break
 				od;
-				for21_exit14571458: skip
+				for21_exit14761477: skip
 			fi;
-			for20_end1458: skip
+			for20_end1477: skip
 		};
-		for20_exit1458: skip
+		for20_exit1477: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -184,8 +190,8 @@ proctype go_Anonymous1(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 
 					if
 					:: send.async_send!0;
-					:: send.sync!0 -> 
-						send.sending?0
+					:: send.sync!false,0 -> 
+						send.sending?state
 					fi;
 					for21_end: skip
 				};
@@ -193,19 +199,19 @@ proctype go_Anonymous1(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 			:: else -> 
 				do
 				:: true -> 
-					for211457: skip;
+					for211476: skip;
 					
 
 					if
 					:: send.async_send!0;
-					:: send.sync!0 -> 
-						send.sending?0
+					:: send.sync!false,0 -> 
+						send.sending?state
 					fi;
-					for21_end1457: skip
+					for21_end1476: skip
 				:: true -> 
 					break
 				od;
-				for21_exit1457: skip
+				for21_exit1476: skip
 			fi;
 			for20_end: skip
 		:: true -> 
@@ -218,6 +224,10 @@ proctype go_Anonymous1(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 	ans.closing!true;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -228,20 +238,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -250,18 +259,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -279,17 +286,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

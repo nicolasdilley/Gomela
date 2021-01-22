@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example065438699/sessions/sessiondb/badger/database.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example097904140/sessions/sessiondb/badger/database.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef item_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(item_wg);
@@ -23,6 +24,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

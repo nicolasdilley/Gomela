@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example013098075/cmd/kubeless/trigger/nats/publish.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example945180267/cmd/kubeless/trigger/nats/publish.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef nc_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(nc_wg);
@@ -23,6 +24,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

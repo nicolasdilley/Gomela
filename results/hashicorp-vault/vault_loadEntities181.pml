@@ -1,14 +1,13 @@
 #define loadEntities_existing  3
-#define loadEntities_consts_ExpirationRestoreWorkerCount  0
+#define loadEntities_consts_ExpirationRestoreWorkerCount  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example911060269/vault/identity_store_util.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example936276566/vault/identity_store_util.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -26,6 +25,7 @@ init {
 	Chandef errs;
 	Chandef quit;
 	Chandef broker;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int consts_ExpirationRestoreWorkerCount = loadEntities_consts_ExpirationRestoreWorkerCount;
@@ -72,48 +72,48 @@ init {
 	if
 	:: 0 != -2 && existing-1 != -3 -> 
 				for(i : 0.. existing-1) {
-			for30279: skip;
+			for30281: skip;
 			do
-			:: errs.async_rcv?0 -> 
+			:: errs.async_rcv?state,num_msgs -> 
 				quit.closing!true;
 				goto stop_process
-			:: errs.sync?0 -> 
+			:: errs.sync?state,num_msgs -> 
 				quit.closing!true;
 				goto stop_process
-			:: result.async_rcv?0 -> 
+			:: result.async_rcv?state,num_msgs -> 
 				
 
 				if
 				:: true -> 
-					goto for30_end279
+					goto for30_end281
 				:: true;
 				fi;
 				break
-			:: result.sync?0 -> 
+			:: result.sync?state,num_msgs -> 
 				
 
 				if
 				:: true -> 
-					goto for30_end279
+					goto for30_end281
 				:: true;
 				fi;
 				break
 			od;
-			for30_end279: skip
+			for30_end281: skip
 		};
-		for30_exit279: skip
+		for30_exit281: skip
 	:: else -> 
 		do
 		:: true -> 
 			for30: skip;
 			do
-			:: errs.async_rcv?0 -> 
+			:: errs.async_rcv?state,num_msgs -> 
 				quit.closing!true;
 				goto stop_process
-			:: errs.sync?0 -> 
+			:: errs.sync?state,num_msgs -> 
 				quit.closing!true;
 				goto stop_process
-			:: result.async_rcv?0 -> 
+			:: result.async_rcv?state,num_msgs -> 
 				
 
 				if
@@ -122,7 +122,7 @@ init {
 				:: true;
 				fi;
 				break
-			:: result.sync?0 -> 
+			:: result.sync?state,num_msgs -> 
 				
 
 				if
@@ -147,11 +147,12 @@ proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
 	:: true -> 
 		for11: skip;
 		do
-		:: broker.async_rcv?0 -> 
+		:: broker.async_rcv?state,num_msgs -> 
 			
 
 			if
@@ -167,8 +168,8 @@ proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 
 				if
 				:: errs.async_send!0;
-				:: errs.sync!0 -> 
-					errs.sending?0
+				:: errs.sync!false,0 -> 
+					errs.sending?state
 				fi;
 				goto for11_end
 			:: true;
@@ -177,11 +178,11 @@ proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 
 			if
 			:: result.async_send!0;
-			:: result.sync!0 -> 
-				result.sending?0
+			:: result.sync!false,0 -> 
+				result.sending?state
 			fi;
 			break
-		:: broker.sync?0 -> 
+		:: broker.sync?state,num_msgs -> 
 			
 
 			if
@@ -197,8 +198,8 @@ proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 
 				if
 				:: errs.async_send!0;
-				:: errs.sync!0 -> 
-					errs.sending?0
+				:: errs.sync!false,0 -> 
+					errs.sending?state
 				fi;
 				goto for11_end
 			:: true;
@@ -207,13 +208,13 @@ proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 
 			if
 			:: result.async_send!0;
-			:: result.sync!0 -> 
-				result.sending?0
+			:: result.sync!false,0 -> 
+				result.sending?state
 			fi;
 			break
-		:: quit.async_rcv?0 -> 
+		:: quit.async_rcv?state,num_msgs -> 
 			goto stop_process
-		:: quit.sync?0 -> 
+		:: quit.sync?state,num_msgs -> 
 			goto stop_process
 		od;
 		for11_end: skip
@@ -226,6 +227,7 @@ proctype go_Anonymous1(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -233,17 +235,17 @@ proctype go_Anonymous1(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 				for(i : 0.. existing-1) {
 			for20: skip;
 			do
-			:: quit.async_rcv?0 -> 
+			:: quit.async_rcv?state,num_msgs -> 
 				goto stop_process
-			:: quit.sync?0 -> 
+			:: quit.sync?state,num_msgs -> 
 				goto stop_process
 			:: true -> 
 				
 
 				if
 				:: broker.async_send!0;
-				:: broker.sync!0 -> 
-					broker.sending?0
+				:: broker.sync!false,0 -> 
+					broker.sending?state
 				fi
 			od;
 			for20_end: skip
@@ -252,31 +254,35 @@ proctype go_Anonymous1(Chandef broker;Chandef quit;Chandef errs;Chandef result;W
 	:: else -> 
 		do
 		:: true -> 
-			for20276: skip;
+			for20278: skip;
 			do
-			:: quit.async_rcv?0 -> 
+			:: quit.async_rcv?state,num_msgs -> 
 				goto stop_process
-			:: quit.sync?0 -> 
+			:: quit.sync?state,num_msgs -> 
 				goto stop_process
 			:: true -> 
 				
 
 				if
 				:: broker.async_send!0;
-				:: broker.sync!0 -> 
-					broker.sending?0
+				:: broker.sync!false,0 -> 
+					broker.sending?state
 				fi
 			od;
-			for20_end276: skip
+			for20_end278: skip
 		:: true -> 
 			break
 		od;
-		for20_exit276: skip
+		for20_exit278: skip
 	fi;
 	broker.closing!true;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -287,20 +293,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -309,18 +314,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -338,17 +341,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

@@ -1,13 +1,12 @@
 #define DirMove_ci_Transfers  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example110380261/fs/operations/operations.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example622960878/fs/operations/operations.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -22,6 +21,7 @@ typedef Wgdef {
 init { 
 	Wgdef g_wg;
 	Chandef renames;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int entries=3;
@@ -78,8 +78,8 @@ init {
 
 						if
 						:: renames.async_send!0;
-						:: renames.sync!0 -> 
-							renames.sending?0
+						:: renames.sync!false,0 -> 
+							renames.sending?state
 						fi
 					:: true;
 					fi;
@@ -89,7 +89,7 @@ init {
 			:: else -> 
 				do
 				:: true -> 
-					for31251: skip;
+					for31259: skip;
 					
 
 					if
@@ -98,16 +98,16 @@ init {
 
 						if
 						:: renames.async_send!0;
-						:: renames.sync!0 -> 
-							renames.sending?0
+						:: renames.sync!false,0 -> 
+							renames.sending?state
 						fi
 					:: true;
 					fi;
-					for31_end251: skip
+					for31_end259: skip
 				:: true -> 
 					break
 				od;
-				for31_exit251: skip
+				for31_exit259: skip
 			fi;
 			for30_end: skip
 		};
@@ -115,13 +115,13 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for30252: skip;
+			for30260: skip;
 			
 
 			if
 			:: entries-1 != -3 -> 
 								for(i : 0.. entries-1) {
-					for31252: skip;
+					for31260: skip;
 					
 
 					if
@@ -130,18 +130,18 @@ init {
 
 						if
 						:: renames.async_send!0;
-						:: renames.sync!0 -> 
-							renames.sending?0
+						:: renames.sync!false,0 -> 
+							renames.sending?state
 						fi
 					:: true;
 					fi;
-					for31_end252: skip
+					for31_end260: skip
 				};
-				for31_exit252: skip
+				for31_exit260: skip
 			:: else -> 
 				do
 				:: true -> 
-					for31251252: skip;
+					for31259260: skip;
 					
 
 					if
@@ -150,22 +150,22 @@ init {
 
 						if
 						:: renames.async_send!0;
-						:: renames.sync!0 -> 
-							renames.sending?0
+						:: renames.sync!false,0 -> 
+							renames.sending?state
 						fi
 					:: true;
 					fi;
-					for31_end251252: skip
+					for31_end259260: skip
 				:: true -> 
 					break
 				od;
-				for31_exit251252: skip
+				for31_exit259260: skip
 			fi;
-			for30_end252: skip
+			for30_end260: skip
 		:: true -> 
 			break
 		od;
-		for30_exit252: skip
+		for30_exit260: skip
 	fi;
 	renames.closing!true;
 	
@@ -179,6 +179,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -189,20 +193,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -211,18 +214,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -240,17 +241,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

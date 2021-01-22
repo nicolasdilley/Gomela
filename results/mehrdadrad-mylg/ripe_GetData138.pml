@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example773212782/ripe/ripe.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example719622462/ripe/ripe.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(wg);
@@ -25,6 +26,7 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
@@ -32,9 +34,14 @@ proctype go_Anonymous1(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

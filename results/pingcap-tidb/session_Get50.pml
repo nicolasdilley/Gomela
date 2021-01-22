@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example682002131/session/tidb.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example369350292/session/tidb.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef _wg;
 	Wgdef d_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(d_wg);
@@ -32,6 +33,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

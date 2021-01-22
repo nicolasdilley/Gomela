@@ -1,7 +1,7 @@
-#define Process_obj_graph_IncomingGraphVertices7221  0
-#define Process_obj_graph_OutgoingGraphVertices21321  0
+#define Process_obj_graph_IncomingGraphVertices7221  1
+#define Process_obj_graph_OutgoingGraphVertices21321  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example499492986/engine/graph/actions.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example784394314/engine/graph/actions.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int obj_graph_OutgoingGraphVertices21321 = Process_obj_graph_OutgoingGraphVertices21321;
@@ -121,6 +122,7 @@ proctype go_Anonymous0(Wgdef wg;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
@@ -128,9 +130,14 @@ proctype go_Anonymous1(Wgdef wg;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

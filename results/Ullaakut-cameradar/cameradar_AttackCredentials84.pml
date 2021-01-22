@@ -1,13 +1,12 @@
 #define AttackCredentials_targets  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example152776580/attack.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example465160148/attack.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -17,6 +16,7 @@ typedef Chandef {
 
 init { 
 	Chandef resChan;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int targets = AttackCredentials_targets;
@@ -36,8 +36,8 @@ init {
 			
 
 			if
-			:: resChan.async_rcv?0;
-			:: resChan.sync?0;
+			:: resChan.async_rcv?state,num_msgs;
+			:: resChan.sync?state,num_msgs;
 			fi;
 			for20_end: skip
 		};
@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201853: skip;
+			for201872: skip;
 			
 
 			if
-			:: resChan.async_rcv?0;
-			:: resChan.sync?0;
+			:: resChan.async_rcv?state,num_msgs;
+			:: resChan.sync?state,num_msgs;
 			fi;
-			for20_end1853: skip
+			for20_end1872: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1853: skip
+		for20_exit1872: skip
 	fi;
 	goto stop_process;
 	resChan.closing!true
@@ -67,6 +67,7 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	int s_credentials_Passwords = -2;
 	int s_credentials_Usernames = -2;
 	
@@ -89,8 +90,8 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 
 						if
 						:: resChan.async_send!0;
-						:: resChan.sync!0 -> 
-							resChan.sending?0
+						:: resChan.sync!false,0 -> 
+							resChan.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -101,7 +102,7 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 			:: else -> 
 				do
 				:: true -> 
-					for121851: skip;
+					for121870: skip;
 					
 
 					if
@@ -110,17 +111,17 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 
 						if
 						:: resChan.async_send!0;
-						:: resChan.sync!0 -> 
-							resChan.sending?0
+						:: resChan.sync!false,0 -> 
+							resChan.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for12_end1851: skip
+					for12_end1870: skip
 				:: true -> 
 					break
 				od;
-				for12_exit1851: skip
+				for12_exit1870: skip
 			fi;
 			for11_end: skip
 		};
@@ -128,13 +129,13 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 	:: else -> 
 		do
 		:: true -> 
-			for111852: skip;
+			for111871: skip;
 			
 
 			if
 			:: s_credentials_Passwords-1 != -3 -> 
 								for(i : 0.. s_credentials_Passwords-1) {
-					for121852: skip;
+					for121871: skip;
 					
 
 					if
@@ -143,19 +144,19 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 
 						if
 						:: resChan.async_send!0;
-						:: resChan.sync!0 -> 
-							resChan.sending?0
+						:: resChan.sync!false,0 -> 
+							resChan.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for12_end1852: skip
+					for12_end1871: skip
 				};
-				for12_exit1852: skip
+				for12_exit1871: skip
 			:: else -> 
 				do
 				:: true -> 
-					for1218511852: skip;
+					for1218701871: skip;
 					
 
 					if
@@ -164,33 +165,37 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 
 						if
 						:: resChan.async_send!0;
-						:: resChan.sync!0 -> 
-							resChan.sending?0
+						:: resChan.sync!false,0 -> 
+							resChan.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for12_end18511852: skip
+					for12_end18701871: skip
 				:: true -> 
 					break
 				od;
-				for12_exit18511852: skip
+				for12_exit18701871: skip
 			fi;
-			for11_end1852: skip
+			for11_end1871: skip
 		:: true -> 
 			break
 		od;
-		for11_exit1852: skip
+		for11_exit1871: skip
 	fi;
 	
 
 	if
 	:: resChan.async_send!0;
-	:: resChan.sync!0 -> 
-		resChan.sending?0
+	:: resChan.sync!false,0 -> 
+		resChan.sending?state
 	fi;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -201,20 +206,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -223,18 +227,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -252,17 +254,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

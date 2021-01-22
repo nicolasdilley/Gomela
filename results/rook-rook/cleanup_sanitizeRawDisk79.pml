@@ -1,6 +1,6 @@
-#define sanitizeRawDisk_osdRawList  3
+#define sanitizeRawDisk_osdRawList  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example174264119/pkg/daemon/ceph/cleanup/disk.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example108432455/pkg/daemon/ceph/cleanup/disk.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int osdRawList = sanitizeRawDisk_osdRawList;
@@ -29,9 +30,14 @@ proctype go_executeSanitizeCommand(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

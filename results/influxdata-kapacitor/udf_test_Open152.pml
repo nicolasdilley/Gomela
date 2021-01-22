@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example424321392/udf/test/test_udf.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example000849088/udf/test/test_udf.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef u_Server_ioGroup;
 	Wgdef u_Server_requestsGroup;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(u_Server_requestsGroup);
@@ -18,6 +19,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

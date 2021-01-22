@@ -1,6 +1,6 @@
 #define Work_workerSettings_Concurrency  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example539570004/goworker.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example727727012/goworker.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef monitor;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int workerSettings_Concurrency = Work_workerSettings_Concurrency;
@@ -41,6 +42,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

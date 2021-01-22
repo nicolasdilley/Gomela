@@ -47,12 +47,11 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		})
 		chan_name := m.getChanStruct(s.X)
 
-		do_guard := &promela_ast.GuardStmt{Cond: &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: chan_name.Name.Name + ".is_closed"}, Rhs: &promela_ast.Ident{Name: "state"}}}
-		if_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+		do_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
 
-		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
 		async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
@@ -60,23 +59,25 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			Cond: sync_rcv,
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
 		}
-		i := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-		if_not_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{i}}}
+		rcv := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+		if_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state && num_msgs <= 0"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+		if_not_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: s1}
+		i := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if len(d1.List) > 0 {
-			return b, d1, &ParseError{err: errors.New("Defer stmt in range statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			return b, d1, &ParseError{err: errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())}
 		}
 		if err1 != nil {
 			err = err1
 		}
 
-		if_not_closed_guard.Body.List = append(if_not_closed_guard.Body.List, s1.List...)
-		do_guard.Body = &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.CondStmt{Guards: []*promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard}}}}
+		do_guard.Body = &promela_ast.BlockStmt{List: []promela_ast.Stmt{rcv, i}}
 		d.Guards = append(d.Guards, do_guard)
 		b.List = append(b.List, d, for_label)
 
 	} else if isChan {
-		return b, b, &ParseError{err: errors.New("A range on a channel was found but could not parse channel : " + m.Fileset.Position(s.Pos()).String())}
+		return b, b, &ParseError{err: errors.New(UNKNOWN_RANGE + m.Fileset.Position(s.Pos()).String())}
 	} else {
 
 		// change into (for i:=0; i < len(x);i++)
@@ -90,7 +91,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			err = err1
 		}
 		if len(d1.List) > 0 {
-			return b, d1, &ParseError{err: errors.New("Defer stmt in range statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+			return b, d1, &ParseError{err: errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())}
 		}
 		block_stmt := s1
 

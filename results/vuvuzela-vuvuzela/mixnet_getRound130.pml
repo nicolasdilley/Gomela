@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example650728418/mixnet/mixnet.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example936177074/mixnet/mixnet.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,13 +9,12 @@ typedef Wgdef {
 
 init { 
 	Wgdef st_decryptWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
 
 	if
-	:: true -> 
-		run wgMonitor(st_decryptWg)
 	:: true -> 
 		run wgMonitor(st_decryptWg)
 	fi;
@@ -30,6 +29,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

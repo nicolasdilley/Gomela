@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example797168370/pkg/plugins/backendplugin/grpcplugin/grpc_plugin.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example383327023/pkg/plugins/backendplugin/grpcplugin/grpc_plugin.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef p_client_stderrWaitGroup;
 	Wgdef p_client_clientWaitGroup;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(p_client_clientWaitGroup);
@@ -40,14 +41,6 @@ init {
 			goto stop_process
 		:: true;
 		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi
 	fi;
 	
 
@@ -60,6 +53,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

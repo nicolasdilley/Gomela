@@ -1,6 +1,6 @@
 #define ObjectsToPack_objectGroups  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example557815295/plumbing/format/packfile/delta_selector.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example207035663/plumbing/format/packfile/delta_selector.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int objectGroups = ObjectsToPack_objectGroups;
@@ -51,9 +52,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

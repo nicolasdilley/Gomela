@@ -14,7 +14,6 @@ FiloSottile/mkcert
 gopherjs/gopherjs
 gorilla/mux
 PuerkitoBio/goquery
-git-lfs/git-lfs
 urfave/negroni
 andlabs/ui
 tylertreat/comcast
@@ -118,6 +117,7 @@ GoogleChromeLabs/simplehttp2server
 mitchellh/mapstructure
 hashicorp/hcl
 dustin/go-humanize
+DarthSim/imgproxy
 volatiletech/authboss
 faiface/pixel
 ahmetb/go-linq
@@ -164,6 +164,7 @@ liuchengxu/blockchain-tutorial
 ory/ladon
 segmentio/ksuid
 opencontainers/runtime-spec
+moncho/dry
 libgit2/git2go
 TrueFurby/go-callvis
 b3log/pipe

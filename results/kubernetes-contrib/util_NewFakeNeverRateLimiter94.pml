@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example078125380/service-loadbalancer/Godeps/_workspace/src/k8s.io/kubernetes/pkg/util/throttle.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example689943956/service-loadbalancer/Godeps/_workspace/src/k8s.io/kubernetes/pkg/util/throttle.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(wg);
@@ -17,6 +18,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

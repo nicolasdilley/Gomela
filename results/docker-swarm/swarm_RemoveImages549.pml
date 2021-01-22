@@ -1,7 +1,7 @@
-#define RemoveImages_c_listActiveEngines55420  3
-#define RemoveImages_e_Images55525  1
+#define RemoveImages_c_listActiveEngines55420  0
+#define RemoveImages_e_Images55525  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example799507408/cluster/swarm/cluster.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example437210400/cluster/swarm/cluster.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int e_Images55525 = RemoveImages_e_Images55525;
@@ -43,6 +44,7 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -53,6 +55,10 @@ proctype go_Anonymous0(Wgdef wg) {
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

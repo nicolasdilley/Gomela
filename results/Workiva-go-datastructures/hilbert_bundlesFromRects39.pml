@@ -1,7 +1,7 @@
 #define bundlesFromRects_chunks  3
-#define bundlesFromRects_runtime_NumCPU4518  3
+#define bundlesFromRects_runtime_NumCPU4518  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example692222135/rtree/hilbert/hilbert.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example917179335/rtree/hilbert/hilbert.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int runtime_NumCPU4518 = bundlesFromRects_runtime_NumCPU4518;
@@ -40,9 +41,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

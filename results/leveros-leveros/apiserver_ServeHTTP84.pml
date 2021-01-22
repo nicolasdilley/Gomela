@@ -1,14 +1,13 @@
 #define ub_for165_2  -2
 #define ub_for190_3  -2
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example474308639/apiserver/apiserver.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example063261999/apiserver/apiserver.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -19,6 +18,7 @@ typedef Chandef {
 init { 
 	Chandef workerDoneCh;
 	Chandef errCh;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -62,8 +62,6 @@ init {
 			if
 			:: true -> 
 				goto stop_process
-			:: true -> 
-				goto stop_process
 			fi
 		:: true;
 		fi;
@@ -100,7 +98,7 @@ init {
 			if
 			:: 0 != -2 && ub_for165_2 != -2 -> 
 								for(i : 0.. ub_for165_2) {
-					for302237: skip;
+					for302253: skip;
 					
 
 					if
@@ -113,29 +111,14 @@ init {
 
 							if
 							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
+							:: errCh.sync!false,0 -> 
+								errCh.sending?state
 							fi;
 							
 
 							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
-							fi;
-							goto stop_process
-						:: true -> 
-							
-
-							if
-							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
-							fi;
-							
-
-							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
+							:: workerDoneCh.async_rcv?state,num_msgs;
+							:: workerDoneCh.sync?state,num_msgs;
 							fi;
 							goto stop_process
 						fi
@@ -153,23 +136,23 @@ init {
 
 							if
 							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
+							:: errCh.sync!false,0 -> 
+								errCh.sending?state
 							fi;
 							
 
 							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
+							:: workerDoneCh.async_rcv?state,num_msgs;
+							:: workerDoneCh.sync?state,num_msgs;
 							fi;
 							goto stop_process
 						:: true;
 						fi
 					:: true;
 					fi;
-					for30_end2237: skip
+					for30_end2253: skip
 				};
-				for30_exit2237: skip
+				for30_exit2253: skip
 			:: else -> 
 				do
 				:: true -> 
@@ -186,29 +169,14 @@ init {
 
 							if
 							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
+							:: errCh.sync!false,0 -> 
+								errCh.sending?state
 							fi;
 							
 
 							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
-							fi;
-							goto stop_process
-						:: true -> 
-							
-
-							if
-							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
-							fi;
-							
-
-							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
+							:: workerDoneCh.async_rcv?state,num_msgs;
+							:: workerDoneCh.sync?state,num_msgs;
 							fi;
 							goto stop_process
 						fi
@@ -226,14 +194,14 @@ init {
 
 							if
 							:: errCh.async_send!0;
-							:: errCh.sync!0 -> 
-								errCh.sending?0
+							:: errCh.sync!false,0 -> 
+								errCh.sending?state
 							fi;
 							
 
 							if
-							:: workerDoneCh.async_rcv?0;
-							:: workerDoneCh.sync?0;
+							:: workerDoneCh.async_rcv?state,num_msgs;
+							:: workerDoneCh.sync?state,num_msgs;
 							fi;
 							goto stop_process
 						:: true;
@@ -252,7 +220,7 @@ init {
 			if
 			:: 0 != -2 && ub_for190_3 != -2 -> 
 								for(i : 0.. ub_for190_3) {
-					for402238: skip;
+					for402254: skip;
 					
 
 					if
@@ -261,21 +229,21 @@ init {
 
 						if
 						:: errCh.async_send!0;
-						:: errCh.sync!0 -> 
-							errCh.sending?0
+						:: errCh.sync!false,0 -> 
+							errCh.sending?state
 						fi;
 						
 
 						if
-						:: workerDoneCh.async_rcv?0;
-						:: workerDoneCh.sync?0;
+						:: workerDoneCh.async_rcv?state,num_msgs;
+						:: workerDoneCh.sync?state,num_msgs;
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for40_end2238: skip
+					for40_end2254: skip
 				};
-				for40_exit2238: skip
+				for40_exit2254: skip
 			:: else -> 
 				do
 				:: true -> 
@@ -288,74 +256,14 @@ init {
 
 						if
 						:: errCh.async_send!0;
-						:: errCh.sync!0 -> 
-							errCh.sending?0
+						:: errCh.sync!false,0 -> 
+							errCh.sending?state
 						fi;
 						
 
 						if
-						:: workerDoneCh.async_rcv?0;
-						:: workerDoneCh.sync?0;
-						fi;
-						goto stop_process
-					:: true;
-					fi;
-					for40_end: skip
-				:: true -> 
-					break
-				od;
-				for40_exit: skip
-			fi
-		:: true -> 
-			
-
-			if
-			:: 0 != -2 && ub_for190_3 != -2 -> 
-								for(i : 0.. ub_for190_3) {
-					for402238: skip;
-					
-
-					if
-					:: true -> 
-						
-
-						if
-						:: errCh.async_send!0;
-						:: errCh.sync!0 -> 
-							errCh.sending?0
-						fi;
-						
-
-						if
-						:: workerDoneCh.async_rcv?0;
-						:: workerDoneCh.sync?0;
-						fi;
-						goto stop_process
-					:: true;
-					fi;
-					for40_end2238: skip
-				};
-				for40_exit2238: skip
-			:: else -> 
-				do
-				:: true -> 
-					for40: skip;
-					
-
-					if
-					:: true -> 
-						
-
-						if
-						:: errCh.async_send!0;
-						:: errCh.sync!0 -> 
-							errCh.sending?0
-						fi;
-						
-
-						if
-						:: workerDoneCh.async_rcv?0;
-						:: workerDoneCh.sync?0;
+						:: workerDoneCh.async_rcv?state,num_msgs;
+						:: workerDoneCh.sync?state,num_msgs;
 						fi;
 						goto stop_process
 					:: true;
@@ -375,14 +283,14 @@ init {
 
 			if
 			:: errCh.async_send!0;
-			:: errCh.sync!0 -> 
-				errCh.sending?0
+			:: errCh.sync!false,0 -> 
+				errCh.sending?state
 			fi;
 			
 
 			if
-			:: workerDoneCh.async_rcv?0;
-			:: workerDoneCh.sync?0;
+			:: workerDoneCh.async_rcv?state,num_msgs;
+			:: workerDoneCh.sync?state,num_msgs;
 			fi;
 			goto stop_process
 		:: true;
@@ -391,14 +299,14 @@ init {
 
 		if
 		:: errCh.async_send!0;
-		:: errCh.sync!0 -> 
-			errCh.sending?0
+		:: errCh.sync!false,0 -> 
+			errCh.sending?state
 		fi;
 		
 
 		if
-		:: workerDoneCh.async_rcv?0;
-		:: workerDoneCh.sync?0;
+		:: workerDoneCh.async_rcv?state,num_msgs;
+		:: workerDoneCh.sync?state,num_msgs;
 		fi
 	:: true -> 
 		
@@ -432,72 +340,6 @@ init {
 				
 
 				if
-				:: true -> 
-					goto stop_process
-				:: true -> 
-					goto stop_process
-				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true -> 
-					goto stop_process
-				fi
-			fi
-		fi;
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
-		:: true;
-		fi;
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi;
-		
-
-		if
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true -> 
-					goto stop_process
-				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
 				:: true -> 
 					goto stop_process
 				fi
@@ -518,6 +360,7 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	Chandef receiveErrCh;
 	Chandef receiveCh;
 	run sync_monitor(receiveCh);
@@ -527,7 +370,7 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 	:: true -> 
 		for20: skip;
 		do
-		:: receiveCh.async_rcv?0 -> 
+		:: receiveCh.async_rcv?state,num_msgs -> 
 			
 
 			if
@@ -554,24 +397,9 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 					goto stop_process
 				:: true;
 				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true;
-				fi;
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true;
-				fi
 			fi;
 			break
-		:: receiveCh.sync?0 -> 
+		:: receiveCh.sync?state,num_msgs -> 
 			
 
 			if
@@ -598,24 +426,9 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 					goto stop_process
 				:: true;
 				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true;
-				fi;
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true;
-				fi
 			fi;
 			break
-		:: receiveErrCh.async_rcv?0 -> 
+		:: receiveErrCh.async_rcv?state,num_msgs -> 
 			
 
 			if
@@ -638,17 +451,6 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 				
 
 				if
-				:: true -> 
-					goto stop_process
-				:: true -> 
-					goto stop_process
-				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
 				:: true -> 
 					goto stop_process
 				fi
@@ -661,7 +463,7 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 			:: true;
 			fi;
 			break
-		:: receiveErrCh.sync?0 -> 
+		:: receiveErrCh.sync?state,num_msgs -> 
 			
 
 			if
@@ -686,17 +488,6 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 				if
 				:: true -> 
 					goto stop_process
-				:: true -> 
-					goto stop_process
-				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					goto stop_process
-				:: true -> 
-					goto stop_process
 				fi
 			fi;
 			
@@ -707,9 +498,9 @@ proctype go_replyStreamWorker(Chandef errCh;Chandef workerDoneCh) {
 			:: true;
 			fi;
 			break
-		:: errCh.async_rcv?0 -> 
+		:: errCh.async_rcv?state,num_msgs -> 
 			goto stop_process
-		:: errCh.sync?0 -> 
+		:: errCh.sync?state,num_msgs -> 
 			goto stop_process
 		od;
 		for20_end: skip
@@ -722,6 +513,7 @@ proctype go_streamReceiveWorker(Chandef receiveCh;Chandef receiveErrCh) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
 	:: true -> 
 		for10: skip;
@@ -733,8 +525,8 @@ proctype go_streamReceiveWorker(Chandef receiveCh;Chandef receiveErrCh) {
 
 			if
 			:: receiveErrCh.async_send!0;
-			:: receiveErrCh.sync!0 -> 
-				receiveErrCh.sending?0
+			:: receiveErrCh.sync!false,0 -> 
+				receiveErrCh.sending?state
 			fi;
 			goto stop_process
 		:: true;
@@ -743,14 +535,18 @@ proctype go_streamReceiveWorker(Chandef receiveCh;Chandef receiveErrCh) {
 
 		if
 		:: receiveCh.async_send!0;
-		:: receiveCh.sync!0 -> 
-			receiveCh.sending?0
+		:: receiveCh.sync!false,0 -> 
+			receiveCh.sending?state
 		fi;
 		for10_end: skip
 	od;
 	for10_exit: skip;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -761,20 +557,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -783,18 +578,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -812,17 +605,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

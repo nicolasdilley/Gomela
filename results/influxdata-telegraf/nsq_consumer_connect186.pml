@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example266662108/plugins/inputs/nsq_consumer/nsq_consumer.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example387426604/plugins/inputs/nsq_consumer/nsq_consumer.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef n_consumer_wg;
 	Wgdef consumer_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -31,6 +32,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

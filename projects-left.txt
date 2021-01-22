@@ -1,5 +1,0 @@
-Tencent/bk-cmdb
-aws/aws-lambda-go
-prometheus/alertmanager
-tj/mmake
-goinaction/code

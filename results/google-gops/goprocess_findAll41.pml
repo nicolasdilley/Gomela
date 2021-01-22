@@ -1,14 +1,13 @@
-#define findAll_pss  1
-#define findAll_concurrencyLimit  0
+#define findAll_pss  0
+#define findAll_concurrencyLimit  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example503645111/goprocess/gp.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example694722759/goprocess/gp.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -24,6 +23,7 @@ init {
 	Wgdef wg;
 	Chandef output;
 	Chandef input;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int concurrencyLimit = findAll_concurrencyLimit;
@@ -56,8 +56,8 @@ init {
 
 			if
 			:: input.async_send!0;
-			:: input.sync!0 -> 
-				input.sending?0
+			:: input.sync!false,0 -> 
+				input.sending?state
 			fi;
 			for10_end: skip
 		};
@@ -65,19 +65,19 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for101069: skip;
+			for101093: skip;
 			
 
 			if
 			:: input.async_send!0;
-			:: input.sync!0 -> 
-				input.sending?0
+			:: input.sync!false,0 -> 
+				input.sending?state
 			fi;
-			for10_end1069: skip
+			for10_end1093: skip
 		:: true -> 
 			break
 		od;
-		for10_exit1069: skip
+		for10_exit1093: skip
 	fi;
 	input.closing!true;
 	run wgMonitor(wg);
@@ -91,17 +91,19 @@ init {
 	wg.Wait?0;
 	output.closing!true;
 	do
-	:: output.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: output.async_rcv?state,num_msgs;
+		:: output.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: output.async_rcv?0;
-			:: output.sync?0;
-			fi;
 			for30: skip;
 			for30_end: skip
 		fi
@@ -115,18 +117,21 @@ proctype go_Anonymous0(Chandef input;Chandef output;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: input.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: input.async_rcv?state,num_msgs;
+		:: input.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: input.async_rcv?0;
-			:: input.sync?0;
-			fi;
 			for21: skip;
 			
 
@@ -146,8 +151,8 @@ proctype go_Anonymous0(Chandef input;Chandef output;Wgdef wg) {
 
 			if
 			:: output.async_send!0;
-			:: output.sync!0 -> 
-				output.sending?0
+			:: output.sync!false,0 -> 
+				output.sending?state
 			fi;
 			for21_end: skip
 		fi
@@ -156,6 +161,10 @@ proctype go_Anonymous0(Chandef input;Chandef output;Wgdef wg) {
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -166,20 +175,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -188,18 +196,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -217,17 +223,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

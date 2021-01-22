@@ -1,8 +1,8 @@
-#define stdserve_listeners  0
-#define stdserve_numLoops  0
-#define stdserve_s_loops  3
+#define stdserve_listeners  1
+#define stdserve_numLoops  1
+#define stdserve_s_loops  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example212535042/evio_std.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example260673746/evio_std.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -13,6 +13,7 @@ typedef Wgdef {
 init { 
 	Wgdef s_lnwg;
 	Wgdef s_loopwg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_loops = stdserve_s_loops;
@@ -30,6 +31,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

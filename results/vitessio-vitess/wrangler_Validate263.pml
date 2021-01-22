@@ -1,13 +1,12 @@
 #define Validate_keyspaces  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example245190199/go/vt/wrangler/validator.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example983313288/go/vt/wrangler/validator.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -23,6 +22,7 @@ init {
 	chan child_waitForResults0 = [0] of {int};
 	Wgdef wg;
 	Chandef results;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int keyspaces = Validate_keyspaces;
@@ -46,17 +46,9 @@ init {
 
 		if
 		:: results.async_send!0;
-		:: results.sync!0 -> 
-			results.sending?0
+		:: results.sync!false,0 -> 
+			results.sending?state
 		fi
-	:: true -> 
-				for(i : 0.. keyspaces-1) {
-			for30: skip;
-			wg.Add!1;
-			run go_Anonymous3(results,wg);
-			for30_end: skip
-		};
-		for30_exit: skip
 	:: true -> 
 				for(i : 0.. keyspaces-1) {
 			for30: skip;
@@ -76,6 +68,7 @@ proctype go_Anonymous0(Chandef results;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_validateAllTablets0 = [0] of {int};
 	run validateAllTablets(wg,results,child_validateAllTablets0);
 	child_validateAllTablets0?0;
@@ -86,10 +79,11 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	int cellSet = 1;
-	int aliases = 3;
-	int shards = -2;
-	int keyspaces = -2;
+	int aliases = 0;
+	int shards=3;
+	int keyspaces=3;
 	
 
 	if
@@ -98,8 +92,8 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 		if
 		:: results.async_send!0;
-		:: results.sync!0 -> 
-			results.sending?0
+		:: results.sync!false,0 -> 
+			results.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -118,8 +112,8 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 				if
 				:: results.async_send!0;
-				:: results.sync!0 -> 
-					results.sending?0
+				:: results.sync!false,0 -> 
+					results.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -138,8 +132,8 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 						if
 						:: results.async_send!0;
-						:: results.sync!0 -> 
-							results.sending?0
+						:: results.sync!false,0 -> 
+							results.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -150,7 +144,7 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 			:: else -> 
 				do
 				:: true -> 
-					for11419: skip;
+					for11469: skip;
 					
 
 					if
@@ -159,17 +153,17 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 						if
 						:: results.async_send!0;
-						:: results.sync!0 -> 
-							results.sending?0
+						:: results.sync!false,0 -> 
+							results.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for11_end419: skip
+					for11_end469: skip
 				:: true -> 
 					break
 				od;
-				for11_exit419: skip
+				for11_exit469: skip
 			fi;
 			for10_end: skip
 		};
@@ -177,7 +171,7 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 	:: else -> 
 		do
 		:: true -> 
-			for10420: skip;
+			for10470: skip;
 			
 
 			if
@@ -186,8 +180,8 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 				if
 				:: results.async_send!0;
-				:: results.sync!0 -> 
-					results.sending?0
+				:: results.sync!false,0 -> 
+					results.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -197,7 +191,7 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 			if
 			:: shards-1 != -3 -> 
 								for(i : 0.. shards-1) {
-					for11420: skip;
+					for11470: skip;
 					
 
 					if
@@ -206,19 +200,19 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 						if
 						:: results.async_send!0;
-						:: results.sync!0 -> 
-							results.sending?0
+						:: results.sync!false,0 -> 
+							results.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for11_end420: skip
+					for11_end470: skip
 				};
-				for11_exit420: skip
+				for11_exit470: skip
 			:: else -> 
 				do
 				:: true -> 
-					for11419420: skip;
+					for11469470: skip;
 					
 
 					if
@@ -227,23 +221,23 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 						if
 						:: results.async_send!0;
-						:: results.sync!0 -> 
-							results.sending?0
+						:: results.sync!false,0 -> 
+							results.sending?state
 						fi;
 						goto stop_process
 					:: true;
 					fi;
-					for11_end419420: skip
+					for11_end469470: skip
 				:: true -> 
 					break
 				od;
-				for11_exit419420: skip
+				for11_exit469470: skip
 			fi;
-			for10_end420: skip
+			for10_end470: skip
 		:: true -> 
 			break
 		od;
-		for10_exit420: skip
+		for10_exit470: skip
 	fi;
 		for(i : 0.. cellSet-1) {
 		for20: skip;
@@ -255,8 +249,8 @@ proctype validateAllTablets(Wgdef wg;Chandef results;chan child) {
 
 			if
 			:: results.async_send!0;
-			:: results.sync!0 -> 
-				results.sending?0
+			:: results.sync!false,0 -> 
+				results.sending?state
 			fi;
 			goto for20_end
 		:: true;
@@ -278,6 +272,7 @@ proctype go_Anonymous2(Chandef results) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -286,8 +281,8 @@ proctype go_Anonymous2(Chandef results) {
 
 		if
 		:: results.async_send!0;
-		:: results.sync!0 -> 
-			results.sending?0
+		:: results.sync!false,0 -> 
+			results.sending?state
 		fi
 	fi;
 	stop_process: skip
@@ -296,6 +291,7 @@ proctype go_Anonymous3(Chandef results;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_validateKeyspace0 = [0] of {int};
 	run validateKeyspace(wg,results,child_validateKeyspace0);
 	child_validateKeyspace0?0;
@@ -306,6 +302,7 @@ proctype validateKeyspace(Wgdef wg;Chandef results;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	int shards = 1;
 	
 
@@ -315,8 +312,8 @@ proctype validateKeyspace(Wgdef wg;Chandef results;chan child) {
 
 		if
 		:: results.async_send!0;
-		:: results.sync!0 -> 
-			results.sending?0
+		:: results.sync!false,0 -> 
+			results.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -335,25 +332,29 @@ proctype go_Anonymous5(Chandef results) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip
 }
 proctype waitForResults(Wgdef wg;Chandef results;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	run go_Anonymous7(results);
 	do
-	:: results.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: results.async_rcv?state,num_msgs;
+		:: results.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: results.async_rcv?0;
-			:: results.sync?0;
-			fi;
 			for40: skip;
 			for40_end: skip
 		fi
@@ -367,9 +368,14 @@ proctype go_Anonymous7(Chandef results) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	results.closing!true;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -380,20 +386,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -402,18 +407,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -431,17 +434,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od
@@ -465,4 +466,5 @@ end: if
 	fi
 od
 }
+
 

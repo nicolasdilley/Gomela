@@ -1,6 +1,6 @@
 #define Run_args_connlist  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example254051793/extern/deprecated/redis-test/bench/benchmark.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example586753930/extern/deprecated/redis-test/bench/benchmark.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int args_connlist = Run_args_connlist;
@@ -50,6 +51,7 @@ proctype go_Anonymous0(Wgdef wg;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
@@ -57,9 +59,14 @@ proctype go_Anonymous1(Wgdef wg;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

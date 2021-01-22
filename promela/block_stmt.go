@@ -92,7 +92,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																	Filename:  m.Fileset.Position(stmt.Pos()).Filename,
 																})
 
-																err = &ParseError{err: errors.New("Waitgroup created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+																err = &ParseError{err: errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 															}
 														}
 													}
@@ -138,7 +138,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 													Commit:    m.Commit,
 													Filename:  m.Fileset.Position(ident.Pos()).Filename,
 												})
-												err = &ParseError{err: errors.New("Channel created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+												err = &ParseError{err: errors.New(CHAN_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 											}
 
 										}
@@ -177,7 +177,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 																Commit:    m.Commit,
 																Filename:  m.Fileset.Position(ident.Pos()).Filename,
 															})
-															err = &ParseError{err: errors.New("Channel created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+															err = &ParseError{err: errors.New(CHAN_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 
 														}
 
@@ -235,7 +235,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 															Commit:    m.Commit,
 															Filename:  m.Fileset.Position(stmt.Pos()).Filename,
 														})
-														err = &ParseError{err: errors.New("Waitgroup created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+														err = &ParseError{err: errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 													}
 												}
 											}
@@ -269,7 +269,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 															}
 															addBlock(block_stmt, ch)
 														} else {
-															err = &ParseError{err: errors.New("Channel created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+															err = &ParseError{err: errors.New(CHAN_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 
 															Features = append(Features, Feature{
 																Proj_name: m.Project_name,
@@ -340,7 +340,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 															Commit:    m.Commit,
 															Filename:  m.Fileset.Position(sel.Pos()).Filename,
 														})
-														err = &ParseError{err: errors.New("Waitgroup created in a for loop at pos :" + m.Fileset.Position(stmt.Pos()).String())}
+														err = &ParseError{err: errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(stmt.Pos()).String())}
 													}
 												}
 											}

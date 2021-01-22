@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example616394530/provider/dummy/environs.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example113662194/provider/dummy/environs.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ init {
 	Wgdef state_apiServer_wg;
 	Wgdef leaseManager_wg;
 	Wgdef apiServer_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -28,6 +29,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

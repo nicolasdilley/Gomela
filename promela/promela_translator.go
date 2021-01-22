@@ -113,7 +113,8 @@ func (m *Model) GoToPromela() {
 
 	m.Init.Body.List = append(m.Init.Body.List,
 		&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
-		&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "state"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}})
+		&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "state"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}},
+		&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "num_msgs"}, Types: promela_types.Int, Rhs: &promela_ast.Ident{Name: "0"}})
 	s1, defers, err := m.TranslateBlockStmt(m.Fun.Body)
 
 	m.Init.Body.List = append(m.Init.Body.List,
@@ -319,17 +320,16 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 	case *ast.UnaryExpr:
 		switch expr.Op {
+		case token.NOT:
+			return m.TranslateExpr(expr.X)
 		case token.ARROW:
+			if m.containsChan(expr.X) {
 
-			channel := m.getChanStruct(expr.X)
-			if channel != nil {
-
-				chan_name := channel.Name
-
+				chan_name := TranslateIdent(expr.X, m.Fileset)
 				if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}, Rcv: m.Fileset.Position(expr.Pos())}
-				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}, Rcv: m.Fileset.Position(expr.Pos())}
+				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
+				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
 
 				async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 				sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -338,7 +338,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 				stmts.List = append(stmts.List, if_stmt)
 			} else {
-				err = &ParseError{err: errors.New("A receive was found on a channel that could not be parsed : " + m.Fileset.Position(expr.Pos()).String())}
+				err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(expr.Pos()).String())}
 			}
 		}
 
@@ -406,6 +406,7 @@ func (m *Model) containsWaitgroup(expr ast.Expr) bool {
 	}
 
 	for e, _ := range m.WaitGroups {
+
 		if IdenticalExpr(e, expr) {
 			return true
 		}

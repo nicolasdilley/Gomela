@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example411313236/flow/runner.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example698904740/flow/runner.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	chan child_RunFlowAsync0 = [0] of {int};
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(wg);
@@ -24,7 +25,8 @@ proctype RunFlowAsync(Wgdef wg;chan child) {
 	bool closed; 
 	int i;
 	bool state;
-	int fc_Steps = 3;
+	int num_msgs;
+	int fc_Steps = 1;
 		for(i : 0.. fc_Steps-1) {
 		for10: skip;
 		
@@ -41,6 +43,10 @@ proctype RunFlowAsync(Wgdef wg;chan child) {
 	wg.Add!-1;
 	child!0
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example038828150/contractcourt/chain_arbitrator.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example044314819/contractcourt/chain_arbitrator.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ init {
 	Wgdef _wg;
 	Wgdef chainWatcher_wg;
 	Wgdef __wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(__wg);
@@ -50,6 +51,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

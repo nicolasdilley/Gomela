@@ -1,14 +1,13 @@
 #define ProbePodToPodConnectivity_size  1
-#define ProbePodToPodConnectivity_numberOfWorkers  0
+#define ProbePodToPodConnectivity_numberOfWorkers  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example328969469/test/e2e/network/netpol/probe.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example090168717/test/e2e/network/netpol/probe.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -19,9 +18,10 @@ typedef Chandef {
 init { 
 	Chandef results;
 	Chandef jobs;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int allPods=0;
+	int allPods=3;
 	int numberOfWorkers = ProbePodToPodConnectivity_numberOfWorkers;
 	int size = ProbePodToPodConnectivity_size;
 	
@@ -64,8 +64,8 @@ init {
 
 					if
 					:: jobs.async_send!0;
-					:: jobs.sync!0 -> 
-						jobs.sending?0
+					:: jobs.sync!false,0 -> 
+						jobs.sending?state
 					fi;
 					for21_end: skip
 				};
@@ -73,19 +73,19 @@ init {
 			:: else -> 
 				do
 				:: true -> 
-					for212345: skip;
+					for212355: skip;
 					
 
 					if
 					:: jobs.async_send!0;
-					:: jobs.sync!0 -> 
-						jobs.sending?0
+					:: jobs.sync!false,0 -> 
+						jobs.sending?state
 					fi;
-					for21_end2345: skip
+					for21_end2355: skip
 				:: true -> 
 					break
 				od;
-				for21_exit2345: skip
+				for21_exit2355: skip
 			fi;
 			for20_end: skip
 		};
@@ -93,45 +93,45 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for202346: skip;
+			for202356: skip;
 			
 
 			if
 			:: allPods-1 != -3 -> 
 								for(i : 0.. allPods-1) {
-					for212346: skip;
+					for212356: skip;
 					
 
 					if
 					:: jobs.async_send!0;
-					:: jobs.sync!0 -> 
-						jobs.sending?0
+					:: jobs.sync!false,0 -> 
+						jobs.sending?state
 					fi;
-					for21_end2346: skip
+					for21_end2356: skip
 				};
-				for21_exit2346: skip
+				for21_exit2356: skip
 			:: else -> 
 				do
 				:: true -> 
-					for2123452346: skip;
+					for2123552356: skip;
 					
 
 					if
 					:: jobs.async_send!0;
-					:: jobs.sync!0 -> 
-						jobs.sending?0
+					:: jobs.sync!false,0 -> 
+						jobs.sending?state
 					fi;
-					for21_end23452346: skip
+					for21_end23552356: skip
 				:: true -> 
 					break
 				od;
-				for21_exit23452346: skip
+				for21_exit23552356: skip
 			fi;
-			for20_end2346: skip
+			for20_end2356: skip
 		:: true -> 
 			break
 		od;
-		for20_exit2346: skip
+		for20_exit2356: skip
 	fi;
 	jobs.closing!true;
 	
@@ -139,16 +139,16 @@ init {
 	if
 	:: 0 != -2 && size-1 != -3 -> 
 				for(i : 0.. size-1) {
-			for302347: skip;
+			for302357: skip;
 			
 
 			if
-			:: results.async_rcv?0;
-			:: results.sync?0;
+			:: results.async_rcv?state,num_msgs;
+			:: results.sync?state,num_msgs;
 			fi;
-			for30_end2347: skip
+			for30_end2357: skip
 		};
-		for30_exit2347: skip
+		for30_exit2357: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -156,8 +156,8 @@ init {
 			
 
 			if
-			:: results.async_rcv?0;
-			:: results.sync?0;
+			:: results.async_rcv?state,num_msgs;
+			:: results.sync?state,num_msgs;
 			fi;
 			for30_end: skip
 		:: true -> 
@@ -172,18 +172,21 @@ proctype go_probeWorker(Chandef jobs;Chandef results) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: jobs.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: jobs.async_rcv?state,num_msgs;
+		:: jobs.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: jobs.async_rcv?0;
-			:: jobs.sync?0;
-			fi;
 			for11: skip;
 			
 
@@ -193,24 +196,16 @@ proctype go_probeWorker(Chandef jobs;Chandef results) {
 
 				if
 				:: results.async_send!0;
-				:: results.sync!0 -> 
-					results.sending?0
+				:: results.sync!false,0 -> 
+					results.sending?state
 				fi
 			:: true -> 
 				
 
 				if
 				:: results.async_send!0;
-				:: results.sync!0 -> 
-					results.sending?0
-				fi
-			:: true -> 
-				
-
-				if
-				:: results.async_send!0;
-				:: results.sync!0 -> 
-					results.sending?0
+				:: results.sync!false,0 -> 
+					results.sending?state
 				fi
 			fi;
 			for11_end: skip
@@ -219,6 +214,10 @@ proctype go_probeWorker(Chandef jobs;Chandef results) {
 	for11_exit: skip;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -229,20 +228,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -251,18 +249,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -280,17 +276,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

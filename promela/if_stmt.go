@@ -13,16 +13,24 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 	stmts, defer_stmts, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
+
 	if err1 != nil {
 		err = err1
 	}
 	addBlock(b, stmts)
 	addBlock(defers, defer_stmts)
 
+	stmts1, err2 := m.TranslateExpr(s.Cond)
+
+	if err2 != nil {
+		err = err2
+	}
+	addBlock(b, stmts1)
+
 	body, defer_stmts2, err1 := m.TranslateBlockStmt(s.Body)
 
 	if len(defer_stmts2.List) > 0 {
-		return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in then branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+		return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
 	}
 	if err1 != nil {
 		err = err1
@@ -39,20 +47,16 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 		case *ast.BlockStmt:
 			s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
 			if len(defer_stmts3.List) > 0 {
-				return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in else branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+				return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
 			}
 			if err1 != nil {
 				err = err1
 			}
 			stmts = s1
-			if len(stmts.List) != 0 {
-				contains = true
-				i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
-			}
 		default:
 			s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
 			if len(defers.List) > 0 {
-				return b, defer_stmts, &ParseError{err: errors.New("Defer stmt in else branch of if statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+				return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
 			}
 			if err1 != nil {
 				err = err1

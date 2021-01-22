@@ -62,7 +62,6 @@ func findOptParams(b *promela_ast.BlockStmt) []*CommPar {
 			switch ident := s.Rhs.(type) {
 			case *promela_ast.Ident:
 				if ident.Name == "-2" {
-					fmt.Println("icii")
 					params = append(params, &CommPar{Name: &ast.Ident{Name: s.Name.Name}, Mandatory: false, Candidate: true})
 				}
 			}

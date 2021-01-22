@@ -1,8 +1,8 @@
-#define executeInterfacesInParallel_int1599  3
-#define executeInterfacesInParallel_numCPU  1
-#define executeInterfacesInParallel_uint6416111  0
+#define executeInterfacesInParallel_int1599  0
+#define executeInterfacesInParallel_numCPU  0
+#define executeInterfacesInParallel_uint6416111  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example692222135/rtree/hilbert/action.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example917179335/rtree/hilbert/action.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int uint6416111 = executeInterfacesInParallel_uint6416111;
@@ -40,9 +41,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

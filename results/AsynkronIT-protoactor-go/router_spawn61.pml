@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example356994758/router/config.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example418917270/router/config.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -28,14 +29,15 @@ init {
 	:: true -> 
 		wg.Add!1;
 		wg.Wait?0
-	:: true -> 
-		wg.Add!1;
-		wg.Wait?0
 	fi;
 	goto stop_process
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

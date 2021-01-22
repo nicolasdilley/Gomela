@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example936662613/db.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example363257061/db.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,12 +9,17 @@ typedef Wgdef {
 
 init { 
 	Wgdef db_closers_writes_waiting;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(db_closers_writes_waiting)
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

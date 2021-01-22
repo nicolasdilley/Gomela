@@ -20,7 +20,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 		case *ast.CommClause: // can only be a commClause
 			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
 			if len(d1.List) > 0 {
-				return b, d1, &ParseError{err: errors.New("Defer stmt in select statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+				return b, d1, &ParseError{err: errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())}
 			}
 			if err1 != nil {
 				return b, defers, err1
@@ -43,7 +43,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 								&promela_ast.RcvStmt{
 									Chan: sending_chan,
-									Rhs:  &promela_ast.Ident{Name: "0"}}}},
+									Rhs:  &promela_ast.Ident{Name: "state"}}}},
 							Guard: m.Fileset.Position(s.Pos())}
 
 						new_body, _ := m.UpdateLabels(body, nil)
@@ -52,7 +52,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						i.Guards = append(i.Guards, async_guard, sync_guard)
 					} else {
 
-						err = &ParseError{err: errors.New("A send on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(com.Chan.Pos()).String() + " was found.")}
+						err = &ParseError{err: errors.New(UNKNOWN_SEND + m.Fileset.Position(com.Chan.Pos()).String() + " was found.")}
 						return b, defers, err
 					}
 
@@ -98,7 +98,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	if len(i.Guards) > 0 {
 		b.List = append(b.List, i)
 	} else {
-		return nil, nil, &ParseError{err: errors.New("Found a select with no branches at " + m.Fileset.Position(s.Pos()).String())}
+		return nil, nil, &ParseError{err: errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())}
 
 	}
 

@@ -1,6 +1,6 @@
-#define getVendorNVMeAttributes_NVMeDevices  3
+#define getVendorNVMeAttributes_NVMeDevices  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example266662108/plugins/inputs/smart/smart.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example387426604/plugins/inputs/smart/smart.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int NVMeDevices = getVendorNVMeAttributes_NVMeDevices;
@@ -40,6 +41,7 @@ proctype go_gatherIntelNVMeDisk(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -50,6 +52,10 @@ proctype go_gatherIntelNVMeDisk(Wgdef wg) {
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example045045774/dnscrypt-proxy/main.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example012538078/dnscrypt-proxy/main.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef app_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(app_wg);
@@ -22,6 +23,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

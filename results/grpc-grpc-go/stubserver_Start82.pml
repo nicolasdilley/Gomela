@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example485522761/internal/stubserver/stubserver.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example346482914/internal/stubserver/stubserver.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef ss_S_serveWG;
 	Wgdef s_serveWG;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -39,6 +40,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

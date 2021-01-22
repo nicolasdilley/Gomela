@@ -36,7 +36,8 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 
 	decl := &DeclStmt{Name: &Ident{Name: "i"}, Types: promela_types.Int}
 	state := &DeclStmt{Name: &Ident{Name: "state"}, Types: promela_types.Bool}
-	p.Body.List = append([]Stmt{decl, state}, p.Body.List...)
+	num_msgs := &DeclStmt{Name: &Ident{Name: "num_msgs"}, Types: promela_types.Int}
+	p.Body.List = append([]Stmt{decl, state, num_msgs}, p.Body.List...)
 	stmt += ") {\n"
 	stmt += "\tbool closed; \n"
 	stmt += p.Body.Print(num_tabs + 1)

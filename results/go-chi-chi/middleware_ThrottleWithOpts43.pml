@@ -1,14 +1,13 @@
-#define ThrottleWithOpts_opts_Limit  3
+#define ThrottleWithOpts_opts_Limit  0
 #define ThrottleWithOpts_opts_BacklogLimit  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example209077243/middleware/throttle.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example614618123/middleware/throttle.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -19,6 +18,7 @@ typedef Chandef {
 init { 
 	Chandef t_backlogTokens;
 	Chandef t_tokens;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int opts_BacklogLimit = ThrottleWithOpts_opts_BacklogLimit;
@@ -46,7 +46,7 @@ init {
 	if
 	:: 0 != -2 && opts_Limit + opts_BacklogLimit-1 != -3 -> 
 				for(i : 0.. opts_Limit + opts_BacklogLimit-1) {
-			for10809: skip;
+			for10835: skip;
 			
 
 			if
@@ -55,8 +55,8 @@ init {
 
 				if
 				:: t_tokens.async_send!0;
-				:: t_tokens.sync!0 -> 
-					t_tokens.sending?0
+				:: t_tokens.sync!false,0 -> 
+					t_tokens.sending?state
 				fi
 			:: true;
 			fi;
@@ -64,12 +64,12 @@ init {
 
 			if
 			:: t_backlogTokens.async_send!0;
-			:: t_backlogTokens.sync!0 -> 
-				t_backlogTokens.sending?0
+			:: t_backlogTokens.sync!false,0 -> 
+				t_backlogTokens.sending?state
 			fi;
-			for10_end809: skip
+			for10_end835: skip
 		};
-		for10_exit809: skip
+		for10_exit835: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -82,8 +82,8 @@ init {
 
 				if
 				:: t_tokens.async_send!0;
-				:: t_tokens.sync!0 -> 
-					t_tokens.sending?0
+				:: t_tokens.sync!false,0 -> 
+					t_tokens.sending?state
 				fi
 			:: true;
 			fi;
@@ -91,8 +91,8 @@ init {
 
 			if
 			:: t_backlogTokens.async_send!0;
-			:: t_backlogTokens.sync!0 -> 
-				t_backlogTokens.sending?0
+			:: t_backlogTokens.sync!false,0 -> 
+				t_backlogTokens.sending?state
 			fi;
 			for10_end: skip
 		:: true -> 
@@ -104,6 +104,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -114,20 +118,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -136,18 +139,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -165,17 +166,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

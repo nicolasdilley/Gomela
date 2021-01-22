@@ -1,6 +1,6 @@
-#define describeServices_batches  3
+#define describeServices_batches  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example162786873/probe/awsecs/client.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example144551369/probe/awsecs/client.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef group;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int batches = describeServices_batches;
@@ -29,9 +30,14 @@ proctype go_Anonymous0(Wgdef group) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	group.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

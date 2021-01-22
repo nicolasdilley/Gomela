@@ -160,3 +160,5 @@ Done() in For : 560 Lots of them because they are called in goroutines that are 
 
 Uses division for channel size throws, "[1]    58409 floating point exception"
 https://github.com/dropbox/godropbox/blob/master/cinterop/buffered_work.go#L55
+
+https://github.com/openshift/source-to-image/blob/master/pkg/util/interrupt/interrupt.go#L65 False Alarms.

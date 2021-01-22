@@ -54,7 +54,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 		err = err1
 	}
 	if len(d3.List) > 0 {
-		return b, d3, &ParseError{err: errors.New("Defer stmt in for statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+		return b, d3, &ParseError{err: errors.New(DEFER_IN_FOR + m.Fileset.Position(s.Pos()).String())}
 	}
 	spawns := m.spawns(s.Body, false)
 	if spawns || containsMSP(stmts) {

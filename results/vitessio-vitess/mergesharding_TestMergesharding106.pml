@@ -1,7 +1,7 @@
-#define TestMergesharding_shard_Vttablets  3
-#define not_found_{shard0shard1}47824  0
+#define TestMergesharding_shard_Vttablets  1
+#define not_found_{shard0shard1}47824  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example245190199/go/test/endtoend/sharding/mergesharding/mergesharding_base.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example983313288/go/test/endtoend/sharding/mergesharding/mergesharding_base.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int shard_Vttablets = TestMergesharding_shard_Vttablets;
@@ -35,9 +36,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

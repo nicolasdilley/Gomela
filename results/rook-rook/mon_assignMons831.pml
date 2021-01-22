@@ -1,6 +1,6 @@
 #define assignMons_mons  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example174264119/pkg/operator/ceph/cluster/mon/mon.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example108432455/pkg/operator/ceph/cluster/mon/mon.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef monSchedulingWait;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int mons = assignMons_mons;
@@ -58,6 +59,7 @@ proctype go_Anonymous0(Wgdef monSchedulingWait) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -87,6 +89,10 @@ proctype go_Anonymous0(Wgdef monSchedulingWait) {
 	stop_process: skip;
 	monSchedulingWait.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

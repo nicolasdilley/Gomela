@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example081380981/pkg/auth/providers/ldap/ldap_client.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example785734846/pkg/auth/providers/ldap/ldap_client.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef lConn_wgClose;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -107,6 +108,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

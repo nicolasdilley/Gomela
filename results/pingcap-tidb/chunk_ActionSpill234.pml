@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example682002131/util/chunk/row_container.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example369350292/util/chunk/row_container.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef c_actionSpill_testWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -22,6 +23,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

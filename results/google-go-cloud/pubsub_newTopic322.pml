@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example266186811/pubsub/pubsub.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example089861707/pubsub/pubsub.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef t_batcher_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(t_batcher_wg);
@@ -16,6 +17,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

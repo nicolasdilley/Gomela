@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example378112969/service/s3/s3manager/download.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example399776601/service/s3/s3manager/download.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef impl_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(impl_wg);
@@ -16,6 +17,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

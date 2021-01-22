@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example619064066/core/internal/consumer/kafka_zk_client.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example134586578/core/internal/consumer/kafka_zk_client.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,12 +9,17 @@ typedef Wgdef {
 
 init { 
 	Wgdef module_running;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(module_running)
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example976469541/pipeline/multidecoder.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example323682997/pipeline/multidecoder.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ init {
 	Wgdef md_pConfig_inputsWg;
 	Wgdef md_pConfig_decodersWg;
 	Wgdef md_pConfig_filtersWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(md_pConfig_filtersWg);
@@ -19,6 +20,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

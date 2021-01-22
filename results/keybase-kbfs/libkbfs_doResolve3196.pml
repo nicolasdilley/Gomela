@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example918102479/libkbfs/conflict_resolver.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example429825247/libkbfs/conflict_resolver.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef dirtyBcache_reqWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -45,14 +46,6 @@ init {
 			goto stop_process
 		:: true;
 		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi
 	fi;
 	
 
@@ -75,14 +68,6 @@ init {
 		
 
 		if
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
 		:: true -> 
 			
 
@@ -154,6 +139,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

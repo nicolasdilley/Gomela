@@ -1,6 +1,6 @@
 #define Flush_s_metricSinks  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example980743093/flusher.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example223935045/flusher.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_metricSinks = Flush_s_metricSinks;
@@ -24,8 +25,6 @@ init {
 		if
 		:: true -> 
 			run go_Anonymous0(wg)
-		:: true -> 
-			run go_Anonymous1(wg)
 		:: true -> 
 			run go_Anonymous1(wg)
 		fi
@@ -53,6 +52,7 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
@@ -60,6 +60,7 @@ proctype go_Anonymous1(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
@@ -67,6 +68,7 @@ proctype go_Anonymous2(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
@@ -74,8 +76,13 @@ proctype go_Anonymous3(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

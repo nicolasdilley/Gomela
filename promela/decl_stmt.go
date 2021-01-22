@@ -1,7 +1,6 @@
 package promela
 
 import (
-	"fmt"
 	"go/ast"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -12,7 +11,6 @@ func (m *Model) translateDeclStmt(s *ast.DeclStmt) (b *promela_ast.BlockStmt, de
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	switch d := s.Decl.(type) {
 	case *ast.FuncDecl:
-		fmt.Println("On en est la !")
 
 	case *ast.GenDecl:
 		for _, spec := range d.Specs {

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example139937316/server/kit/sd_log.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example470036084/server/kit/sd_log.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef client_loggers;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -22,8 +23,6 @@ init {
 			
 
 			if
-			:: true -> 
-				goto stop_process
 			:: true -> 
 				goto stop_process
 			fi
@@ -41,6 +40,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

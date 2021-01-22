@@ -1,7 +1,7 @@
-#define cleanAttributeFieldInInstances_objectFields  3
+#define cleanAttributeFieldInInstances_objectFields  0
 #define cleanAttributeFieldInInstances_objFields  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example358165944/src/source_controller/coreservice/core/model/attribute_curd.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example748744968/src/source_controller/coreservice/core/model/attribute_curd.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int objFields = cleanAttributeFieldInInstances_objFields;
@@ -72,26 +73,6 @@ init {
 					:: true;
 					fi
 				fi
-			:: true -> 
-				
-
-				if
-				:: true -> 
-					
-
-					if
-					:: true -> 
-						
-
-						if
-						:: true -> 
-							goto stop_process
-						:: true;
-						fi;
-						goto for22_end
-					:: true;
-					fi
-				fi
 			fi;
 			wg.Add!1;
 			run go_Anonymous0(wg);
@@ -132,6 +113,7 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -142,6 +124,10 @@ proctype go_Anonymous0(Wgdef wg) {
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

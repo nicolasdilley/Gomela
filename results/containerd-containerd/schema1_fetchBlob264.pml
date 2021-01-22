@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example168625059/remotes/docker/schema1/converter.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example485120947/remotes/docker/schema1/converter.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef eg_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -73,22 +74,6 @@ init {
 			goto stop_process
 		:: true;
 		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi;
-		run wgMonitor(eg_wg);
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi
 	fi;
 	
 
@@ -114,6 +99,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

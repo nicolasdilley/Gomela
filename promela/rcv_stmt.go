@@ -13,9 +13,9 @@ func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt, g *pro
 
 	if m.containsChan(e) {
 		chan_name := m.getChanStruct(e)
-		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 		m.checkForBreak(body, g)
 		async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(e.Pos()), Body: body}
 
@@ -44,7 +44,7 @@ func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt, g *pro
 		}
 
 		if !isTimeAfter {
-			err = &ParseError{err: errors.New("A receive on a channel that could not be parsed by Gomela at position " + m.Fileset.Position(e.Pos()).String() + " was found.")}
+			err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(e.Pos()).String())}
 		}
 	}
 

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example852762459/common/ledger/util/leveldbhelper/leveldb_helper.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example738497340/common/ledger/util/leveldbhelper/leveldb_helper.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef f_db_closeW;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -29,6 +30,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

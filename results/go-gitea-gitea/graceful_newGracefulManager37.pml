@@ -1,6 +1,6 @@
 #define newGracefulManager_numberOfServersToCreate  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example133053963/modules/graceful/manager_unix.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example027066028/modules/graceful/manager_unix.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ init {
 	Wgdef manager_terminateWaitGroup;
 	Wgdef manager_createServerWaitGroup;
 	Wgdef manager_runningServerWaitGroup;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int numberOfServersToCreate = newGracefulManager_numberOfServersToCreate;
@@ -23,6 +24,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

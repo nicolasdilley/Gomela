@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example814430198/github.com/miekg/dns/server.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example363375302/github.com/miekg/dns/server.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef server_wgTCP;
 	Wgdef server_wgUDP;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(server_wgUDP);
@@ -18,6 +19,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,6 +1,6 @@
-#define Close_p_Size  3
+#define Close_p_Size  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example512321996/archive/src/github.com/getlantern/connpool/connpool.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example550807409/archive/src/github.com/getlantern/connpool/connpool.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int p_Size = Close_p_Size;
@@ -26,6 +27,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example329467458/transport/client.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example467864594/transport/client.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,12 +9,17 @@ typedef Wgdef {
 
 init { 
 	Wgdef conn_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(conn_wg)
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

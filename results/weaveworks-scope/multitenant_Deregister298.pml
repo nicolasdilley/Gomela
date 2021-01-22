@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example162786873/app/multitenant/sqs_control_router.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example144551369/app/multitenant/sqs_control_router.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef pw_done;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(pw_done);
@@ -16,6 +17,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

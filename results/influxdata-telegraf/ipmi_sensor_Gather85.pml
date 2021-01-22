@@ -1,6 +1,6 @@
 #define Gather_m_Servers  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example266662108/plugins/inputs/ipmi_sensor/ipmi.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example387426604/plugins/inputs/ipmi_sensor/ipmi.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int m_Servers = Gather_m_Servers;
@@ -41,14 +42,6 @@ init {
 			goto stop_process
 		:: true;
 		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			goto stop_process
-		:: true;
-		fi
 	fi;
 	goto stop_process
 stop_process:skip
@@ -58,9 +51,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

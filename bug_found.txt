@@ -9,11 +9,11 @@ Interesting, very similar to FindAll !
 add -1 before add +1 https://github.com/kubernetes/kubernetes/blob/master/test/e2e/storage/vsphere/nodemapper.go#L132 (Note that its in a test folder)
 
 
-could potentially add-1 twice per loop. https://github.com/Workiva/go-datastructures/blob/master/rtree/hilbert/hilbert.go#L39
-
 looks fishy https://github.com/tenta-browser/tenta-dns/blob/master/responder/blacklist/blacklist.go#L69
 What if after close(responses) counter is 0 you still do add -1 ??
 
+https://github.com/tenta-browser/tenta-dns/blob/8a8ab0bbeb86f54d3a26606118d06ca03e49dfdd/responder/blacklist/blacklist.go#L69
+Bug found when blacklist > 0, can have no send because dbErr doesnot refer to the same variable.
 
 
 

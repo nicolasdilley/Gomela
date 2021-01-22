@@ -45,7 +45,7 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 					body, d2, err1 := m.TranslateBlockStmt(stmt)
 
 					if len(d2.List) > 0 {
-						return b, d2, &ParseError{err: errors.New("Defer stmt in switch statement at pos : " + m.Fileset.Position(s.Pos()).String())}
+						return b, d2, &ParseError{err: errors.New(DEFER_IN_SWITCH + m.Fileset.Position(s.Pos()).String())}
 					}
 					if err1 != nil {
 						err = err1

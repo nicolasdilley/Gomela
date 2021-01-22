@@ -1,12 +1,11 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example721320668/proxy.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example114725164/proxy.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -17,6 +16,7 @@ typedef Chandef {
 init { 
 	Chandef pending;
 	Chandef complete;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -56,8 +56,8 @@ init {
 
 		if
 		:: pending.async_send!0;
-		:: pending.sync!0 -> 
-			pending.sending?0
+		:: pending.sync!false,0 -> 
+			pending.sending?state
 		fi;
 		for30_end: skip
 	od;
@@ -69,25 +69,28 @@ proctype go_handleConn(Chandef in;Chandef out) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: in.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: in.async_rcv?state,num_msgs;
+		:: in.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: in.async_rcv?0;
-			:: in.sync?0;
-			fi;
 			for11: skip;
 			
 
 			if
 			:: out.async_send!0;
-			:: out.sync!0 -> 
-				out.sending?0
+			:: out.sync!false,0 -> 
+				out.sending?state
 			fi;
 			for11_end: skip
 		fi
@@ -99,18 +102,21 @@ proctype go_closeConn(Chandef in) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: in.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: in.async_rcv?state,num_msgs;
+		:: in.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: in.async_rcv?0;
-			:: in.sync?0;
-			fi;
 			for20: skip;
 			for20_end: skip
 		fi
@@ -118,6 +124,10 @@ proctype go_closeConn(Chandef in) {
 	for20_exit: skip;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -128,20 +138,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -150,18 +159,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -179,17 +186,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

@@ -18,7 +18,10 @@ func (m *Model) translateReturnStmt(s *ast.ReturnStmt) (b *promela_ast.BlockStmt
 		}
 
 		if m.containsChan(spec) {
-			return b, defers, &ParseError{err: errors.New("Returning a channel. at pos : " + m.Fileset.Position(spec.Pos()).String())}
+			return b, defers, &ParseError{err: errors.New(RETURN_CHAN + m.Fileset.Position(spec.Pos()).String())}
+		}
+		if m.containsWaitgroup(spec) {
+			return b, defers, &ParseError{err: errors.New(RETURN_WG + m.Fileset.Position(spec.Pos()).String())}
 		}
 
 		addBlock(b, expr)

@@ -1,7 +1,7 @@
-#define TraverseBfs_K  3
-#define ub_for23_1  0
+#define TraverseBfs_K  0
+#define ub_for23_1  1
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example510331850/weed/pb/filer_pb/filer_client_bfs.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example274005402/weed/pb/filer_pb/filer_client_bfs.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef jobQueueWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int K = TraverseBfs_K;
@@ -31,6 +32,7 @@ proctype go_Anonymous0(Wgdef jobQueueWg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_filer_pbprocessOneDirectory0 = [0] of {int};
 		for(i : 0.. ub_for23_1) {
 		for11: skip;
@@ -60,10 +62,15 @@ proctype filer_pbprocessOneDirectory(Wgdef jobQueueWg;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	goto stop_process;
 	stop_process: skip;
 	child!0
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example911060269/vault/rollback.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example936276566/vault/rollback.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -11,6 +11,7 @@ init {
 	Wgdef _WaitGroup;
 	Wgdef rs_WaitGroup;
 	Wgdef rsInflight_WaitGroup;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(rsInflight_WaitGroup);
@@ -27,6 +28,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

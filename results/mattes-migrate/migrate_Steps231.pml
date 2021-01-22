@@ -1,15 +1,14 @@
-#define Steps_m_PrefetchMigrations  3
+#define Steps_m_PrefetchMigrations  0
 #define ub_for522_1  -2
 #define ub_for626_2  -2
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example946158452/migrate.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example027452356/migrate.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -19,6 +18,7 @@ typedef Chandef {
 
 init { 
 	Chandef ret;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int m_PrefetchMigrations = Steps_m_PrefetchMigrations;
@@ -66,8 +66,6 @@ init {
 		run go_readUp(ret)
 	:: true -> 
 		run go_readDown(ret)
-	:: true -> 
-		run go_readDown(ret)
 	fi;
 	goto stop_process
 stop_process:skip
@@ -77,6 +75,7 @@ proctype go_readUp(Chandef ret) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -89,8 +88,8 @@ proctype go_readUp(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
 			goto stop_process
 		:: true;
@@ -105,8 +104,8 @@ proctype go_readUp(Chandef ret) {
 
 		if
 		:: ret.async_send!0;
-		:: ret.sync!0 -> 
-			ret.sending?0
+		:: ret.sync!false,0 -> 
+			ret.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -116,7 +115,7 @@ proctype go_readUp(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for522_1 != -2 -> 
 				for(i : 0.. ub_for522_1) {
-			for101264: skip;
+			for101290: skip;
 			
 
 			if
@@ -136,8 +135,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -150,8 +149,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -160,10 +159,10 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
-				goto for10_end1264
+				goto for10_end1290
 			:: true;
 			fi;
 			
@@ -178,8 +177,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -199,8 +198,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -213,8 +212,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -229,8 +228,8 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -243,8 +242,8 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -253,12 +252,12 @@ proctype go_readUp(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
-			for10_end1264: skip
+			for10_end1290: skip
 		};
-		for10_exit1264: skip
+		for10_exit1290: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -282,8 +281,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -296,8 +295,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -306,8 +305,8 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto for10_end
 			:: true;
@@ -324,8 +323,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -345,8 +344,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -359,8 +358,8 @@ proctype go_readUp(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi;
 					goto stop_process
 				:: true;
@@ -375,8 +374,8 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -389,8 +388,8 @@ proctype go_readUp(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -399,8 +398,8 @@ proctype go_readUp(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
 			for10_end: skip
 		:: true -> 
@@ -415,6 +414,7 @@ proctype go_readDown(Chandef ret) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -427,8 +427,8 @@ proctype go_readDown(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
 			goto stop_process
 		:: true;
@@ -443,8 +443,8 @@ proctype go_readDown(Chandef ret) {
 
 		if
 		:: ret.async_send!0;
-		:: ret.sync!0 -> 
-			ret.sending?0
+		:: ret.sync!false,0 -> 
+			ret.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -457,8 +457,8 @@ proctype go_readDown(Chandef ret) {
 
 		if
 		:: ret.async_send!0;
-		:: ret.sync!0 -> 
-			ret.sending?0
+		:: ret.sync!false,0 -> 
+			ret.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -471,8 +471,8 @@ proctype go_readDown(Chandef ret) {
 
 		if
 		:: ret.async_send!0;
-		:: ret.sync!0 -> 
-			ret.sending?0
+		:: ret.sync!false,0 -> 
+			ret.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -482,7 +482,7 @@ proctype go_readDown(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for626_2 != -2 -> 
 				for(i : 0.. ub_for626_2) {
-			for201265: skip;
+			for201291: skip;
 			
 
 			if
@@ -506,8 +506,8 @@ proctype go_readDown(Chandef ret) {
 
 						if
 						:: ret.async_send!0;
-						:: ret.sync!0 -> 
-							ret.sending?0
+						:: ret.sync!false,0 -> 
+							ret.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -520,8 +520,8 @@ proctype go_readDown(Chandef ret) {
 
 						if
 						:: ret.async_send!0;
-						:: ret.sync!0 -> 
-							ret.sending?0
+						:: ret.sync!false,0 -> 
+							ret.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -530,8 +530,8 @@ proctype go_readDown(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi
 				:: true;
 				fi;
@@ -543,8 +543,8 @@ proctype go_readDown(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi
 				:: true;
 				fi;
@@ -559,8 +559,8 @@ proctype go_readDown(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -573,8 +573,8 @@ proctype go_readDown(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -583,12 +583,12 @@ proctype go_readDown(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
-			for20_end1265: skip
+			for20_end1291: skip
 		};
-		for20_exit1265: skip
+		for20_exit1291: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -616,8 +616,8 @@ proctype go_readDown(Chandef ret) {
 
 						if
 						:: ret.async_send!0;
-						:: ret.sync!0 -> 
-							ret.sending?0
+						:: ret.sync!false,0 -> 
+							ret.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -630,8 +630,8 @@ proctype go_readDown(Chandef ret) {
 
 						if
 						:: ret.async_send!0;
-						:: ret.sync!0 -> 
-							ret.sending?0
+						:: ret.sync!false,0 -> 
+							ret.sending?state
 						fi;
 						goto stop_process
 					:: true;
@@ -640,8 +640,8 @@ proctype go_readDown(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi
 				:: true;
 				fi;
@@ -653,8 +653,8 @@ proctype go_readDown(Chandef ret) {
 
 					if
 					:: ret.async_send!0;
-					:: ret.sync!0 -> 
-						ret.sending?0
+					:: ret.sync!false,0 -> 
+						ret.sending?state
 					fi
 				:: true;
 				fi;
@@ -669,8 +669,8 @@ proctype go_readDown(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -683,8 +683,8 @@ proctype go_readDown(Chandef ret) {
 
 				if
 				:: ret.async_send!0;
-				:: ret.sync!0 -> 
-					ret.sending?0
+				:: ret.sync!false,0 -> 
+					ret.sending?state
 				fi;
 				goto stop_process
 			:: true;
@@ -693,8 +693,8 @@ proctype go_readDown(Chandef ret) {
 
 			if
 			:: ret.async_send!0;
-			:: ret.sync!0 -> 
-				ret.sending?0
+			:: ret.sync!false,0 -> 
+				ret.sending?state
 			fi;
 			for20_end: skip
 		:: true -> 
@@ -705,6 +705,10 @@ proctype go_readDown(Chandef ret) {
 	stop_process: skip;
 	ret.closing!true
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -715,20 +719,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -737,18 +740,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -766,17 +767,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

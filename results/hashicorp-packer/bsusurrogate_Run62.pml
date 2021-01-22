@@ -1,6 +1,6 @@
-#define Run_s_LaunchDevices  3
+#define Run_s_LaunchDevices  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example991647239/builder/osc/bsusurrogate/step_snapshop_volumes.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example673911960/builder/osc/bsusurrogate/step_snapshop_volumes.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_LaunchDevices = Run_s_LaunchDevices;
@@ -37,9 +38,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

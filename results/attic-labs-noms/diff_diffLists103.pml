@@ -1,12 +1,11 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example955070127/go/diff/diff.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example006988768/go/diff/diff.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -17,6 +16,7 @@ typedef Chandef {
 init { 
 	Chandef stopChan;
 	Chandef spliceChan;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run sync_monitor(spliceChan);
@@ -31,17 +31,19 @@ init {
 	fi;
 	run go_Anonymous0(spliceChan,stopChan);
 	do
-	:: spliceChan.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: spliceChan.async_rcv?state,num_msgs;
+		:: spliceChan.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: spliceChan.async_rcv?0;
-			:: spliceChan.sync?0;
-			fi;
 			for20: skip;
 			
 
@@ -69,21 +71,23 @@ init {
 
 		if
 		:: stopChan.async_send!0;
-		:: stopChan.sync!0 -> 
-			stopChan.sending?0
+		:: stopChan.sync!false,0 -> 
+			stopChan.sending?state
 		fi;
 		do
-		:: spliceChan.is_closed?state -> 
+		:: true -> 
+			
+
 			if
-			:: state -> 
+			:: spliceChan.async_rcv?state,num_msgs;
+			:: spliceChan.sync?state,num_msgs;
+			fi;
+			
+
+			if
+			:: state && num_msgs <= 0 -> 
 				break
 			:: else -> 
-				
-
-				if
-				:: spliceChan.async_rcv?0;
-				:: spliceChan.sync?0;
-				fi;
 				for30: skip;
 				for30_end: skip
 			fi
@@ -99,6 +103,7 @@ proctype go_Anonymous0(Chandef spliceChan;Chandef stopChan) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_Diff0 = [0] of {int};
 	run Diff(spliceChan,stopChan,child_Diff0);
 	child_Diff0?0;
@@ -109,6 +114,7 @@ proctype Diff(Chandef changes;Chandef closeChan;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_DiffWithLimit0 = [0] of {int};
 	run DiffWithLimit(changes,closeChan,child_DiffWithLimit0);
 	child_DiffWithLimit0?0;
@@ -119,6 +125,7 @@ proctype DiffWithLimit(Chandef changes;Chandef closeChan;chan child) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	chan child_typesindexedSequenceDiff0 = [0] of {int};
 	
 
@@ -135,8 +142,8 @@ proctype DiffWithLimit(Chandef changes;Chandef closeChan;chan child) {
 
 		if
 		:: changes.async_send!0;
-		:: changes.sync!0 -> 
-			changes.sending?0
+		:: changes.sync!false,0 -> 
+			changes.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -149,8 +156,8 @@ proctype DiffWithLimit(Chandef changes;Chandef closeChan;chan child) {
 
 		if
 		:: changes.async_send!0;
-		:: changes.sync!0 -> 
-			changes.sending?0
+		:: changes.sync!false,0 -> 
+			changes.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -164,8 +171,13 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 	bool closed; 
 	int i;
 	bool state;
-	chan child_typesindexedSequenceDiff2 = [0] of {int};
-	chan child_typesindexedSequenceDiff2 = [0] of {int};
+	int num_msgs;
+	chan child_typesindexedSequenceDiff4 = [0] of {int};
+	chan child_typessendSpliceChange3 = [0] of {int};
+	chan child_typessendSpliceChange2 = [0] of {int};
+	chan child_typesindexedSequenceDiff4 = [0] of {int};
+	chan child_typessendSpliceChange3 = [0] of {int};
+	chan child_typessendSpliceChange2 = [0] of {int};
 	chan child_typesindexedSequenceDiff1 = [0] of {int};
 	chan child_typesindexedSequenceDiff0 = [0] of {int};
 	int initialSplices = -2;
@@ -197,6 +209,8 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 
 			if
 			:: true -> 
+				run typessendSpliceChange(changes,closeChan,child_typessendSpliceChange2);
+				child_typessendSpliceChange2?0;
 				
 
 				if
@@ -211,6 +225,8 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 
 			if
 			:: true -> 
+				run typessendSpliceChange(changes,closeChan,child_typessendSpliceChange3);
+				child_typessendSpliceChange3?0;
 				
 
 				if
@@ -221,8 +237,8 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 				goto for10_end
 			:: true;
 			fi;
-			run typesindexedSequenceDiff(changes,closeChan,child_typesindexedSequenceDiff2);
-			child_typesindexedSequenceDiff2?0;
+			run typesindexedSequenceDiff(changes,closeChan,child_typesindexedSequenceDiff4);
+			child_typesindexedSequenceDiff4?0;
 			
 
 			if
@@ -236,11 +252,13 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 	:: else -> 
 		do
 		:: true -> 
-			for10409: skip;
+			for10416: skip;
 			
 
 			if
 			:: true -> 
+				run typessendSpliceChange(changes,closeChan,child_typessendSpliceChange2);
+				child_typessendSpliceChange2?0;
 				
 
 				if
@@ -248,13 +266,15 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 					goto stop_process
 				:: true;
 				fi;
-				goto for10_end409
+				goto for10_end416
 			:: true;
 			fi;
 			
 
 			if
 			:: true -> 
+				run typessendSpliceChange(changes,closeChan,child_typessendSpliceChange3);
+				child_typessendSpliceChange3?0;
 				
 
 				if
@@ -262,11 +282,11 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 					goto stop_process
 				:: true;
 				fi;
-				goto for10_end409
+				goto for10_end416
 			:: true;
 			fi;
-			run typesindexedSequenceDiff(changes,closeChan,child_typesindexedSequenceDiff2);
-			child_typesindexedSequenceDiff2?0;
+			run typesindexedSequenceDiff(changes,closeChan,child_typesindexedSequenceDiff4);
+			child_typesindexedSequenceDiff4?0;
 			
 
 			if
@@ -274,16 +294,40 @@ proctype typesindexedSequenceDiff(Chandef changes;Chandef closeChan;chan child) 
 				goto stop_process
 			:: true;
 			fi;
-			for10_end409: skip
+			for10_end416: skip
 		:: true -> 
 			break
 		od;
-		for10_exit409: skip
+		for10_exit416: skip
 	fi;
 	goto stop_process;
 	stop_process: skip;
 	child!0
 }
+proctype typessendSpliceChange(Chandef changes;Chandef closeChan;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	do
+	:: changes.async_send!0 -> 
+		break
+	:: changes.sync!0 -> 
+		changes.sending?state;
+		break
+	:: closeChan.async_rcv?state,num_msgs -> 
+		goto stop_process
+	:: closeChan.sync?state,num_msgs -> 
+		goto stop_process
+	od;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -294,20 +338,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -316,18 +359,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -345,17 +386,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

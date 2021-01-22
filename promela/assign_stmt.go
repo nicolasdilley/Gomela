@@ -13,7 +13,7 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 	for _, spec := range s.Rhs {
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
-			return b, defers, &ParseError{err: errors.New("Function declared as a variable at pos : " + m.Fileset.Position(spec.Pos()).String())}
+			return b, defers, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
 		}
 
 		expr, err1 := m.TranslateExpr(spec)

@@ -1,13 +1,12 @@
-#define IndexDiff_IndexOperationConcurrency  3
+#define IndexDiff_IndexOperationConcurrency  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example287807526/provider/aws/index.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example769614070/provider/aws/index.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -19,9 +18,10 @@ init {
 	Chandef errch;
 	Chandef outch;
 	Chandef inch;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int index=0;
+	int index=3;
 	int IndexOperationConcurrency = IndexDiff_IndexOperationConcurrency;
 	run sync_monitor(inch);
 	run sync_monitor(outch);
@@ -40,13 +40,13 @@ init {
 				for(i : 0.. index-1) {
 			for30: skip;
 			do
-			:: outch.async_rcv?0 -> 
+			:: outch.async_rcv?state,num_msgs -> 
 				break
-			:: outch.sync?0 -> 
+			:: outch.sync?state,num_msgs -> 
 				break
-			:: errch.async_rcv?0 -> 
+			:: errch.async_rcv?state,num_msgs -> 
 				goto stop_process
-			:: errch.sync?0 -> 
+			:: errch.sync?state,num_msgs -> 
 				goto stop_process
 			od;
 			for30_end: skip
@@ -55,22 +55,22 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for301563: skip;
+			for301582: skip;
 			do
-			:: outch.async_rcv?0 -> 
+			:: outch.async_rcv?state,num_msgs -> 
 				break
-			:: outch.sync?0 -> 
+			:: outch.sync?state,num_msgs -> 
 				break
-			:: errch.async_rcv?0 -> 
+			:: errch.async_rcv?state,num_msgs -> 
 				goto stop_process
-			:: errch.sync?0 -> 
+			:: errch.sync?state,num_msgs -> 
 				goto stop_process
 			od;
-			for30_end1563: skip
+			for30_end1582: skip
 		:: true -> 
 			break
 		od;
-		for30_exit1563: skip
+		for30_exit1582: skip
 	fi;
 	inch.closing!true;
 	goto stop_process
@@ -81,18 +81,21 @@ proctype go_missingHashes(Chandef inch;Chandef outch;Chandef errch) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: inch.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: inch.async_rcv?state,num_msgs;
+		:: inch.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: inch.async_rcv?0;
-			:: inch.sync?0;
-			fi;
 			for11: skip;
 			
 
@@ -102,8 +105,8 @@ proctype go_missingHashes(Chandef inch;Chandef outch;Chandef errch) {
 
 				if
 				:: errch.async_send!0;
-				:: errch.sync!0 -> 
-					errch.sending?0
+				:: errch.sync!false,0 -> 
+					errch.sending?state
 				fi
 			:: true -> 
 				
@@ -114,24 +117,16 @@ proctype go_missingHashes(Chandef inch;Chandef outch;Chandef errch) {
 
 					if
 					:: outch.async_send!0;
-					:: outch.sync!0 -> 
-						outch.sending?0
+					:: outch.sync!false,0 -> 
+						outch.sending?state
 					fi
 				:: true -> 
 					
 
 					if
 					:: outch.async_send!0;
-					:: outch.sync!0 -> 
-						outch.sending?0
-					fi
-				:: true -> 
-					
-
-					if
-					:: outch.async_send!0;
-					:: outch.sync!0 -> 
-						outch.sending?0
+					:: outch.sync!false,0 -> 
+						outch.sending?state
 					fi
 				fi
 			fi;
@@ -145,6 +140,7 @@ proctype go_Anonymous1(Chandef inch;Chandef outch;Chandef errch;int index) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -155,8 +151,8 @@ proctype go_Anonymous1(Chandef inch;Chandef outch;Chandef errch;int index) {
 
 			if
 			:: inch.async_send!0;
-			:: inch.sync!0 -> 
-				inch.sending?0
+			:: inch.sync!false,0 -> 
+				inch.sending?state
 			fi;
 			for20_end: skip
 		};
@@ -164,22 +160,26 @@ proctype go_Anonymous1(Chandef inch;Chandef outch;Chandef errch;int index) {
 	:: else -> 
 		do
 		:: true -> 
-			for201560: skip;
+			for201579: skip;
 			
 
 			if
 			:: inch.async_send!0;
-			:: inch.sync!0 -> 
-				inch.sending?0
+			:: inch.sync!false,0 -> 
+				inch.sending?state
 			fi;
-			for20_end1560: skip
+			for20_end1579: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1560: skip
+		for20_exit1579: skip
 	fi;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -190,20 +190,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -212,18 +211,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -241,17 +238,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

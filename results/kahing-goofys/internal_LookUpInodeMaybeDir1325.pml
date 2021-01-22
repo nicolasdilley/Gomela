@@ -1,13 +1,12 @@
-#define ub_for1350_0  0
+#define ub_for1350_0  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example763902570/internal/dir.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example065402426/internal/dir.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -21,6 +20,7 @@ init {
 	Chandef errDirBlobChan;
 	Chandef objectChan;
 	Chandef errObjectChan;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -86,15 +86,15 @@ init {
 		for(i : 0.. ub_for1350_0) {
 		for10: skip;
 		do
-		:: objectChan.async_rcv?0 -> 
+		:: objectChan.async_rcv?state,num_msgs -> 
 			goto stop_process
-		:: objectChan.sync?0 -> 
+		:: objectChan.sync?state,num_msgs -> 
 			goto stop_process
-		:: errObjectChan.async_rcv?0 -> 
+		:: errObjectChan.async_rcv?state,num_msgs -> 
 			break
-		:: errObjectChan.sync?0 -> 
+		:: errObjectChan.sync?state,num_msgs -> 
 			break
-		:: dirChan.async_rcv?0 -> 
+		:: dirChan.async_rcv?state,num_msgs -> 
 			
 
 			if
@@ -102,7 +102,7 @@ init {
 				goto stop_process
 			fi;
 			break
-		:: dirChan.sync?0 -> 
+		:: dirChan.sync?state,num_msgs -> 
 			
 
 			if
@@ -110,13 +110,13 @@ init {
 				goto stop_process
 			fi;
 			break
-		:: errDirChan.async_rcv?0 -> 
+		:: errDirChan.async_rcv?state,num_msgs -> 
 			break
-		:: errDirChan.sync?0 -> 
+		:: errDirChan.sync?state,num_msgs -> 
 			break
-		:: errDirBlobChan.async_rcv?0 -> 
+		:: errDirBlobChan.async_rcv?state,num_msgs -> 
 			break
-		:: errDirBlobChan.sync?0 -> 
+		:: errDirBlobChan.sync?state,num_msgs -> 
 			break
 		od;
 		
@@ -136,6 +136,7 @@ proctype go_LookUpInodeNotDir(Chandef c;Chandef errc) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -144,8 +145,8 @@ proctype go_LookUpInodeNotDir(Chandef c;Chandef errc) {
 
 		if
 		:: errc.async_send!0;
-		:: errc.sync!0 -> 
-			errc.sending?0
+		:: errc.sync!false,0 -> 
+			errc.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -154,8 +155,8 @@ proctype go_LookUpInodeNotDir(Chandef c;Chandef errc) {
 
 	if
 	:: c.async_send!0;
-	:: c.sync!0 -> 
-		c.sending?0
+	:: c.sync!false,0 -> 
+		c.sending?state
 	fi;
 	stop_process: skip
 }
@@ -163,6 +164,7 @@ proctype go_LookUpInodeDir(Chandef c;Chandef errc) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -171,8 +173,8 @@ proctype go_LookUpInodeDir(Chandef c;Chandef errc) {
 
 		if
 		:: errc.async_send!0;
-		:: errc.sync!0 -> 
-			errc.sending?0
+		:: errc.sync!false,0 -> 
+			errc.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -181,11 +183,15 @@ proctype go_LookUpInodeDir(Chandef c;Chandef errc) {
 
 	if
 	:: c.async_send!0;
-	:: c.sync!0 -> 
-		c.sending?0
+	:: c.sync!false,0 -> 
+		c.sending?state
 	fi;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -196,20 +202,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -218,18 +223,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -247,17 +250,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

@@ -53,19 +53,19 @@ func main() {
 			splitted_line := strings.Split(line, ",")
 
 			if len(splitted_line) > 3 {
-				features_map[splitted_line[1]] = append(features_map[splitted_line[1]], line)
+				features_map[splitted_line[0]+splitted_line[1]] = append(features_map[splitted_line[0]+splitted_line[1]], line)
 				others_map[splitted_line[0]] = true
 			} else {
 				others_map[splitted_line[0]] = false
 			}
 		}
-
+		printProjectList(features[1:])
 		unparsedProjects(others_map)
 		supported_models_map := parseBound(features_map) // get all the lines from the csv
 		parseFeature(supported_models_map)               // get all the lines from the csv
 		project_map := ProjectList{Projects: []Project{}}
 
-		for _, supported_models := range supported_models_map {
+		for model, supported_models := range supported_models_map {
 			for _, line := range supported_models {
 				splitted_line := strings.Split(line, ",")
 				project := splitted_line[0]
@@ -79,7 +79,6 @@ func main() {
 					packages += pack
 
 				}
-				model := splitted_line[1]
 				project_map.addPackage(project, packages, model)
 			}
 		}
@@ -106,6 +105,7 @@ func main() {
 			project_map.Projects[i], project_map.Projects[j] = project_map.Projects[j], project_map.Projects[i]
 		}
 
+		overall_num_models := 0
 		for _, project := range project_map.Projects {
 			num_models := 0
 
@@ -113,7 +113,7 @@ func main() {
 				num_models += len(pack.Models)
 				models_per_packages = append(models_per_packages, float64(len(pack.Models)))
 			}
-
+			overall_num_models += num_models
 			models_per_projects = append(models_per_projects, float64(num_models))
 		}
 
@@ -122,7 +122,7 @@ func main() {
 		models_quartiles, _ := stats.Quartile(models_per_projects)
 		models_max, _ := stats.Max(models_per_projects)
 		models_min, _ := stats.Min(models_per_projects)
-
+		fmt.Println("num of models: ", overall_num_models)
 		fmt.Println("# of models per project : ", models_mean, models_sd, models_min, models_quartiles.Q1, models_quartiles.Q2, models_quartiles.Q3, models_max)
 
 		packages_models_sd, _ := stats.StandardDeviation(models_per_packages)
@@ -145,6 +145,31 @@ func main() {
 
 }
 
+func printProjectList(lines []string) {
+
+	project_map := make(map[string]string) // a map of the projects and their commit
+	for _, line := range lines {
+
+		splitted_line := strings.Split(line, ",")
+		if _, ok := project_map[splitted_line[0]]; !ok && len(splitted_line) > 7 {
+			link := strings.Split(splitted_line[len(splitted_line)-1], "blob/")
+			commit := strings.Split(link[1], "/")[0]
+			project_map[splitted_line[0]] = commit
+		}
+	}
+
+	ioutil.WriteFile("projects-commit.csv", []byte(""), 0644)
+
+	file, err := os.OpenFile("projects-commit.csv", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer file.Close()
+	for project, commit := range project_map {
+		file.WriteString(project + "," + commit + "\n")
+	}
+}
+
 func parseBound(features_map map[string][]string) map[string][]string {
 	model_unsupported := 0
 	feature_unsupported := 0
@@ -153,22 +178,66 @@ func parseBound(features_map map[string][]string) map[string][]string {
 
 	unsupported_models := []string{}
 
+	channel_returned := 0
+	wg_returned := 0
+	rcv_chan := 0
+	find_decl := 0
+	range_on_chan := 0
+	func_as_var := 0
+	chan_in_for := 0
+	wg_in_for := 0
+	send_chan := 0
+	defer_in_blockstmt := 0
+	notify := 0
+	select_no_branch := 0
+
 	for model, lines := range features_map {
 
 		unsupported := false
-		for _, line := range lines { // go through each bound of a model
+		for _, line := range lines { // go through each feature of a model
 			splitted_line := strings.Split(line, ",")
 			if strings.Contains(splitted_line[3], "MODEL ERROR") {
 				model_errors += 1
+
+				if strings.Contains(splitted_line[3], "Returning") {
+					if strings.Contains(splitted_line[3], "channel") {
+						channel_returned++
+					} else {
+						wg_returned++
+					}
+				} else if strings.Contains(splitted_line[3], "A receive on a channel") || strings.Contains(splitted_line[3], "A receive was found on a channel") {
+					rcv_chan++
+				} else if strings.Contains(splitted_line[3], "cannot find decl") {
+					find_decl++
+				} else if strings.Contains(splitted_line[3], "A range on a channel was found") {
+					range_on_chan++
+				} else if strings.Contains(splitted_line[3], "Function declared as a variable") {
+					func_as_var++
+				} else if strings.Contains(splitted_line[3], "Channel created in a for") {
+					chan_in_for++
+				} else if strings.Contains(splitted_line[3], "A send on a channel that could") {
+					send_chan++
+				} else if strings.Contains(splitted_line[3], "Waitgroup created in a for") {
+					wg_in_for++
+				} else if strings.Contains(splitted_line[3], "Defer stmt") {
+					defer_in_blockstmt++
+				} else if strings.Contains(splitted_line[3], "promela_translator.go : Func of go statement") {
+					find_decl++
+				} else if strings.Contains(splitted_line[3], "Can not find send of signal.Notify") {
+					notify++
+				} else if strings.Contains(splitted_line[3], "Found a select with no branches") {
+					select_no_branch++
+				} else {
+					fmt.Println(splitted_line[3])
+				}
+
 				unsupported = true
 				break
-
 			} else if strings.Contains(splitted_line[5], "Not supported") || strings.Contains(splitted_line[5], "UNSUPPORTED") {
 				feature_unsupported += 1
 			}
 
 		}
-
 		if unsupported {
 			model_unsupported += 1
 			unsupported_models = append(unsupported_models, model)
@@ -178,6 +247,18 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	for _, model := range unsupported_models {
 		delete(features_map, model)
 	}
+
+	fmt.Println("# of models returning a channel : ", channel_returned)
+	fmt.Println("# of models returning a Waitgroup : ", wg_returned)
+	fmt.Println("# of models receive on unknown chan : ", rcv_chan)
+	fmt.Println("# of models send on unknown chan : ", send_chan)
+	fmt.Println("# of models cannot find decl : ", find_decl)
+	fmt.Println("# of models function declared as var : ", func_as_var)
+	fmt.Println("# of models channel in for : ", chan_in_for)
+	fmt.Println("# of models range on unknown chan : ", range_on_chan)
+	fmt.Println("# of models cant find notify : ", notify)
+	fmt.Println("# of models select without branch : ", select_no_branch)
+	fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
 
 	fmt.Println("Num of unsupported features = ", feature_unsupported)
 	fmt.Println("Num of model errors = ", model_errors)
@@ -234,6 +315,10 @@ func parseFeature(features_map map[string][]string) {
 	model_with_parameters := 0
 	num_done_in_for := 0
 
+	chan_bound := 0
+	add_bound := 0
+	for_bound := 0
+
 	num_models := len(features_map)
 
 	add_bounds := []float64{}
@@ -260,6 +345,26 @@ func parseFeature(features_map map[string][]string) {
 
 			if strings.Contains(feature, "new channel") {
 				num_channels += 1
+			}
+
+			if strings.Contains(feature, "chan bound") && !strings.Contains(feature, "len") {
+				chan_bound += 1
+			}
+
+			if strings.Contains(feature, "add bound") && !strings.Contains(feature, "len") {
+				add_bound += 1
+			}
+
+			if strings.Contains(feature, "range bound") && !strings.Contains(feature, "len") {
+				for_bound += 1
+			}
+
+			if strings.Contains(feature, "for upper bound") && !strings.Contains(feature, "len") {
+				for_bound += 1
+			}
+
+			if strings.Contains(feature, "for lower bound") && !strings.Contains(feature, "len") {
+				for_bound += 1
 			}
 
 			if strings.Contains(feature, "new WaitGroup") {
@@ -315,6 +420,14 @@ func parseFeature(features_map map[string][]string) {
 			}
 
 			if strings.Contains(feature, "Slice as a ") {
+				if mandatory == "false" {
+					opt_list_parameters += 1
+				} else {
+					mand_list_parameters += 1
+				}
+			}
+
+			if strings.Contains(feature, "List as a") {
 				if mandatory == "false" {
 					opt_list_parameters += 1
 				} else {
@@ -399,7 +512,7 @@ func parseFeature(features_map map[string][]string) {
 		if contains_param {
 
 			if num_comm_par > 10 {
-				fmt.Println(model)
+				fmt.Println(model, " ", num_comm_par)
 			}
 			model_with_parameters += 1
 			comm_param_per_models = append(comm_param_per_models, float64(num_comm_par))
@@ -439,6 +552,9 @@ func parseFeature(features_map map[string][]string) {
 
 	fmt.Println("Comm param per models ", comm_param_per_models_mean, comm_param_per_models_sd, comm_param_per_models_min, comm_param_per_models_quartiles.Q1, comm_param_per_models_quartiles.Q2, comm_param_per_models_quartiles.Q3, comm_param_per_models_max)
 
+	fmt.Println("Num of chan bounds: ", chan_bound)
+	fmt.Println("Num of add bounds: ", add_bound)
+	fmt.Println("Num of for bounds: ", for_bound)
 	// add unsupported everywhere
 	// check occurences that are constaxnts
 	// check type int and Var (And add when litteral)
@@ -661,6 +777,7 @@ func (p *ProjectList) addPackage(project_name, package_name string, model_name s
 		if packages.Name == package_name {
 			package_found = true
 			package_index = i
+			break
 		}
 
 	}
@@ -675,6 +792,7 @@ func (p *ProjectList) addPackage(project_name, package_name string, model_name s
 	for _, model := range p.Projects[index].Packages[package_index].Models {
 		if model == model_name {
 			model_found = true
+			break
 		}
 	}
 

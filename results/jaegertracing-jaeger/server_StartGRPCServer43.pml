@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example685148456/cmd/collector/app/server/grpc.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example891529336/cmd/collector/app/server/grpc.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef server_serveWG;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -42,6 +43,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

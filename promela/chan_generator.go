@@ -49,17 +49,15 @@ func generateSyncChanMonitor() string {
 		"    assert(false)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
 		"    assert(false)\n" +
-		"  :: ch.is_closed!true; // sending state of channel (closed)\n" +
 		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
 		"    assert(false)\n" +
-		"  :: ch.sync!0; // can always receive on a closed chan\n" +
+		"  :: ch.sync!true,0; // can always receive on a closed chan\n" +
 		"  fi;\n" +
 		":: else -> \n" +
 		"end1: if\n" +
 		"    :: ch.sending!false;\n" +
 		"    :: ch.closing?true ->\n" +
 		"      ch.closed = true\n" +
-		"    :: ch.is_closed!false ->\n" +
 		"    fi;\n" +
 		"fi;\n" +
 		"od\n" +
@@ -78,20 +76,19 @@ func GenerateAsyncMonitor() string {
 		"    assert(false)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
 		"    assert(false)\n" +
-		"  :: ch.is_closed!true; // sending state of channel (closed)\n" +
 		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
 		"    assert(false)\n" +
-		"  :: ch.sync!0; // can always receive on a closed chan\n" +
+		"  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan\n" +
+		"		 ch.num_msgs = ch.num_msgs - 1\n" +
 		"  fi;\n" +
 		":: else ->\n" +
 		"	if\n" +
 		"	:: ch.num_msgs == ch.size ->\n" +
 		"		end1: if\n" +
-		"		  :: ch.async_rcv!0 ->\n" +
+		"		  :: ch.async_rcv!false,ch.num_msgs ->\n" +
 		"		    ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing?true -> // closing the channel\n" +
 		"		      ch.closed = true\n" +
-		"		  :: ch.is_closed!false; // sending channel is open \n" +
 		"		  :: ch.sending!false;\n" +
 		"		fi;\n" +
 		"	:: ch.num_msgs == 0 -> \n" +
@@ -100,18 +97,16 @@ func GenerateAsyncMonitor() string {
 		"			ch.num_msgs = ch.num_msgs + 1\n" +
 		"		:: ch.closing?true -> // closing the channel\n" +
 		"			ch.closed = true\n" +
-		"		:: ch.is_closed!false;\n" +
 		"		:: ch.sending!false;\n" +
 		"		fi;\n" +
 		"		:: else -> \n" +
 		"		end3: if\n" +
 		"		  :: ch.async_send?0->\n" +
 		"		     ch.num_msgs = ch.num_msgs + 1\n" +
-		"		  :: ch.async_rcv!0\n" +
+		"		  :: ch.async_rcv!false,ch.num_msgs\n" +
 		"		     ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing?true -> // closing the channel\n" +
 		"		      ch.closed = true\n" +
-		"		  :: ch.is_closed!false;  // sending channel is open\n" +
 		"		  :: ch.sending!false;  // sending channel is open\n" +
 		"		fi;\n" +
 		"	fi;\n" +

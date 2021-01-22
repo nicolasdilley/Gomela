@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example408925639/pkg/event/target/nats.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example397229400/pkg/event/target/nats.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef target_natsConn_wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	
@@ -26,14 +27,6 @@ init {
 				goto stop_process
 			:: true;
 			fi
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
 		fi
 	:: true -> 
 		
@@ -41,37 +34,6 @@ init {
 		if
 		:: true -> 
 			run wgMonitor(target_natsConn_wg)
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
-		fi
-	:: true -> 
-		
-
-		if
-		:: true -> 
-			run wgMonitor(target_natsConn_wg)
-		:: true -> 
-			
-
-			if
-			:: true -> 
-				goto stop_process
-			:: true;
-			fi
 		:: true -> 
 			
 
@@ -100,6 +62,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

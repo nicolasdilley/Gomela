@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example227875684/pkg/platform/kube/function.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example327401396/pkg/platform/kube/function.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -9,6 +9,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef waitGroup;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(waitGroup);
@@ -25,6 +26,7 @@ proctype go_Anonymous0(Wgdef waitGroup) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -45,6 +47,7 @@ proctype go_Anonymous1(Wgdef waitGroup) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -65,6 +68,7 @@ proctype go_Anonymous2(Wgdef waitGroup) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -81,6 +85,10 @@ proctype go_Anonymous2(Wgdef waitGroup) {
 	waitGroup.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

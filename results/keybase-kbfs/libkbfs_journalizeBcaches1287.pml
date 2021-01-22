@@ -1,5 +1,5 @@
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example918102479/libkbfs/config_local.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example429825247/libkbfs/config_local.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 init { 
 	Wgdef journalCache_reqWg;
 	Wgdef syncCache_reqWg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	run wgMonitor(syncCache_reqWg);
@@ -25,6 +26,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

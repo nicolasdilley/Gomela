@@ -1,6 +1,6 @@
-#define Subscribe_s_subscriberClients  0
+#define Subscribe_s_subscriberClients  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example510331850/weed/messaging/msgclient/subscriber.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example274005402/weed/messaging/msgclient/subscriber.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int s_subscriberClients = Subscribe_s_subscriberClients;
@@ -35,9 +36,14 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

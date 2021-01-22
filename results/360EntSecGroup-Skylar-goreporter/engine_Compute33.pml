@@ -1,6 +1,6 @@
 #define Compute_parameters_UnitTestDirs  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example478251678/engine/strategy_unittest.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example439685998/engine/strategy_unittest.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef pkg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int parameters_UnitTestDirs = Compute_parameters_UnitTestDirs;
@@ -30,9 +31,14 @@ proctype go_Anonymous0(Wgdef pkg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	pkg.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

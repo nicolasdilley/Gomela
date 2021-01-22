@@ -1,7 +1,7 @@
-#define sanitizeLVMDisk_osdLVMList  0
-#define sanitizeLVMDisk_pvs  1
+#define sanitizeLVMDisk_osdLVMList  1
+#define sanitizeLVMDisk_pvs  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example174264119/pkg/daemon/ceph/cleanup/disk.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example108432455/pkg/daemon/ceph/cleanup/disk.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ typedef Wgdef {
 init { 
 	Wgdef wg2;
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int pvs = sanitizeLVMDisk_pvs;
@@ -41,6 +42,7 @@ proctype go_wipeLVM(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
@@ -48,9 +50,14 @@ proctype go_executeSanitizeCommand(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

@@ -1,13 +1,12 @@
-#define List_requests  3
+#define List_requests  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example757678981/applog/aggregator.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example280065045/applog/aggregator.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -23,6 +22,7 @@ init {
 	Wgdef wg;
 	Chandef errCh;
 	Chandef logsCh;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int requests = List_requests;
@@ -70,17 +70,19 @@ init {
 	:: true;
 	fi;
 	do
-	:: logsCh.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: logsCh.async_rcv?state,num_msgs;
+		:: logsCh.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: logsCh.async_rcv?0;
-			:: logsCh.sync?0;
-			fi;
 			for20: skip;
 			for20_end: skip
 		fi
@@ -94,6 +96,7 @@ proctype go_Anonymous0(Chandef logsCh;Chandef errCh;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	
 
 	if
@@ -102,8 +105,8 @@ proctype go_Anonymous0(Chandef logsCh;Chandef errCh;Wgdef wg) {
 
 		if
 		:: errCh.async_send!0;
-		:: errCh.sync!0 -> 
-			errCh.sending?0
+		:: errCh.sync!false,0 -> 
+			errCh.sending?state
 		fi;
 		goto stop_process
 	:: true;
@@ -112,12 +115,16 @@ proctype go_Anonymous0(Chandef logsCh;Chandef errCh;Wgdef wg) {
 
 	if
 	:: logsCh.async_send!0;
-	:: logsCh.sync!0 -> 
-		logsCh.sending?0
+	:: logsCh.sync!false,0 -> 
+		logsCh.sending?state
 	fi;
 	stop_process: skip;
 	wg.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -128,20 +135,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -150,18 +156,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -179,17 +183,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od

@@ -1,8 +1,8 @@
-#define MultithreadedSortComparators_chunks  3
+#define MultithreadedSortComparators_chunks  1
 #define ub_for48_1  1
-#define ub_for45_2  1
+#define ub_for45_2  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example692222135/sort/sort.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example917179335/sort/sort.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -12,6 +12,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef wg;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int chunks = MultithreadedSortComparators_chunks;
@@ -52,6 +53,7 @@ proctype go_Anonymous0(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
@@ -59,9 +61,14 @@ proctype go_Anonymous1(Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	wg.Add!-1;
 	stop_process: skip
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

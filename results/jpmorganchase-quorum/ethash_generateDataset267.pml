@@ -1,6 +1,6 @@
-#define generateDataset_threads  3
+#define generateDataset_threads  0
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example434979571/consensus/ethash/algorithm.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example270542083/consensus/ethash/algorithm.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef pend;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int threads = generateDataset_threads;
@@ -29,9 +30,14 @@ proctype go_Anonymous0(Wgdef pend) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	stop_process: skip;
 	pend.Add!-1
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

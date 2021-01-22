@@ -1,6 +1,6 @@
-#define scan_i_Services  0
+#define scan_i_Services  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example328958936/inspeqtor.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example074529576/inspeqtor.go
 typedef Wgdef {
 	chan Add = [0] of {int};
 	chan Wait = [0] of {int};
@@ -10,6 +10,7 @@ typedef Wgdef {
 
 init { 
 	Wgdef barrier;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int i_Services = scan_i_Services;
@@ -20,6 +21,10 @@ init {
 stop_process:skip
 }
 
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

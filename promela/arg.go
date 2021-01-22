@@ -74,7 +74,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, bounds []promel
 			e1 = &name
 			bounds = append(bounds, name)
 		} else {
-			return arg, bounds, &ParseError{err: errors.New("Could not parse the name of the function at pos " + m.Fileset.Position(expr.Pos()).String())}
+			return arg, bounds, &ParseError{err: errors.New(UNPARSABLE_FUNCTION_NAME + m.Fileset.Position(expr.Pos()).String())}
 		}
 	case *ast.BasicLit:
 		name := promela_ast.Ident{Name: expr.Value}
@@ -85,7 +85,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, bounds []promel
 	case *ast.ParenExpr:
 		return m.TranslateArg(expr.X)
 	default:
-		err = &ParseError{err: errors.New("Could not parse an arguments at line " + m.Fileset.Position(expr.Pos()).String())}
+		err = &ParseError{err: errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())}
 
 	}
 	return e1, bounds, err

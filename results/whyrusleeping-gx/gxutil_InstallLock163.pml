@@ -1,13 +1,12 @@
 #define InstallLock_maxWorkers  3
 
-// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example223081060/gxutil/pm.go
+// /var/folders/28/gltwgskn4998yb1_d73qtg8h0000gn/T/clone-example003659444/gxutil/pm.go
 typedef Chandef {
-	chan sync = [0] of {int};
+	chan sync = [0] of {bool,int};
 	chan async_send = [0] of {int};
-	chan async_rcv = [0] of {int};
+	chan async_rcv = [0] of {bool,int};
 	chan sending = [0] of {int};
 	chan closing = [0] of {bool};
-	chan is_closed = [0] of {bool};
 	int size = 0;
 	int num_msgs = 0;
 	bool closed = false;
@@ -23,6 +22,7 @@ init {
 	chan child_installLock0 = [0] of {int};
 	Wgdef wg;
 	Chandef workers;
+	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int maxWorkers = InstallLock_maxWorkers;
@@ -75,18 +75,21 @@ proctype go_Anonymous0(Chandef workers;Wgdef wg) {
 	bool closed; 
 	int i;
 	bool state;
+	int num_msgs;
 	do
-	:: workers.is_closed?state -> 
+	:: true -> 
+		
+
 		if
-		:: state -> 
+		:: workers.async_rcv?state,num_msgs;
+		:: workers.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
 			break
 		:: else -> 
-			
-
-			if
-			:: workers.async_rcv?0;
-			:: workers.sync?0;
-			fi;
 			for11: skip;
 			
 
@@ -106,8 +109,9 @@ proctype installLock(Chandef workers;chan child) {
 	bool closed; 
 	int i;
 	bool state;
-	int langdeps=3;
-	int lck_Deps=1;
+	int num_msgs;
+	int langdeps=0;
+	int lck_Deps=3;
 	
 
 	if
@@ -131,8 +135,8 @@ proctype installLock(Chandef workers;chan child) {
 
 					if
 					:: workers.async_send!0;
-					:: workers.sync!0 -> 
-						workers.sending?0
+					:: workers.sync!false,0 -> 
+						workers.sending?state
 					fi;
 					for22_end: skip
 				};
@@ -140,19 +144,19 @@ proctype installLock(Chandef workers;chan child) {
 			:: else -> 
 				do
 				:: true -> 
-					for221613: skip;
+					for221633: skip;
 					
 
 					if
 					:: workers.async_send!0;
-					:: workers.sync!0 -> 
-						workers.sending?0
+					:: workers.sync!false,0 -> 
+						workers.sending?state
 					fi;
-					for22_end1613: skip
+					for22_end1633: skip
 				:: true -> 
 					break
 				od;
-				for22_exit1613: skip
+				for22_exit1633: skip
 			fi;
 			for21_end: skip
 		};
@@ -160,7 +164,7 @@ proctype installLock(Chandef workers;chan child) {
 	:: else -> 
 		do
 		:: true -> 
-			for211614: skip;
+			for211634: skip;
 			
 
 			if
@@ -173,44 +177,48 @@ proctype installLock(Chandef workers;chan child) {
 			if
 			:: langdeps-1 != -3 -> 
 								for(i : 0.. langdeps-1) {
-					for221614: skip;
+					for221634: skip;
 					
 
 					if
 					:: workers.async_send!0;
-					:: workers.sync!0 -> 
-						workers.sending?0
+					:: workers.sync!false,0 -> 
+						workers.sending?state
 					fi;
-					for22_end1614: skip
+					for22_end1634: skip
 				};
-				for22_exit1614: skip
+				for22_exit1634: skip
 			:: else -> 
 				do
 				:: true -> 
-					for2216131614: skip;
+					for2216331634: skip;
 					
 
 					if
 					:: workers.async_send!0;
-					:: workers.sync!0 -> 
-						workers.sending?0
+					:: workers.sync!false,0 -> 
+						workers.sending?state
 					fi;
-					for22_end16131614: skip
+					for22_end16331634: skip
 				:: true -> 
 					break
 				od;
-				for22_exit16131614: skip
+				for22_exit16331634: skip
 			fi;
-			for21_end1614: skip
+			for21_end1634: skip
 		:: true -> 
 			break
 		od;
-		for21_exit1614: skip
+		for21_exit1634: skip
 	fi;
 	goto stop_process;
 	stop_process: skip;
 	child!0
 }
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
@@ -221,20 +229,19 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan
+		 ch.num_msgs = ch.num_msgs - 1
   fi;
 :: else ->
 	if
 	:: ch.num_msgs == ch.size ->
 		end1: if
-		  :: ch.async_rcv!0 ->
+		  :: ch.async_rcv!false,ch.num_msgs ->
 		    ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false; // sending channel is open 
 		  :: ch.sending!false;
 		fi;
 	:: ch.num_msgs == 0 -> 
@@ -243,18 +250,16 @@ end2:		if
 			ch.num_msgs = ch.num_msgs + 1
 		:: ch.closing?true -> // closing the channel
 			ch.closed = true
-		:: ch.is_closed!false;
 		:: ch.sending!false;
 		fi;
 		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
-		  :: ch.async_rcv!0
+		  :: ch.async_rcv!false,ch.num_msgs
 		     ch.num_msgs = ch.num_msgs - 1
 		  :: ch.closing?true -> // closing the channel
 		      ch.closed = true
-		  :: ch.is_closed!false;  // sending channel is open
 		  :: ch.sending!false;  // sending channel is open
 		fi;
 	fi;
@@ -272,17 +277,15 @@ end: if
     assert(false)
   :: ch.closing?true -> // cannot close twice a channel
     assert(false)
-  :: ch.is_closed!true; // sending state of channel (closed)
   :: ch.sending!true -> // sending state of channel (closed)
     assert(false)
-  :: ch.sync!0; // can always receive on a closed chan
+  :: ch.sync!true,0; // can always receive on a closed chan
   fi;
 :: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->
       ch.closed = true
-    :: ch.is_closed!false ->
     fi;
 fi;
 od
