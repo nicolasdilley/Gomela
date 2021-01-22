@@ -61,7 +61,8 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, bounds []promel
 
 		bounds = append(bounds, names...)
 	case *ast.CallExpr:
-		if TranslateIdent(expr.Fun, m.Fileset).Name == "len" {
+		call_name := TranslateIdent(expr.Fun, m.Fileset).Name
+		if (call_name == "len" || call_name == "int") && len(expr.Args) > 0 {
 			return m.TranslateArg(expr.Args[0]) // if its len just return the translation of the first args which is the list
 		}
 
