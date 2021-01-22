@@ -354,7 +354,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 				}
 
 				if containsChan {
-					err = &ParseError{err: errors.New(UNKNOWN_DECL + m.Fileset.Position(call_expr.Fun.Pos()))}
+					err = &ParseError{err: errors.New(UNKNOWN_DECL + m.Fileset.Position(call_expr.Fun.Pos()).String())}
 				} else {
 					var stmts1 *promela_ast.BlockStmt
 					stmts1, err = m.ParseFuncArgs(call_expr)
@@ -378,7 +378,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 		}
 
 		if containsChan {
-			err = &ParseError{err: errors.New(UNKNOWN_DECL, m.Fileset.Position(call_expr.Fun.Pos()))}
+			err = &ParseError{err: errors.New(UNKNOWN_DECL + m.Fileset.Position(call_expr.Fun.Pos()).String())}
 		} else {
 
 			var stmts1 *promela_ast.BlockStmt
