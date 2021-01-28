@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"strconv"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -154,47 +155,239 @@ func (m *Model) GoToPromela() {
 	}
 
 }
+func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	for _, l := range lhs {
+		stmt := m.AstMap[m.Package].TypesInfo.TypeOf(l)
+		switch types := stmt.(type) {
+		case *types.Pointer:
+			stmt = types.Elem()
+		}
+		switch stmt.(type) {
+		case *types.Named:
+			switch stmt := stmt.Underlying().(type) {
+			case *types.Struct:
+				for i := 0; i < stmt.NumFields(); i++ {
+					switch field := stmt.Field(i).Type().(type) {
+					case *types.Named:
+						if field.Obj() != nil {
+							if field.Obj().Pkg() != nil {
+								if field.Obj().Pkg().Name() == "sync" {
+									if field.Obj().Name() == "WaitGroup" {
+										b1, err1 := m.translateWg(s, &ast.Ident{Name: translateIdent(l).Name + "_" + stmt.Field(i).Name(), NamePos: l.Pos()})
+										addBlock(b, b1)
+										if err1 != nil {
+											err = err1
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	for i := len(rhs) - 1; i >= 0; i-- {
+		call := rhs[i]
+		switch unary := call.(type) {
+		case *ast.UnaryExpr:
+			call = unary.X
+		}
+		switch call := call.(type) {
+		case *ast.CallExpr:
+			switch ident := call.Fun.(type) {
+			case *ast.Ident:
+				if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
+					switch call.Args[0].(type) {
+					case *ast.ChanType:
+						ch, err1 := m.translateChan(lhs[i], call.Args)
+						addBlock(b, ch)
+						if err1 != nil {
+							err = err1
+						}
+					}
+				} else if ident.Name == "new" && len(call.Args) > 0 {
+					// check if its the decleration of a new sync.Waitgroup
 
-func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
-	prom_chan_name := translateIdent(go_chan_name)
-	channel := &ChanStruct{Name: &prom_chan_name, Chan: m.Fileset.Position(go_chan_name.Pos())}
-	chan_def := &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: prom_chan_name.Name}, Types: promela_types.Chandef}
-	block_stmt := &promela_ast.BlockStmt{List: []promela_ast.Stmt{chan_def}}
-	if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
-	sync_monitor := &promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "sync_monitor"}, Args: []promela_ast.Expr{&prom_chan_name}}}
-	if len(args) > 1 { // check if the channel is buffered or not
-		channel.Buffered = true
-		var size *promela_ast.Ident
-		size, err = m.lookUp(args[1], CHAN_BOUND, false)
-		async_guard := &promela_ast.GuardStmt{
-			Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
-			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-				&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: &prom_chan_name, Sel: &promela_ast.Ident{Name: "size"}}, Rhs: size},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "AsyncChan"}, Args: []promela_ast.Expr{&prom_chan_name}}},
-			}}}
-		sync_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"},
-			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{sync_monitor}}}
+					expr := call.Args[0]
 
-		if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
-		block_stmt.List = append(block_stmt.List, if_stmt)
+					switch p := call.Args[0].(type) {
+					case *ast.StarExpr:
+						expr = p.X
+					}
+
+					switch expr := expr.(type) {
+					case *ast.SelectorExpr:
+						if expr.Sel.Name == "WaitGroup" {
+							switch expr := expr.X.(type) {
+							case *ast.Ident:
+								if expr.Name == "sync" {
+									b1, err1 := m.translateWg(s, lhs[i])
+									addBlock(b, b1)
+									if err1 != nil {
+										err = err1
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+		case *ast.CompositeLit:
+			for _, elt := range call.Elts {
+				switch elt := elt.(type) {
+				case *ast.KeyValueExpr:
+					switch call := elt.Value.(type) {
+					case *ast.CallExpr:
+						switch ident := call.Fun.(type) {
+						case *ast.Ident:
+							if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
+								switch call.Args[0].(type) {
+								case *ast.ChanType:
+									sel := &ast.SelectorExpr{X: lhs[i], Sel: &ast.Ident{Name: translateIdent(elt.Key).Name}}
+									ch, err1 := m.translateChan(sel, call.Args)
+									if err1 != nil {
+										err = err1
+									}
+									addBlock(b, ch)
+
+								}
+							}
+						}
+
+					}
+				}
+
+			}
+
+			switch sel := call.Type.(type) {
+			case *ast.SelectorExpr:
+				if sel.Sel.Name == "WaitGroup" {
+					switch sel := sel.X.(type) {
+					case *ast.Ident:
+						if sel.Name == "sync" {
+							// we have a waitgroup
+							b1, err1 := m.translateWg(s, lhs[i])
+							if err1 != nil {
+								err = err1
+							}
+							addBlock(b, b1)
+						}
+					}
+				}
+			}
+		}
+	}
+	return b, err
+}
+
+func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	if !m.For_counter.In_for {
+		prom_wg_name := &promela_ast.Ident{Name: translateIdent(name).Name, Ident: m.Fileset.Position(name.Pos())}
+		if !m.containsWaitgroup(name) {
+			m.ContainsWg = true
+			m.WaitGroups[name] = &WaitGroupStruct{
+				Name:    prom_wg_name,
+				Wait:    m.Fileset.Position(name.Pos()),
+				Counter: 0,
+			}
+
+			Features = append(Features, Feature{
+				Proj_name: m.Project_name,
+				Model:     m.Name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "new WaitGroup",
+				Info:      "Name :" + prom_wg_name.Name,
+				Mandatory: "false",
+				Line:      m.Fileset.Position(s.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(s.Pos()).Filename,
+			})
+
+			b.List = append(b.List,
+				&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{prom_wg_name}}})
+		}
 	} else {
-		block_stmt.List = append(block_stmt.List, sync_monitor)
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "WaitGroup in for",
+			Mandatory: "false",
+			Line:      m.Fileset.Position(s.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(s.Pos()).Filename,
+		})
+		err = &ParseError{err: errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(s.Pos()).String())}
 	}
 
-	m.Chans[go_chan_name] = channel
-	m.ContainsChan = true
-	Features = append(Features, Feature{
-		Proj_name: m.Project_name,
-		Model:     m.Name,
-		Fun:       m.Fun.Name.String(),
-		Name:      "new channel",
-		Info:      "Name :" + channel.Name.Name,
-		Mandatory: "false",
-		Line:      channel.Chan.Line,
-		Commit:    m.Commit,
-		Filename:  channel.Chan.Filename,
-	})
-	return block_stmt, err
+	return b, err
+}
+
+func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	if !m.For_counter.In_for {
+		// a new channel is found lets change its name, rename it in function and add to struct
+
+		// b.List = RenameBlockStmt(b, []ast.Expr{lhs[i]}, &chan_name).List
+
+		prom_chan_name := translateIdent(go_chan_name)
+		channel := &ChanStruct{Name: &prom_chan_name, Chan: m.Fileset.Position(go_chan_name.Pos())}
+		chan_def := &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: prom_chan_name.Name}, Types: promela_types.Chandef}
+		b.List = append(b.List, chan_def)
+		if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
+		sync_monitor := &promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "sync_monitor"}, Args: []promela_ast.Expr{&prom_chan_name}}}
+		if len(args) > 1 { // check if the channel is buffered or not
+			channel.Buffered = true
+			var size *promela_ast.Ident
+			size, err = m.lookUp(args[1], CHAN_BOUND, false)
+			async_guard := &promela_ast.GuardStmt{
+				Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
+				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+					&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: &prom_chan_name, Sel: &promela_ast.Ident{Name: "size"}}, Rhs: size},
+					&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "AsyncChan"}, Args: []promela_ast.Expr{&prom_chan_name}}},
+				}}}
+			sync_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"},
+				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{sync_monitor}}}
+
+			if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
+			b.List = append(b.List, if_stmt)
+		} else {
+			b.List = append(b.List, sync_monitor)
+		}
+
+		m.Chans[go_chan_name] = channel
+		m.ContainsChan = true
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "new channel",
+			Info:      "Name :" + channel.Name.Name,
+			Mandatory: "false",
+			Line:      channel.Chan.Line,
+			Commit:    m.Commit,
+			Filename:  channel.Chan.Filename,
+		})
+
+	} else {
+		Features = append(Features, Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "Chan in for",
+			Mandatory: "false",
+			Line:      m.Fileset.Position(go_chan_name.Pos()).Line,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(go_chan_name.Pos()).Filename,
+		})
+		err = &ParseError{err: errors.New(CHAN_IN_FOR + m.Fileset.Position(go_chan_name.Pos()).String())}
+	}
+	return b, err
 }
 
 // takes a promela body and add break if there are no breaks at the end or if there is
@@ -581,6 +774,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) Model {
 		Project_name:    m.Project_name,
 		Package:         pack,
 		Name:            m.Name,
+		Commit:          m.Commit,
 		RecFuncs:        []RecFunc{},
 		SpawningFuncs:   m.SpawningFuncs,
 		Fileset:         m.Fileset,

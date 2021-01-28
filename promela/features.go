@@ -43,15 +43,8 @@ func logFeature(feature Feature) {
 			strconv.Itoa(feature.Line) + "," +
 			feature.Filename + ","
 
-	if feature.Commit != "" {
-		toPrint += "https://github.com/" +
-			feature.Proj_name + "/blob/" +
-			feature.Commit + "/" +
-			feature.Filename + "#L" +
-			strconv.Itoa(feature.Line)
-	} else {
-		toPrint += feature.Filename
-	}
+	toPrint += feature.Commit
+
 	log.Println(toPrint)
 }
 

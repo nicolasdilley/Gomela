@@ -98,9 +98,9 @@ func main() {
 				}
 				proj_listings := strings.Split(string(data), "\n")
 				fmt.Println(len(proj_listings), " projects to parse")
-				for i, project := range proj_listings {
+				for _, project := range proj_listings {
 					project_info := strings.Split(project, ",")
-					if i < len(proj_listings) {
+					if len(proj_listings) > 1 {
 						parseProject(project_info[0], project_info[1], ver)
 					}
 				}

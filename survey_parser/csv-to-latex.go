@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/montanaflynn/stats"
+	"github.com/nicolasdilley/gomela/promela"
 )
 
 type Counter struct {
@@ -152,8 +153,7 @@ func printProjectList(lines []string) {
 
 		splitted_line := strings.Split(line, ",")
 		if _, ok := project_map[splitted_line[0]]; !ok && len(splitted_line) > 7 {
-			link := strings.Split(splitted_line[len(splitted_line)-1], "blob/")
-			commit := strings.Split(link[1], "/")[0]
+			commit := splitted_line[len(splitted_line)-1]
 			project_map[splitted_line[0]] = commit
 		}
 	}
@@ -190,6 +190,9 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	defer_in_blockstmt := 0
 	notify := 0
 	select_no_branch := 0
+	unknown_arg := 0
+	unparsable_function_name := 0
+	unparsable_arg := 0
 
 	for model, lines := range features_map {
 
@@ -199,33 +202,37 @@ func parseBound(features_map map[string][]string) map[string][]string {
 			if strings.Contains(splitted_line[3], "MODEL ERROR") {
 				model_errors += 1
 
-				if strings.Contains(splitted_line[3], "Returning") {
-					if strings.Contains(splitted_line[3], "channel") {
-						channel_returned++
-					} else {
-						wg_returned++
-					}
-				} else if strings.Contains(splitted_line[3], "A receive on a channel") || strings.Contains(splitted_line[3], "A receive was found on a channel") {
+				if strings.Contains(splitted_line[3], promela.RETURN_CHAN) {
+					channel_returned++
+				} else if strings.Contains(splitted_line[3], promela.RETURN_WG) {
+					wg_returned++
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_RCV) {
 					rcv_chan++
-				} else if strings.Contains(splitted_line[3], "cannot find decl") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_DECL) {
 					find_decl++
-				} else if strings.Contains(splitted_line[3], "A range on a channel was found") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_RANGE) {
 					range_on_chan++
-				} else if strings.Contains(splitted_line[3], "Function declared as a variable") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_ARG) {
+					unknown_arg++
+				} else if strings.Contains(splitted_line[3], promela.UNPARSABLE_FUNCTION_NAME) {
+					unparsable_function_name++
+				} else if strings.Contains(splitted_line[3], promela.UNPARSABLE_ARG) {
+					unparsable_arg++
+				} else if strings.Contains(splitted_line[3], promela.FUNC_DECLARED_AS_VAR) {
 					func_as_var++
-				} else if strings.Contains(splitted_line[3], "Channel created in a for") {
+				} else if strings.Contains(splitted_line[3], promela.CHAN_IN_FOR) {
 					chan_in_for++
-				} else if strings.Contains(splitted_line[3], "A send on a channel that could") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_SEND) {
 					send_chan++
-				} else if strings.Contains(splitted_line[3], "Waitgroup created in a for") {
+				} else if strings.Contains(splitted_line[3], promela.WAITGROUP_IN_FOR) {
 					wg_in_for++
 				} else if strings.Contains(splitted_line[3], "Defer stmt") {
 					defer_in_blockstmt++
-				} else if strings.Contains(splitted_line[3], "promela_translator.go : Func of go statement") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_GO_FUNC) {
 					find_decl++
-				} else if strings.Contains(splitted_line[3], "Can not find send of signal.Notify") {
+				} else if strings.Contains(splitted_line[3], promela.UNKNOWN_NOTIFY) {
 					notify++
-				} else if strings.Contains(splitted_line[3], "Found a select with no branches") {
+				} else if strings.Contains(splitted_line[3], promela.SELECT_WITH_NO_BRANCH) {
 					select_no_branch++
 				} else {
 					fmt.Println(splitted_line[3])

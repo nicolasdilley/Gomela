@@ -7,13 +7,14 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
-	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+
+	// look if the struct is a struct that contains the "automatic" declaration of a new WaitGroup
+	b, err = m.translateNewVar(s, s.Lhs, s.Rhs)
 	for _, spec := range s.Rhs {
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
-			return b, defers, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
+			return b, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
 		}
 
 		expr, err1 := m.TranslateExpr(spec)
@@ -24,5 +25,5 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 		addBlock(b, expr)
 	}
 
-	return b, defers, err
+	return b, err
 }

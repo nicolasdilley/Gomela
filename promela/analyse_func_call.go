@@ -24,82 +24,23 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, call_expr *ast.C
 					call_expr_reached = true
 				}
 			case *ast.AssignStmt:
-				for _, l := range n.Lhs {
-					switch s := pack.TypesInfo.TypeOf(l).(type) {
-					case *types.Named:
-						switch s := s.Underlying().(type) {
-						case *types.Struct:
-							for i := 0; i < s.NumFields(); i++ {
-								switch field := s.Field(i).Type().(type) {
-								case *types.Named:
-									if field.Obj() != nil {
-										if field.Obj().Pkg() != nil {
-											if field.Obj().Pkg().Name() == "sync" {
-												if field.Obj().Name() == "WaitGroup" {
-													wgs = append(wgs, &ast.Ident{Name: translateIdent(l).Name + "_" + s.Field(i).Name(), NamePos: l.Pos()})
-												}
-											}
-										}
-
-									}
-								}
-							}
-						}
-					}
-				}
-				for i, rhs := range n.Rhs {
-					switch rhs := rhs.(type) {
-					case *ast.UnaryExpr:
-						n.Rhs[i] = rhs.X
-					}
-				}
-				for i, rhs := range n.Rhs {
-					switch rhs := rhs.(type) {
-					case *ast.CallExpr:
-						switch ident := rhs.Fun.(type) {
-						case *ast.Ident:
-							if ident.Name == "make" && len(rhs.Args) > 0 { // possibly a new chan
-								switch rhs.Args[0].(type) {
-								case *ast.ChanType:
-									chans = append(chans, n.Lhs[i])
-								}
-							}
-						case *ast.SelectorExpr:
-							if ident.Sel.Name == "WaitGroup" {
-								switch sel := ident.X.(type) {
-								case *ast.Ident:
-									if sel.Name == "sync" {
-										// we have a waitgroup
-										if len(n.Lhs) > i {
-											wgs = append(wgs, n.Lhs[i])
-										}
-									}
-								}
-							}
-						}
-					case *ast.CompositeLit:
-						switch sel := rhs.Type.(type) {
-						case *ast.SelectorExpr:
-							if sel.Sel.Name == "WaitGroup" {
-								switch sel := sel.X.(type) {
-								case *ast.Ident:
-									if sel.Name == "sync" {
-										// we have a waitgroup
-										for _, name := range n.Lhs {
-											wgs = append(wgs, name)
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+				c1, w1 := AnalyseNewVar(n, n.Lhs, n.Rhs, pack)
+				chans = append(chans, c1...)
+				wgs = append(wgs, w1...)
 			case *ast.DeclStmt:
 				switch decl := n.Decl.(type) {
 				case *ast.GenDecl:
 					for _, spec := range decl.Specs {
 						switch spec := spec.(type) {
 						case *ast.ValueSpec:
+							exprs := []ast.Expr{}
+
+							for _, name := range spec.Names {
+								exprs = append(exprs, name)
+							}
+							c1, w1 := AnalyseNewVar(n, exprs, spec.Values, pack)
+							chans = append(chans, c1...)
+							wgs = append(wgs, w1...)
 							for i, rhs := range spec.Values {
 								switch call := rhs.(type) {
 
@@ -150,5 +91,103 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, call_expr *ast.C
 		}
 	}
 
+	return chans, wgs
+}
+
+func AnalyseNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr, pack *packages.Package) (chans []ast.Expr, wgs []ast.Expr) {
+	chans = []ast.Expr{}
+	wgs = []ast.Expr{}
+
+	for _, l := range lhs {
+		switch s := pack.TypesInfo.TypeOf(l).(type) {
+		case *types.Named:
+			switch s := s.Underlying().(type) {
+			case *types.Struct:
+				for i := 0; i < s.NumFields(); i++ {
+					switch field := s.Field(i).Type().(type) {
+					case *types.Named:
+						if field.Obj() != nil {
+							if field.Obj().Pkg() != nil {
+								if field.Obj().Pkg().Name() == "sync" {
+									if field.Obj().Name() == "WaitGroup" {
+										wgs = append(wgs, &ast.Ident{Name: translateIdent(l).Name + "_" + s.Field(i).Name(), NamePos: l.Pos()})
+									}
+								}
+							}
+
+						}
+					}
+				}
+			}
+		}
+	}
+	for i, r := range rhs {
+		switch r := r.(type) {
+		case *ast.UnaryExpr:
+			rhs[i] = r.X
+		}
+	}
+	for i, rhs := range rhs {
+		switch rhs := rhs.(type) {
+		case *ast.CallExpr:
+			switch ident := rhs.Fun.(type) {
+			case *ast.Ident:
+				if ident.Name == "make" && len(rhs.Args) > 0 { // possibly a new chan
+					switch rhs.Args[0].(type) {
+					case *ast.ChanType:
+						chans = append(chans, lhs[i])
+					}
+				} else if ident.Name == "new" && len(rhs.Args) > 0 {
+					// check if its the decleration of a new sync.Waitgroup
+
+					expr := rhs.Args[0]
+
+					switch p := rhs.Args[0].(type) {
+					case *ast.StarExpr:
+						expr = p.X
+					}
+
+					switch expr := expr.(type) {
+					case *ast.SelectorExpr:
+						if expr.Sel.Name == "WaitGroup" {
+							switch expr := expr.X.(type) {
+							case *ast.Ident:
+								if expr.Name == "sync" {
+									wgs = append(wgs, lhs[i])
+								}
+							}
+						}
+					}
+				}
+			case *ast.SelectorExpr:
+				if ident.Sel.Name == "WaitGroup" {
+					switch sel := ident.X.(type) {
+					case *ast.Ident:
+						if sel.Name == "sync" {
+							// we have a waitgroup
+							if len(lhs) > i {
+								wgs = append(wgs, lhs[i])
+							}
+						}
+					}
+				}
+			}
+		case *ast.CompositeLit:
+			switch sel := rhs.Type.(type) {
+			case *ast.SelectorExpr:
+				if sel.Sel.Name == "WaitGroup" {
+					switch sel := sel.X.(type) {
+					case *ast.Ident:
+						if sel.Name == "sync" {
+							// we have a waitgroup
+							for _, name := range lhs {
+								wgs = append(wgs, name)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	return chans, wgs
 }
