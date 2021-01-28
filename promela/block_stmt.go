@@ -58,7 +58,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 					}
 
 					if err1 != nil {
-						err = err1
+						return block_stmt, defer_stmts, err1
 					} else {
 						addBlock(block_stmt, s1)
 						addBlock(defer_stmts, defers)

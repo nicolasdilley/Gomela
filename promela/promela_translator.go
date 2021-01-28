@@ -174,11 +174,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 							if field.Obj().Pkg() != nil {
 								if field.Obj().Pkg().Name() == "sync" {
 									if field.Obj().Name() == "WaitGroup" {
-										b1, err1 := m.translateWg(s, &ast.Ident{Name: translateIdent(l).Name + "_" + stmt.Field(i).Name(), NamePos: l.Pos()})
-										addBlock(b, b1)
-										if err1 != nil {
-											err = err1
-										}
+										return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
 									}
 								}
 							}
@@ -236,6 +232,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 			}
 
 		case *ast.CompositeLit:
+
 			for _, elt := range call.Elts {
 				switch elt := elt.(type) {
 				case *ast.KeyValueExpr:
@@ -246,13 +243,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 							if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
 								switch call.Args[0].(type) {
 								case *ast.ChanType:
-									sel := &ast.SelectorExpr{X: lhs[i], Sel: &ast.Ident{Name: translateIdent(elt.Key).Name}}
-									ch, err1 := m.translateChan(sel, call.Args)
-									if err1 != nil {
-										err = err1
-									}
-									addBlock(b, ch)
-
+									return b, &ParseError{err: errors.New(CHAN_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
 								}
 							}
 						}
@@ -262,22 +253,43 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 
 			}
 
+			// Tests if one of the field of the assign structs is a WG
+			var obj *ast.Object
 			switch sel := call.Type.(type) {
+			case *ast.Ident:
+				obj = sel.Obj
 			case *ast.SelectorExpr:
-				if sel.Sel.Name == "WaitGroup" {
-					switch sel := sel.X.(type) {
-					case *ast.Ident:
-						if sel.Name == "sync" {
-							// we have a waitgroup
-							b1, err1 := m.translateWg(s, lhs[i])
-							if err1 != nil {
-								err = err1
+				obj = sel.Sel.Obj
+			}
+
+			if obj != nil {
+				switch decl := obj.Decl.(type) {
+				case *ast.TypeSpec:
+					switch s := decl.Type.(type) {
+					case *ast.StructType:
+						for _, field := range s.Fields.List {
+							var expr ast.Expr = field.Type
+							switch star := field.Type.(type) {
+							case *ast.StarExpr:
+								expr = star.X
 							}
-							addBlock(b, b1)
+							switch sel := expr.(type) {
+							case *ast.SelectorExpr:
+								if sel.Sel.Name == "WaitGroup" {
+									switch sel := sel.X.(type) {
+									case *ast.Ident:
+										if sel.Name == "sync" {
+											return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
+										}
+									}
+
+								}
+							}
 						}
 					}
 				}
 			}
+
 		}
 	}
 	return b, err

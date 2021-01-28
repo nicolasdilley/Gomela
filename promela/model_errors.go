@@ -21,4 +21,6 @@ const (
 	RETURN_CHAN              = "Returning a channel at pos: "
 	RETURN_WG                = "Returning a waitgroup at pos: "
 	SELECT_WITH_NO_BRANCH    = "Found a select with no branches at pos: "
+	CHAN_DECLARED_IN_STRUCT  = "Found a chan declared in a struct at pos: "
+	WG_DECLARED_IN_STRUCT    = "Found a waitgroup declared in a struct at pos: "
 )
