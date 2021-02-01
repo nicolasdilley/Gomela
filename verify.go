@@ -72,7 +72,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 					}
 				}
 
-				model_name := filepath.Base(dir_name) + ":" + model.Name()
+				model_name := strings.Replace(filepath.Base(dir_name), "&", "/", -1) + ":" + model.Name()
 				fmt.Println("there is ", optional_params, " optionnal params.")
 				if len(comm_params) == 0 {
 					ver := verifyModel(path, model_name, f, []string{}, []string{})

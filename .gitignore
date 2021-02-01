@@ -12,3 +12,5 @@
 ./source/*
 ./source/*/*
 ./source/*/*/*
+./projects
+./projects/*

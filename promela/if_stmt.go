@@ -33,7 +33,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 		return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
 	}
 	if err1 != nil {
-		err = err1
+		return b, defer_stmts, err1
 	}
 	contains := false
 	if len(body.List) != 0 {

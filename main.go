@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,9 +90,18 @@ func main() {
 		if len(os.Args) > 2 {
 			if strings.HasSuffix(*ver.multi_projects, ".csv") {
 
+				_, err := os.Stat("projects")
+
+				if !os.IsNotExist(err) {
+					os.RemoveAll("projects")
+				}
+				errDir := os.MkdirAll("projects", 0755)
+				if errDir != nil {
+					log.Fatal(err)
+				}
+
 				// parse each projects
 				data, e := ioutil.ReadFile(*ver.multi_projects)
-
 				if e != nil {
 					fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_projects, e)
 					return
@@ -113,6 +123,17 @@ func main() {
 		}
 
 	} else if *ver.single_project != "" {
+
+		_, err := os.Stat("projects")
+
+		if !os.IsNotExist(err) {
+			os.RemoveAll("projects")
+		}
+		errDir := os.MkdirAll("projects", 0755)
+		if errDir != nil {
+			log.Fatal(err)
+		}
+
 		// parse project given
 		parseProject(*ver.single_project, "master", ver)
 
@@ -173,7 +194,6 @@ func parseProject(project_name string, commit string, ver *VerificationInfo) {
 		if err != nil {
 			fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
 		}
-		defer os.RemoveAll(path_to_dir) // clean up
 	} else {
 		fmt.Println("Could not download project ", project_name)
 	}
@@ -185,7 +205,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 	f, ast_map := GenerateAst(path, packages, dir_name)
 	if f != nil {
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
-		dir_name = strings.Replace(dir_name, "/", "-", -1)
+		dir_name = strings.Replace(dir_name, "/", "&", -1)
 
 		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 		if err != nil {

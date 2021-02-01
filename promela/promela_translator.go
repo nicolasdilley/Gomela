@@ -128,30 +128,29 @@ func (m *Model) GoToPromela() {
 	m.Init.Body.List = append(m.Init.Body.List,
 		defers.List...)
 
-	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
-		// generate the model only if it contains only supported features
-		if err == nil {
+	// generate the model only if it contains only supported features
+	if err == nil {
+		if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
 			// clean the model by removing empty for loops and unused opt param
 			m.Features = Features
 			Clean(m)
 			Print(m) // print the model
 			PrintFeatures(m.Features)
-		} else {
-			fmt.Println("Could not parse model ", m.Name, " :")
-			fmt.Println(err.err.Error())
-
-			logFeature(Feature{
-				Proj_name: m.Project_name,
-				Model:     m.Name,
-				Fun:       m.Fun.Name.String(),
-				Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
-				Mandatory: "false",
-				Line:      0,
-				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-			})
 		}
+	} else {
+		fmt.Println("Could not parse model ", m.Name, " :")
+		fmt.Println(err.err.Error())
 
+		logFeature(Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       m.Fun.Name.String(),
+			Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
+			Mandatory: "false",
+			Line:      0,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+		})
 	}
 
 }
@@ -298,11 +297,19 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if !m.For_counter.In_for {
-		prom_wg_name := &promela_ast.Ident{Name: translateIdent(name).Name, Ident: m.Fileset.Position(name.Pos())}
+
+		var prom_wg_name promela_ast.Ident
+		switch name.(type) {
+		case *ast.SelectorExpr:
+			return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(name.Pos()).String())}
+		default:
+
+			prom_wg_name = translateIdent(name)
+		}
 		if !m.containsWaitgroup(name) {
 			m.ContainsWg = true
 			m.WaitGroups[name] = &WaitGroupStruct{
-				Name:    prom_wg_name,
+				Name:    &prom_wg_name,
 				Wait:    m.Fileset.Position(name.Pos()),
 				Counter: 0,
 			}
@@ -320,8 +327,8 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 			})
 
 			b.List = append(b.List,
-				&promela_ast.DeclStmt{Name: prom_wg_name, Types: promela_types.Wgdef},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{prom_wg_name}}})
+				&promela_ast.DeclStmt{Name: &prom_wg_name, Types: promela_types.Wgdef},
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 		}
 	} else {
 		Features = append(Features, Feature{
@@ -346,8 +353,15 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 		// a new channel is found lets change its name, rename it in function and add to struct
 
 		// b.List = RenameBlockStmt(b, []ast.Expr{lhs[i]}, &chan_name).List
+		var prom_chan_name promela_ast.Ident
 
-		prom_chan_name := translateIdent(go_chan_name)
+		switch go_chan_name.(type) {
+		case *ast.SelectorExpr:
+			return b, &ParseError{err: errors.New(CHAN_DECLARED_IN_STRUCT + m.Fileset.Position(go_chan_name.Pos()).String())}
+		default:
+
+			prom_chan_name = translateIdent(go_chan_name)
+		}
 		channel := &ChanStruct{Name: &prom_chan_name, Chan: m.Fileset.Position(go_chan_name.Pos())}
 		chan_def := &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: prom_chan_name.Name}, Types: promela_types.Chandef}
 		b.List = append(b.List, chan_def)

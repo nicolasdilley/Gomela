@@ -70,15 +70,19 @@ func main() {
 			for _, line := range supported_models {
 				splitted_line := strings.Split(line, ",")
 				project := splitted_line[0]
-				splitted := strings.Split(splitted_line[1], "_")
+				splitted := strings.Split(splitted_line[1], "&")
 
-				packages := ""
-				for i, pack := range splitted[:len(splitted)-1] {
-					if pack != "" && i != 0 {
-						packages += "_"
+				packages := splitted[0]
+				if len(splitted) > 2 {
+					fmt.Println("have a model with two &")
+
+					for i, pack := range splitted[:len(splitted)-1] {
+						if pack != "" && i != 0 {
+							packages += "&"
+						}
+						packages += pack
+
 					}
-					packages += pack
-
 				}
 				project_map.addPackage(project, packages, model)
 			}

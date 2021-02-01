@@ -1,19 +1,44 @@
 package main
 
-import "sync"
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"time"
 
-func main() {
-	errChan := make(chan int)
+	"k8s.io/apimachinery/pkg/util/runtime"
+)
 
-	wg = new(*sync.WaitGroup)
+func createStreams(req *http.Request, w http.ResponseWriter, opts *Options, supportedStreamProtocols []string, idleTimeout, streamCreationTimeout time.Duration) (*context, bool) {
+	var ctx *context
+	var ok bool
+	if wsstream.IsWebSocketRequest(req) {
+		ctx, ok = createWebSocketStreams(req, w, opts, idleTimeout)
+	} else {
+		ctx, ok = createHTTPStreamStreams(req, w, opts, supportedStreamProtocols, idleTimeout, streamCreationTimeout)
+	}
+	if !ok {
+		return nil, false
+	}
 
-	var t Test
+	if ctx.resizeStream != nil {
+		ctx.resizeChan = make(chan remotecommand.TerminalSize)
+		go handleResizeEvents(ctx.resizeStream, ctx.resizeChan)
+	}
 
-	wg.Add(1)
-	errChan <- 0
+	return ctx, true
 }
 
-type Test struct {
-	c chan int
-	w sync.WaitGroup
+func handleResizeEvents(stream io.Reader, channel chan<- remotecommand.TerminalSize) {
+	defer runtime.HandleCrash()
+	defer close(channel)
+
+	decoder := json.NewDecoder(stream)
+	for {
+		size := remotecommand.TerminalSize{}
+		if err := decoder.Decode(&size); err != nil {
+			break
+		}
+		channel <- size
+	}
 }

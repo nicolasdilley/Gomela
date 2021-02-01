@@ -31,7 +31,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Result_fodler: result_folder,
 							Project_name:  proj_name,
 							Package:       pack_name,
-							Name:          pack_name + "_" + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
+							Name:          pack_name + "&" + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
 							AstMap:        ast_map,
 							Fileset:       fileSet,
 							FuncDecls:     []*ast.FuncDecl{},

@@ -11,6 +11,10 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 
 	// look if the struct is a struct that contains the "automatic" declaration of a new WaitGroup
 	b, err = m.translateNewVar(s, s.Lhs, s.Rhs)
+
+	if err != nil {
+		return b, err
+	}
 	for _, spec := range s.Rhs {
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
