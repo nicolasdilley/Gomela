@@ -38,6 +38,7 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, call_expr *ast.C
 							for _, name := range spec.Names {
 								exprs = append(exprs, name)
 							}
+
 							c1, w1 := AnalyseNewVar(n, exprs, spec.Values, pack)
 							chans = append(chans, c1...)
 							wgs = append(wgs, w1...)
@@ -58,6 +59,10 @@ func AnalyseFuncCall(fileSet *token.FileSet, fun *ast.FuncDecl, call_expr *ast.C
 								}
 							}
 
+							switch sel := spec.Type.(type) {
+							case *ast.StarExpr:
+								spec.Type = sel.X
+							}
 							// check if its the declaration of a WG
 							switch sel := spec.Type.(type) {
 							case *ast.SelectorExpr:

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -13,26 +14,36 @@ func CloneRepo(url string, commit string) (string, string, error) {
 	// var last_commit_hash string
 
 	// Tempdir to clone the repository
-
 	var err error
 
-	dir := "projects/" + strings.Replace(url, "/", "&", -1)
-	// Clones the repository into the given dir, just as a normal git clone does
-	var r *git.Repository
-	r, err = git.PlainClone(dir, false, &git.CloneOptions{
-		URL:      "https://github.com/" + url,
-		Progress: os.Stdout,
-	})
-	// var head *plumbing.Reference
+	dir := PROJECTS_FOLDER + "/" + strings.Replace(url, "/", "&", -1)
 
-	// head, err = r.Head()
+	_, err1 := os.Stat(dir)
 
-	var w *git.Worktree
-	w, err = r.Worktree()
+	if os.IsNotExist(err1) {
 
-	err = w.Checkout(&git.CheckoutOptions{
-		Hash: plumbing.NewHash(commit),
-	})
+		errDir := os.MkdirAll("projects", 0755)
+		if errDir != nil {
+			log.Fatal(errDir)
+		}
+
+		// Clones the repository into the given dir, just as a normal git clone does
+		var r *git.Repository
+		r, err = git.PlainClone(dir, false, &git.CloneOptions{
+			URL:      "https://github.com/" + url,
+			Progress: os.Stdout,
+		})
+		// var head *plumbing.Reference
+
+		// head, err = r.Head()
+
+		var w *git.Worktree
+		w, err = r.Worktree()
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Hash: plumbing.NewHash(commit),
+		})
+	}
 
 	return dir, commit, err
 }

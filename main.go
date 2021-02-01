@@ -42,6 +42,7 @@ var (
 	NUM_OF_MODELS            int = 0
 	NUM_OF_EXECUTABLE_MODELS int = 0
 	RESULTS_FOLDER               = "result"
+	PROJECTS_FOLDER              = "../projects"
 )
 
 func main() {
@@ -51,6 +52,16 @@ func main() {
 	t := time.Now().Local().Format("2006-01-02--15:04:05")
 	RESULTS_FOLDER += t
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
+
+	_, err := os.Stat(PROJECTS_FOLDER)
+
+	if os.IsNotExist(err) { // create the projects folder if not there
+		errDir := os.MkdirAll(PROJECTS_FOLDER, 0755)
+		if errDir != nil {
+			log.Fatal(err)
+		}
+	}
+
 	f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/package_errors.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	os.Stderr = f
@@ -90,16 +101,6 @@ func main() {
 		if len(os.Args) > 2 {
 			if strings.HasSuffix(*ver.multi_projects, ".csv") {
 
-				_, err := os.Stat("projects")
-
-				if !os.IsNotExist(err) {
-					os.RemoveAll("projects")
-				}
-				errDir := os.MkdirAll("projects", 0755)
-				if errDir != nil {
-					log.Fatal(err)
-				}
-
 				// parse each projects
 				data, e := ioutil.ReadFile(*ver.multi_projects)
 				if e != nil {
@@ -123,16 +124,6 @@ func main() {
 		}
 
 	} else if *ver.single_project != "" {
-
-		_, err := os.Stat("projects")
-
-		if !os.IsNotExist(err) {
-			os.RemoveAll("projects")
-		}
-		errDir := os.MkdirAll("projects", 0755)
-		if errDir != nil {
-			log.Fatal(err)
-		}
 
 		// parse project given
 		parseProject(*ver.single_project, "master", ver)

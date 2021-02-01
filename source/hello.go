@@ -1,44 +1,34 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
-	"time"
-
-	"k8s.io/apimachinery/pkg/util/runtime"
+	"fmt"
+	"sync"
 )
 
-func createStreams(req *http.Request, w http.ResponseWriter, opts *Options, supportedStreamProtocols []string, idleTimeout, streamCreationTimeout time.Duration) (*context, bool) {
-	var ctx *context
-	var ok bool
-	if wsstream.IsWebSocketRequest(req) {
-		ctx, ok = createWebSocketStreams(req, w, opts, idleTimeout)
-	} else {
-		ctx, ok = createHTTPStreamStreams(req, w, opts, supportedStreamProtocols, idleTimeout, streamCreationTimeout)
-	}
-	if !ok {
-		return nil, false
-	}
+func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
+	workers := make(chan int)
+	var wg sync.WaitGroup
 
-	if ctx.resizeStream != nil {
-		ctx.resizeChan = make(chan remotecommand.TerminalSize)
-		go handleResizeEvents(ctx.resizeStream, ctx.resizeChan)
-	}
+	for b := 0; b < datalen; b += blockSize {
+		wg.Add(1)
+		switch data := input.(type) {
+		case []float64:
+			go func(data, output []float64, dimSize, dimStride int, wg *sync.WaitGroup) {
+				workers <- struct{}{}
+				op.f64skernel(data, output, inner, ostride, dimSize, dimStride)
+				wg.Done()
+				<-workers
+			}(newdata, newoutput, dimSize, dimStride, &wg)
+		case []float32:
+			go func(data, output []float32, dimSize, dimStride int, wg *sync.WaitGroup) {
+				workers <- struct{}{}
+				wg.Done()
+				<-workers
+			}(newdata, newoutput, dimSize, dimStride, &wg)
+		default:
+			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", data))
 
-	return ctx, true
-}
-
-func handleResizeEvents(stream io.Reader, channel chan<- remotecommand.TerminalSize) {
-	defer runtime.HandleCrash()
-	defer close(channel)
-
-	decoder := json.NewDecoder(stream)
-	for {
-		size := remotecommand.TerminalSize{}
-		if err := decoder.Decode(&size); err != nil {
-			break
 		}
-		channel <- size
 	}
+	wg.Wait()
 }

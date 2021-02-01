@@ -55,6 +55,8 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 						s1, defers, err1 = m.translateBranchStmt(stmt)
 					case *ast.IfStmt:
 						s1, defers, err1 = m.translateIfStmt(stmt)
+					case *ast.TypeSwitchStmt:
+						s1, defers, err1 = m.translateTypeSwitchStmt(stmt)
 					}
 
 					if err1 != nil {
