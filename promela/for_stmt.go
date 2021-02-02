@@ -23,10 +23,9 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	m.For_counter.With_go = false
 
 	if m.For_counter.In_for {
-		m.For_counter.Y++
+		m.For_counter.Y += 1
 	} else {
-		m.For_counter.X++
-		m.For_counter.In_for = true
+		m.For_counter.X += 1
 	}
 
 	cond, err1 := m.TranslateExpr(s.Cond)
@@ -45,6 +44,8 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	post, d2, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Post}})
 	addBlock(b, post)
 	addBlock(defers, d2)
+
+	m.For_counter.In_for = true
 
 	if err1 != nil {
 		err = err1
@@ -128,12 +129,12 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	if !was_in_for { // if outer loop set in for to false and reset y
 		m.For_counter.In_for = false
 		m.For_counter.Y = 0
+	} else {
+		m.For_counter.In_for = true
+		m.For_counter.Y -= 1
 	}
-	m.For_counter.With_go = false
 
-	if had_go {
-		m.For_counter.With_go = true
-	}
+	m.For_counter.With_go = had_go
 
 	return b, defers, err
 }

@@ -43,6 +43,7 @@ var (
 	NUM_OF_EXECUTABLE_MODELS int = 0
 	RESULTS_FOLDER               = "result"
 	PROJECTS_FOLDER              = "../projects"
+	AUTHOR_PROJECT_SEP           = "--"
 )
 
 func main() {
@@ -193,10 +194,10 @@ func parseProject(project_name string, commit string, ver *VerificationInfo) {
 func inferProject(path string, dir_name string, commit string, packages []string, ver *VerificationInfo) {
 
 	// Partition program
+	dir_name = strings.Replace(dir_name, "/", AUTHOR_PROJECT_SEP, -1)
 	f, ast_map := GenerateAst(path, packages, dir_name)
 	if f != nil {
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
-		dir_name = strings.Replace(dir_name, "/", "&", -1)
 
 		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 		if err != nil {

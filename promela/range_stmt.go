@@ -22,8 +22,9 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		m.For_counter.Y++
 	} else {
 		m.For_counter.X++
-		m.For_counter.In_for = true
 	}
+
+	m.For_counter.In_for = true
 
 	isChan := false
 	switch m.AstMap[m.Package].TypesInfo.TypeOf(s.X).(type) {
@@ -134,12 +135,11 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 	if !was_in_for { // if outer loop set in for to false and reset y
 		m.For_counter.In_for = false
 		m.For_counter.Y = 0
+	} else {
+		m.For_counter.Y -= 1
+		m.For_counter.In_for = true
 	}
-	m.For_counter.With_go = false
-
-	if had_go {
-		m.For_counter.With_go = true
-	}
+	m.For_counter.With_go = had_go
 
 	return b, defers, err
 }
