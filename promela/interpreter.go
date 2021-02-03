@@ -3,6 +3,7 @@ package promela
 import (
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -32,7 +33,23 @@ func Print(m *Model) {
 
 	stmt += "\n"
 
-	stmt += "// " + m.Fileset.Position(m.Fun.Pos()).Filename + "\n"
+	pos := strings.Split(m.Fileset.Position(m.Fun.Pos()).Filename, "/Users/redfloyd/go/src/github.com/nicolasdilley/projects/")
+	splitted := strings.Split(pos[1], "/")
+
+	path := splitted[1:]
+
+	file_path := ""
+
+	for i, p := range path {
+		file_path += p
+
+		if i < len(path)-1 {
+			file_path += "/"
+		}
+	}
+
+	proj_name := strings.Replace(splitted[0], AUTHOR_PROJECT_SEP, "/", -1)
+	stmt += "// https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line) + "\n"
 
 	// add chans to the chandef
 	chan_struct := promela_ast.ChanStructDef{Name: &promela_ast.Ident{Name: "Chandef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel

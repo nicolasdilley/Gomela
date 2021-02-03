@@ -34,6 +34,7 @@ type ProjectList struct {
 const (
 	NUM_TOP_PROJECTS   = 5
 	AUTHOR_PROJECT_SEP = "--"
+	PACKAGE_MODEL_SEP  = "++"
 )
 
 func main() {
@@ -71,15 +72,15 @@ func main() {
 			for _, line := range supported_models {
 				splitted_line := strings.Split(line, ",")
 				project := splitted_line[0]
-				splitted := strings.Split(splitted_line[1], AUTHOR_PROJECT_SEP)
+				splitted := strings.Split(splitted_line[1], PACKAGE_MODEL_SEP)
 
 				packages := splitted[0]
 				if len(splitted) > 2 {
-					fmt.Println("have a model with two $")
+					fmt.Println("Have a model with two " + PACKAGE_MODEL_SEP)
 
 					for i, pack := range splitted[:len(splitted)-1] {
 						if pack != "" && i != 0 {
-							packages += AUTHOR_PROJECT_SEP
+							packages += PACKAGE_MODEL_SEP
 						}
 						packages += pack
 
@@ -171,7 +172,7 @@ func printProjectList(lines []string) {
 	}
 	defer file.Close()
 	for project, commit := range project_map {
-		file.WriteString(project + "," + commit + "\n")
+		file.WriteString(strings.Replace(project, AUTHOR_PROJECT_SEP, "/", -1) + "," + commit + "\n")
 	}
 }
 

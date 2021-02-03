@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Feature struct {
@@ -32,24 +33,43 @@ func CreateCSV(result_folder string) {
 
 }
 
-func logFeature(feature Feature) {
+func logFeature(feature Feature, m *Model) {
+
+	pos := strings.Split(m.Fileset.Position(m.Fun.Pos()).Filename, "/Users/redfloyd/go/src/github.com/nicolasdilley/projects/")
+	splitted := strings.Split(pos[1], "/")
+
+	path := splitted[1:]
+
+	file_path := ""
+
+	for i, p := range path {
+		file_path += p
+
+		if i < len(path)-1 {
+			file_path += "/"
+		}
+	}
+
+	proj_name := strings.Replace(splitted[0], AUTHOR_PROJECT_SEP, "/", -1)
+	filename := "https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line)
+
 	toPrint :=
-		feature.Proj_name + "," +
+		proj_name + "," +
 			feature.Model + "," +
 			feature.Fun + "," +
 			feature.Name + "," +
 			feature.Mandatory + "," +
 			feature.Info + "," +
 			strconv.Itoa(feature.Line) + "," +
-			feature.Filename + ","
+			filename + ","
 
 	toPrint += feature.Commit
 
 	log.Println(toPrint)
 }
 
-func PrintFeatures(features []Feature) {
+func PrintFeatures(features []Feature, m *Model) {
 	for _, feature := range features {
-		logFeature(feature)
+		logFeature(feature, m)
 	}
 }

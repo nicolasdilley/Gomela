@@ -16,13 +16,13 @@ func (m *Model) translateTypeSwitchStmt(s *ast.TypeSwitchStmt) (b *promela_ast.B
 	for _, stmt := range s.Body.List {
 		switch c := stmt.(type) {
 		case *ast.CaseClause:
-			for _, stmt := range c.Body {
+			var body *promela_ast.BlockStmt
+			var d2 *promela_ast.BlockStmt
+			var err1 *ParseError
 
-				var body *promela_ast.BlockStmt
-				var d2 *promela_ast.BlockStmt
-				var err1 *ParseError
+			if len(c.Body) > 0 {
 
-				switch stmt := stmt.(type) {
+				switch stmt := c.Body[0].(type) {
 
 				case *ast.BlockStmt:
 					body, d2, err1 = m.TranslateBlockStmt(stmt)
@@ -41,7 +41,6 @@ func (m *Model) translateTypeSwitchStmt(s *ast.TypeSwitchStmt) (b *promela_ast.B
 				guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}
 				i.Guards = append(i.Guards, guard)
 			}
-
 		default:
 			fmt.Println("Promela_translator.go: in a switch and its not a case clause or a default")
 		}

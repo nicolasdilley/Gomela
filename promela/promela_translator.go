@@ -14,14 +14,15 @@ import (
 )
 
 var (
-	CHAN_NAME       = "_ch"
-	DEFAULT_BOUND   = "??"
-	OPTIONAL_BOUND  = "-2"
-	CHAN_BOUND      = 0
-	ADD_BOUND       = 1
-	LOWER_FOR_BOUND = 2
-	UPPER_FOR_BOUND = 3
-	RANGE_BOUND     = 4
+	CHAN_NAME          = "_ch"
+	DEFAULT_BOUND      = "??"
+	OPTIONAL_BOUND     = "-2"
+	CHAN_BOUND         = 0
+	ADD_BOUND          = 1
+	LOWER_FOR_BOUND    = 2
+	UPPER_FOR_BOUND    = 3
+	RANGE_BOUND        = 4
+	AUTHOR_PROJECT_SEP = "--"
 
 	Features = []Feature{}
 )
@@ -81,7 +82,9 @@ type ParseError struct {
 }
 
 // Take a go function and translate it to a Promela module
-func (m *Model) GoToPromela() {
+func (m *Model) GoToPromela(SEP string) {
+
+	AUTHOR_PROJECT_SEP = SEP
 	Features = []Feature{}
 	m.CommPars = m.AnalyseCommParam(m.Package, m.Fun, m.AstMap, true)
 
@@ -135,7 +138,7 @@ func (m *Model) GoToPromela() {
 			m.Features = Features
 			Clean(m)
 			Print(m) // print the model
-			PrintFeatures(m.Features)
+			PrintFeatures(m.Features, m)
 		}
 	} else {
 		fmt.Println("Could not parse model ", m.Name, " :")
@@ -150,7 +153,7 @@ func (m *Model) GoToPromela() {
 			Line:      0,
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-		})
+		}, m)
 	}
 
 }

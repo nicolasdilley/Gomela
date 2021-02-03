@@ -16,7 +16,7 @@ func CloneRepo(url string, commit string) (string, string, error) {
 	// Tempdir to clone the repository
 	var err error
 
-	dir := PROJECTS_FOLDER + "/" + strings.Replace(url, "/", "&", -1)
+	dir := PROJECTS_FOLDER + "/" + strings.Replace(url, "/", AUTHOR_PROJECT_SEP, -1)
 
 	_, err1 := os.Stat(dir)
 

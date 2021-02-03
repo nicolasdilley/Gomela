@@ -44,6 +44,7 @@ var (
 	RESULTS_FOLDER               = "result"
 	PROJECTS_FOLDER              = "../projects"
 	AUTHOR_PROJECT_SEP           = "--"
+	PACKAGE_MODEL_SEP            = "++"
 )
 
 func main() {
