@@ -57,6 +57,7 @@ type Model struct {
 	Default_ub      int
 	AstMap          map[string]*packages.Package // the map used to find the type of the channels
 	Chan_closing    bool
+	Projects_folder string
 }
 
 // Used to represent a function for recursive calls
@@ -121,39 +122,40 @@ func (m *Model) GoToPromela(SEP string) {
 		&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "num_msgs"}, Types: promela_types.Int, Rhs: &promela_ast.Ident{Name: "0"}})
 	s1, defers, err := m.TranslateBlockStmt(m.Fun.Body)
 
-	m.Init.Body.List = append(m.Init.Body.List,
-		s1.List...)
+	// generate the model only if it contains a chan or a wg
+	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
+		if err == nil {
 
-	for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
-		defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
-	} // reverse defer stmts
+			m.Init.Body.List = append(m.Init.Body.List,
+				s1.List...)
 
-	m.Init.Body.List = append(m.Init.Body.List,
-		defers.List...)
+			for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {²
+				defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
+			} // reverse defer stmts
 
-	// generate the model only if it contains only supported features
-	if err == nil {
-		if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
+			m.Init.Body.List = append(m.Init.Body.List,
+				defers.List...)
+
 			// clean the model by removing empty for loops and unused opt param
 			m.Features = Features
 			Clean(m)
 			Print(m) // print the model
 			PrintFeatures(m.Features, m)
-		}
-	} else {
-		fmt.Println("Could not parse model ", m.Name, " :")
-		fmt.Println(err.err.Error())
+		} else {
+			fmt.Println("Could not parse model ", m.Name, " :")
+			fmt.Println(err.err.Error())
 
-		logFeature(Feature{
-			Proj_name: m.Project_name,
-			Model:     m.Name,
-			Fun:       m.Fun.Name.String(),
-			Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
-			Mandatory: "false",
-			Line:      0,
-			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-		}, m)
+			logFeature(Feature{
+				Proj_name: m.Project_name,
+				Model:     m.Name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
+				Mandatory: "false",
+				Line:      0,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+			}, m)
+		}
 	}
 
 }
@@ -828,6 +830,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) Model {
 		Default_ub:      m.Default_lb,
 		AstMap:          m.AstMap,
 		Chan_closing:    m.Chan_closing,
+		Projects_folder: m.Projects_folder,
 	}
 }
 

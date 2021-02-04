@@ -83,7 +83,7 @@ func main() {
 	promela.CreateCSV(RESULTS_FOLDER)
 
 	if *ver.verify {
-		toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info,\n"
+		toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
 
 		// Print CSV
 		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
@@ -198,7 +198,8 @@ func inferProject(path string, dir_name string, commit string, packages []string
 	dir_name = strings.Replace(dir_name, "/", AUTHOR_PROJECT_SEP, -1)
 	f, ast_map := GenerateAst(path, packages, dir_name)
 	if f != nil {
-		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER)
+		projects_folder, _ := filepath.Abs(PROJECTS_FOLDER)
+		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER, projects_folder)
 
 		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
 		if err != nil {

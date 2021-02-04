@@ -37,6 +37,13 @@ const (
 	PACKAGE_MODEL_SEP  = "++"
 )
 
+type ModelScore struct {
+	model   string
+	GDScore float64
+	CSScore float64
+	Commit  string
+}
+
 func main() {
 
 	if len(os.Args) > 1 {
@@ -649,14 +656,16 @@ func parseVerificationResults() {
 			}
 		}
 
-		scores := make(map[string][]float64)
+		scores := make(map[string]ModelScore)
 		num_models_with_score_that_are_not_one_not_zero := 0
+
 		for model, verifications := range verification_map {
 			gd_score := 0
 			cs_score := 0
-
+			commit := ""
 			for _, v := range verifications {
 				splitted_line := strings.Split(v, ",")
+				commit = splitted_line[len(splitted_line)-2]
 				cs_error := splitted_line[4] == "true"
 				gd_error := splitted_line[5] == "true"
 				if cs_error {
@@ -671,10 +680,12 @@ func parseVerificationResults() {
 			} else if float64(gd_score)/float64(len(verifications)) != 0.0 && float64(gd_score)/float64(len(verifications)) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
-			scores[model] = append(scores[model], []float64{float64(cs_score) / float64(len(verifications)), float64(gd_score) / float64(len(verifications))}...)
+
+			score := ModelScore{model: model, GDScore: float64(gd_score) / float64(len(verifications)), CSScore: float64(cs_score) / float64(len(verifications)), Commit: commit}
+			scores[model] = score
 		}
 
-		ioutil.WriteFile("scores.csv", []byte("Project, Channel safety score, Global deadlock score, \n"), 0644)
+		ioutil.WriteFile("scores.csv", []byte("Project, Channel safety score, Global deadlock score, Link \n"), 0644)
 		file, err := os.OpenFile("scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Println(err)
@@ -685,41 +696,37 @@ func parseVerificationResults() {
 		cs_scores_frequency := make(map[string]int)
 
 		for model, scores := range scores {
-			toPrint := fmt.Sprint(model + ",")
-			if scores[0] == 0.0 {
+			toPrint := fmt.Sprint(model, ",", scores.CSScore, ",", scores.GDScore, ",", scores.Commit)
+			if scores.CSScore == 0.0 {
 				cs_scores_frequency["0"]++
-			} else if scores[0] < 0.2 {
+			} else if scores.CSScore < 0.2 {
 				cs_scores_frequency["0 - 0.2"]++
-			} else if scores[0] < 0.4 {
+			} else if scores.CSScore < 0.4 {
 				cs_scores_frequency["0.2 - 0.4"]++
-			} else if scores[0] < 0.6 {
+			} else if scores.CSScore < 0.6 {
 				cs_scores_frequency["0.4 - 0.6"]++
-			} else if scores[0] < 0.8 {
+			} else if scores.CSScore < 0.8 {
 				cs_scores_frequency["0.6 - 0.8"]++
-			} else if scores[0] < 1.0 {
+			} else if scores.CSScore < 1.0 {
 				cs_scores_frequency["0.8 - 1"]++
 			} else {
 				cs_scores_frequency["1"]++
 			}
 
-			if scores[1] == 0.0 {
+			if scores.GDScore == 0.0 {
 				gb_scores_frequency["0"]++
-			} else if scores[1] == 1.0 {
+			} else if scores.GDScore == 1.0 {
 				gb_scores_frequency["1"]++
-			} else if scores[1] < 0.2 {
+			} else if scores.GDScore < 0.2 {
 				gb_scores_frequency["0 - 0.2"]++
-			} else if scores[1] < 0.4 {
+			} else if scores.GDScore < 0.4 {
 				gb_scores_frequency["0.2 - 0.4"]++
-			} else if scores[1] < 0.6 {
+			} else if scores.GDScore < 0.6 {
 				gb_scores_frequency["0.4 - 0.6"]++
-			} else if scores[1] < 0.8 {
+			} else if scores.GDScore < 0.8 {
 				gb_scores_frequency["0.6 - 0.8"]++
 			} else {
 				gb_scores_frequency["0.8 - 1"]++
-			}
-
-			for _, score := range scores {
-				toPrint += fmt.Sprint(score) + ","
 			}
 			//Append second line
 

@@ -12,7 +12,7 @@ import (
 )
 
 // takes a project name and infer promela models
-func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package, ver *VerificationInfo, result_folder string) {
+func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map map[string]*packages.Package, ver *VerificationInfo, result_folder string, projects_folder string) {
 
 	if len(ast_map) == 0 {
 		fmt.Println("Program has no packages")
@@ -28,24 +28,25 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
 						var m promela.Model = promela.Model{
-							Result_fodler: result_folder,
-							Project_name:  proj_name,
-							Package:       pack_name,
-							Name:          pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
-							AstMap:        ast_map,
-							Fileset:       fileSet,
-							FuncDecls:     []*ast.FuncDecl{},
-							Proctypes:     []*promela_ast.Proctype{},
-							RecFuncs:      []promela.RecFunc{},
-							SpawningFuncs: []*promela.SpawningFunc{},
-							Fun:           decl,
-							Chans:         make(map[ast.Expr]*promela.ChanStruct),
-							WaitGroups:    make(map[ast.Expr]*promela.WaitGroupStruct),
-							Commit:        commit,
-							Global_vars:   []promela_ast.Stmt{},
-							For_counter:   &promela.ForCounter{},
-							Default_ub:    *ver.ub,
-							Default_lb:    *ver.lb,
+							Result_fodler:   result_folder,
+							Project_name:    proj_name,
+							Package:         pack_name,
+							Name:            pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
+							AstMap:          ast_map,
+							Fileset:         fileSet,
+							FuncDecls:       []*ast.FuncDecl{},
+							Proctypes:       []*promela_ast.Proctype{},
+							RecFuncs:        []promela.RecFunc{},
+							SpawningFuncs:   []*promela.SpawningFunc{},
+							Fun:             decl,
+							Chans:           make(map[ast.Expr]*promela.ChanStruct),
+							WaitGroups:      make(map[ast.Expr]*promela.WaitGroupStruct),
+							Commit:          commit,
+							Global_vars:     []promela_ast.Stmt{},
+							For_counter:     &promela.ForCounter{},
+							Default_ub:      *ver.ub,
+							Default_lb:      *ver.lb,
+							Projects_folder: projects_folder,
 						}
 
 						m.GoToPromela(AUTHOR_PROJECT_SEP)

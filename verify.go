@@ -49,10 +49,10 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
 
 			content, err := ioutil.ReadFile(path)
-
 			if err != nil {
 				fmt.Println("Could not read content of : ", path, err)
 			} else {
+				var git_link string = ""
 				file_content := string(content)
 				lines := strings.Split(file_content, "\n")
 
@@ -70,14 +70,18 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 					if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
 						optional_params += 1
 					}
+
+					if strings.Contains(line, "github.com") && git_link == "" {
+						git_link = strings.Split(line, "// ")[1]
+					}
 				}
 
 				model_name := strings.Replace(filepath.Base(dir_name), "&", "/", -1) + ":" + model.Name()
 				fmt.Println("there is ", optional_params, " optionnal params.")
 				if len(comm_params) == 0 {
-					ver := verifyModel(path, model_name, f, []string{}, []string{})
+					ver := verifyModel(path, model_name, git_link, f, []string{}, []string{})
 					if optional_params > 0 {
-						verifyWithOptParams(ver, path, model_name, lines, f, []string{}, []string{}, optional_params)
+						verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params)
 					}
 				} else if len(comm_params) > 5 {
 					toPrint := filepath.Base(dir_name) + ":" + model.Name() + ",too many comm params : " + strconv.Itoa(len(comm_params)) + ",,,,,\n"
@@ -105,9 +109,9 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 						for _, b := range bound {
 							bound_str = append(bound_str, fmt.Sprint(b))
 						}
-						ver := verifyModel(path, model_name, f, comm_params, bound_str)
+						ver := verifyModel(path, model_name, git_link, f, comm_params, bound_str)
 						if optional_params > 0 {
-							verifyWithOptParams(ver, path, model_name, lines, f, comm_params, bound_str, optional_params)
+							verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params)
 						}
 					}
 				}
@@ -117,9 +121,10 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 }
 
-func verifyModel(path string, model_name string, f *os.File, comm_params []string, bound []string) *VerificationRun {
+func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, bound []string) *VerificationRun {
 
 	ver := &VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
+
 	var output bytes.Buffer
 
 	// Verify with SPIN
@@ -158,7 +163,7 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 			}
 			fmt.Println("-------------------------------")
 
-			toPrint = model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+			toPrint = model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + "," + git_link + ",\n"
 
 		}
 
@@ -169,7 +174,7 @@ func verifyModel(path string, model_name string, f *os.File, comm_params []strin
 	return ver
 }
 
-func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, f *os.File, comm_params []string, bound []string, num_optionnal int) {
+func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int) {
 	if ver.Global_deadlock && !ver.Timeout && ver.Err == "" {
 		// add values to the candidates param
 
@@ -254,7 +259,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 							}
 							fmt.Println("-------------------------------")
 
-							toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + ",\n"
+							toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + "," + git_link + ",\n"
 							if _, err := f.WriteString(toPrint); err != nil {
 								panic(err)
 							}
