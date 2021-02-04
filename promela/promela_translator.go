@@ -129,7 +129,7 @@ func (m *Model) GoToPromela(SEP string) {
 			m.Init.Body.List = append(m.Init.Body.List,
 				s1.List...)
 
-			for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {²
+			for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
 				defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
 			} // reverse defer stmts
 
