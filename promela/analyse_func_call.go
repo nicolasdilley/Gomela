@@ -3,7 +3,6 @@ package promela
 import (
 	"go/ast"
 	"go/token"
-	"go/types"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -103,35 +102,13 @@ func AnalyseNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr, pack *packages.Pa
 	chans = []ast.Expr{}
 	wgs = []ast.Expr{}
 
-	for _, l := range lhs {
-		switch s := pack.TypesInfo.TypeOf(l).(type) {
-		case *types.Named:
-			switch s := s.Underlying().(type) {
-			case *types.Struct:
-				for i := 0; i < s.NumFields(); i++ {
-					switch field := s.Field(i).Type().(type) {
-					case *types.Named:
-						if field.Obj() != nil {
-							if field.Obj().Pkg() != nil {
-								if field.Obj().Pkg().Name() == "sync" {
-									if field.Obj().Name() == "WaitGroup" {
-										wgs = append(wgs, &ast.Ident{Name: translateIdent(l).Name + "_" + s.Field(i).Name(), NamePos: l.Pos()})
-									}
-								}
-							}
-
-						}
-					}
-				}
-			}
-		}
-	}
 	for i, r := range rhs {
 		switch r := r.(type) {
 		case *ast.UnaryExpr:
 			rhs[i] = r.X
 		}
 	}
+
 	for i, rhs := range rhs {
 		switch rhs := rhs.(type) {
 		case *ast.CallExpr:

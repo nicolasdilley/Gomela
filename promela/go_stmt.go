@@ -81,6 +81,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 										prom_call.Args = append(prom_call.Args, arg)
 										known = true
 									} else {
+										fmt.Println("oui", call_expr.Args[counter])
 										known = false
 									}
 								}
@@ -122,6 +123,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 				counter++
 			}
 		}
+
 		if hasChan && known {
 			// Add the commparam to the param of the new proc
 			for _, commPar := range new_mod.CommPars {

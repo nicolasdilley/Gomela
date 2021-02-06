@@ -132,6 +132,7 @@ func main() {
 
 	} else {
 
+		PROJECTS_FOLDER = "./source"
 		path := os.Args[len(os.Args)-1]
 
 		_, err := ioutil.ReadDir(path)

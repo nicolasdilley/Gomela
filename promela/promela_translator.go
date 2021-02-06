@@ -195,6 +195,22 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 			call = unary.X
 		}
 		switch call := call.(type) {
+		case *ast.SelectorExpr:
+			if call.Sel.Name == "WaitGroup" {
+				switch sel := call.X.(type) {
+				case *ast.Ident:
+					if sel.Name == "sync" {
+						// we have a waitgroup
+						if len(lhs) > i {
+							b1, err1 := m.translateWg(s, lhs[i])
+							addBlock(b, b1)
+							if err1 != nil {
+								err = err1
+							}
+						}
+					}
+				}
+			}
 		case *ast.CallExpr:
 			switch ident := call.Fun.(type) {
 			case *ast.Ident:
@@ -264,6 +280,25 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 				obj = sel.Obj
 			case *ast.SelectorExpr:
 				obj = sel.Sel.Obj
+			}
+
+			switch sel := call.Type.(type) {
+			case *ast.SelectorExpr:
+				if sel.Sel.Name == "WaitGroup" {
+					switch sel := sel.X.(type) {
+					case *ast.Ident:
+						if sel.Name == "sync" {
+							// we have a waitgroup
+							for _, name := range lhs {
+								b1, err1 := m.translateWg(s, name)
+								addBlock(b, b1)
+								if err1 != nil {
+									err = err1
+								}
+							}
+						}
+					}
+				}
 			}
 
 			if obj != nil {

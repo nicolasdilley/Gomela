@@ -162,7 +162,7 @@ func removeDecl(commPar *CommPar, b *promela_ast.BlockStmt) {
 	}
 }
 
-// see if the blockstmt contains a receive or send
+// see if the blockstmt contains a receive, a send or a run stmt
 func containsMSP(b *promela_ast.BlockStmt) bool {
 	contains := false
 
@@ -171,7 +171,7 @@ func containsMSP(b *promela_ast.BlockStmt) bool {
 		case *promela_ast.RcvStmt, *promela_ast.SendStmt, *promela_ast.RunStmt:
 			contains = true
 		}
-		return true
+		return !contains
 	})
 	return contains
 }
