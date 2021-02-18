@@ -1,4 +1,4 @@
-#define AttackCredentials_targets  3
+#define AttackCredentials_targets  0
 
 // https://github.com/Ullaakut/cameradar/blob/8c8ea1209b352671ca99e07eb4de0b96b833506f/attack.go#L84
 typedef Chandef {
@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201054: skip;
+			for201078: skip;
 			
 
 			if
 			:: resChan.async_rcv?state,num_msgs;
 			:: resChan.sync?state,num_msgs;
 			fi;
-			for20_end1054: skip
+			for20_end1078: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1054: skip
+		for20_exit1078: skip
 	fi;
 	goto stop_process;
 	resChan.closing!true
@@ -102,7 +102,7 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 			:: else -> 
 				do
 				:: true -> 
-					for121052: skip;
+					for121076: skip;
 					
 
 					if
@@ -117,11 +117,11 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 						goto stop_process
 					:: true;
 					fi;
-					for12_end1052: skip
+					for12_end1076: skip
 				:: true -> 
 					break
 				od;
-				for12_exit1052: skip
+				for12_exit1076: skip
 			fi;
 			for11_end: skip
 		};
@@ -129,13 +129,13 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 	:: else -> 
 		do
 		:: true -> 
-			for111053: skip;
+			for111077: skip;
 			
 
 			if
 			:: s_credentials_Passwords-1 != -3 -> 
 								for(i : 0.. s_credentials_Passwords-1) {
-					for121053: skip;
+					for121077: skip;
 					
 
 					if
@@ -150,13 +150,13 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 						goto stop_process
 					:: true;
 					fi;
-					for12_end1053: skip
+					for12_end1077: skip
 				};
-				for12_exit1053: skip
+				for12_exit1077: skip
 			:: else -> 
 				do
 				:: true -> 
-					for1210521053: skip;
+					for1210761077: skip;
 					
 
 					if
@@ -171,17 +171,17 @@ proctype go_attackCameraCredentials(Chandef resChan) {
 						goto stop_process
 					:: true;
 					fi;
-					for12_end10521053: skip
+					for12_end10761077: skip
 				:: true -> 
 					break
 				od;
-				for12_exit10521053: skip
+				for12_exit10761077: skip
 			fi;
-			for11_end1053: skip
+			for11_end1077: skip
 		:: true -> 
 			break
 		od;
-		for11_exit1053: skip
+		for11_exit1077: skip
 	fi;
 	
 

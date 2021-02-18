@@ -1,4 +1,4 @@
-#define runFullValidation_shards  3
+#define runFullValidation_shards  1
 
 // https://github.com/perkeep/perkeep/blob/40f12e532cba9a2b236a413d486c7ab0a6768672/pkg/server/sync.go#L751
 typedef Wgdef {

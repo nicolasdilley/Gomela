@@ -18,7 +18,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int paths=3;
+	int paths=0;
 	
 
 	if
@@ -172,7 +172,7 @@ proctype go_writePluginToWriter(Chandef errChan;int pluginPaths) {
 	:: else -> 
 		do
 		:: true -> 
-			for20339: skip;
+			for20354: skip;
 			
 
 			if
@@ -235,11 +235,11 @@ proctype go_writePluginToWriter(Chandef errChan;int pluginPaths) {
 				:: true;
 				fi
 			fi;
-			for20_end339: skip
+			for20_end354: skip
 		:: true -> 
 			break
 		od;
-		for20_exit339: skip
+		for20_exit354: skip
 	fi;
 	
 

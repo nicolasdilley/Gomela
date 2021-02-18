@@ -21,7 +21,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int uint648611=3;
+	int uint648611=0;
 	int frozen=0;
 	int runtime_NumCPU5018 = InitDatabaseFromFreezer_runtime_NumCPU5018;
 	int runtime_NumCPU4539 = InitDatabaseFromFreezer_runtime_NumCPU4539;
@@ -53,7 +53,7 @@ init {
 	if
 	:: uint648611 != -2 && frozen-1 != -3 -> 
 				for(i : uint648611.. frozen-1) {
-			for201045: skip;
+			for201043: skip;
 			
 
 			if
@@ -67,9 +67,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end1045: skip
+			for20_end1043: skip
 		};
-		for20_exit1045: skip
+		for20_exit1043: skip
 	:: else -> 
 		do
 		:: true -> 

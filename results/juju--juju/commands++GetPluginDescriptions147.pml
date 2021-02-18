@@ -60,18 +60,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20292: skip;
+			for20308: skip;
 			
 
 			if
 			:: description.async_rcv?state,num_msgs;
 			:: description.sync?state,num_msgs;
 			fi;
-			for20_end292: skip
+			for20_end308: skip
 		:: true -> 
 			break
 		od;
-		for20_exit292: skip
+		for20_exit308: skip
 	fi;
 	goto stop_process
 stop_process:skip

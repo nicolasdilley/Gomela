@@ -1,4 +1,4 @@
-#define spawnSync_fetchers  0
+#define spawnSync_fetchers  3
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/eth/downloader/downloader.go#L543
 typedef Chandef {
@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && fetchers-1 != -3 -> 
 				for(i : 0.. fetchers-1) {
-			for201040: skip;
+			for201054: skip;
 			
 
 			if
@@ -54,9 +54,9 @@ init {
 				break
 			:: true;
 			fi;
-			for20_end1040: skip
+			for20_end1054: skip
 		};
-		for20_exit1040: skip
+		for20_exit1054: skip
 	:: else -> 
 		do
 		:: true -> 

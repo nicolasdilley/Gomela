@@ -1,4 +1,4 @@
-#define StartReplicas_replicas  3
+#define StartReplicas_replicas  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/orchestrator/inst/instance_topology_dao.go#L461
 typedef Chandef {
@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20721: skip;
+			for20744: skip;
 			
 
 			if
 			:: barrier.async_rcv?state,num_msgs;
 			:: barrier.sync?state,num_msgs;
 			fi;
-			for20_end721: skip
+			for20_end744: skip
 		:: true -> 
 			break
 		od;
-		for20_exit721: skip
+		for20_exit744: skip
 	fi
 stop_process:skip
 }

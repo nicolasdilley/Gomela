@@ -1,4 +1,4 @@
-#define Select_q_queriers  1
+#define Select_q_queriers  3
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/storage/merge.go#L100
 typedef Chandef {

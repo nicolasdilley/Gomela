@@ -1,4 +1,4 @@
-#define Start_r_loopFuncs  1
+#define Start_r_loopFuncs  3
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/pkg/util/async/runner.go#L38
 typedef Chandef {

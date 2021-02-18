@@ -1,4 +1,4 @@
-#define ExecuteInParallel_numCPU  1
+#define ExecuteInParallel_numCPU  3
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/queue/queue.go#L372
 typedef Wgdef {

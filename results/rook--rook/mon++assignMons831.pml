@@ -1,4 +1,4 @@
-#define assignMons_mons  1
+#define assignMons_mons  3
 
 // https://github.com/rook/rook/blob/62ac1cd0017576c78598044d42d046e8a4a4c482/pkg/operator/ceph/cluster/mon/mon.go#L831
 typedef Wgdef {

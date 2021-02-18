@@ -1,4 +1,4 @@
-#define Gather_h_Servers  1
+#define Gather_h_Servers  3
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/httpjson/httpjson.go#L125
 typedef Wgdef {

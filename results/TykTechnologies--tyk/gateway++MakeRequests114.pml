@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int batchRequest_Requests=1;
+	int batchRequest_Requests=0;
 	int requestSet = MakeRequests_requestSet;
 	
 
@@ -41,7 +41,7 @@ init {
 				
 
 				if
-				:: replies.async_rcv?0;
+				:: replies.async_rcv?state,num_msgs;
 				:: replies.sync?state,num_msgs;
 				fi;
 				for20_end: skip
@@ -50,18 +50,18 @@ init {
 		:: else -> 
 			do
 			:: true -> 
-				for20619: skip;
+				for20640: skip;
 				
 
 				if
-				:: replies.async_rcv?0;
+				:: replies.async_rcv?state,num_msgs;
 				:: replies.sync?state,num_msgs;
 				fi;
-				for20_end619: skip
+				for20_end640: skip
 			:: true -> 
 				break
 			od;
-			for20_exit619: skip
+			for20_exit640: skip
 		fi
 	fi;
 	goto stop_process

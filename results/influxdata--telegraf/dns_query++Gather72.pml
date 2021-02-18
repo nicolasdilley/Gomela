@@ -1,5 +1,5 @@
-#define Gather_d_Domains  1
-#define Gather_d_Servers  1
+#define Gather_d_Domains  0
+#define Gather_d_Servers  0
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/dns_query/dns_query.go#L72
 typedef Wgdef {

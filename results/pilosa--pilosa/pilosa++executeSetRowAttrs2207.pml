@@ -1,4 +1,4 @@
-#define executeSetRowAttrs_nodes  0
+#define executeSetRowAttrs_nodes  3
 
 // https://github.com/pilosa/pilosa/blob/d960d2fda97521711a6b7d2542a8bd1a41112378/executor.go#L2207
 typedef Chandef {
@@ -102,7 +102,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20774: skip;
+			for20795: skip;
 			
 
 			if
@@ -116,11 +116,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end774: skip
+			for20_end795: skip
 		:: true -> 
 			break
 		od;
-		for20_exit774: skip
+		for20_exit795: skip
 	fi;
 	goto stop_process
 stop_process:skip

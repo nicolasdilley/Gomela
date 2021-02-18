@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && batches-1 != -3 -> 
 				for(i : 0.. batches-1) {
-			for40889: skip;
+			for40911: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for40_end889: skip
+			for40_end911: skip
 		};
-		for40_exit889: skip
+		for40_exit911: skip
 	:: else -> 
 		do
 		:: true -> 

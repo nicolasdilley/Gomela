@@ -1,4 +1,4 @@
-#define Shutdown_r_containers  1
+#define Shutdown_r_containers  3
 
 // https://github.com/hyperledger/fabric/blob/8555262cca0e3b0c89e077a71c9c5312920b87b0/core/container/container.go#L157
 typedef Chandef {

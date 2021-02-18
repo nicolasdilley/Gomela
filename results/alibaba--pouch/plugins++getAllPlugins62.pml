@@ -1,4 +1,4 @@
-#define getAllPlugins_names  1
+#define getAllPlugins_names  3
 
 // https://github.com/alibaba/pouch/blob/bc5839e3c493f3bcc56d16a65fa9d2bd0e7866a5/storage/plugins/manager.go#L62
 typedef Wgdef {

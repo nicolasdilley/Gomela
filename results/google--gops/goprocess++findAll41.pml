@@ -1,4 +1,4 @@
-#define findAll_pss  1
+#define findAll_pss  0
 #define findAll_concurrencyLimit  1
 
 // https://github.com/google/gops/blob/268f11e4fcde1604b8593e6bc35eb6e138699cb5/goprocess/gp.go#L41
@@ -65,7 +65,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for10165: skip;
+			for10175: skip;
 			
 
 			if
@@ -73,11 +73,11 @@ init {
 			:: input.sync!false,0 -> 
 				input.sending?state
 			fi;
-			for10_end165: skip
+			for10_end175: skip
 		:: true -> 
 			break
 		od;
-		for10_exit165: skip
+		for10_exit175: skip
 	fi;
 	input.closing!true;
 	run wgMonitor(wg);

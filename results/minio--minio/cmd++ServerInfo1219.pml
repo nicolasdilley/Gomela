@@ -1,4 +1,4 @@
-#define ServerInfo_sys_peerClients  3
+#define ServerInfo_sys_peerClients  0
 
 // https://github.com/minio/minio/blob/3163a660aa79b75b725a0c6f152557e6253b900f/cmd/notification.go#L1219
 typedef Wgdef {

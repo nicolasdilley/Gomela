@@ -1,4 +1,4 @@
-#define Gather_n_Fetch  1
+#define Gather_n_Fetch  0
 #define Gather_n_CityId  1
 #define ub_for106_2  1
 

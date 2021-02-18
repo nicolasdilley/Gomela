@@ -55,7 +55,7 @@ init {
 	if
 	:: 0 != -2 && ub_for588_2 != -2 -> 
 				for(i : 0.. ub_for588_2) {
-			for20920: skip;
+			for20944: skip;
 			
 
 			if
@@ -70,9 +70,9 @@ init {
 			:: ch.sync!false,0 -> 
 				ch.sending?state
 			fi;
-			for20_end920: skip
+			for20_end944: skip
 		};
-		for20_exit920: skip
+		for20_exit944: skip
 	:: else -> 
 		do
 		:: true -> 

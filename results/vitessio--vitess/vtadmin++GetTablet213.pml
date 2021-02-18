@@ -1,4 +1,4 @@
-#define GetTablet_clusters  3
+#define GetTablet_clusters  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/vtadmin/api.go#L213
 typedef Wgdef {

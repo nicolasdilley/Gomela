@@ -1,5 +1,5 @@
-#define bundlesFromRects_chunks  0
-#define bundlesFromRects_runtime_NumCPU4518  3
+#define bundlesFromRects_chunks  3
+#define bundlesFromRects_runtime_NumCPU4518  0
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/rtree/hilbert/hilbert.go#L39
 typedef Wgdef {

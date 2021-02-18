@@ -1,4 +1,4 @@
-#define GetLookupdTopics_lookupdHTTPAddrs  3
+#define GetLookupdTopics_lookupdHTTPAddrs  1
 
 // https://github.com/nsqio/nsq/blob/8adb229f70538c6f6554b98285a33552bcb5832c/internal/clusterinfo/data.go#L73
 typedef Wgdef {

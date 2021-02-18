@@ -1,4 +1,4 @@
-#define Steps_m_PrefetchMigrations  1
+#define Steps_m_PrefetchMigrations  3
 #define ub_for522_1  -2
 #define ub_for626_2  -2
 
@@ -115,7 +115,7 @@ proctype go_readUp(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for522_1 != -2 -> 
 				for(i : 0.. ub_for522_1) {
-			for10172: skip;
+			for10182: skip;
 			
 
 			if
@@ -162,7 +162,7 @@ proctype go_readUp(Chandef ret) {
 				:: ret.sync!false,0 -> 
 					ret.sending?state
 				fi;
-				goto for10_end172
+				goto for10_end182
 			:: true;
 			fi;
 			
@@ -255,9 +255,9 @@ proctype go_readUp(Chandef ret) {
 			:: ret.sync!false,0 -> 
 				ret.sending?state
 			fi;
-			for10_end172: skip
+			for10_end182: skip
 		};
-		for10_exit172: skip
+		for10_exit182: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -482,7 +482,7 @@ proctype go_readDown(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for626_2 != -2 -> 
 				for(i : 0.. ub_for626_2) {
-			for20173: skip;
+			for20183: skip;
 			
 
 			if
@@ -586,9 +586,9 @@ proctype go_readDown(Chandef ret) {
 			:: ret.sync!false,0 -> 
 				ret.sending?state
 			fi;
-			for20_end173: skip
+			for20_end183: skip
 		};
-		for20_exit173: skip
+		for20_exit183: skip
 	:: else -> 
 		do
 		:: true -> 

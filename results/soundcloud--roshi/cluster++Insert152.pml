@@ -1,4 +1,4 @@
-#define Insert_m  1
+#define Insert_m  3
 
 // https://github.com/soundcloud/roshi/blob/3386d6e0563cf5920a7d3f310fbe0adc934e3fa5/cluster/cluster.go#L152
 typedef Chandef {
@@ -60,7 +60,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for3075: skip;
+			for3082: skip;
 			
 
 			if
@@ -74,11 +74,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end75: skip
+			for30_end82: skip
 		:: true -> 
 			break
 		od;
-		for30_exit75: skip
+		for30_exit82: skip
 	fi;
 	goto stop_process
 stop_process:skip

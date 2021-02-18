@@ -1,4 +1,4 @@
-#define findBestAlgorithm_datas  1
+#define findBestAlgorithm_datas  3
 #define findBestAlgorithm_workers  1
 
 // https://github.com/schollz/find3/blob/5964026678a3b2c9f50f2e638f0eb1e0ecb6fe81/server/main/src/api/calibration.go#L177

@@ -1,4 +1,4 @@
-#define Gather_tubes  1
+#define Gather_tubes  0
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/beanstalkd/beanstalkd.go#L36
 typedef Wgdef {

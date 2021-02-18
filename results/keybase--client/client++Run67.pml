@@ -1,4 +1,4 @@
-#define Run_c_numUsers  0
+#define Run_c_numUsers  3
 
 // https://github.com/keybase/client/blob/cd76ccb97183c2be78b869fab9aed4b6f5b11086/go/client/cmd_stress.go#L67
 typedef Wgdef {

@@ -1,4 +1,4 @@
-#define splitBatchRegionsReq_batches  1
+#define splitBatchRegionsReq_batches  3
 
 // https://github.com/pingcap/tidb/blob/8ddd41c960caaebbdeb28da33c781fca1464f05f/store/tikv/split_region.go#L43
 typedef Chandef {
@@ -61,16 +61,16 @@ init {
 	if
 	:: 0 != -2 && batches-1 != -3 -> 
 				for(i : 0.. batches-1) {
-			for30891: skip;
+			for30913: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for30_end891: skip
+			for30_end913: skip
 		};
-		for30_exit891: skip
+		for30_exit913: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -1,4 +1,4 @@
-#define parseScannerLogOutput_chanBufSize  0
+#define parseScannerLogOutput_chanBufSize  3
 #define ub_for127_1  -2
 
 // https://github.com/git-lfs/git-lfs/blob/731bcc598b2edd1b400a8908a803fd6afdc255ff/lfs/gitscanner_log.go#L122
@@ -63,7 +63,7 @@ proctype go_Anonymous0(Chandef ch) {
 	if
 	:: 0 != -2 && ub_for127_1 != -2 -> 
 				for(i : 0.. ub_for127_1) {
-			for10616: skip;
+			for10635: skip;
 			
 
 			if
@@ -77,9 +77,9 @@ proctype go_Anonymous0(Chandef ch) {
 				fi
 			:: true;
 			fi;
-			for10_end616: skip
+			for10_end635: skip
 		};
-		for10_exit616: skip
+		for10_exit635: skip
 	:: else -> 
 		do
 		:: true -> 

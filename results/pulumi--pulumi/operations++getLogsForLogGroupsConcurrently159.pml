@@ -1,4 +1,4 @@
-#define getLogsForLogGroupsConcurrently_logGroups  3
+#define getLogsForLogGroupsConcurrently_logGroups  0
 
 // https://github.com/pulumi/pulumi/blob/940c0eaf62bac1196a10942ec437f2c39e7e2bda/pkg/operations/operations_aws.go#L159
 typedef Chandef {
@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && logGroups-1 != -3 -> 
 				for(i : 0.. logGroups-1) {
-			for2061: skip;
+			for2062: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end61: skip
+			for20_end62: skip
 		};
-		for20_exit61: skip
+		for20_exit62: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && h_zones-1 != -3 -> 
 				for(i : 0.. h_zones-1) {
-			for20629: skip;
+			for20641: skip;
 			
 
 			if
 			:: errc.async_rcv?state,num_msgs;
 			:: errc.sync?state,num_msgs;
 			fi;
-			for20_end629: skip
+			for20_end641: skip
 		};
-		for20_exit629: skip
+		for20_exit641: skip
 	:: else -> 
 		do
 		:: true -> 

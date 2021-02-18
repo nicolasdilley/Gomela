@@ -46,7 +46,7 @@ init {
 	if
 	:: 0 != -2 && 10-1 != -3 -> 
 				for(i : 0.. 10-1) {
-			for10570: skip;
+			for10590: skip;
 			do
 			:: cacheErrorChan.async_rcv?state,num_msgs -> 
 				goto stop_process
@@ -61,9 +61,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for10_end570: skip
+			for10_end590: skip
 		};
-		for10_exit570: skip
+		for10_exit590: skip
 	:: else -> 
 		do
 		:: true -> 

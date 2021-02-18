@@ -1,5 +1,5 @@
 #define ScaleDownVMs_numVmsToDelete  1
-#define ScaleDownVMs_vmNames  3
+#define ScaleDownVMs_vmNames  1
 
 // https://github.com/Azure/acs-engine/blob/36d434b2a7102ab8f4219f095787c7ab31b5ddd6/pkg/operations/scaledownagentpool.go#L21
 typedef Chandef {
@@ -42,16 +42,16 @@ init {
 	if
 	:: 0 != -2 && numVmsToDelete-1 != -3 -> 
 				for(i : 0.. numVmsToDelete-1) {
-			for20397: skip;
+			for20414: skip;
 			
 
 			if
 			:: errChan.async_rcv?state,num_msgs;
 			:: errChan.sync?state,num_msgs;
 			fi;
-			for20_end397: skip
+			for20_end414: skip
 		};
-		for20_exit397: skip
+		for20_exit414: skip
 	:: else -> 
 		do
 		:: true -> 

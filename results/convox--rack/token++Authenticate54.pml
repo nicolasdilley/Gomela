@@ -1,4 +1,4 @@
-#define Authenticate_ds  0
+#define Authenticate_ds  3
 
 // https://github.com/convox/rack/blob/ee5e31801fa5f2e69aa3bd41339db0b4f64c82fe/pkg/token/token.go#L54
 typedef Chandef {
@@ -79,7 +79,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20661: skip;
+			for20682: skip;
 			
 
 			if
@@ -100,11 +100,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end661: skip
+			for20_end682: skip
 		:: true -> 
 			break
 		od;
-		for20_exit661: skip
+		for20_exit682: skip
 	fi;
 	goto stop_process
 stop_process:skip
@@ -115,7 +115,7 @@ proctype go_authenticateDevice(Chandef rch) {
 	int i;
 	bool state;
 	int num_msgs;
-	int req_RegisteredKeys = -2;
+	int req_RegisteredKeys=3;
 	
 
 	if
@@ -205,7 +205,7 @@ proctype go_authenticateDevice(Chandef rch) {
 	:: else -> 
 		do
 		:: true -> 
-			for11660: skip;
+			for11681: skip;
 			
 
 			if
@@ -224,24 +224,24 @@ proctype go_authenticateDevice(Chandef rch) {
 
 			if
 			:: true -> 
-				goto for11_end660
+				goto for11_end681
 			:: true;
 			fi;
 			do
 			:: true -> 
-				for12660: skip;
+				for12681: skip;
 				
 
 				if
 				:: true -> 
-					goto for12_end660
+					goto for12_end681
 				:: true;
 				fi;
 				
 
 				if
 				:: true -> 
-					goto for12_end660
+					goto for12_end681
 				:: true;
 				fi;
 				
@@ -266,14 +266,14 @@ proctype go_authenticateDevice(Chandef rch) {
 					rch.sending?state
 				fi;
 				goto stop_process;
-				for12_end660: skip
+				for12_end681: skip
 			od;
-			for12_exit660: skip;
-			for11_end660: skip
+			for12_exit681: skip;
+			for11_end681: skip
 		:: true -> 
 			break
 		od;
-		for11_exit660: skip
+		for11_exit681: skip
 	fi;
 	
 
@@ -360,4 +360,5 @@ fi;
 od
 stop_process:
 }
+
 

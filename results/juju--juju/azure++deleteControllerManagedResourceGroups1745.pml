@@ -1,4 +1,4 @@
-#define deleteControllerManagedResourceGroups_groupNames  0
+#define deleteControllerManagedResourceGroups_groupNames  3
 
 // https://github.com/juju/juju/blob/af21dceaf489e65417c11a49921a03bf188480cd/provider/azure/environ.go#L1745
 typedef Wgdef {

@@ -1,4 +1,4 @@
-#define Gather_s_Servers  1
+#define Gather_s_Servers  3
 #define Gather_s_queries  1
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/sqlserver/sqlserver.go#L216

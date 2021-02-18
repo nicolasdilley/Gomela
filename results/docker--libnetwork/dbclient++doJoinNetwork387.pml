@@ -1,4 +1,4 @@
-#define doJoinNetwork_ips  3
+#define doJoinNetwork_ips  1
 
 // https://github.com/docker/libnetwork/blob/954d1ddc998d8b6eb93afb628ae8ca122e53bca8/cmd/networkdb-test/dbclient/ndbClient.go#L387
 typedef Chandef {
@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && ips-1 != -3 -> 
 				for(i : 0.. ips-1) {
-			for20752: skip;
+			for20772: skip;
 			
 
 			if
 			:: doneCh.async_rcv?state,num_msgs;
 			:: doneCh.sync?state,num_msgs;
 			fi;
-			for20_end752: skip
+			for20_end772: skip
 		};
-		for20_exit752: skip
+		for20_exit772: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -61,16 +61,16 @@ init {
 	if
 	:: 0 != -2 && numVMs-1 != -3 -> 
 				for(i : 0.. numVMs-1) {
-			for20992: skip;
+			for201021: skip;
 			
 
 			if
-			:: res.async_rcv?0;
+			:: res.async_rcv?state,num_msgs;
 			:: res.sync?state,num_msgs;
 			fi;
-			for20_end992: skip
+			for20_end1021: skip
 		};
-		for20_exit992: skip
+		for20_exit1021: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -78,7 +78,7 @@ init {
 			
 
 			if
-			:: res.async_rcv?0;
+			:: res.async_rcv?state,num_msgs;
 			:: res.sync?state,num_msgs;
 			fi;
 			for20_end: skip

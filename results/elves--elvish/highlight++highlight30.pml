@@ -61,7 +61,7 @@ proctype go_Anonymous1(Chandef lateCh) {
 	
 
 	if
-	:: lateCh.async_rcv?0;
+	:: lateCh.async_rcv?state,num_msgs;
 	:: lateCh.sync?state,num_msgs;
 	fi;
 	stop_process: skip

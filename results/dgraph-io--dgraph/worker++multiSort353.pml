@@ -1,4 +1,4 @@
-#define multiSort_ts_Order  3
+#define multiSort_ts_Order  0
 
 // https://github.com/dgraph-io/dgraph/blob/ee0b99586ab740fbdec6da78605624c7feba2e5d/worker/sort.go#L353
 typedef Chandef {
@@ -40,7 +40,7 @@ init {
 	if
 	:: 1 != -2 && ts_Order-1 != -3 -> 
 				for(i : 1.. ts_Order-1) {
-			for40591: skip;
+			for40606: skip;
 			
 
 			if
@@ -51,12 +51,12 @@ init {
 
 			if
 			:: true -> 
-				goto for40_end591
+				goto for40_end606
 			:: true;
 			fi;
-			for40_end591: skip
+			for40_end606: skip
 		};
-		for40_exit591: skip
+		for40_exit606: skip
 	:: else -> 
 		do
 		:: true -> 

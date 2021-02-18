@@ -67,7 +67,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for40775: skip;
+			for40796: skip;
 			
 
 			if
@@ -81,11 +81,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for40_end775: skip
+			for40_end796: skip
 		:: true -> 
 			break
 		od;
-		for40_exit775: skip
+		for40_exit796: skip
 	fi;
 	goto stop_process
 stop_process:skip

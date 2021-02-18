@@ -92,18 +92,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20998: skip;
+			for201019: skip;
 			
 
 			if
 			:: errors.async_rcv?state,num_msgs;
 			:: errors.sync?state,num_msgs;
 			fi;
-			for20_end998: skip
+			for20_end1019: skip
 		:: true -> 
 			break
 		od;
-		for20_exit998: skip
+		for20_exit1019: skip
 	fi;
 	
 

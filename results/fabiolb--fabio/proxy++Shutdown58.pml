@@ -1,4 +1,4 @@
-#define Shutdown_srvs  1
+#define Shutdown_srvs  3
 
 // https://github.com/fabiolb/fabio/blob/b8d800f880bd4109ad899fb49cf7398f1f90fe33/proxy/serve.go#L58
 typedef Wgdef {

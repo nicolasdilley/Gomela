@@ -60,7 +60,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for3076: skip;
+			for3084: skip;
 			
 
 			if
@@ -74,11 +74,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end76: skip
+			for30_end84: skip
 		:: true -> 
 			break
 		od;
-		for30_exit76: skip
+		for30_exit84: skip
 	fi;
 	goto stop_process
 stop_process:skip

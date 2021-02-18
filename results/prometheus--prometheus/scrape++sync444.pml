@@ -1,4 +1,4 @@
-#define sync_sp_activeTargets  1
+#define sync_sp_activeTargets  3
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/scrape/scrape.go#L444
 typedef Wgdef {

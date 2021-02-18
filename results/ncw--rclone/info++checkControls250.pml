@@ -1,6 +1,6 @@
-#define checkControls_ci_Checkers  1
-#define checkControls_rune26011  1
-#define not_found_{"＼""\u00A0""\xBF""\xFE"}27620  1
+#define checkControls_ci_Checkers  0
+#define checkControls_rune26011  0
+#define not_found_{"＼""\u00A0""\xBF""\xFE"}27620  3
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/cmd/info/info.go#L250
 typedef Chandef {
@@ -42,7 +42,7 @@ init {
 	if
 	:: 0 != -2 && ci_Checkers-1 != -3 -> 
 				for(i : 0.. ci_Checkers-1) {
-			for101224: skip;
+			for101264: skip;
 			
 
 			if
@@ -50,9 +50,9 @@ init {
 			:: tokens.sync!false,0 -> 
 				tokens.sending?state
 			fi;
-			for10_end1224: skip
+			for10_end1264: skip
 		};
-		for10_exit1224: skip
+		for10_exit1264: skip
 	:: else -> 
 		do
 		:: true -> 

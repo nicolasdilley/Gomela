@@ -1,5 +1,5 @@
-#define SyncPluginsActiveState_disabledPlugins  0
-#define SyncPluginsActiveState_enabledPlugins  0
+#define SyncPluginsActiveState_disabledPlugins  1
+#define SyncPluginsActiveState_enabledPlugins  1
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/app/plugin.go#L71
 typedef Wgdef {

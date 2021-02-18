@@ -1,4 +1,4 @@
-#define Identify_is_res_ProofChecks  1
+#define Identify_is_res_ProofChecks  3
 
 // https://github.com/keybase/client/blob/cd76ccb97183c2be78b869fab9aed4b6f5b11086/go/libkb/id_table.go#L1666
 typedef Chandef {
@@ -53,7 +53,7 @@ init {
 	if
 	:: 0 != -2 && is_res_ProofChecks-1 != -3 -> 
 				for(i : 0.. is_res_ProofChecks-1) {
-			for30505: skip;
+			for30524: skip;
 			
 
 			if
@@ -67,9 +67,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end505: skip
+			for30_end524: skip
 		};
-		for30_exit505: skip
+		for30_exit524: skip
 	:: else -> 
 		do
 		:: true -> 

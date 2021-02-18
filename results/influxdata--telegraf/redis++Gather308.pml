@@ -1,4 +1,4 @@
-#define Gather_r_clients  3
+#define Gather_r_clients  0
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/redis/redis.go#L308
 typedef Wgdef {

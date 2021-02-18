@@ -1,4 +1,4 @@
-#define sendBatchReq_batches  3
+#define sendBatchReq_batches  0
 
 // https://github.com/pingcap/tidb/blob/8ddd41c960caaebbdeb28da33c781fca1464f05f/store/tikv/rawkv.go#L397
 typedef Chandef {
@@ -53,16 +53,16 @@ init {
 	if
 	:: 0 != -2 && batches-1 != -3 -> 
 				for(i : 0.. batches-1) {
-			for30888: skip;
+			for30910: skip;
 			
 
 			if
 			:: ches.async_rcv?state,num_msgs;
 			:: ches.sync?state,num_msgs;
 			fi;
-			for30_end888: skip
+			for30_end910: skip
 		};
-		for30_exit888: skip
+		for30_exit910: skip
 	:: else -> 
 		do
 		:: true -> 

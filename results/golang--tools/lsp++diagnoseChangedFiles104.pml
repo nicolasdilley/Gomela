@@ -1,4 +1,4 @@
-#define diagnoseChangedFiles_packages  1
+#define diagnoseChangedFiles_packages  0
 
 // https://github.com/golang/tools/blob/e0d201561e39aeaab8136532f2bbe17ae1ef24ff/internal/lsp/diagnostics.go#L104
 typedef Wgdef {

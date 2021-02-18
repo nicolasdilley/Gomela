@@ -1,4 +1,4 @@
-#define close_h_handlers  1
+#define close_h_handlers  3
 
 // https://github.com/lucas-clemente/quic-go/blob/492429aed5b135a851adb27fd4a5127705f2ee69/packet_handler_map.go#L263
 typedef Wgdef {

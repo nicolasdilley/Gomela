@@ -1,4 +1,4 @@
-#define Run_s_LaunchDevices  3
+#define Run_s_LaunchDevices  1
 
 // https://github.com/hashicorp/packer/blob/94e22e666440c3ceb633cc0ea96d9a7f345d736e/builder/amazon/ebssurrogate/step_snapshot_volumes.go#L90
 typedef Wgdef {

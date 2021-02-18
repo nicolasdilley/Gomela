@@ -1,5 +1,5 @@
 #define ProcessBufferedData_batchSize  3
-#define ProcessBufferedData_workItemSize  1
+#define ProcessBufferedData_workItemSize  0
 
 // https://github.com/dropbox/godropbox/blob/52ad444d35023d078d496d305d75511e772f0295/cinterop/buffered_work.go#L55
 typedef Chandef {

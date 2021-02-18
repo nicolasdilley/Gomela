@@ -1,4 +1,4 @@
-#define replicateChunks_sourceChunks  1
+#define replicateChunks_sourceChunks  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/replication/sink/filersink/fetch_write.go#L18
 typedef Wgdef {

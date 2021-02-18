@@ -1,6 +1,6 @@
-#define MultithreadedSortComparators_chunks  3
+#define MultithreadedSortComparators_chunks  1
 #define ub_for48_1  1
-#define ub_for45_2  1
+#define ub_for45_2  0
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/sort/sort.go#L23
 typedef Wgdef {

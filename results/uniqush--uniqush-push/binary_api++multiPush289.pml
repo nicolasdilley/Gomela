@@ -1,5 +1,5 @@
-#define multiPush_n  3
-#define multiPush_req_Devtokens  0
+#define multiPush_n  0
+#define multiPush_req_Devtokens  1
 
 // https://github.com/uniqush/uniqush-push/blob/0805cb3332828dd3781735bc5bde1f6553f79f2a/srv/apns/binary_api/processor.go#L289
 typedef Wgdef {

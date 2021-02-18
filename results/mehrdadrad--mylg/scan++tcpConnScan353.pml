@@ -1,5 +1,5 @@
-#define tcpConnScan_s_maxPort  0
-#define tcpConnScan_s_minPort  1
+#define tcpConnScan_s_maxPort  3
+#define tcpConnScan_s_minPort  3
 
 // https://github.com/mehrdadrad/mylg/blob/faba8672ef9f2693ca9093d2a3a671114401e55a/scan/scan.go#L353
 typedef Wgdef {

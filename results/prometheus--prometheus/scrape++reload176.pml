@@ -1,4 +1,4 @@
-#define reload_m_targetSets  3
+#define reload_m_targetSets  1
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/scrape/manager.go#L176
 typedef Wgdef {

@@ -1,4 +1,4 @@
-#define FetchReports_keys  3
+#define FetchReports_keys  1
 
 // https://github.com/weaveworks/scope/blob/9aa9b1ae70bc40a765324152debf82e0ae0e2fce/app/multitenant/s3_client.go#L48
 typedef Chandef {
@@ -60,7 +60,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20351: skip;
+			for20373: skip;
 			
 
 			if
@@ -74,11 +74,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end351: skip
+			for20_end373: skip
 		:: true -> 
 			break
 		od;
-		for20_exit351: skip
+		for20_exit373: skip
 	fi;
 	goto stop_process
 stop_process:skip

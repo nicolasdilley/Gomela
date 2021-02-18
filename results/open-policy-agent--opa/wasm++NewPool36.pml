@@ -1,4 +1,4 @@
-#define NewPool_poolSize  1
+#define NewPool_poolSize  3
 
 // https://github.com/open-policy-agent/opa/blob/a2d14c214cc298b339ba48164d7759900589eb64/internal/wasm/sdk/internal/wasm/pool.go#L36
 typedef Chandef {
@@ -35,7 +35,7 @@ init {
 	if
 	:: uint323811 != -2 && poolSize-1 != -3 -> 
 				for(i : uint323811.. poolSize-1) {
-			for10308: skip;
+			for10326: skip;
 			
 
 			if
@@ -43,9 +43,9 @@ init {
 			:: available.sync!false,0 -> 
 				available.sending?state
 			fi;
-			for10_end308: skip
+			for10_end326: skip
 		};
-		for10_exit308: skip
+		for10_exit326: skip
 	:: else -> 
 		do
 		:: true -> 

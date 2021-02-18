@@ -1,4 +1,4 @@
-#define doWriteKeys_parallelWriters  1
+#define doWriteKeys_parallelWriters  0
 
 // https://github.com/docker/libnetwork/blob/954d1ddc998d8b6eb93afb628ae8ca122e53bca8/cmd/networkdb-test/dbclient/ndbClient.go#L483
 typedef Chandef {
@@ -21,7 +21,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int numberOfKeys=0;
+	int numberOfKeys = -2;
 	int parallelWriters = doWriteKeys_parallelWriters;
 	
 
@@ -82,16 +82,16 @@ proctype dbclientwaitWriters(Chandef doneCh;int parallelWriters;chan child) {
 	if
 	:: 0 != -2 && parallelWriters-1 != -3 -> 
 				for(i : 0.. parallelWriters-1) {
-			for20756: skip;
+			for20776: skip;
 			
 
 			if
 			:: doneCh.async_rcv?state,num_msgs;
 			:: doneCh.sync?state,num_msgs;
 			fi;
-			for20_end756: skip
+			for20_end776: skip
 		};
-		for20_exit756: skip
+		for20_exit776: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -202,5 +202,4 @@ fi;
 od
 stop_process:
 }
-
 

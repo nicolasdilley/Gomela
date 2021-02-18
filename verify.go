@@ -32,6 +32,7 @@ const (
 )
 
 func VerifyModels(models []os.FileInfo, dir_name string) {
+	fmt.Println(dir_name)
 	// Print CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

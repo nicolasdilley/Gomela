@@ -1,4 +1,4 @@
-#define Down_m_PrefetchMigrations  1
+#define Down_m_PrefetchMigrations  0
 #define ub_for626_1  -2
 
 // https://github.com/mattes/migrate/blob/4768a648fbd9e04389a73a21139d14a4ccb1a61a/migrate.go#L284
@@ -128,7 +128,7 @@ proctype go_readDown(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for626_1 != -2 -> 
 				for(i : 0.. ub_for626_1) {
-			for10175: skip;
+			for10185: skip;
 			
 
 			if
@@ -232,9 +232,9 @@ proctype go_readDown(Chandef ret) {
 			:: ret.sync!false,0 -> 
 				ret.sending?state
 			fi;
-			for10_end175: skip
+			for10_end185: skip
 		};
-		for10_exit175: skip
+		for10_exit185: skip
 	:: else -> 
 		do
 		:: true -> 

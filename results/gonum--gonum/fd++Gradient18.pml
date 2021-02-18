@@ -1,5 +1,5 @@
-#define Gradient_evals  0
-#define Gradient_nWorkers  1
+#define Gradient_evals  3
+#define Gradient_nWorkers  0
 
 // https://github.com/gonum/gonum/blob/090a5d652c892e8d5460a07eca1c1ddf480b04d9/diff/fd/gradient.go#L18
 typedef Chandef {
@@ -24,7 +24,7 @@ init {
 	int i;
 	int nWorkers = Gradient_nWorkers;
 	int evals = Gradient_evals;
-	int formula_Stencil=0;
+	int formula_Stencil=1;
 	
 
 	if
@@ -63,16 +63,16 @@ init {
 	if
 	:: 0 != -2 && evals-1 != -3 -> 
 				for(i : 0.. evals-1) {
-			for50365: skip;
+			for50382: skip;
 			
 
 			if
 			:: ansChan.async_rcv?state,num_msgs;
 			:: ansChan.sync?state,num_msgs;
 			fi;
-			for50_end365: skip
+			for50_end382: skip
 		};
-		for50_exit365: skip
+		for50_exit382: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -136,7 +136,7 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 	int i;
 	bool state;
 	int num_msgs;
-	int x=1;
+	int x=3;
 	
 
 	if
@@ -176,7 +176,7 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 			:: else -> 
 				do
 				:: true -> 
-					for31363: skip;
+					for31380: skip;
 					
 
 					if
@@ -188,7 +188,7 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 						:: ansChan.sync!false,0 -> 
 							ansChan.sending?state
 						fi;
-						goto for31_end363
+						goto for31_end380
 					:: true;
 					fi;
 					
@@ -198,11 +198,11 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 					:: sendChan.sync!false,0 -> 
 						sendChan.sending?state
 					fi;
-					for31_end363: skip
+					for31_end380: skip
 				:: true -> 
 					break
 				od;
-				for31_exit363: skip
+				for31_exit380: skip
 			fi;
 			for30_end: skip
 		};
@@ -210,13 +210,13 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 	:: else -> 
 		do
 		:: true -> 
-			for30364: skip;
+			for30381: skip;
 			
 
 			if
 			:: formula_Stencil-1 != -3 -> 
 								for(i : 0.. formula_Stencil-1) {
-					for31364: skip;
+					for31381: skip;
 					
 
 					if
@@ -228,7 +228,7 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 						:: ansChan.sync!false,0 -> 
 							ansChan.sending?state
 						fi;
-						goto for31_end364
+						goto for31_end381
 					:: true;
 					fi;
 					
@@ -238,13 +238,13 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 					:: sendChan.sync!false,0 -> 
 						sendChan.sending?state
 					fi;
-					for31_end364: skip
+					for31_end381: skip
 				};
-				for31_exit364: skip
+				for31_exit381: skip
 			:: else -> 
 				do
 				:: true -> 
-					for31363364: skip;
+					for31380381: skip;
 					
 
 					if
@@ -256,7 +256,7 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 						:: ansChan.sync!false,0 -> 
 							ansChan.sending?state
 						fi;
-						goto for31_end363364
+						goto for31_end380381
 					:: true;
 					fi;
 					
@@ -266,17 +266,17 @@ proctype go_Anonymous1(Chandef sendChan;Chandef ansChan;Chandef quit;int formula
 					:: sendChan.sync!false,0 -> 
 						sendChan.sending?state
 					fi;
-					for31_end363364: skip
+					for31_end380381: skip
 				:: true -> 
 					break
 				od;
-				for31_exit363364: skip
+				for31_exit380381: skip
 			fi;
-			for30_end364: skip
+			for30_end381: skip
 		:: true -> 
 			break
 		od;
-		for30_exit364: skip
+		for30_exit381: skip
 	fi;
 	stop_process: skip
 }

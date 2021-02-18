@@ -1,3 +1,4 @@
+#define ub_for243_0  -2
 
 // https://github.com/go-gitea/gitea/blob/127907c5e66d671b139a8d2bd8912911c7e58347/modules/git/pipeline/lfs_nogogit.go#L40
 typedef Chandef {
@@ -10,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errChan;
 	int num_msgs = 0;
 	bool state = false;
@@ -34,6 +40,12 @@ init {
 	:: else -> 
 		run sync_monitor(errChan)
 	fi;
+	run wgMonitor(wg);
+	wg.Add!3;
+	run go_Anonymous0(errChan,wg);
+	run go_NameRevStdin(wg);
+	run go_Anonymous2(errChan,wg);
+	wg.Wait?0;
 	do
 	:: errChan.async_rcv?state,num_msgs -> 
 		
@@ -59,6 +71,184 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef errChan;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_NameRevStdin(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_Anonymous2(Chandef errChan;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	int results = -2;
+	
+
+	if
+	:: results-1 != -3 -> 
+				for(i : 0.. results-1) {
+			for40: skip;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: true -> 
+					
+
+					if
+					:: errChan.async_send!0;
+					:: errChan.sync!false,0 -> 
+						errChan.sending?state
+					fi;
+					break
+				:: true;
+				fi
+			:: true;
+			fi;
+			
+
+			if
+			:: 0 != -2 && ub_for243_0 != -2 -> 
+								for(i : 0.. ub_for243_0) {
+					for4167: skip;
+					
+
+					if
+					:: true -> 
+						
+
+						if
+						:: errChan.async_send!0;
+						:: errChan.sync!false,0 -> 
+							errChan.sending?state
+						fi;
+						break
+					:: true;
+					fi;
+					for41_end67: skip
+				};
+				for41_exit67: skip
+			:: else -> 
+				do
+				:: true -> 
+					for41: skip;
+					
+
+					if
+					:: true -> 
+						
+
+						if
+						:: errChan.async_send!0;
+						:: errChan.sync!false,0 -> 
+							errChan.sending?state
+						fi;
+						break
+					:: true;
+					fi;
+					for41_end: skip
+				:: true -> 
+					break
+				od;
+				for41_exit: skip
+			fi;
+			for40_end: skip
+		};
+		for40_exit: skip
+	:: else -> 
+		do
+		:: true -> 
+			for4068: skip;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: true -> 
+					
+
+					if
+					:: errChan.async_send!0;
+					:: errChan.sync!false,0 -> 
+						errChan.sending?state
+					fi;
+					break
+				:: true;
+				fi
+			:: true;
+			fi;
+			
+
+			if
+			:: 0 != -2 && ub_for243_0 != -2 -> 
+								for(i : 0.. ub_for243_0) {
+					for416768: skip;
+					
+
+					if
+					:: true -> 
+						
+
+						if
+						:: errChan.async_send!0;
+						:: errChan.sync!false,0 -> 
+							errChan.sending?state
+						fi;
+						break
+					:: true;
+					fi;
+					for41_end6768: skip
+				};
+				for41_exit6768: skip
+			:: else -> 
+				do
+				:: true -> 
+					for4168: skip;
+					
+
+					if
+					:: true -> 
+						
+
+						if
+						:: errChan.async_send!0;
+						:: errChan.sync!false,0 -> 
+							errChan.sending?state
+						fi;
+						break
+					:: true;
+					fi;
+					for41_end68: skip
+				:: true -> 
+					break
+				od;
+				for41_exit68: skip
+			fi;
+			for40_end68: skip
+		:: true -> 
+			break
+		od;
+		for40_exit68: skip
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -134,5 +324,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

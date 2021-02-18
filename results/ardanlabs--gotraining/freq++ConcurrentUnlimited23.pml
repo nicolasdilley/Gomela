@@ -1,4 +1,4 @@
-#define ConcurrentUnlimited_text  3
+#define ConcurrentUnlimited_text  0
 #define not_found_32  -2
 
 // https://github.com/ardanlabs/gotraining/blob/2a8609213c14c6f4a048c95daad0bc31ba5f4db1/topics/go/algorithms/fun/freq/freq.go#L23
@@ -54,18 +54,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20691: skip;
+			for20712: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end691: skip
+			for20_end712: skip
 		:: true -> 
 			break
 		od;
-		for20_exit691: skip
+		for20_exit712: skip
 	fi;
 	goto stop_process
 stop_process:skip

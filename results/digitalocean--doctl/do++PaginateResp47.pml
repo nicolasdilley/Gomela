@@ -60,7 +60,7 @@ init {
 	if
 	:: 0 != -2 && ub_for84_0 != -2 -> 
 				for(i : 0.. ub_for84_0) {
-			for20644: skip;
+			for20665: skip;
 			
 
 			if
@@ -68,9 +68,9 @@ init {
 			:: fetchChan.sync!false,0 -> 
 				fetchChan.sending?state
 			fi;
-			for20_end644: skip
+			for20_end665: skip
 		};
-		for20_exit644: skip
+		for20_exit665: skip
 	:: else -> 
 		do
 		:: true -> 

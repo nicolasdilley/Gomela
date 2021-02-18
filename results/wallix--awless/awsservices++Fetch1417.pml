@@ -1,6 +1,6 @@
-#define not_found_addParentsFnsL"bucket"L146023  1
-#define not_found_list145921  0
-#define not_found_addParentsFnsL"s3object"L148223  0
+#define not_found_addParentsFnsL"bucket"L146023  0
+#define not_found_list145921  1
+#define not_found_addParentsFnsL"s3object"L148223  1
 #define not_found_list148121  1
 
 // https://github.com/wallix/awless/blob/44e892b4961fc09abf82f61de2ffeb66a20c82b7/aws/services/gen_services.go#L1417

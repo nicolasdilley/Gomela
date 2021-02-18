@@ -1,4 +1,4 @@
-#define DeleteBlobs_param_Items  1
+#define DeleteBlobs_param_Items  3
 
 // https://github.com/kahing/goofys/blob/45b8d78375af1b24604439d2e60c567654bcdf88/internal/backend_azblob.go#L665
 typedef Wgdef {

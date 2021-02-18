@@ -11,10 +11,16 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wgReplicas;
+	Wgdef wgStopAll;
 	Chandef positions;
 	int num_msgs = 0;
 	bool state = false;
@@ -95,11 +101,15 @@ init {
 		:: else -> 
 			run sync_monitor(positions)
 		fi;
+		run wgMonitor(wgStopAll);
 				for(i : 0.. tabletMap-1) {
 			for10: skip;
+			wgStopAll.Add!1;
+			run go_Anonymous0(positions,wgStopAll);
 			for10_end: skip
 		};
 		for10_exit: skip;
+		wgStopAll.Wait?0;
 		positions.closing!true;
 		
 
@@ -233,14 +243,30 @@ init {
 		goto stop_process
 	:: true;
 	fi;
+	run wgMonitor(wgReplicas);
+		for(i : 0.. tabletMap-1) {
+		for40: skip;
+		
+
+		if
+		:: true -> 
+			goto for40_end
+		:: true;
+		fi;
+		wgReplicas.Add!1;
+		run go_Anonymous1(positions,wgStopAll,wgReplicas);
+		for40_end: skip
+	};
 	for40_exit: skip;
 	
 
 	if
 	:: true -> 
+		wgReplicas.Wait?0;
 		goto stop_process
 	:: true;
 	fi;
+	wgReplicas.Wait?0;
 	
 
 	if
@@ -252,6 +278,50 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef positions;Wgdef wgStopAll) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: positions.async_send!0;
+	:: positions.sync!false,0 -> 
+		positions.sending?state
+	fi;
+	stop_process: skip;
+	wgStopAll.Add!-1
+}
+proctype go_Anonymous1(Chandef positions;Wgdef wgStopAll;Wgdef wgReplicas) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	stop_process: skip;
+	wgReplicas.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -327,5 +397,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

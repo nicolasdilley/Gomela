@@ -58,7 +58,7 @@ init {
 	if
 	:: 0 != -2 && pods + daemonSetPods-1 != -3 -> 
 				for(i : 0.. pods + daemonSetPods-1) {
-			for30982: skip;
+			for301005: skip;
 			do
 			:: confirmations.async_rcv?state,num_msgs -> 
 				break
@@ -78,9 +78,9 @@ init {
 				fi;
 				break
 			od;
-			for30_end982: skip
+			for30_end1005: skip
 		};
-		for30_exit982: skip
+		for30_exit1005: skip
 	:: else -> 
 		do
 		:: true -> 

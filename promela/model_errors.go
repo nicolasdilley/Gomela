@@ -23,4 +23,5 @@ const (
 	SELECT_WITH_NO_BRANCH    = "Found a select with no branches at pos: "
 	CHAN_DECLARED_IN_STRUCT  = "Found a chan declared in a struct at pos: "
 	WG_DECLARED_IN_STRUCT    = "Found a waitgroup declared in a struct at pos: "
+	UNKNOWN_CHAN_CLOSE       = "A close on an unknown channel was found at pos: "
 )

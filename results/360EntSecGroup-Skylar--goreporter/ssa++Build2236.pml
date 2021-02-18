@@ -1,4 +1,4 @@
-#define Build_prog_packages  1
+#define Build_prog_packages  3
 
 // https://github.com/360EntSecGroup-Skylar/goreporter/blob/df1b20f7c5d0f3538a3dc2cc04f68c59ba177fc5/linters/simpler/ssa/builder.go#L2236
 typedef Wgdef {

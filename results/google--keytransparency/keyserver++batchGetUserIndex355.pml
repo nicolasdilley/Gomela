@@ -83,7 +83,7 @@ proctype go_Anonymous0(Chandef uIDs;Chandef results) {
 	:: else -> 
 		do
 		:: true -> 
-			for101008: skip;
+			for101025: skip;
 			
 
 			if
@@ -91,11 +91,11 @@ proctype go_Anonymous0(Chandef uIDs;Chandef results) {
 			:: uIDs.sync!false,0 -> 
 				uIDs.sending?state
 			fi;
-			for10_end1008: skip
+			for10_end1025: skip
 		:: true -> 
 			break
 		od;
-		for10_exit1008: skip
+		for10_exit1025: skip
 	fi;
 	stop_process: skip;
 	uIDs.closing!true

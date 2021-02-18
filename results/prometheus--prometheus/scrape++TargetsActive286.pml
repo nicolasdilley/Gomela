@@ -1,4 +1,4 @@
-#define TargetsActive_m_scrapePools  1
+#define TargetsActive_m_scrapePools  3
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/scrape/manager.go#L286
 typedef Wgdef {

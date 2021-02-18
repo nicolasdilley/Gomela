@@ -69,7 +69,7 @@ init {
 	if
 	:: 0 != -2 && 2-1 != -3 -> 
 				for(i : 0.. 2-1) {
-			for10273: skip;
+			for10288: skip;
 			
 
 			if
@@ -83,9 +83,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for10_end273: skip
+			for10_end288: skip
 		};
-		for10_exit273: skip
+		for10_exit288: skip
 	:: else -> 
 		do
 		:: true -> 

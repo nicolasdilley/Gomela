@@ -1,4 +1,4 @@
-#define setupLinks_t_options_Nodes  0
+#define setupLinks_t_options_Nodes  3
 
 // https://github.com/micro/go-micro/blob/bf4ab679e18b5fc1e23c6ad466bfe63bdd51112f/network/tunnel/default.go#L943
 typedef Wgdef {

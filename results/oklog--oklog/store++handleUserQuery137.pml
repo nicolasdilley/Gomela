@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int responses=1;
+	int responses=3;
 	int requests = handleUserQuery_requests;
 	
 
@@ -55,16 +55,16 @@ init {
 	if
 	:: 0 != -2 && responses-1 != -3 -> 
 				for(i : 0.. responses-1) {
-			for40433: skip;
+			for40450: skip;
 			
 
 			if
 			:: c.async_rcv?state,num_msgs;
 			:: c.sync?state,num_msgs;
 			fi;
-			for40_end433: skip
+			for40_end450: skip
 		};
-		for40_exit433: skip
+		for40_exit450: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -54,7 +54,7 @@ init {
 	if
 	:: 0 != -2 && 5-1 != -3 -> 
 				for(i : 0.. 5-1) {
-			for30402: skip;
+			for30419: skip;
 			
 
 			if
@@ -62,9 +62,9 @@ init {
 			:: sem.sync!false,0 -> 
 				sem.sending?state
 			fi;
-			for30_end402: skip
+			for30_end419: skip
 		};
-		for30_exit402: skip
+		for30_exit419: skip
 	:: else -> 
 		do
 		:: true -> 

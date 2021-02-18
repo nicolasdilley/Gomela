@@ -39,16 +39,16 @@ init {
 	if
 	:: 0 != -2 && docItems-1 != -3 -> 
 				for(i : 0.. docItems-1) {
-			for30527: skip;
+			for30545: skip;
 			do
 			:: ch.async_rcv?state,num_msgs -> 
 				break
 			:: ch.sync?state,num_msgs -> 
 				break
 			od;
-			for30_end527: skip
+			for30_end545: skip
 		};
-		for30_exit527: skip
+		for30_exit545: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -113,7 +113,7 @@ proctype go_Anonymous0(Chandef ch;int rowIndexList) {
 	:: else -> 
 		do
 		:: true -> 
-			for21525: skip;
+			for21543: skip;
 			
 
 			if
@@ -134,11 +134,11 @@ proctype go_Anonymous0(Chandef ch;int rowIndexList) {
 					ch.sending?state
 				fi
 			fi;
-			for21_end525: skip
+			for21_end543: skip
 		:: true -> 
 			break
 		od;
-		for21_exit525: skip
+		for21_exit543: skip
 	fi;
 	stop_process: skip
 }

@@ -34,7 +34,7 @@ init {
 	if
 	:: 0 != -2 && 2-1 != -3 -> 
 				for(i : 0.. 2-1) {
-			for101150: skip;
+			for101176: skip;
 			
 
 			if
@@ -48,9 +48,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for10_end1150: skip
+			for10_end1176: skip
 		};
-		for10_exit1150: skip
+		for10_exit1176: skip
 	:: else -> 
 		do
 		:: true -> 

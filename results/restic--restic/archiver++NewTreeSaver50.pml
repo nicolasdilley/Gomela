@@ -1,5 +1,5 @@
-#define NewTreeSaver_treeWorkers  1
-#define NewTreeSaver_uint5911  3
+#define NewTreeSaver_treeWorkers  3
+#define NewTreeSaver_uint5911  0
 
 // https://github.com/restic/restic/blob/aa0faa8c7d7800b6ba7b11164fa2d3683f7f78aa/internal/archiver/tree_saver.go#L50
 typedef Chandef {

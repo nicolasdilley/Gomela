@@ -1,4 +1,4 @@
-#define MentionsToTeamMembers_possibleMentions  3
+#define MentionsToTeamMembers_possibleMentions  1
 #define ub_for247_1  -2
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/app/command.go#L221
@@ -89,7 +89,7 @@ proctype go_Anonymous0(Chandef mentionChan;Wgdef wg) {
 		if
 		:: 0 != -2 && ub_for247_1 != -2 -> 
 						for(i : 0.. ub_for247_1) {
-				for11580: skip;
+				for11600: skip;
 				
 
 				if
@@ -101,7 +101,7 @@ proctype go_Anonymous0(Chandef mentionChan;Wgdef wg) {
 
 				if
 				:: true -> 
-					goto for11_end580
+					goto for11_end600
 				:: true;
 				fi;
 				
@@ -119,9 +119,9 @@ proctype go_Anonymous0(Chandef mentionChan;Wgdef wg) {
 					mentionChan.sending?state
 				fi;
 				goto stop_process;
-				for11_end580: skip
+				for11_end600: skip
 			};
-			for11_exit580: skip
+			for11_exit600: skip
 		:: else -> 
 			do
 			:: true -> 

@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && spans-1 != -3 -> 
 				for(i : 0.. spans-1) {
-			for20469: skip;
+			for20486: skip;
 			
 
 			if
 			:: errs.async_rcv?state,num_msgs;
 			:: errs.sync?state,num_msgs;
 			fi;
-			for20_end469: skip
+			for20_end486: skip
 		};
-		for20_exit469: skip
+		for20_exit486: skip
 	:: else -> 
 		do
 		:: true -> 

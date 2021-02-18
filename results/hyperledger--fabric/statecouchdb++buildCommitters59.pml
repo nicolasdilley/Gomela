@@ -64,16 +64,16 @@ init {
 		if
 		:: 0 != -2 && namespaces-1 != -3 -> 
 						for(i : 0.. namespaces-1) {
-				for20652: skip;
+				for20675: skip;
 				
 
 				if
-				:: nsCommittersChan.async_rcv?0;
+				:: nsCommittersChan.async_rcv?state,num_msgs;
 				:: nsCommittersChan.sync?state,num_msgs;
 				fi;
-				for20_end652: skip
+				for20_end675: skip
 			};
-			for20_exit652: skip
+			for20_exit675: skip
 		:: else -> 
 			do
 			:: true -> 
@@ -81,7 +81,7 @@ init {
 				
 
 				if
-				:: nsCommittersChan.async_rcv?0;
+				:: nsCommittersChan.async_rcv?state,num_msgs;
 				:: nsCommittersChan.sync?state,num_msgs;
 				fi;
 				for20_end: skip

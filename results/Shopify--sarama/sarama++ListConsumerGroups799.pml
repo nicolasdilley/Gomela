@@ -11,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errChan;
 	Chandef groupMaps;
 	int num_msgs = 0;
@@ -39,7 +44,15 @@ init {
 	:: else -> 
 		run sync_monitor(errChan)
 	fi;
+	run wgMonitor(wg);
+		for(i : 0.. brokers-1) {
+		for10: skip;
+		wg.Add!1;
+		run go_Anonymous0(groupMaps,errChan,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Wait?0;
 	groupMaps.closing!true;
 	errChan.closing!true;
 	do
@@ -71,6 +84,35 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef groupMaps;Chandef errChan;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		
+
+		if
+		:: errChan.async_send!0;
+		:: errChan.sync!false,0 -> 
+			errChan.sending?state
+		fi;
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: groupMaps.async_send!0;
+	:: groupMaps.sync!false,0 -> 
+		groupMaps.sending?state
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -146,5 +188,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

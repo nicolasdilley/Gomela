@@ -1,5 +1,5 @@
-#define main_loop  1
-#define main_group  1
+#define main_loop  0
+#define main_group  0
 
 // https://github.com/henrylee2cn/teleport/blob/b23c46ba9ee6cb8ede9b6e09c525784bb096ba27/socket/example/socket_client_ab.go#L17
 typedef Wgdef {

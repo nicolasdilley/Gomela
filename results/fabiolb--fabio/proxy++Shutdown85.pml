@@ -1,4 +1,4 @@
-#define Shutdown_tps_children  0
+#define Shutdown_tps_children  3
 
 // https://github.com/fabiolb/fabio/blob/b8d800f880bd4109ad899fb49cf7398f1f90fe33/proxy/inetaf_tcpproxy.go#L85
 typedef Chandef {
@@ -53,18 +53,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201129: skip;
+			for201155: skip;
 			
 
 			if
 			:: errChan.async_rcv?state,num_msgs;
 			:: errChan.sync?state,num_msgs;
 			fi;
-			for20_end1129: skip
+			for20_end1155: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1129: skip
+		for20_exit1155: skip
 	fi;
 	goto stop_process
 stop_process:skip

@@ -1,4 +1,4 @@
-#define forAllTargets_mz_targetShards  1
+#define forAllTargets_mz_targetShards  3
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/wrangler/materializer.go#L1112
 typedef Wgdef {

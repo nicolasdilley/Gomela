@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"go/types"
 	"strconv"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -161,33 +160,7 @@ func (m *Model) GoToPromela(SEP string) {
 }
 func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	for _, l := range lhs {
-		stmt := m.AstMap[m.Package].TypesInfo.TypeOf(l)
-		switch types := stmt.(type) {
-		case *types.Pointer:
-			stmt = types.Elem()
-		}
-		switch stmt.(type) {
-		case *types.Named:
-			switch stmt := stmt.Underlying().(type) {
-			case *types.Struct:
-				for i := 0; i < stmt.NumFields(); i++ {
-					switch field := stmt.Field(i).Type().(type) {
-					case *types.Named:
-						if field.Obj() != nil {
-							if field.Obj().Pkg() != nil {
-								if field.Obj().Pkg().Name() == "sync" {
-									if field.Obj().Name() == "WaitGroup" {
-										return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+
 	for i := len(rhs) - 1; i >= 0; i-- {
 		call := rhs[i]
 		switch unary := call.(type) {
@@ -263,6 +236,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 							if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
 								switch call.Args[0].(type) {
 								case *ast.ChanType:
+
 									return b, &ParseError{err: errors.New(CHAN_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
 								}
 							}
@@ -318,6 +292,8 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 									switch sel := sel.X.(type) {
 									case *ast.Ident:
 										if sel.Name == "sync" {
+											fmt.Println("2 ++++++++++++++++++++++++++++++++")
+
 											return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
 										}
 									}
@@ -341,6 +317,7 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 		var prom_wg_name promela_ast.Ident
 		switch name.(type) {
 		case *ast.SelectorExpr:
+			fmt.Println("3 ++++++++++++++++++++++++++++++++")
 			return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(name.Pos()).String())}
 		default:
 
@@ -541,6 +518,8 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 					send.Rhs = &promela_ast.Ident{Name: "true"}
 					m.Chan_closing = true
 					stmts.List = append(stmts.List, send)
+				} else {
+					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
 				}
 			} else {
 				call, err1 := m.TranslateCallExpr(expr)

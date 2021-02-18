@@ -1,5 +1,5 @@
-#define execList_concurrency  0
-#define execList_l  1
+#define execList_concurrency  1
+#define execList_l  3
 
 // https://github.com/graph-gophers/graphql-go/blob/beb923fada293249384c7a9fa0c5078ea92466f3/internal/exec/exec.go#L312
 typedef Chandef {
@@ -53,7 +53,7 @@ init {
 		if
 		:: 0 != -2 && concurrency-1 != -3 -> 
 						for(i : 0.. concurrency-1) {
-				for20100: skip;
+				for20105: skip;
 				
 
 				if
@@ -61,9 +61,9 @@ init {
 				:: sem.sync!false,0 -> 
 					sem.sending?state
 				fi;
-				for20_end100: skip
+				for20_end105: skip
 			};
-			for20_exit100: skip
+			for20_exit105: skip
 		:: else -> 
 			do
 			:: true -> 

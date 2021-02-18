@@ -42,7 +42,7 @@ init {
 	if
 	:: 0 != -2 && numVmsToDrain-1 != -3 -> 
 				for(i : 0.. numVmsToDrain-1) {
-			for20399: skip;
+			for20416: skip;
 			
 
 			if
@@ -56,9 +56,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end399: skip
+			for20_end416: skip
 		};
-		for20_exit399: skip
+		for20_exit416: skip
 	:: else -> 
 		do
 		:: true -> 

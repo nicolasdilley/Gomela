@@ -1,4 +1,4 @@
-#define syncSourceStreams_sm_streams  0
+#define syncSourceStreams_sm_streams  3
 #define syncSourceStreams_tabletStreams  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/wrangler/stream_migrater.go#L298

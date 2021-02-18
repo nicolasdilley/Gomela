@@ -1,4 +1,4 @@
-#define main_flag_Args4327  0
+#define main_flag_Args4327  3
 
 // https://github.com/hpcloud/tail/blob/a1dbeea552b7c8df4b542c66073e393de198a800/cmd/gotail/gotail.go#L31
 typedef Chandef {
@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int flag_Args4719=1;
+	int flag_Args4719=0;
 	int flag_Args4327 = main_flag_Args4327;
 	run sync_monitor(done);
 		for(i : 0.. flag_Args4327-1) {
@@ -46,18 +46,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20880: skip;
+			for20903: skip;
 			
 
 			if
 			:: done.async_rcv?state,num_msgs;
 			:: done.sync?state,num_msgs;
 			fi;
-			for20_end880: skip
+			for20_end903: skip
 		:: true -> 
 			break
 		od;
-		for20_exit880: skip
+		for20_exit903: skip
 	fi
 stop_process:skip
 }

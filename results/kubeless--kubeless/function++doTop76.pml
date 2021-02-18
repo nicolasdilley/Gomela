@@ -48,7 +48,7 @@ init {
 	if
 	:: 0 != -2 && ub_for92_1 != -2 -> 
 				for(i : 0.. ub_for92_1) {
-			for20385: skip;
+			for20401: skip;
 			do
 			:: ch.async_rcv?state,num_msgs -> 
 				break
@@ -57,9 +57,9 @@ init {
 			:: true -> 
 				break
 			od;
-			for20_end385: skip
+			for20_end401: skip
 		};
-		for20_exit385: skip
+		for20_exit401: skip
 	:: else -> 
 		do
 		:: true -> 

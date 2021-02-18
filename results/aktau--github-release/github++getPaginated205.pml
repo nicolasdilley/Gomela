@@ -81,7 +81,7 @@ proctype go_Anonymous0(Chandef done;Chandef responses) {
 	if
 	:: 0 != -2 && ub_for243_0 != -2 -> 
 				for(i : 0.. ub_for243_0) {
-			for10659: skip;
+			for10680: skip;
 			
 
 			if
@@ -121,9 +121,9 @@ proctype go_Anonymous0(Chandef done;Chandef responses) {
 				responses.sending?state;
 				break
 			od;
-			for10_end659: skip
+			for10_end680: skip
 		};
-		for10_exit659: skip
+		for10_exit680: skip
 	:: else -> 
 		do
 		:: true -> 

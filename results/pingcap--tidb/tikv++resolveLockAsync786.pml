@@ -1,4 +1,4 @@
-#define resolveLockAsync_keysByRegion  1
+#define resolveLockAsync_keysByRegion  3
 
 // https://github.com/pingcap/tidb/blob/8ddd41c960caaebbdeb28da33c781fca1464f05f/store/tikv/lock_resolver.go#L786
 typedef Chandef {
@@ -67,18 +67,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20886: skip;
+			for20908: skip;
 			
 
 			if
 			:: errChan.async_rcv?state,num_msgs;
 			:: errChan.sync?state,num_msgs;
 			fi;
-			for20_end886: skip
+			for20_end908: skip
 		:: true -> 
 			break
 		od;
-		for20_exit886: skip
+		for20_exit908: skip
 	fi;
 	
 

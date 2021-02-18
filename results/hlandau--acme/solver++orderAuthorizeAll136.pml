@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && order_AuthorizationURLs-1 != -3 -> 
 				for(i : 0.. order_AuthorizationURLs-1) {
-			for20671: skip;
+			for20692: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end671: skip
+			for20_end692: skip
 		};
-		for20_exit671: skip
+		for20_exit692: skip
 	:: else -> 
 		do
 		:: true -> 

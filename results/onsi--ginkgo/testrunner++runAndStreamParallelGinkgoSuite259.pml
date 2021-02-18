@@ -32,16 +32,16 @@ init {
 	if
 	:: 0 != -2 && t_numCPU-1 != -3 -> 
 				for(i : 0.. t_numCPU-1) {
-			for20535: skip;
+			for20554: skip;
 			
 
 			if
-			:: completions.async_rcv?0;
+			:: completions.async_rcv?state,num_msgs;
 			:: completions.sync?state,num_msgs;
 			fi;
-			for20_end535: skip
+			for20_end554: skip
 		};
-		for20_exit535: skip
+		for20_exit554: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -49,7 +49,7 @@ init {
 			
 
 			if
-			:: completions.async_rcv?0;
+			:: completions.async_rcv?state,num_msgs;
 			:: completions.sync?state,num_msgs;
 			fi;
 			for20_end: skip

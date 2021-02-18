@@ -36,7 +36,7 @@ init {
 	if
 	:: 0 != -2 && ub_for915_0 != -2 -> 
 				for(i : 0.. ub_for915_0) {
-			for20522: skip;
+			for20536: skip;
 			
 
 			if
@@ -86,9 +86,9 @@ init {
 					datac.sending?state
 				fi
 			fi;
-			for20_end522: skip
+			for20_end536: skip
 		};
-		for20_exit522: skip
+		for20_exit536: skip
 	:: else -> 
 		do
 		:: true -> 

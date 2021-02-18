@@ -32,6 +32,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 		// Check if its a call a Waitgroup call (Add(x), Done or Wait)
 		func_name = name.Sel.Name
 		fun = name.Sel.Name
+
 		pack_name = getPackName(name)
 
 		if m.containsWaitgroup(&ast.Ident{Name: translateIdent(name.X).Name}) {

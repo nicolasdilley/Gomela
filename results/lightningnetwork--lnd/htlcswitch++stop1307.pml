@@ -26,16 +26,16 @@ init {
 	if
 	:: 0 != -2 && 2-1 != -3 -> 
 				for(i : 0.. 2-1) {
-			for101181: skip;
+			for101209: skip;
 			
 
 			if
 			:: done.async_rcv?state,num_msgs;
 			:: done.sync?state,num_msgs;
 			fi;
-			for10_end1181: skip
+			for10_end1209: skip
 		};
-		for10_exit1181: skip
+		for10_exit1209: skip
 	:: else -> 
 		do
 		:: true -> 

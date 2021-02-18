@@ -1,4 +1,4 @@
-#define Build_prog_packages  3
+#define Build_prog_packages  1
 
 // https://github.com/golang/tools/blob/e0d201561e39aeaab8136532f2bbe17ae1ef24ff/go/ssa/builder.go#L2239
 typedef Wgdef {

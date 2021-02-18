@@ -1,4 +1,4 @@
-#define doUnsafeDestroyRangeRequest_stores  1
+#define doUnsafeDestroyRangeRequest_stores  3
 
 // https://github.com/pingcap/tidb/blob/8ddd41c960caaebbdeb28da33c781fca1464f05f/store/tikv/gcworker/gc_worker.go#L735
 typedef Chandef {
@@ -67,18 +67,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20893: skip;
+			for20914: skip;
 			
 
 			if
 			:: errChan.async_rcv?state,num_msgs;
 			:: errChan.sync?state,num_msgs;
 			fi;
-			for20_end893: skip
+			for20_end914: skip
 		:: true -> 
 			break
 		od;
-		for20_exit893: skip
+		for20_exit914: skip
 	fi;
 	wg.Wait?0;
 	

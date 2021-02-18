@@ -21,7 +21,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int allPods=1;
+	int allPods=3;
 	int numberOfWorkers = ProbePodToPodConnectivity_numberOfWorkers;
 	int size = ProbePodToPodConnectivity_size;
 	
@@ -73,7 +73,7 @@ init {
 			:: else -> 
 				do
 				:: true -> 
-					for21788: skip;
+					for21812: skip;
 					
 
 					if
@@ -81,11 +81,11 @@ init {
 					:: jobs.sync!false,0 -> 
 						jobs.sending?state
 					fi;
-					for21_end788: skip
+					for21_end812: skip
 				:: true -> 
 					break
 				od;
-				for21_exit788: skip
+				for21_exit812: skip
 			fi;
 			for20_end: skip
 		};
@@ -93,13 +93,13 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20789: skip;
+			for20813: skip;
 			
 
 			if
 			:: allPods-1 != -3 -> 
 								for(i : 0.. allPods-1) {
-					for21789: skip;
+					for21813: skip;
 					
 
 					if
@@ -107,13 +107,13 @@ init {
 					:: jobs.sync!false,0 -> 
 						jobs.sending?state
 					fi;
-					for21_end789: skip
+					for21_end813: skip
 				};
-				for21_exit789: skip
+				for21_exit813: skip
 			:: else -> 
 				do
 				:: true -> 
-					for21788789: skip;
+					for21812813: skip;
 					
 
 					if
@@ -121,17 +121,17 @@ init {
 					:: jobs.sync!false,0 -> 
 						jobs.sending?state
 					fi;
-					for21_end788789: skip
+					for21_end812813: skip
 				:: true -> 
 					break
 				od;
-				for21_exit788789: skip
+				for21_exit812813: skip
 			fi;
-			for20_end789: skip
+			for20_end813: skip
 		:: true -> 
 			break
 		od;
-		for20_exit789: skip
+		for20_exit813: skip
 	fi;
 	jobs.closing!true;
 	
@@ -139,16 +139,16 @@ init {
 	if
 	:: 0 != -2 && size-1 != -3 -> 
 				for(i : 0.. size-1) {
-			for30790: skip;
+			for30814: skip;
 			
 
 			if
 			:: results.async_rcv?state,num_msgs;
 			:: results.sync?state,num_msgs;
 			fi;
-			for30_end790: skip
+			for30_end814: skip
 		};
-		for30_exit790: skip
+		for30_exit814: skip
 	:: else -> 
 		do
 		:: true -> 

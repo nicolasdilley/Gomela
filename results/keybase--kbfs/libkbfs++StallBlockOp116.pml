@@ -1,4 +1,4 @@
-#define StallBlockOp_maxStalls  1
+#define StallBlockOp_maxStalls  3
 
 // https://github.com/keybase/kbfs/blob/a4a00254ce4a3f4cf9d19ca56085d4964f1a7f64/libkbfs/test_stallers.go#L116
 typedef Chandef {

@@ -1,4 +1,4 @@
-#define runCommandOnNodes_nodeAddresses  0
+#define runCommandOnNodes_nodeAddresses  3
 
 // https://github.com/gravitational/teleport/blob/7b21cbaa566b561b40f322245b9ef5b931cbedfb/lib/client/api.go#L1613
 typedef Chandef {
@@ -53,18 +53,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20422: skip;
+			for20431: skip;
 			
 
 			if
 			:: resultsC.async_rcv?state,num_msgs;
 			:: resultsC.sync?state,num_msgs;
 			fi;
-			for20_end422: skip
+			for20_end431: skip
 		:: true -> 
 			break
 		od;
-		for20_exit422: skip
+		for20_exit431: skip
 	fi;
 	goto stop_process
 stop_process:skip

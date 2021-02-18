@@ -1,4 +1,4 @@
-#define enableAPIs_requiredServices  1
+#define enableAPIs_requiredServices  3
 
 // https://github.com/perkeep/perkeep/blob/40f12e532cba9a2b236a413d486c7ab0a6768672/pkg/deploy/gce/deploy.go#L332
 typedef Chandef {

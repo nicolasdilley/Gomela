@@ -1,4 +1,4 @@
-#define CollectMetrics_pluginToMetricMap  3
+#define CollectMetrics_pluginToMetricMap  0
 
 // https://github.com/intelsdi-x/snap/blob/e3a6c8e39994b3980df0c7b069d5ede810622952/control/control.go#L988
 typedef Chandef {

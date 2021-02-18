@@ -50,7 +50,7 @@ init {
 	if
 	:: 0 != -2 && dcs-1 != -3 -> 
 				for(i : 0.. dcs-1) {
-			for201205: skip;
+			for201252: skip;
 			do
 			:: errorCh.async_rcv?state,num_msgs -> 
 				goto stop_process
@@ -61,9 +61,9 @@ init {
 			:: respCh.sync?state,num_msgs -> 
 				break
 			od;
-			for20_end1205: skip
+			for20_end1252: skip
 		};
-		for20_exit1205: skip
+		for20_exit1252: skip
 	:: else -> 
 		do
 		:: true -> 

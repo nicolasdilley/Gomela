@@ -1,4 +1,4 @@
-#define GarbageCollect_m_dirtySS  3
+#define GarbageCollect_m_dirtySS  0
 
 // https://github.com/containerd/containerd/blob/66fec3bbbf91520a1433faa16e99e5a314a61902/metadata/db.go#L280
 typedef Wgdef {

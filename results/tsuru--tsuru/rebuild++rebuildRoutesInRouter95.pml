@@ -1,4 +1,4 @@
-#define rebuildRoutesInRouter_allPrefixes  0
+#define rebuildRoutesInRouter_allPrefixes  3
 #define rebuildRoutesInRouter_allPrefixes_Sorted20525  1
 
 // https://github.com/tsuru/tsuru/blob/acb87a16aa1c971080a7771119155c44e5eab9f2/router/rebuild/rebuild.go#L95
@@ -12,10 +12,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errorCh;
 	Chandef resultCh;
 	int num_msgs = 0;
@@ -115,7 +120,22 @@ init {
 	:: else -> 
 		run sync_monitor(errorCh)
 	fi;
+	run wgMonitor(wg);
+		for(i : 0.. allPrefixes_Sorted20525-1) {
+		for60: skip;
+		
+
+		if
+		:: true -> 
+			goto for60_end
+		:: true;
+		fi;
+		wg.Add!1;
+		run go_Anonymous0(resultCh,errorCh,wg);
+		for60_end: skip
+	};
 	for60_exit: skip;
+	wg.Wait?0;
 	errorCh.closing!true;
 	resultCh.closing!true;
 	do
@@ -167,6 +187,34 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef resultCh;Chandef errorCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		
+
+		if
+		:: resultCh.async_send!0;
+		:: resultCh.sync!false,0 -> 
+			resultCh.sending?state
+		fi
+	:: true -> 
+		
+
+		if
+		:: errorCh.async_send!0;
+		:: errorCh.sync!false,0 -> 
+			errorCh.sending?state
+		fi
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -242,5 +290,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

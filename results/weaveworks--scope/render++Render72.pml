@@ -1,6 +1,6 @@
 #define Render_l  0
 #define Render_r  1
-#define ub_for92_2  0
+#define ub_for92_2  1
 
 // https://github.com/weaveworks/scope/blob/9aa9b1ae70bc40a765324152debf82e0ae0e2fce/render/render.go#L72
 typedef Chandef {

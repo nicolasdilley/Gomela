@@ -55,19 +55,19 @@ proctype go_Anonymous0(Chandef done) {
 	if
 	:: 0 != -2 && ub_for1289_0 != -2 -> 
 				for(i : 0.. ub_for1289_0) {
-			for101142: skip;
+			for101169: skip;
 			
 
 			if
 			:: true -> 
-				goto for10_end1142
+				goto for10_end1169
 			:: true;
 			fi;
 			
 
 			if
 			:: true -> 
-				goto for10_end1142
+				goto for10_end1169
 			:: true;
 			fi;
 			
@@ -75,12 +75,12 @@ proctype go_Anonymous0(Chandef done) {
 			if
 			:: true -> 
 				done.closing!true;
-				goto for10_end1142
+				goto for10_end1169
 			:: true;
 			fi;
-			for10_end1142: skip
+			for10_end1169: skip
 		};
-		for10_exit1142: skip
+		for10_exit1169: skip
 	:: else -> 
 		do
 		:: true -> 

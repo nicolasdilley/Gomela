@@ -1,4 +1,4 @@
-#define NewChannelLogger_size  3
+#define NewChannelLogger_size  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/logutil/logger.go#L218
 typedef Chandef {

@@ -1,4 +1,4 @@
-#define DistributePairs_datacenters  3
+#define DistributePairs_datacenters  1
 
 // https://github.com/github/orchestrator/blob/6105fd97bfceb293ac5ca1420e0ee01692ab3577/go/kv/consul.go#L101
 typedef Wgdef {

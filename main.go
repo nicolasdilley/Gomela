@@ -111,7 +111,7 @@ func main() {
 				}
 				proj_listings := strings.Split(string(data), "\n")
 				fmt.Println(len(proj_listings), " projects to parse")
-				for _, project := range proj_listings {
+				for _, project := range proj_listings[:len(proj_listings)-1] {
 					project_info := strings.Split(project, ",")
 					if len(proj_listings) > 1 {
 						parseProject(project_info[0], project_info[1], ver)
@@ -132,8 +132,8 @@ func main() {
 
 	} else {
 
-		PROJECTS_FOLDER = "./source"
 		path := os.Args[len(os.Args)-1]
+		PROJECTS_FOLDER = path
 
 		_, err := ioutil.ReadDir(path)
 

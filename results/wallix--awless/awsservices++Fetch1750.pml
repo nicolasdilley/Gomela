@@ -1,7 +1,7 @@
-#define not_found_addParentsFnsL"zone"L179323  1
-#define not_found_list179221  0
+#define not_found_addParentsFnsL"zone"L179323  0
+#define not_found_list179221  3
 #define not_found_addParentsFnsL"record"L181523  0
-#define not_found_list181421  3
+#define not_found_list181421  1
 
 // https://github.com/wallix/awless/blob/44e892b4961fc09abf82f61de2ffeb66a20c82b7/aws/services/gen_services.go#L1750
 typedef Chandef {

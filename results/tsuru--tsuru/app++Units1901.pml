@@ -1,4 +1,4 @@
-#define Units_provMap  3
+#define Units_provMap  1
 
 // https://github.com/tsuru/tsuru/blob/acb87a16aa1c971080a7771119155c44e5eab9f2/app/app.go#L1901
 typedef Chandef {
@@ -11,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef rspCh;
 	int num_msgs = 0;
 	bool state = false;
@@ -29,7 +34,15 @@ init {
 	:: else -> 
 		run sync_monitor(rspCh)
 	fi;
+	run wgMonitor(wg);
+		for(i : 0.. provMap-1) {
+		for20: skip;
+		wg.Add!1;
+		run go_Anonymous0(rspCh,wg);
+		for20_end: skip
+	};
 	for20_exit: skip;
+	wg.Wait?0;
 	rspCh.closing!true;
 	do
 	:: true -> 
@@ -61,6 +74,21 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef rspCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: rspCh.async_send!0;
+	:: rspCh.sync!false,0 -> 
+		rspCh.sending?state
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -136,5 +164,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

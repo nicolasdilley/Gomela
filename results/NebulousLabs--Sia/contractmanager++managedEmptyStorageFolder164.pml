@@ -1,6 +1,6 @@
 #define managedEmptyStorageFolder_workers  0
-#define managedEmptyStorageFolder_storageFolderGranularity  0
-#define not_found_sf_usage21124  0
+#define managedEmptyStorageFolder_storageFolderGranularity  1
+#define not_found_sf_usage21124  1
 
 // https://github.com/NebulousLabs/Sia/blob/a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1/modules/host/contractmanager/storagefolderempty.go#L164
 typedef Chandef {

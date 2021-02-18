@@ -56,7 +56,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201098: skip;
+			for201124: skip;
 			
 
 			if
@@ -70,14 +70,14 @@ init {
 			:: responseChannel.sync?state,num_msgs -> 
 				break
 			:: true -> 
-				goto responseloop1098;
+				goto responseloop1124;
 				break
 			od;
-			for20_end1098: skip
+			for20_end1124: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1098: skip
+		for20_exit1124: skip
 	fi;
 	goto stop_process
 stop_process:skip

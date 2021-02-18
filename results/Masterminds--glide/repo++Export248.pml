@@ -1,6 +1,6 @@
-#define Export_concurrentWorkers  3
+#define Export_concurrentWorkers  1
 #define Export_conf_Imports  1
-#define Export_conf_DevImports  1
+#define Export_conf_DevImports  0
 
 // https://github.com/Masterminds/glide/blob/b94b39d657d8abcccba6545e148f1201aee6ffec/repo/installer.go#L248
 typedef Chandef {
@@ -112,7 +112,7 @@ init {
 	if
 	:: 0 != -2 && concurrentWorkers-1 != -3 -> 
 				for(i : 0.. concurrentWorkers-1) {
-			for40151: skip;
+			for40161: skip;
 			
 
 			if
@@ -120,9 +120,9 @@ init {
 			:: done.sync!false,0 -> 
 				done.sending?state
 			fi;
-			for40_end151: skip
+			for40_end161: skip
 		};
-		for40_exit151: skip
+		for40_exit161: skip
 	:: else -> 
 		do
 		:: true -> 

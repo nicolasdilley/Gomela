@@ -1,4 +1,4 @@
-#define generateMiniPreviewForInfos_fileInfos  3
+#define generateMiniPreviewForInfos_fileInfos  1
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/app/file.go#L1147
 typedef Wgdef {

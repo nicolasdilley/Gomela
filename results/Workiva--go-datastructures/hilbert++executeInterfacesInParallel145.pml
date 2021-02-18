@@ -1,6 +1,6 @@
 #define executeInterfacesInParallel_int1599  3
 #define executeInterfacesInParallel_numCPU  0
-#define executeInterfacesInParallel_uint6416111  0
+#define executeInterfacesInParallel_uint6416111  3
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/rtree/hilbert/action.go#L145
 typedef Wgdef {

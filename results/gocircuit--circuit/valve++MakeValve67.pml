@@ -1,4 +1,4 @@
-#define MakeValve_n  0
+#define MakeValve_n  3
 
 // https://github.com/gocircuit/circuit/blob/fd2add79ac1e5c203803f3e845169584c2aafaa5/element/valve/valve.go#L67
 typedef Chandef {

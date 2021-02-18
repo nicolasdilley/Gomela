@@ -88,7 +88,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20776: skip;
+			for20797: skip;
 			
 
 			if
@@ -102,11 +102,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end776: skip
+			for20_end797: skip
 		:: true -> 
 			break
 		od;
-		for20_exit776: skip
+		for20_exit797: skip
 	fi;
 	goto stop_process
 stop_process:skip

@@ -1,4 +1,4 @@
-#define dialFirst_left  1
+#define dialFirst_left  3
 #define ub_for596_1  -2
 
 // https://github.com/anacrolix/torrent/blob/b6ad979670b7de1883ee0fa0f813517edf8ab96e/client.go#L560
@@ -35,16 +35,16 @@ init {
 	if
 	:: 0 != -2 && ub_for596_1 != -2 -> 
 				for(i : 0.. ub_for596_1) {
-			for10927: skip;
+			for10949: skip;
 			
 
 			if
 			:: resCh.async_rcv?state,num_msgs;
 			:: resCh.sync?state,num_msgs;
 			fi;
-			for10_end927: skip
+			for10_end949: skip
 		};
-		for10_exit927: skip
+		for10_exit949: skip
 	:: else -> 
 		do
 		:: true -> 

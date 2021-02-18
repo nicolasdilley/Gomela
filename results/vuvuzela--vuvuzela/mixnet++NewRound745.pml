@@ -1,4 +1,4 @@
-#define NewRound_servers  3
+#define NewRound_servers  0
 
 // https://github.com/vuvuzela/vuvuzela/blob/55ba49f81ad006877ae6b4d76c0958a3ee956441/mixnet/mixnet.go#L745
 typedef Chandef {
@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && servers-1 != -3 -> 
 				for(i : 0.. servers-1) {
-			for40467: skip;
+			for40484: skip;
 			
 
 			if
 			:: errs.async_rcv?state,num_msgs;
 			:: errs.sync?state,num_msgs;
 			fi;
-			for40_end467: skip
+			for40_end484: skip
 		};
-		for40_exit467: skip
+		for40_exit484: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -84,16 +84,16 @@ init {
 	if
 	:: 0 != -2 && servers-1 != -3 -> 
 				for(i : 0.. servers-1) {
-			for60468: skip;
+			for60485: skip;
 			
 
 			if
 			:: errs.async_rcv?state,num_msgs;
 			:: errs.sync?state,num_msgs;
 			fi;
-			for60_end468: skip
+			for60_end485: skip
 		};
-		for60_exit468: skip
+		for60_exit485: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -66,7 +66,7 @@ proctype go_Anonymous0(Chandef ch;Chandef done) {
 	:: else -> 
 		do
 		:: true -> 
-			for10697: skip;
+			for10718: skip;
 			do
 			:: ch.async_send!0 -> 
 				break
@@ -78,11 +78,11 @@ proctype go_Anonymous0(Chandef ch;Chandef done) {
 			:: done.sync?state,num_msgs -> 
 				goto stop_process
 			od;
-			for10_end697: skip
+			for10_end718: skip
 		:: true -> 
 			break
 		od;
-		for10_exit697: skip
+		for10_exit718: skip
 	fi;
 	stop_process: skip;
 	ch.closing!true

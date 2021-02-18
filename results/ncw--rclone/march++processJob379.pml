@@ -1,5 +1,5 @@
-#define processJob_ci_Checkers  0
-#define processJob_srcList  3
+#define processJob_ci_Checkers  1
+#define processJob_srcList  1
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/fs/march/march.go#L379
 typedef Chandef {

@@ -1,4 +1,4 @@
-#define Gather_n_Urls  0
+#define Gather_n_Urls  3
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/nginx_sts/nginx_sts.go#L51
 typedef Wgdef {

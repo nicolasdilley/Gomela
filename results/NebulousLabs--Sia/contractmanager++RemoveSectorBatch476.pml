@@ -1,5 +1,5 @@
-#define RemoveSectorBatch_maxSectorBatchThreads  3
-#define RemoveSectorBatch_sectorRoots  0
+#define RemoveSectorBatch_maxSectorBatchThreads  0
+#define RemoveSectorBatch_sectorRoots  1
 
 // https://github.com/NebulousLabs/Sia/blob/a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1/modules/host/contractmanager/sectorupdate.go#L476
 typedef Chandef {

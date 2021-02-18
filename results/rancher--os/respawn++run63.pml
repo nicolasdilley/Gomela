@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && lines-1 != -3 -> 
 				for(i : 0.. lines-1) {
-			for2099: skip;
+			for20101: skip;
 			
 
 			if
 			:: doneChannel.async_rcv?state,num_msgs;
 			:: doneChannel.sync?state,num_msgs;
 			fi;
-			for20_end99: skip
+			for20_end101: skip
 		};
-		for20_exit99: skip
+		for20_exit101: skip
 	:: else -> 
 		do
 		:: true -> 

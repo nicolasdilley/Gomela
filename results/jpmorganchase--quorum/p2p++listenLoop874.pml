@@ -1,5 +1,5 @@
-#define listenLoop_tokens  1
-#define ub_for887_1  3
+#define listenLoop_tokens  3
+#define ub_for887_1  0
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/p2p/server.go#L874
 typedef Chandef {
@@ -35,7 +35,7 @@ init {
 	if
 	:: 0 != -2 && tokens-1 != -3 -> 
 				for(i : 0.. tokens-1) {
-			for101035: skip;
+			for101048: skip;
 			
 
 			if
@@ -43,9 +43,9 @@ init {
 			:: slots.sync!false,0 -> 
 				slots.sending?state
 			fi;
-			for10_end1035: skip
+			for10_end1048: skip
 		};
-		for10_exit1035: skip
+		for10_exit1048: skip
 	:: else -> 
 		do
 		:: true -> 

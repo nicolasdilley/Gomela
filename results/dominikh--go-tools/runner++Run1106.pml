@@ -18,7 +18,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int all=0;
+	int all=3;
 	
 
 	if
@@ -89,7 +89,7 @@ proctype go_Anonymous0(Chandef queue;int all) {
 	:: else -> 
 		do
 		:: true -> 
-			for40478: skip;
+			for40495: skip;
 			
 
 			if
@@ -103,11 +103,11 @@ proctype go_Anonymous0(Chandef queue;int all) {
 				fi
 			:: true;
 			fi;
-			for40_end478: skip
+			for40_end495: skip
 		:: true -> 
 			break
 		od;
-		for40_exit478: skip
+		for40_exit495: skip
 	fi;
 	stop_process: skip
 }
@@ -116,7 +116,7 @@ proctype go_genericHandle(Chandef queue) {
 	int i;
 	bool state;
 	int num_msgs;
-	int a_Triggers77220=0;
+	int a_Triggers77220=3;
 	
 
 	if
@@ -150,7 +150,7 @@ proctype go_genericHandle(Chandef queue) {
 	:: else -> 
 		do
 		:: true -> 
-			for51479: skip;
+			for51496: skip;
 			
 
 			if
@@ -164,11 +164,11 @@ proctype go_genericHandle(Chandef queue) {
 				fi
 			:: true;
 			fi;
-			for51_end479: skip
+			for51_end496: skip
 		:: true -> 
 			break
 		od;
-		for51_exit479: skip
+		for51_exit496: skip
 	fi;
 	stop_process: skip
 }

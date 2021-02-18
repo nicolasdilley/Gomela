@@ -1,4 +1,4 @@
-#define generateDataset_threads  3
+#define generateDataset_threads  1
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/consensus/ethash/algorithm.go#L267
 typedef Wgdef {

@@ -1,5 +1,5 @@
-#define traceBlock_txs  0
-#define traceBlock_threads  0
+#define traceBlock_txs  1
+#define traceBlock_threads  1
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/eth/api_tracer.go#L458
 typedef Chandef {
@@ -91,7 +91,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201037: skip;
+			for201045: skip;
 			
 
 			if
@@ -106,11 +106,11 @@ init {
 				break
 			:: true;
 			fi;
-			for20_end1037: skip
+			for20_end1045: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1037: skip
+		for20_exit1045: skip
 	fi;
 	jobs.closing!true;
 	pend.Wait?0;

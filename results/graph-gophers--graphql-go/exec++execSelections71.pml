@@ -1,4 +1,4 @@
-#define execSelections_fields  3
+#define execSelections_fields  1
 
 // https://github.com/graph-gophers/graphql-go/blob/beb923fada293249384c7a9fa0c5078ea92466f3/internal/exec/exec.go#L71
 typedef Wgdef {

@@ -1,4 +1,4 @@
-#define IndexDownload_IndexOperationConcurrency  1
+#define IndexDownload_IndexOperationConcurrency  0
 
 // https://github.com/convox/rack/blob/ee5e31801fa5f2e69aa3bd41339db0b4f64c82fe/provider/aws/index.go#L51
 typedef Chandef {
@@ -20,7 +20,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int index=0;
+	int index=3;
 	int IndexOperationConcurrency = IndexDownload_IndexOperationConcurrency;
 	run sync_monitor(inch);
 	run sync_monitor(errch);
@@ -56,7 +56,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for30668: skip;
+			for30689: skip;
 			
 
 			if
@@ -70,11 +70,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end668: skip
+			for30_end689: skip
 		:: true -> 
 			break
 		od;
-		for30_exit668: skip
+		for30_exit689: skip
 	fi;
 	goto stop_process
 stop_process:skip
@@ -137,7 +137,7 @@ proctype go_Anonymous1(Chandef inch;Chandef errch;int index) {
 	:: else -> 
 		do
 		:: true -> 
-			for20667: skip;
+			for20688: skip;
 			
 
 			if
@@ -145,11 +145,11 @@ proctype go_Anonymous1(Chandef inch;Chandef errch;int index) {
 			:: inch.sync!false,0 -> 
 				inch.sending?state
 			fi;
-			for20_end667: skip
+			for20_end688: skip
 		:: true -> 
 			break
 		od;
-		for20_exit667: skip
+		for20_exit688: skip
 	fi;
 	stop_process: skip
 }

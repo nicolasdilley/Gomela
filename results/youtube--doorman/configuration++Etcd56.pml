@@ -93,7 +93,7 @@ proctype go_Anonymous0(Chandef updates;Chandef req) {
 	
 
 	if
-	:: req.async_rcv?0;
+	:: req.async_rcv?state,num_msgs;
 	:: req.sync?state,num_msgs;
 	fi;
 	

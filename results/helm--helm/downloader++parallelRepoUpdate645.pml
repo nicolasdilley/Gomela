@@ -1,4 +1,4 @@
-#define parallelRepoUpdate_repos  3
+#define parallelRepoUpdate_repos  0
 
 // https://github.com/helm/helm/blob/ab12382ddcd3a27a974b45ed96e47697de221244/pkg/downloader/manager.go#L645
 typedef Wgdef {

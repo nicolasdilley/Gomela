@@ -89,7 +89,7 @@ proctype go_Anonymous0(Chandef containerHealthy;Chandef timeoutChan) {
 	if
 	:: 0 != -2 && ub_for479_0 != -2 -> 
 				for(i : 0.. ub_for479_0) {
-			for10373: skip;
+			for10390: skip;
 			
 
 			if
@@ -138,9 +138,9 @@ proctype go_Anonymous0(Chandef containerHealthy;Chandef timeoutChan) {
 				fi
 			:: true;
 			fi;
-			for10_end373: skip
+			for10_end390: skip
 		};
-		for10_exit373: skip
+		for10_exit390: skip
 	:: else -> 
 		do
 		:: true -> 

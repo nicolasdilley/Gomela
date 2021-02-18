@@ -1,6 +1,6 @@
-#define SetReference_concurrentWorkers  3
-#define SetReference_conf_Imports  3
-#define SetReference_conf_DevImports  0
+#define SetReference_concurrentWorkers  1
+#define SetReference_conf_Imports  0
+#define SetReference_conf_DevImports  3
 
 // https://github.com/Masterminds/glide/blob/b94b39d657d8abcccba6545e148f1201aee6ffec/repo/set_reference.go#L14
 typedef Chandef {
@@ -112,7 +112,7 @@ init {
 	if
 	:: 0 != -2 && concurrentWorkers-1 != -3 -> 
 				for(i : 0.. concurrentWorkers-1) {
-			for40157: skip;
+			for40167: skip;
 			
 
 			if
@@ -120,9 +120,9 @@ init {
 			:: done.sync!false,0 -> 
 				done.sending?state
 			fi;
-			for40_end157: skip
+			for40_end167: skip
 		};
-		for40_exit157: skip
+		for40_exit167: skip
 	:: else -> 
 		do
 		:: true -> 

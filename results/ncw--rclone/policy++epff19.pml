@@ -1,4 +1,4 @@
-#define epff_upstreams  0
+#define epff_upstreams  3
 #define not_found_42  -2
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/backend/union/policy/epff.go#L19
@@ -81,16 +81,16 @@ proctype go_Anonymous1(Chandef ch;int num) {
 	if
 	:: 0 != -2 && num-1 != -3 -> 
 				for(i : 0.. num-1) {
-			for211218: skip;
+			for211265: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for21_end1218: skip
+			for21_end1265: skip
 		};
-		for21_exit1218: skip
+		for21_exit1265: skip
 	:: else -> 
 		do
 		:: true -> 

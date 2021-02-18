@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && s_hosts-1 != -3 -> 
 				for(i : 0.. s_hosts-1) {
-			for20400: skip;
+			for20417: skip;
 			
 
 			if
@@ -54,9 +54,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end400: skip
+			for20_end417: skip
 		};
-		for20_exit400: skip
+		for20_exit417: skip
 	:: else -> 
 		do
 		:: true -> 

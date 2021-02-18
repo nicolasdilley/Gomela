@@ -1,5 +1,5 @@
 #define doClusterPeers_ips  0
-#define doClusterPeers_maxRetry  0
+#define doClusterPeers_maxRetry  1
 
 // https://github.com/docker/libnetwork/blob/954d1ddc998d8b6eb93afb628ae8ca122e53bca8/cmd/networkdb-test/dbclient/ndbClient.go#L355
 typedef Chandef {
@@ -44,16 +44,16 @@ init {
 		if
 		:: 0 != -2 && ips-1 != -3 -> 
 						for(i : 0.. ips-1) {
-				for11751: skip;
+				for11771: skip;
 				
 
 				if
 				:: doneCh.async_rcv?state,num_msgs;
 				:: doneCh.sync?state,num_msgs;
 				fi;
-				for11_end751: skip
+				for11_end771: skip
 			};
-			for11_exit751: skip
+			for11_exit771: skip
 		:: else -> 
 			do
 			:: true -> 

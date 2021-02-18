@@ -1,6 +1,6 @@
-#define SuggestPrice_gpo_checkBlocks  0
+#define SuggestPrice_gpo_checkBlocks  3
 #define ub_for106_1  0
-#define ub_for113_2  0
+#define ub_for113_2  3
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/eth/gasprice/gasprice.go#L77
 typedef Chandef {
@@ -140,7 +140,7 @@ proctype go_getBlockPrices(Chandef ch) {
 	:: else -> 
 		do
 		:: true -> 
-			for111042: skip;
+			for111040: skip;
 			
 
 			if
@@ -155,11 +155,11 @@ proctype go_getBlockPrices(Chandef ch) {
 				goto stop_process
 			:: true;
 			fi;
-			for11_end1042: skip
+			for11_end1040: skip
 		:: true -> 
 			break
 		od;
-		for11_exit1042: skip
+		for11_exit1040: skip
 	fi;
 	
 

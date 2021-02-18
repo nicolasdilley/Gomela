@@ -218,7 +218,7 @@ proctype go_Anonymous1(Chandef errChan;int trees;int commits;int tags) {
 	:: else -> 
 		do
 		:: true -> 
-			for301162: skip;
+			for301188: skip;
 			
 
 			if
@@ -247,18 +247,18 @@ proctype go_Anonymous1(Chandef errChan;int trees;int commits;int tags) {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end1162: skip
+			for30_end1188: skip
 		:: true -> 
 			break
 		od;
-		for30_exit1162: skip
+		for30_exit1188: skip
 	fi;
 	
 
 	if
 	:: 0 != -2 && commits-1 != -3 -> 
 				for(i : 0.. commits-1) {
-			for401163: skip;
+			for401189: skip;
 			
 
 			if
@@ -287,9 +287,9 @@ proctype go_Anonymous1(Chandef errChan;int trees;int commits;int tags) {
 				goto stop_process
 			:: true;
 			fi;
-			for40_end1163: skip
+			for40_end1189: skip
 		};
-		for40_exit1163: skip
+		for40_exit1189: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -368,7 +368,7 @@ proctype go_Anonymous1(Chandef errChan;int trees;int commits;int tags) {
 	:: else -> 
 		do
 		:: true -> 
-			for501164: skip;
+			for501190: skip;
 			
 
 			if
@@ -397,11 +397,11 @@ proctype go_Anonymous1(Chandef errChan;int trees;int commits;int tags) {
 				goto stop_process
 			:: true;
 			fi;
-			for50_end1164: skip
+			for50_end1190: skip
 		:: true -> 
 			break
 		od;
-		for50_exit1164: skip
+		for50_exit1190: skip
 	fi;
 	
 

@@ -60,7 +60,7 @@ proctype go_scanLogs(Chandef output) {
 	if
 	:: 0 != -2 && ub_for135_0 != -2 -> 
 				for(i : 0.. ub_for135_0) {
-			for101108: skip;
+			for101133: skip;
 			
 
 			if
@@ -68,9 +68,9 @@ proctype go_scanLogs(Chandef output) {
 			:: output.sync!false,0 -> 
 				output.sending?state
 			fi;
-			for10_end1108: skip
+			for10_end1133: skip
 		};
-		for10_exit1108: skip
+		for10_exit1133: skip
 	:: else -> 
 		do
 		:: true -> 

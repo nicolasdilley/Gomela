@@ -52,16 +52,16 @@ init {
 	if
 	:: 0 != -2 && m-1 != -3 -> 
 				for(i : 0.. m-1) {
-			for301126: skip;
+			for301152: skip;
 			
 
 			if
 			:: cfgs.async_rcv?state,num_msgs;
 			:: cfgs.sync?state,num_msgs;
 			fi;
-			for30_end1126: skip
+			for30_end1152: skip
 		};
-		for30_exit1126: skip
+		for30_exit1152: skip
 	:: else -> 
 		do
 		:: true -> 

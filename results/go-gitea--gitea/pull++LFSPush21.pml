@@ -10,10 +10,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errChan;
 	int num_msgs = 0;
 	bool state = false;
@@ -27,7 +32,15 @@ init {
 	:: else -> 
 		run sync_monitor(errChan)
 	fi;
-	run go_RevListObjects(errChan);
+	run wgMonitor(wg);
+	wg.Add!6;
+	run go_createLFSMetaObjectsFromCatFileBatch(wg);
+	run go_CatFileBatch(wg);
+	run go_BlobsLessThan1024FromCatFileBatchCheck(wg);
+	run go_CatFileBatchCheck(wg);
+	run go_BlobsFromRevListObjects(wg);
+	run go_RevListObjects(wg,errChan);
+	wg.Wait?0;
 	do
 	:: errChan.async_rcv?state,num_msgs -> 
 		
@@ -53,7 +66,47 @@ init {
 stop_process:skip
 }
 
-proctype go_RevListObjects(Chandef errChan) {
+proctype go_createLFSMetaObjectsFromCatFileBatch(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_CatFileBatch(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_BlobsLessThan1024FromCatFileBatchCheck(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_CatFileBatchCheck(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_BlobsFromRevListObjects(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_RevListObjects(Wgdef wg;Chandef errChan) {
 	bool closed; 
 	int i;
 	bool state;
@@ -71,7 +124,8 @@ proctype go_RevListObjects(Chandef errChan) {
 		fi
 	:: true;
 	fi;
-	stop_process: skip
+	stop_process: skip;
+	wg.Add!-1
 }
 
  /* ================================================================================== */
@@ -148,5 +202,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

@@ -1,4 +1,4 @@
-#define fetchKeysInParallel_numCPU  3
+#define fetchKeysInParallel_numCPU  1
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/btree/palm/tree.go#L276
 typedef Wgdef {

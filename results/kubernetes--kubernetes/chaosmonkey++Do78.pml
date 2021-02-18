@@ -1,4 +1,4 @@
-#define Do_cm_tests  0
+#define Do_cm_tests  3
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/test/e2e/chaosmonkey/chaosmonkey.go#L78
 typedef Chandef {

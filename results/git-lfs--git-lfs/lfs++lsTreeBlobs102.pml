@@ -65,7 +65,7 @@ proctype go_Anonymous0(Chandef blobs;Chandef errchan) {
 	if
 	:: 0 != -2 && ub_for115_1 != -2 -> 
 				for(i : 0.. ub_for115_1) {
-			for10618: skip;
+			for10637: skip;
 			
 
 			if
@@ -79,9 +79,9 @@ proctype go_Anonymous0(Chandef blobs;Chandef errchan) {
 				fi
 			:: true;
 			fi;
-			for10_end618: skip
+			for10_end637: skip
 		};
-		for10_exit618: skip
+		for10_exit637: skip
 	:: else -> 
 		do
 		:: true -> 

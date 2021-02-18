@@ -1,4 +1,4 @@
-#define runServiceLatencies_total  3
+#define runServiceLatencies_total  0
 #define runServiceLatencies_inParallel  3
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/test/e2e/network/service_latency.go#L134
@@ -69,7 +69,7 @@ init {
 	if
 	:: 0 != -2 && total-1 != -3 -> 
 				for(i : 0.. total-1) {
-			for20796: skip;
+			for20809: skip;
 			do
 			:: errs.async_rcv?state,num_msgs -> 
 				break
@@ -80,9 +80,9 @@ init {
 			:: durations.sync?state,num_msgs -> 
 				break
 			od;
-			for20_end796: skip
+			for20_end809: skip
 		};
-		for20_exit796: skip
+		for20_exit809: skip
 	:: else -> 
 		do
 		:: true -> 

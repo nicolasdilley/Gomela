@@ -1,4 +1,4 @@
-#define List_requests  3
+#define List_requests  0
 
 // https://github.com/tsuru/tsuru/blob/acb87a16aa1c971080a7771119155c44e5eab9f2/applog/aggregator.go#L53
 typedef Chandef {
@@ -11,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errCh;
 	Chandef logsCh;
 	int num_msgs = 0;
@@ -46,7 +51,15 @@ init {
 	:: else -> 
 		run sync_monitor(errCh)
 	fi;
+	run wgMonitor(wg);
+		for(i : 0.. requests-1) {
+		for10: skip;
+		wg.Add!1;
+		run go_Anonymous0(logsCh,errCh,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Wait?0;
 	logsCh.closing!true;
 	errCh.closing!true;
 	
@@ -85,6 +98,35 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef logsCh;Chandef errCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		
+
+		if
+		:: errCh.async_send!0;
+		:: errCh.sync!false,0 -> 
+			errCh.sending?state
+		fi;
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: logsCh.async_send!0;
+	:: logsCh.sync!false,0 -> 
+		logsCh.sending?state
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -160,5 +202,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

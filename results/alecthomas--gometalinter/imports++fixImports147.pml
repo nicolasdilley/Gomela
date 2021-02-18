@@ -47,7 +47,7 @@ init {
 	if
 	:: 0 != -2 && searches-1 != -3 -> 
 				for(i : 0.. searches-1) {
-			for50102: skip;
+			for50107: skip;
 			
 
 			if
@@ -61,9 +61,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for50_end102: skip
+			for50_end107: skip
 		};
-		for50_exit102: skip
+		for50_exit107: skip
 	:: else -> 
 		do
 		:: true -> 

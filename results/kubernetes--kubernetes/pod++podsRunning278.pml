@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20784: skip;
+			for20815: skip;
 			
 
 			if
 			:: errorChan.async_rcv?state,num_msgs;
 			:: errorChan.sync?state,num_msgs;
 			fi;
-			for20_end784: skip
+			for20_end815: skip
 		:: true -> 
 			break
 		od;
-		for20_exit784: skip
+		for20_exit815: skip
 	fi;
 	goto stop_process
 stop_process:skip

@@ -1,5 +1,5 @@
 #define not_found_addParentsFnsL"stack"L235823  1
-#define not_found_list235721  3
+#define not_found_list235721  1
 
 // https://github.com/wallix/awless/blob/44e892b4961fc09abf82f61de2ffeb66a20c82b7/aws/services/gen_services.go#L2315
 typedef Chandef {

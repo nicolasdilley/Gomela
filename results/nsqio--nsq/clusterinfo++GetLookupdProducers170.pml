@@ -1,4 +1,4 @@
-#define GetLookupdProducers_lookupdHTTPAddrs  3
+#define GetLookupdProducers_lookupdHTTPAddrs  0
 
 // https://github.com/nsqio/nsq/blob/8adb229f70538c6f6554b98285a33552bcb5832c/internal/clusterinfo/data.go#L170
 typedef Wgdef {

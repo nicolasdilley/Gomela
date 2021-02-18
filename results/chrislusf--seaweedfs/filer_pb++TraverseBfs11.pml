@@ -1,5 +1,5 @@
-#define TraverseBfs_K  0
-#define ub_for23_1  0
+#define TraverseBfs_K  1
+#define ub_for23_1  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/pb/filer_pb/filer_client_bfs.go#L11
 typedef Wgdef {

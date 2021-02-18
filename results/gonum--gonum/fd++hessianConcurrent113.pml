@@ -1,4 +1,4 @@
-#define hessianConcurrent_evals  1
+#define hessianConcurrent_evals  3
 #define hessianConcurrent_nWorkers  1
 
 // https://github.com/gonum/gonum/blob/090a5d652c892e8d5460a07eca1c1ddf480b04d9/diff/fd/hessian.go#L113
@@ -148,25 +148,25 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 	if
 	:: 0 != -2 && n-1 != -3 -> 
 				for(i : 0.. n-1) {
-			for20369: skip;
+			for20386: skip;
 			
 
 			if
 			:: i != -2 && n-1 != -3 -> 
 								for(i : i.. n-1) {
-					for21368369: skip;
+					for21385386: skip;
 					
 
 					if
 					:: stencil-1 != -3 -> 
 												for(i : 0.. stencil-1) {
-							for22368369: skip;
+							for22385386: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23368369: skip;
+									for23385386: skip;
 									
 
 									if
@@ -174,13 +174,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end368369: skip
+									for23_end385386: skip
 								};
-								for23_exit368369: skip
+								for23_exit385386: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366368369: skip;
+									for23383385386: skip;
 									
 
 									if
@@ -188,25 +188,25 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366368369: skip
+									for23_end383385386: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366368369: skip
+								for23_exit383385386: skip
 							fi;
-							for22_end368369: skip
+							for22_end385386: skip
 						};
-						for22_exit368369: skip
+						for22_exit385386: skip
 					:: else -> 
 						do
 						:: true -> 
-							for22367368369: skip;
+							for22384385386: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23367368369: skip;
+									for23384385386: skip;
 									
 
 									if
@@ -214,13 +214,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end367368369: skip
+									for23_end384385386: skip
 								};
-								for23_exit367368369: skip
+								for23_exit384385386: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366367368369: skip;
+									for23383384385386: skip;
 									
 
 									if
@@ -228,37 +228,37 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366367368369: skip
+									for23_end383384385386: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366367368369: skip
+								for23_exit383384385386: skip
 							fi;
-							for22_end367368369: skip
+							for22_end384385386: skip
 						:: true -> 
 							break
 						od;
-						for22_exit367368369: skip
+						for22_exit384385386: skip
 					fi;
-					for21_end368369: skip
+					for21_end385386: skip
 				};
-				for21_exit368369: skip
+				for21_exit385386: skip
 			:: else -> 
 				do
 				:: true -> 
-					for21369: skip;
+					for21386: skip;
 					
 
 					if
 					:: stencil-1 != -3 -> 
 												for(i : 0.. stencil-1) {
-							for22369: skip;
+							for22386: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23369: skip;
+									for23386: skip;
 									
 
 									if
@@ -266,13 +266,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end369: skip
+									for23_end386: skip
 								};
-								for23_exit369: skip
+								for23_exit386: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366369: skip;
+									for23383386: skip;
 									
 
 									if
@@ -280,25 +280,25 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366369: skip
+									for23_end383386: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366369: skip
+								for23_exit383386: skip
 							fi;
-							for22_end369: skip
+							for22_end386: skip
 						};
-						for22_exit369: skip
+						for22_exit386: skip
 					:: else -> 
 						do
 						:: true -> 
-							for22367369: skip;
+							for22384386: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23367369: skip;
+									for23384386: skip;
 									
 
 									if
@@ -306,13 +306,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end367369: skip
+									for23_end384386: skip
 								};
-								for23_exit367369: skip
+								for23_exit384386: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366367369: skip;
+									for23383384386: skip;
 									
 
 									if
@@ -320,27 +320,27 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366367369: skip
+									for23_end383384386: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366367369: skip
+								for23_exit383384386: skip
 							fi;
-							for22_end367369: skip
+							for22_end384386: skip
 						:: true -> 
 							break
 						od;
-						for22_exit367369: skip
+						for22_exit384386: skip
 					fi;
-					for21_end369: skip
+					for21_end386: skip
 				:: true -> 
 					break
 				od;
-				for21_exit369: skip
+				for21_exit386: skip
 			fi;
-			for20_end369: skip
+			for20_end386: skip
 		};
-		for20_exit369: skip
+		for20_exit386: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -350,19 +350,19 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 			if
 			:: i != -2 && n-1 != -3 -> 
 								for(i : i.. n-1) {
-					for21368: skip;
+					for21385: skip;
 					
 
 					if
 					:: stencil-1 != -3 -> 
 												for(i : 0.. stencil-1) {
-							for22368: skip;
+							for22385: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23368: skip;
+									for23385: skip;
 									
 
 									if
@@ -370,13 +370,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end368: skip
+									for23_end385: skip
 								};
-								for23_exit368: skip
+								for23_exit385: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366368: skip;
+									for23383385: skip;
 									
 
 									if
@@ -384,25 +384,25 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366368: skip
+									for23_end383385: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366368: skip
+								for23_exit383385: skip
 							fi;
-							for22_end368: skip
+							for22_end385: skip
 						};
-						for22_exit368: skip
+						for22_exit385: skip
 					:: else -> 
 						do
 						:: true -> 
-							for22367368: skip;
+							for22384385: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23367368: skip;
+									for23384385: skip;
 									
 
 									if
@@ -410,13 +410,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end367368: skip
+									for23_end384385: skip
 								};
-								for23_exit367368: skip
+								for23_exit384385: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366367368: skip;
+									for23383384385: skip;
 									
 
 									if
@@ -424,21 +424,21 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366367368: skip
+									for23_end383384385: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366367368: skip
+								for23_exit383384385: skip
 							fi;
-							for22_end367368: skip
+							for22_end384385: skip
 						:: true -> 
 							break
 						od;
-						for22_exit367368: skip
+						for22_exit384385: skip
 					fi;
-					for21_end368: skip
+					for21_end385: skip
 				};
-				for21_exit368: skip
+				for21_exit385: skip
 			:: else -> 
 				do
 				:: true -> 
@@ -468,7 +468,7 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 							:: else -> 
 								do
 								:: true -> 
-									for23366: skip;
+									for23383: skip;
 									
 
 									if
@@ -476,11 +476,11 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366: skip
+									for23_end383: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366: skip
+								for23_exit383: skip
 							fi;
 							for22_end: skip
 						};
@@ -488,13 +488,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 					:: else -> 
 						do
 						:: true -> 
-							for22367: skip;
+							for22384: skip;
 							
 
 							if
 							:: stencil-1 != -3 -> 
 																for(i : 0.. stencil-1) {
-									for23367: skip;
+									for23384: skip;
 									
 
 									if
@@ -502,13 +502,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end367: skip
+									for23_end384: skip
 								};
-								for23_exit367: skip
+								for23_exit384: skip
 							:: else -> 
 								do
 								:: true -> 
-									for23366367: skip;
+									for23383384: skip;
 									
 
 									if
@@ -516,17 +516,17 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 									:: send.sync!false,0 -> 
 										send.sending?state
 									fi;
-									for23_end366367: skip
+									for23_end383384: skip
 								:: true -> 
 									break
 								od;
-								for23_exit366367: skip
+								for23_exit383384: skip
 							fi;
-							for22_end367: skip
+							for22_end384: skip
 						:: true -> 
 							break
 						od;
-						for22_exit367: skip
+						for22_exit384: skip
 					fi;
 					for21_end: skip
 				:: true -> 

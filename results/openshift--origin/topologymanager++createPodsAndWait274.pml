@@ -1,4 +1,4 @@
-#define createPodsAndWait_num  1
+#define createPodsAndWait_num  3
 
 // https://github.com/openshift/origin/blob/56333ce08d76ca93e3930a2eeb1445fdd337de39/test/extended/topology_manager/utils.go#L274
 typedef Wgdef {

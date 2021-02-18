@@ -53,16 +53,16 @@ proctype go_Anonymous0(Chandef doneChan) {
 		if
 		:: 0 != -2 && ub_for124_0 != -2 -> 
 						for(i : 0.. ub_for124_0) {
-				for11337: skip;
+				for11355: skip;
 				
 
 				if
 				:: true -> 
 					doneChan.closing!true
 				fi;
-				for11_end337: skip
+				for11_end355: skip
 			};
-			for11_exit337: skip
+			for11_exit355: skip
 		:: else -> 
 			do
 			:: true -> 

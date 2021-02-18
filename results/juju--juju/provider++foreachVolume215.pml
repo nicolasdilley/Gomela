@@ -1,4 +1,4 @@
-#define foreachVolume_volumeIds  1
+#define foreachVolume_volumeIds  0
 
 // https://github.com/juju/juju/blob/af21dceaf489e65417c11a49921a03bf188480cd/caas/kubernetes/provider/storage.go#L215
 typedef Wgdef {

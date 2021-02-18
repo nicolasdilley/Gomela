@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && servers-1 != -3 -> 
 				for(i : 0.. servers-1) {
-			for20770: skip;
+			for20784: skip;
 			do
 			:: resChan.async_rcv?state,num_msgs -> 
 				break
@@ -49,9 +49,9 @@ init {
 			:: true -> 
 				break
 			od;
-			for20_end770: skip
+			for20_end784: skip
 		};
-		for20_exit770: skip
+		for20_exit784: skip
 	:: else -> 
 		do
 		:: true -> 

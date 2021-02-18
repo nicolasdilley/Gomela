@@ -200,9 +200,10 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 			b.List = append(b.List, r)
 		}
-	} else { // Could not find the decl of the function and it didnt take a chan as param so
+	} else { // Could not find the decl of the function
 		// So lets check if it takes a receive as an arg
 		for _, arg := range call_expr.Args {
+
 			stmt, err1 := m.TranslateExpr(arg)
 
 			if err1 == nil {
@@ -315,16 +316,12 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 		} else { // The declaration of the function could not be found
 			// If the goroutines takes one of our channel as input return an error
 			// Otherwise check if the args are a receive on a channel
-			hasChan := false
 			for _, arg := range call_expr.Args {
-				if m.containsChan(arg) {
-					hasChan = true
+				if m.containsChan(arg) || m.containsWaitgroup(arg) {
+					return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_GO_FUNC + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
 				}
 			}
 
-			if hasChan {
-				return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_GO_FUNC + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
-			}
 		}
 	}
 

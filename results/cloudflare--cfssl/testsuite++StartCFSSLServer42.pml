@@ -63,7 +63,7 @@ proctype go_Anonymous0(Chandef errorOccurred) {
 	if
 	:: 0 != -2 && ub_for111_0 != -2 -> 
 				for(i : 0.. ub_for111_0) {
-			for40928: skip;
+			for40952: skip;
 			
 
 			if
@@ -77,9 +77,9 @@ proctype go_Anonymous0(Chandef errorOccurred) {
 				fi
 			:: true;
 			fi;
-			for40_end928: skip
+			for40_end952: skip
 		};
-		for40_exit928: skip
+		for40_exit952: skip
 	:: else -> 
 		do
 		:: true -> 

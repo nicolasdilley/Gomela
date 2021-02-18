@@ -1,4 +1,4 @@
-#define MoveUpReplicas_replicas  3
+#define MoveUpReplicas_replicas  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/orchestrator/inst/instance_topology.go#L354
 typedef Chandef {
@@ -110,18 +110,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for30717: skip;
+			for30740: skip;
 			
 
 			if
 			:: barrier.async_rcv?state,num_msgs;
 			:: barrier.sync?state,num_msgs;
 			fi;
-			for30_end717: skip
+			for30_end740: skip
 		:: true -> 
 			break
 		od;
-		for30_exit717: skip
+		for30_exit740: skip
 	fi;
 	Cleanup: skip;
 	;

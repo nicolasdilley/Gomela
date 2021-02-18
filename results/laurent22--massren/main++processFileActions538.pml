@@ -1,4 +1,4 @@
-#define processFileActions_fileActions  1
+#define processFileActions_fileActions  3
 
 // https://github.com/laurent22/massren/blob/f721006d1e4ee8220a6eea144cfe3b0835a5880f/main.go#L538
 typedef Chandef {

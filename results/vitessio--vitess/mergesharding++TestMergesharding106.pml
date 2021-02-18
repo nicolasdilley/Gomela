@@ -1,4 +1,4 @@
-#define TestMergesharding_shard_Vttablets  1
+#define TestMergesharding_shard_Vttablets  0
 #define not_found_{shard0shard1}47824  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/test/endtoend/sharding/mergesharding/mergesharding_base.go#L106

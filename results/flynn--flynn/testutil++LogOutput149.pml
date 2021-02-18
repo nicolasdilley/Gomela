@@ -1,4 +1,4 @@
-#define LogOutput_rs  1
+#define LogOutput_rs  3
 
 // https://github.com/flynn/flynn/blob/eecb13ba8d5f4228c24dce308293f9c65075c949/discoverd/testutil/testutil.go#L149
 typedef Wgdef {

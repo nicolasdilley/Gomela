@@ -1,4 +1,4 @@
-#define recoverOneRemoteEcShardInterval_ecVolume_ShardLocations  0
+#define recoverOneRemoteEcShardInterval_ecVolume_ShardLocations  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/storage/store_ec.go#L322
 typedef Wgdef {

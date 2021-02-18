@@ -167,7 +167,7 @@ proctype go_Anonymous3(Chandef resultC;Chandef errc;Wgdef wgg) {
 	int i;
 	bool state;
 	int num_msgs;
-	int output_AttachedPolicies=3;
+	int output_AttachedPolicies=0;
 	
 
 	if
@@ -201,7 +201,7 @@ proctype go_Anonymous3(Chandef resultC;Chandef errc;Wgdef wgg) {
 	:: else -> 
 		do
 		:: true -> 
-			for31944: skip;
+			for31975: skip;
 			
 
 			if
@@ -209,11 +209,11 @@ proctype go_Anonymous3(Chandef resultC;Chandef errc;Wgdef wgg) {
 			:: resultC.sync!false,0 -> 
 				resultC.sending?state
 			fi;
-			for31_end944: skip
+			for31_end975: skip
 		:: true -> 
 			break
 		od;
-		for31_exit944: skip
+		for31_exit975: skip
 	fi;
 	stop_process: skip;
 	wgg.Add!-1

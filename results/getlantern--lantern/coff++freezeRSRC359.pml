@@ -29,8 +29,8 @@ proctype go_Anonymous0(Chandef leafwalker) {
 	bool state;
 	int num_msgs;
 	int dir2_DirEntries=1;
-	int dir1_Dirs=3;
-	int coff_Dir_Dirs=3;
+	int dir1_Dirs=1;
+	int coff_Dir_Dirs=1;
 	
 
 	if
@@ -62,7 +62,7 @@ proctype go_Anonymous0(Chandef leafwalker) {
 					:: else -> 
 						do
 						:: true -> 
-							for12274: skip;
+							for12289: skip;
 							
 
 							if
@@ -70,11 +70,11 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end274: skip
+							for12_end289: skip
 						:: true -> 
 							break
 						od;
-						for12_exit274: skip
+						for12_exit289: skip
 					fi;
 					for11_end: skip
 				};
@@ -82,13 +82,13 @@ proctype go_Anonymous0(Chandef leafwalker) {
 			:: else -> 
 				do
 				:: true -> 
-					for11275: skip;
+					for11290: skip;
 					
 
 					if
 					:: dir2_DirEntries-1 != -3 -> 
 												for(i : 0.. dir2_DirEntries-1) {
-							for12275: skip;
+							for12290: skip;
 							
 
 							if
@@ -96,13 +96,13 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end275: skip
+							for12_end290: skip
 						};
-						for12_exit275: skip
+						for12_exit290: skip
 					:: else -> 
 						do
 						:: true -> 
-							for12274275: skip;
+							for12289290: skip;
 							
 
 							if
@@ -110,17 +110,17 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end274275: skip
+							for12_end289290: skip
 						:: true -> 
 							break
 						od;
-						for12_exit274275: skip
+						for12_exit289290: skip
 					fi;
-					for11_end275: skip
+					for11_end290: skip
 				:: true -> 
 					break
 				od;
-				for11_exit275: skip
+				for11_exit290: skip
 			fi;
 			for10_end: skip
 		};
@@ -128,19 +128,19 @@ proctype go_Anonymous0(Chandef leafwalker) {
 	:: else -> 
 		do
 		:: true -> 
-			for10276: skip;
+			for10291: skip;
 			
 
 			if
 			:: dir1_Dirs-1 != -3 -> 
 								for(i : 0.. dir1_Dirs-1) {
-					for11276: skip;
+					for11291: skip;
 					
 
 					if
 					:: dir2_DirEntries-1 != -3 -> 
 												for(i : 0.. dir2_DirEntries-1) {
-							for12276: skip;
+							for12291: skip;
 							
 
 							if
@@ -148,13 +148,13 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end276: skip
+							for12_end291: skip
 						};
-						for12_exit276: skip
+						for12_exit291: skip
 					:: else -> 
 						do
 						:: true -> 
-							for12274276: skip;
+							for12289291: skip;
 							
 
 							if
@@ -162,25 +162,25 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end274276: skip
+							for12_end289291: skip
 						:: true -> 
 							break
 						od;
-						for12_exit274276: skip
+						for12_exit289291: skip
 					fi;
-					for11_end276: skip
+					for11_end291: skip
 				};
-				for11_exit276: skip
+				for11_exit291: skip
 			:: else -> 
 				do
 				:: true -> 
-					for11275276: skip;
+					for11290291: skip;
 					
 
 					if
 					:: dir2_DirEntries-1 != -3 -> 
 												for(i : 0.. dir2_DirEntries-1) {
-							for12275276: skip;
+							for12290291: skip;
 							
 
 							if
@@ -188,13 +188,13 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end275276: skip
+							for12_end290291: skip
 						};
-						for12_exit275276: skip
+						for12_exit290291: skip
 					:: else -> 
 						do
 						:: true -> 
-							for12274275276: skip;
+							for12289290291: skip;
 							
 
 							if
@@ -202,23 +202,23 @@ proctype go_Anonymous0(Chandef leafwalker) {
 							:: leafwalker.sync!false,0 -> 
 								leafwalker.sending?state
 							fi;
-							for12_end274275276: skip
+							for12_end289290291: skip
 						:: true -> 
 							break
 						od;
-						for12_exit274275276: skip
+						for12_exit289290291: skip
 					fi;
-					for11_end275276: skip
+					for11_end290291: skip
 				:: true -> 
 					break
 				od;
-				for11_exit275276: skip
+				for11_exit290291: skip
 			fi;
-			for10_end276: skip
+			for10_end291: skip
 		:: true -> 
 			break
 		od;
-		for10_exit276: skip
+		for10_exit291: skip
 	fi;
 	stop_process: skip
 }

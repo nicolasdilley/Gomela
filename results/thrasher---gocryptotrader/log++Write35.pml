@@ -1,4 +1,4 @@
-#define Write_mw_writers  1
+#define Write_mw_writers  3
 
 // https://github.com/thrasher/-gocryptotrader/blob/e611a7542db9b5eac6cf277719498f397e0a9c0f/log/logger_multiwriter.go#L35
 typedef Chandef {
@@ -60,7 +60,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20306: skip;
+			for20321: skip;
 			
 
 			if
@@ -74,11 +74,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end306: skip
+			for20_end321: skip
 		:: true -> 
 			break
 		od;
-		for20_exit306: skip
+		for20_exit321: skip
 	fi;
 	goto stop_process
 stop_process:skip

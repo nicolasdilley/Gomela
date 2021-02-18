@@ -1,4 +1,4 @@
-#define forAll_shards  0
+#define forAll_shards  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/wrangler/resharder.go#L336
 typedef Wgdef {

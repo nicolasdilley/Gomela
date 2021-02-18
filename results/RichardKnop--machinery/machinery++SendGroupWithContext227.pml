@@ -1,5 +1,5 @@
 #define SendGroupWithContext_group_Tasks  0
-#define SendGroupWithContext_sendConcurrency  1
+#define SendGroupWithContext_sendConcurrency  0
 
 // https://github.com/RichardKnop/machinery/blob/47893a0e7aa31dcc73974647c0fac6d9889643a6/v2/server.go#L227
 typedef Chandef {
@@ -73,7 +73,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for10823: skip;
+			for10847: skip;
 			
 
 			if
@@ -85,14 +85,14 @@ init {
 				:: errorsChan.sync!false,0 -> 
 					errorsChan.sending?state
 				fi;
-				goto for10_end823
+				goto for10_end847
 			:: true;
 			fi;
-			for10_end823: skip
+			for10_end847: skip
 		:: true -> 
 			break
 		od;
-		for10_exit823: skip
+		for10_exit847: skip
 	fi;
 	
 
@@ -147,7 +147,7 @@ proctype go_Anonymous0(Chandef errorsChan;Chandef pool;Wgdef wg;int sendConcurre
 	if
 	:: 0 != -2 && sendConcurrency-1 != -3 -> 
 				for(i : 0.. sendConcurrency-1) {
-			for20824: skip;
+			for20848: skip;
 			
 
 			if
@@ -155,9 +155,9 @@ proctype go_Anonymous0(Chandef errorsChan;Chandef pool;Wgdef wg;int sendConcurre
 			:: pool.sync!false,0 -> 
 				pool.sending?state
 			fi;
-			for20_end824: skip
+			for20_end848: skip
 		};
-		for20_exit824: skip
+		for20_exit848: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -1,5 +1,5 @@
-#define typeCheck_m_compiledGoFiles  1
-#define typeCheck_m_goFiles  0
+#define typeCheck_m_compiledGoFiles  0
+#define typeCheck_m_goFiles  1
 
 // https://github.com/golang/tools/blob/e0d201561e39aeaab8136532f2bbe17ae1ef24ff/internal/lsp/cache/check.go#L265
 typedef Wgdef {

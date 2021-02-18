@@ -1,4 +1,4 @@
-#define serveAPI_s_servers  1
+#define serveAPI_s_servers  0
 
 // https://github.com/hyperhq/hyperd/blob/8a7e67dc33bbccdfc92b5e2a908bbdb1c5d9b956/server/server.go#L87
 typedef Chandef {
@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && s_servers-1 != -3 -> 
 				for(i : 0.. s_servers-1) {
-			for20831: skip;
+			for20851: skip;
 			
 
 			if
@@ -54,9 +54,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end831: skip
+			for20_end851: skip
 		};
-		for20_exit831: skip
+		for20_exit851: skip
 	:: else -> 
 		do
 		:: true -> 

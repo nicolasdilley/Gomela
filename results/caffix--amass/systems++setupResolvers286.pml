@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int l=0;
+	int l=3;
 	int addrs = setupResolvers_addrs;
 	
 

@@ -1,4 +1,4 @@
-#define GetLogs_ops_resource_Children  3
+#define GetLogs_ops_resource_Children  1
 
 // https://github.com/pulumi/pulumi/blob/940c0eaf62bac1196a10942ec437f2c39e7e2bda/pkg/operations/resources.go#L133
 typedef Chandef {
@@ -93,7 +93,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for2062: skip;
+			for2063: skip;
 			
 
 			if
@@ -106,11 +106,11 @@ init {
 			:: errch.async_rcv?state,num_msgs;
 			:: errch.sync?state,num_msgs;
 			fi;
-			for20_end62: skip
+			for20_end63: skip
 		:: true -> 
 			break
 		od;
-		for20_exit62: skip
+		for20_exit63: skip
 	fi;
 	
 

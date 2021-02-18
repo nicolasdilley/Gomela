@@ -1,4 +1,4 @@
-#define forAllSources_ts_sources  3
+#define forAllSources_ts_sources  0
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/wrangler/traffic_switcher.go#L1352
 typedef Wgdef {

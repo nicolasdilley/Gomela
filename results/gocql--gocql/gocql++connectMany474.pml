@@ -1,4 +1,4 @@
-#define connectMany_count  0
+#define connectMany_count  3
 
 // https://github.com/gocql/gocql/blob/e49edf966d9036342234c0f42c9643fbffdefaf5/connectionpool.go#L474
 typedef Wgdef {

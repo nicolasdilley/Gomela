@@ -1,5 +1,5 @@
-#define collectDataOnce_batchCnt  3
-#define ub_for82_1  3
+#define collectDataOnce_batchCnt  1
+#define ub_for82_1  0
 
 // https://github.com/open-falcon/falcon-plus/blob/0c37ac5b9412e90c560571563e9a6824eea2e03f/modules/nodata/collector/collector_cron.go#L61
 typedef Chandef {
@@ -41,16 +41,16 @@ init {
 	if
 	:: 0 != -2 && batchCnt-1 != -3 -> 
 				for(i : 0.. batchCnt-1) {
-			for2048: skip;
+			for2044: skip;
 			do
 			:: rch.async_rcv?state,num_msgs -> 
 				break
 			:: rch.sync?state,num_msgs -> 
 				break
 			od;
-			for20_end48: skip
+			for20_end44: skip
 		};
-		for20_exit48: skip
+		for20_exit44: skip
 	:: else -> 
 		do
 		:: true -> 

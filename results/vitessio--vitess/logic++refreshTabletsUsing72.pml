@@ -1,4 +1,4 @@
-#define refreshTabletsUsing_cells  3
+#define refreshTabletsUsing_cells  1
 #define refreshTabletsUsing_keyspaceShards  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/orchestrator/logic/tablet_discovery.go#L72

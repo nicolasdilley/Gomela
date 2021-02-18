@@ -1,5 +1,5 @@
-#define PerformValidation_remoteVACount  1
-#define PerformValidation_rand_Perm38620  3
+#define PerformValidation_remoteVACount  3
+#define PerformValidation_rand_Perm38620  1
 
 // https://github.com/letsencrypt/boulder/blob/9464d025d1e336ccb5f366e4499ebe9e9596e8d1/va/va.go#L598
 typedef Chandef {

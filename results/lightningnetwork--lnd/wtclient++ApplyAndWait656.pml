@@ -1,4 +1,4 @@
-#define ApplyAndWait_s  1
+#define ApplyAndWait_s  3
 
 // https://github.com/lightningnetwork/lnd/blob/ff897db293ab0e59abdefcb438d0ef42ebc91ff5/watchtower/wtclient/session_queue.go#L656
 typedef Wgdef {

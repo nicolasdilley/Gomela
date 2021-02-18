@@ -91,7 +91,7 @@ proctype go_Anonymous0(Chandef errChain;Wgdef wg) {
 	:: else -> 
 		do
 		:: true -> 
-			for10806: skip;
+			for10838: skip;
 			
 
 			if
@@ -105,11 +105,11 @@ proctype go_Anonymous0(Chandef errChain;Wgdef wg) {
 				fi
 			:: true;
 			fi;
-			for10_end806: skip
+			for10_end838: skip
 		:: true -> 
 			break
 		od;
-		for10_exit806: skip
+		for10_exit838: skip
 	fi;
 	wg.Add!-1;
 	stop_process: skip

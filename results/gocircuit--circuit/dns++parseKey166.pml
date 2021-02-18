@@ -1,4 +1,4 @@
-#define ub_for198_0  3
+#define ub_for198_0  -2
 
 // https://github.com/gocircuit/circuit/blob/fd2add79ac1e5c203803f3e845169584c2aafaa5/github.com/miekg/dns/kscan.go#L166
 typedef Chandef {
@@ -14,7 +14,7 @@ typedef Chandef {
 
 
 
-init {
+init { 
 	Chandef c;
 	int num_msgs = 0;
 	bool state = false;
@@ -22,29 +22,29 @@ init {
 	run sync_monitor(c);
 	run go_klexer(c);
 	do
-	:: true ->
-
+	:: true -> 
+		
 
 		if
 		:: c.async_rcv?state,num_msgs;
 		:: c.sync?state,num_msgs;
 		fi;
-
+		
 
 		if
-		:: state && num_msgs <= 0 ->
+		:: state && num_msgs <= 0 -> 
 			break
-		:: else ->
+		:: else -> 
 			for20: skip;
-
+			
 
 			if
 			:: true;
-			:: true ->
-
+			:: true -> 
+				
 
 				if
-				:: true ->
+				:: true -> 
 					goto stop_process
 				:: true;
 				fi
@@ -58,120 +58,120 @@ stop_process:skip
 }
 
 proctype go_klexer(Chandef c) {
-	bool closed;
+	bool closed; 
 	int i;
 	bool state;
 	int num_msgs;
-
+	
 
 	if
-	:: 0 != -2 && ub_for198_0 != -2 ->
+	:: 0 != -2 && ub_for198_0 != -2 -> 
 				for(i : 0.. ub_for198_0) {
-			for10380: skip;
-
+			for10395: skip;
+			
 
 			if
-			:: true ->
-
+			:: true -> 
+				
 
 				if
-				:: true ->
+				:: true -> 
 					break
 				:: true;
 				fi;
-
+				
 
 				if
-				:: true ->
-
+				:: true -> 
+					
 
 					if
 					:: c.async_send!0;
-					:: c.sync!false,0 ->
+					:: c.sync!false,0 -> 
 						c.sending?state
 					fi
 				fi
 			:: true;
-			:: true ->
-
+			:: true -> 
+				
 
 				if
 				:: c.async_send!0;
-				:: c.sync!false,0 ->
+				:: c.sync!false,0 -> 
 					c.sending?state
 				fi
-			:: true ->
-
+			:: true -> 
+				
 
 				if
-				:: true ->
+				:: true -> 
 					break
 				:: true;
 				fi
 			fi;
-			for10_end380: skip
+			for10_end395: skip
 		};
-		for10_exit380: skip
-	:: else ->
+		for10_exit395: skip
+	:: else -> 
 		do
-		:: true ->
+		:: true -> 
 			for10: skip;
-
+			
 
 			if
-			:: true ->
-
+			:: true -> 
+				
 
 				if
-				:: true ->
+				:: true -> 
 					break
 				:: true;
 				fi;
-
+				
 
 				if
-				:: true ->
-
+				:: true -> 
+					
 
 					if
 					:: c.async_send!0;
-					:: c.sync!false,0 ->
+					:: c.sync!false,0 -> 
 						c.sending?state
 					fi
 				fi
 			:: true;
-			:: true ->
-
+			:: true -> 
+				
 
 				if
 				:: c.async_send!0;
-				:: c.sync!false,0 ->
+				:: c.sync!false,0 -> 
 					c.sending?state
 				fi
-			:: true ->
-
+			:: true -> 
+				
 
 				if
-				:: true ->
+				:: true -> 
 					break
 				:: true;
 				fi
 			fi;
 			for10_end: skip
-		:: true ->
+		:: true -> 
 			break
 		od;
 		for10_exit: skip
 	fi;
-
+	
 
 	if
-	:: true ->
-
+	:: true -> 
+		
 
 		if
 		:: c.async_send!0;
-		:: c.sync!false,0 ->
+		:: c.sync!false,0 -> 
 			c.sending?state
 		fi
 	:: true;
@@ -182,12 +182,12 @@ proctype go_klexer(Chandef c) {
 
  /* ================================================================================== */
  /* ================================================================================== */
- /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
 if
-:: ch.closed ->
+:: ch.closed -> 
 end: if
   :: ch.async_send?0-> // cannot send on closed channel
     assert(false)
@@ -208,7 +208,7 @@ end: if
 		      ch.closed = true
 		  :: ch.sending!false;
 		fi;
-	:: ch.num_msgs == 0 ->
+	:: ch.num_msgs == 0 -> 
 end2:		if
 		:: ch.async_send?0 -> // a message has been received
 			ch.num_msgs = ch.num_msgs + 1
@@ -216,7 +216,7 @@ end2:		if
 			ch.closed = true
 		:: ch.sending!false;
 		fi;
-		:: else ->
+		:: else -> 
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
@@ -245,7 +245,7 @@ end: if
     assert(false)
   :: ch.sync!true,0; // can always receive on a closed chan
   fi;
-:: else ->
+:: else -> 
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->

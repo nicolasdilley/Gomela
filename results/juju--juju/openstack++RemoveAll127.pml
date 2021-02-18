@@ -1,4 +1,4 @@
-#define RemoveAll_maxRoutines  0
+#define RemoveAll_maxRoutines  1
 #define RemoveAll_names  1
 
 // https://github.com/juju/juju/blob/af21dceaf489e65417c11a49921a03bf188480cd/provider/openstack/storage.go#L127
@@ -97,7 +97,7 @@ proctype go_Anonymous0(Chandef toDelete;int names) {
 	:: else -> 
 		do
 		:: true -> 
-			for10288: skip;
+			for10302: skip;
 			
 
 			if
@@ -105,11 +105,11 @@ proctype go_Anonymous0(Chandef toDelete;int names) {
 			:: toDelete.sync!false,0 -> 
 				toDelete.sending?state
 			fi;
-			for10_end288: skip
+			for10_end302: skip
 		:: true -> 
 			break
 		od;
-		for10_exit288: skip
+		for10_exit302: skip
 	fi;
 	toDelete.closing!true;
 	stop_process: skip

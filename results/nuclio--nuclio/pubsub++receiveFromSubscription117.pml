@@ -54,7 +54,7 @@ init {
 	if
 	:: 0 != -2 && subscriptionConfig_MaxNumWorkers-1 != -3 -> 
 				for(i : 0.. subscriptionConfig_MaxNumWorkers-1) {
-			for10377: skip;
+			for10393: skip;
 			
 
 			if
@@ -62,9 +62,9 @@ init {
 			:: eventsChan.sync!false,0 -> 
 				eventsChan.sending?state
 			fi;
-			for10_end377: skip
+			for10_end393: skip
 		};
-		for10_exit377: skip
+		for10_exit393: skip
 	:: else -> 
 		do
 		:: true -> 

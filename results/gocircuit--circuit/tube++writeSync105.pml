@@ -1,4 +1,4 @@
-#define writeSync_t_folk_Opened10729  0
+#define writeSync_t_folk_Opened10729  3
 
 // https://github.com/gocircuit/circuit/blob/fd2add79ac1e5c203803f3e845169584c2aafaa5/tissue/tube/tube.go#L105
 typedef Wgdef {

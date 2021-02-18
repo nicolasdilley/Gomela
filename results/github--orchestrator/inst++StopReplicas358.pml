@@ -43,7 +43,7 @@ init {
 			
 
 			if
-			:: barrier.async_rcv?0;
+			:: barrier.async_rcv?state,num_msgs;
 			:: barrier.sync?state,num_msgs;
 			fi;
 			for20_end: skip
@@ -52,18 +52,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20473: skip;
+			for20490: skip;
 			
 
 			if
-			:: barrier.async_rcv?0;
+			:: barrier.async_rcv?state,num_msgs;
 			:: barrier.sync?state,num_msgs;
 			fi;
-			for20_end473: skip
+			for20_end490: skip
 		:: true -> 
 			break
 		od;
-		for20_exit473: skip
+		for20_exit490: skip
 	fi;
 	goto stop_process
 stop_process:skip

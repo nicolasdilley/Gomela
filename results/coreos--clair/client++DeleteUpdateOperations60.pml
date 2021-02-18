@@ -45,7 +45,7 @@ init {
 	if
 	:: ref != -2 && lim-1-1 != -3 -> 
 				for(i : ref.. lim-1-1) {
-			for20672: skip;
+			for20693: skip;
 			
 
 			if
@@ -53,9 +53,9 @@ init {
 			:: item.sync!false,0 -> 
 				item.sending?state
 			fi;
-			for20_end672: skip
+			for20_end693: skip
 		};
-		for20_exit672: skip
+		for20_exit693: skip
 	:: else -> 
 		do
 		:: true -> 

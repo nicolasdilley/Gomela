@@ -1,4 +1,4 @@
-#define newestEntries_entries  3
+#define newestEntries_entries  1
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/backend/union/policy/newest.go#L55
 typedef Wgdef {

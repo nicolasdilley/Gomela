@@ -1,4 +1,4 @@
-#define BroadcastMessage_peers  3
+#define BroadcastMessage_peers  0
 
 // https://github.com/lightningnetwork/lnd/blob/ff897db293ab0e59abdefcb438d0ef42ebc91ff5/server.go#L2591
 typedef Wgdef {

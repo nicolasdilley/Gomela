@@ -1,4 +1,4 @@
-#define reload_sp_loops  1
+#define reload_sp_loops  3
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/scrape/scrape.go#L332
 typedef Wgdef {

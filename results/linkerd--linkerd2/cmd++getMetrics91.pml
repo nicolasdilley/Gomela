@@ -91,7 +91,7 @@ proctype go_Anonymous0(Chandef resultChan) {
 	:: else -> 
 		do
 		:: true -> 
-			for11973: skip;
+			for11999: skip;
 			
 
 			if
@@ -99,11 +99,11 @@ proctype go_Anonymous0(Chandef resultChan) {
 			:: resultChan.sync!false,0 -> 
 				resultChan.sending?state
 			fi;
-			for11_end973: skip
+			for11_end999: skip
 		:: true -> 
 			break
 		od;
-		for11_exit973: skip
+		for11_exit999: skip
 	fi;
 	stop_process: skip
 }

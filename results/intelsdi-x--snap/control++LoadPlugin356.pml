@@ -203,7 +203,7 @@ proctype go_Anonymous0(Chandef resultChan) {
 			:: else -> 
 				do
 				:: true -> 
-					for20333: skip;
+					for20350: skip;
 					
 
 					if
@@ -218,11 +218,11 @@ proctype go_Anonymous0(Chandef resultChan) {
 						goto stop_process
 					:: true;
 					fi;
-					for20_end333: skip
+					for20_end350: skip
 				:: true -> 
 					break
 				od;
-				for20_exit333: skip
+				for20_exit350: skip
 			fi;
 			
 
@@ -294,7 +294,7 @@ proctype go_Anonymous0(Chandef resultChan) {
 		:: else -> 
 			do
 			:: true -> 
-				for30334: skip;
+				for30351: skip;
 				
 
 				if
@@ -323,11 +323,11 @@ proctype go_Anonymous0(Chandef resultChan) {
 					goto stop_process
 				:: true;
 				fi;
-				for30_end334: skip
+				for30_end351: skip
 			:: true -> 
 				break
 			od;
-			for30_exit334: skip
+			for30_exit351: skip
 		fi
 	:: true;
 	fi;

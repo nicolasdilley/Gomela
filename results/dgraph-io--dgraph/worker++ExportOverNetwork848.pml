@@ -54,7 +54,7 @@ init {
 	if
 	:: 0 != -2 && gids-1 != -3 -> 
 				for(i : 0.. gids-1) {
-			for20588: skip;
+			for20603: skip;
 			
 
 			if
@@ -68,9 +68,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end588: skip
+			for20_end603: skip
 		};
-		for20_exit588: skip
+		for20_exit603: skip
 	:: else -> 
 		do
 		:: true -> 

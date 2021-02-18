@@ -1,4 +1,4 @@
-#define NewBoundedQueue_capacity  0
+#define NewBoundedQueue_capacity  3
 
 // https://github.com/jaegertracing/jaeger/blob/1cd272535cc11895bbacf7c3fcb7b095ef0935f3/pkg/queue/bounded_queue.go#L52
 typedef Chandef {

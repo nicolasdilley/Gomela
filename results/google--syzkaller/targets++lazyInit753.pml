@@ -1,4 +1,4 @@
-#define lazyInit_target_CFlags  3
+#define lazyInit_target_CFlags  1
 
 // https://github.com/google/syzkaller/blob/63631df1539816bc62c7be40779c5f3e23b23b2f/sys/targets/targets.go#L753
 typedef Wgdef {

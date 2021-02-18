@@ -1,4 +1,4 @@
-#define parseFiles_filenames  1
+#define parseFiles_filenames  3
 
 // https://github.com/golang/tools/blob/e0d201561e39aeaab8136532f2bbe17ae1ef24ff/go/packages/packages.go#L1046
 typedef Wgdef {

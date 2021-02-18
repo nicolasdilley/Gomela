@@ -1,4 +1,4 @@
-#define FindCloudAreaHostCount_cloudIDs  3
+#define FindCloudAreaHostCount_cloudIDs  1
 
 // https://github.com/Tencent/bk-cmdb/blob/4347923164dc5bdd2ecd166e58d00c5a394b5c10/src/source_controller/coreservice/core/host/cloudarea.go#L125
 typedef Chandef {

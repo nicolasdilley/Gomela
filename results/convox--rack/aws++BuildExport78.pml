@@ -137,7 +137,7 @@ init {
 	if
 	:: 0 != -2 && images-1 != -3 -> 
 				for(i : 0.. images-1) {
-			for50662: skip;
+			for50683: skip;
 			
 
 			if
@@ -151,9 +151,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for50_end662: skip
+			for50_end683: skip
 		};
-		for50_exit662: skip
+		for50_exit683: skip
 	:: else -> 
 		do
 		:: true -> 

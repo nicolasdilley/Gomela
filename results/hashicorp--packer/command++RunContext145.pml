@@ -1,4 +1,4 @@
-#define RunContext_builds  3
+#define RunContext_builds  1
 
 // https://github.com/hashicorp/packer/blob/94e22e666440c3ceb633cc0ea96d9a7f345d736e/command/build.go#L145
 typedef Wgdef {

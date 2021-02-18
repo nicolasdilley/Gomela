@@ -1,4 +1,4 @@
-#define Submit_searchers  3
+#define Submit_searchers  0
 
 // https://github.com/ardanlabs/gotraining/blob/2a8609213c14c6f4a048c95daad0bc31ba5f4db1/topics/go/profiling/project/search/search.go#L42
 typedef Chandef {

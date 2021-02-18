@@ -1,4 +1,4 @@
-#define add_nodes  3
+#define add_nodes  0
 
 // https://github.com/Workiva/go-datastructures/blob/0819bcaf26091e7c33585441f8961854c2400faa/btree/immutable/add.go#L45
 typedef Wgdef {

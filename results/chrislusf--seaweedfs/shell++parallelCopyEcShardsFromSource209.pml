@@ -1,4 +1,4 @@
-#define parallelCopyEcShardsFromSource_targetServers  1
+#define parallelCopyEcShardsFromSource_targetServers  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/shell/command_ec_encode.go#L209
 typedef Chandef {

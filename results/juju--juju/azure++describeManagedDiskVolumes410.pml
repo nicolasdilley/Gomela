@@ -1,4 +1,4 @@
-#define describeManagedDiskVolumes_volumeIds  0
+#define describeManagedDiskVolumes_volumeIds  3
 
 // https://github.com/juju/juju/blob/af21dceaf489e65417c11a49921a03bf188480cd/provider/azure/storage.go#L410
 typedef Wgdef {

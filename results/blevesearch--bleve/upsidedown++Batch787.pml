@@ -53,16 +53,16 @@ init {
 	if
 	:: 0 != -2 && ub_for857_1 != -2 -> 
 				for(i : 0.. ub_for857_1) {
-			for40905: skip;
+			for40929: skip;
 			
 
 			if
 			:: resultChan.async_rcv?state,num_msgs;
 			:: resultChan.sync?state,num_msgs;
 			fi;
-			for40_end905: skip
+			for40_end929: skip
 		};
-		for40_exit905: skip
+		for40_exit929: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -169,7 +169,7 @@ proctype go_Anonymous1(Chandef resultChan;Chandef docBackIndexRowCh;int batch_In
 	:: else -> 
 		do
 		:: true -> 
-			for30904: skip;
+			for30928: skip;
 			
 
 			if
@@ -184,11 +184,11 @@ proctype go_Anonymous1(Chandef resultChan;Chandef docBackIndexRowCh;int batch_In
 			:: docBackIndexRowCh.sync!false,0 -> 
 				docBackIndexRowCh.sending?state
 			fi;
-			for30_end904: skip
+			for30_end928: skip
 		:: true -> 
 			break
 		od;
-		for30_exit904: skip
+		for30_exit928: skip
 	fi;
 	stop_process: skip;
 	docBackIndexRowCh.closing!true

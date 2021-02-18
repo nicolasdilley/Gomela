@@ -1,4 +1,4 @@
-#define Shutdown_s_httpListeners  1
+#define Shutdown_s_httpListeners  3
 
 // https://github.com/open-policy-agent/opa/blob/a2d14c214cc298b339ba48164d7759900589eb64/server/server.go#L179
 typedef Chandef {
@@ -32,16 +32,16 @@ init {
 	if
 	:: 0 != -2 && s_httpListeners-1 != -3 -> 
 				for(i : 0.. s_httpListeners-1) {
-			for20311: skip;
+			for20323: skip;
 			
 
 			if
 			:: errChan.async_rcv?state,num_msgs;
 			:: errChan.sync?state,num_msgs;
 			fi;
-			for20_end311: skip
+			for20_end323: skip
 		};
-		for20_exit311: skip
+		for20_exit323: skip
 	:: else -> 
 		do
 		:: true -> 

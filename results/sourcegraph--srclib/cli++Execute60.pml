@@ -163,7 +163,7 @@ proctype go_Anonymous1(Chandef issuec;Chandef quitc;Wgdef wg) {
 	:: else -> 
 		do
 		:: true -> 
-			for22345: skip;
+			for22362: skip;
 			
 
 			if
@@ -171,11 +171,11 @@ proctype go_Anonymous1(Chandef issuec;Chandef quitc;Wgdef wg) {
 			:: issuec.sync!false,0 -> 
 				issuec.sending?state
 			fi;
-			for22_end345: skip
+			for22_end362: skip
 		:: true -> 
 			break
 		od;
-		for22_exit345: skip
+		for22_exit362: skip
 	fi;
 	stop_process: skip;
 	wg.Add!-1

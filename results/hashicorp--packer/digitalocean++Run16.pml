@@ -65,7 +65,7 @@ proctype go_Anonymous0(Chandef done;Chandef shutdownRetryDone) {
 	if
 	:: 0 != -2 && ub_for52_0 != -2 -> 
 				for(i : 0.. ub_for52_0) {
-			for10247: skip;
+			for10242: skip;
 			do
 			:: done.async_rcv?state,num_msgs -> 
 				goto stop_process
@@ -74,9 +74,9 @@ proctype go_Anonymous0(Chandef done;Chandef shutdownRetryDone) {
 			:: true -> 
 				break
 			od;
-			for10_end247: skip
+			for10_end242: skip
 		};
-		for10_exit247: skip
+		for10_exit242: skip
 	:: else -> 
 		do
 		:: true -> 

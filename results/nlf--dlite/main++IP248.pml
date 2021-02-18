@@ -135,7 +135,7 @@ proctype go_Anonymous0(Chandef value) {
 		:: else -> 
 			do
 			:: true -> 
-				for11511: skip;
+				for11529: skip;
 				
 
 				if
@@ -156,11 +156,11 @@ proctype go_Anonymous0(Chandef value) {
 					fi
 				:: true;
 				fi;
-				for11_end511: skip
+				for11_end529: skip
 			:: true -> 
 				break
 			od;
-			for11_exit511: skip
+			for11_exit529: skip
 		fi;
 		for10_end: skip
 	od;

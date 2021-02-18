@@ -11,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef containerResults;
 	int num_msgs = 0;
 	bool state = false;
@@ -29,7 +34,15 @@ init {
 	:: else -> 
 		run sync_monitor(containerResults)
 	fi;
+	run wgMonitor(wg);
+	wg.Add!runningPod_Containers;
+		for(i : 0.. runningPod_Containers-1) {
+		for10: skip;
+		run go_Anonymous0(containerResults,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Wait?0;
 	containerResults.closing!true;
 	do
 	:: true -> 
@@ -54,6 +67,21 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef containerResults;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: containerResults.async_send!0;
+	:: containerResults.sync!false,0 -> 
+		containerResults.sending?state
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -129,5 +157,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

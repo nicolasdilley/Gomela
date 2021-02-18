@@ -1,4 +1,4 @@
-#define epall_upstreams  0
+#define epall_upstreams  3
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/backend/union/policy/epall.go#L24
 typedef Wgdef {

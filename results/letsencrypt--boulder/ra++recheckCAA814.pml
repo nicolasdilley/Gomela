@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && authzs-1 != -3 -> 
 				for(i : 0.. authzs-1) {
-			for20447: skip;
+			for20463: skip;
 			
 
 			if
@@ -59,9 +59,9 @@ init {
 				fi
 			:: true;
 			fi;
-			for20_end447: skip
+			for20_end463: skip
 		};
-		for20_exit447: skip
+		for20_exit463: skip
 	:: else -> 
 		do
 		:: true -> 

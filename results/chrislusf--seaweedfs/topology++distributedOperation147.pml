@@ -1,4 +1,4 @@
-#define distributedOperation_locations  1
+#define distributedOperation_locations  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/topology/store_replicate.go#L147
 typedef Chandef {
@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int length=3;
+	int length=0;
 	int locations = distributedOperation_locations;
 	run sync_monitor(results);
 		for(i : 0.. locations-1) {
@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && length-1 != -3 -> 
 				for(i : 0.. length-1) {
-			for20813: skip;
+			for20827: skip;
 			
 
 			if
 			:: results.async_rcv?state,num_msgs;
 			:: results.sync?state,num_msgs;
 			fi;
-			for20_end813: skip
+			for20_end827: skip
 		};
-		for20_exit813: skip
+		for20_exit827: skip
 	:: else -> 
 		do
 		:: true -> 

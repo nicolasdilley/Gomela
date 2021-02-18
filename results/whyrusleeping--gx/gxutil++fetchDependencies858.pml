@@ -1,4 +1,4 @@
-#define ub_for903_0  0
+#define ub_for903_0  1
 #define ub_for893_1  1
 #define ub_for955_2  -2
 
@@ -80,7 +80,7 @@ init {
 	if
 	:: 0 != -2 && ub_for955_2 != -2 -> 
 				for(i : 0.. ub_for955_2) {
-			for20117: skip;
+			for20122: skip;
 			do
 			:: fetchErrs.async_rcv?state,num_msgs -> 
 				break
@@ -91,9 +91,9 @@ init {
 			:: fetchedPackages.sync?state,num_msgs -> 
 				break
 			od;
-			for20_end117: skip
+			for20_end122: skip
 		};
-		for20_exit117: skip
+		for20_exit122: skip
 	:: else -> 
 		do
 		:: true -> 

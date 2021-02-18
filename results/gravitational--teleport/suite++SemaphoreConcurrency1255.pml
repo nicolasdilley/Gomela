@@ -1,4 +1,4 @@
-#define SemaphoreConcurrency_int64127511  1
+#define SemaphoreConcurrency_int64127511  3
 
 // https://github.com/gravitational/teleport/blob/7b21cbaa566b561b40f322245b9ef5b931cbedfb/lib/services/suite/suite.go#L1255
 typedef Wgdef {
@@ -8,7 +8,7 @@ typedef Wgdef {
 
 
 
-init {
+init { 
 	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
@@ -27,7 +27,7 @@ stop_process:skip
 }
 
 proctype go_Anonymous0(Wgdef wg) {
-	bool closed;
+	bool closed; 
 	int i;
 	bool state;
 	int num_msgs;
@@ -37,7 +37,7 @@ proctype go_Anonymous0(Wgdef wg) {
 
  /* ================================================================================== */
  /* ================================================================================== */
- /* ================================================================================== */
+ /* ================================================================================== */ 
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

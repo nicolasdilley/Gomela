@@ -1,4 +1,4 @@
-#define resetVia_c_pending  1
+#define resetVia_c_pending  0
 #define resetVia_ids  1
 
 // https://github.com/oklog/oklog/blob/ca7cdf51fb41fbc290986e9a24db4fa644ab0714/pkg/store/consume.go#L290

@@ -134,7 +134,6 @@ variadico/noti
 gpmgo/gopm
 knqyf263/pet
 goraft/raft
-nfnt/resize
 redspread/spread
 gogo/protobuf
 gwuhaolin/lightsocks
@@ -185,7 +184,6 @@ mkchoi212/fac
 mailru/easyjson
 achilleasa/gopher-os
 RangelReale/osin
-mozilla/sops
 mmcloughlin/globe
 utahta/pythonbrew
 spolu/warp
@@ -216,14 +214,12 @@ matcornic/hermes
 faceair/youjumpijump
 svent/sift
 op/go-logging
-mvdan/sh
 opentracing/opentracing-go
 FiloSottile/whosthere
 golang/vgo
 shen100/wemall
 flosch/pongo2
 oklog/ulid
-rakyll/gom
 Jeffail/gabs
 google/btree
 rs/zerolog
@@ -249,7 +245,6 @@ grpc-ecosystem/go-grpc-middleware
 bmizerany/pat
 egonelbre/gophers
 unrolled/render
-motemen/ghq
 tidwall/summitdb
 cznic/ql
 ssllabs/ssllabs-scan
@@ -277,7 +272,6 @@ StackExchange/dnscontrol
 nareix/joy4
 valyala/quicktemplate
 google/skylark
-genuinetools/binctr
 asdine/storm
 funny/link
 shopspring/decimal
@@ -341,4 +335,3 @@ thrasher-/gocryptotrader
 lgtmco/lgtm
 dave/jennifer
 cdipaolo/goml
-moby/moby

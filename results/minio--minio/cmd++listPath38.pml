@@ -1,5 +1,5 @@
-#define listPath_z_serverPools  3
-#define listPath_pool_sets  0
+#define listPath_z_serverPools  1
+#define listPath_pool_sets  1
 
 // https://github.com/minio/minio/blob/3163a660aa79b75b725a0c6f152557e6253b900f/cmd/metacache-server-pool.go#L38
 typedef Wgdef {

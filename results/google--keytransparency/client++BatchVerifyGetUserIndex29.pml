@@ -1,4 +1,4 @@
-#define BatchVerifyGetUserIndex_runtime_NumCPU6818  0
+#define BatchVerifyGetUserIndex_runtime_NumCPU6818  3
 
 // https://github.com/google/keytransparency/blob/c1d8b03b87f098b18637b89ab17ff4c1c49fd1e2/core/client/batch_get_and_verify.go#L29
 typedef Chandef {
@@ -107,7 +107,7 @@ proctype go_Anonymous0(Chandef proofs;Chandef done) {
 	:: else -> 
 		do
 		:: true -> 
-			for101003: skip;
+			for101029: skip;
 			do
 			:: proofs.async_send!0 -> 
 				break
@@ -119,11 +119,11 @@ proctype go_Anonymous0(Chandef proofs;Chandef done) {
 			:: done.sync?state,num_msgs -> 
 				goto stop_process
 			od;
-			for10_end1003: skip
+			for10_end1029: skip
 		:: true -> 
 			break
 		od;
-		for10_exit1003: skip
+		for10_exit1029: skip
 	fi;
 	stop_process: skip;
 	proofs.closing!true

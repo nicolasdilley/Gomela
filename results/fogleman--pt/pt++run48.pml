@@ -1,5 +1,5 @@
-#define run_h  1
-#define run_ncpu  1
+#define run_h  0
+#define run_ncpu  3
 #define ub_for67_2  -2
 
 // https://github.com/fogleman/pt/blob/6fa0015c2178c2ccd524e0b35b16081e5c9d3101/pt/renderer.go#L48
@@ -43,16 +43,16 @@ init {
 	if
 	:: 0 != -2 && h-1 != -3 -> 
 				for(i : 0.. h-1) {
-			for20450: skip;
+			for20467: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end450: skip
+			for20_end467: skip
 		};
-		for20_exit450: skip
+		for20_exit467: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -82,7 +82,7 @@ proctype go_Anonymous0(Chandef ch) {
 	if
 	:: 0 != -2 && ub_for67_2 != -2 -> 
 				for(i : 0.. ub_for67_2) {
-			for11449: skip;
+			for11466: skip;
 			
 
 			if
@@ -90,9 +90,9 @@ proctype go_Anonymous0(Chandef ch) {
 			:: ch.sync!false,0 -> 
 				ch.sending?state
 			fi;
-			for11_end449: skip
+			for11_end466: skip
 		};
-		for11_exit449: skip
+		for11_exit466: skip
 	:: else -> 
 		do
 		:: true -> 

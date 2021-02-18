@@ -34,7 +34,7 @@ init {
 	if
 	:: 0 != -2 && order_Authorizations-1 != -3 -> 
 				for(i : 0.. order_Authorizations-1) {
-			for201050: skip;
+			for201074: skip;
 			do
 			:: resc.async_rcv?state,num_msgs -> 
 				break
@@ -45,9 +45,9 @@ init {
 			:: errc.sync?state,num_msgs -> 
 				break
 			od;
-			for20_end1050: skip
+			for20_end1074: skip
 		};
-		for20_exit1050: skip
+		for20_exit1074: skip
 	:: else -> 
 		do
 		:: true -> 

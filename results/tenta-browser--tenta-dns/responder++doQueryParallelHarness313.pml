@@ -1,4 +1,4 @@
-#define doQueryParallelHarness_serversNum  3
+#define doQueryParallelHarness_serversNum  0
 #define doQueryParallelHarness_targetServers  0
 
 // https://github.com/tenta-browser/tenta-dns/blob/8a8ab0bbeb86f54d3a26606118d06ca03e49dfdd/responder/recursive_dns_resolver.go#L313
@@ -12,11 +12,16 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef res;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
@@ -36,6 +41,9 @@ init {
 		goto stop_process
 	:: true;
 	fi;
+	run wgMonitor(wg);
+	wg.Add!serversNum;
+	run go_Anonymous0(wg);
 	
 
 	if
@@ -45,6 +53,11 @@ init {
 	:: else -> 
 		run sync_monitor(res)
 	fi;
+		for(i : 0.. targetServers-1) {
+		for10: skip;
+		run go_Anonymous1(res,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
 	do
 	:: true -> 
@@ -89,6 +102,36 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	wg.Wait?0;
+	stop_process: skip
+}
+proctype go_Anonymous1(Chandef res;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: res.async_send!0;
+	:: res.sync!false,0 -> 
+		res.sending?state
+	fi;
+	
+
+	if
+	:: true -> 
+		res.closing!true
+	:: true;
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -164,5 +207,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

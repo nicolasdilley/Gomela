@@ -67,7 +67,7 @@ proctype go_klexer(Chandef c) {
 	if
 	:: 0 != -2 && ub_for203_0 != -2 -> 
 				for(i : 0.. ub_for203_0) {
-			for10277: skip;
+			for10292: skip;
 			
 
 			if
@@ -109,9 +109,9 @@ proctype go_klexer(Chandef c) {
 				:: true;
 				fi
 			fi;
-			for10_end277: skip
+			for10_end292: skip
 		};
-		for10_exit277: skip
+		for10_exit292: skip
 	:: else -> 
 		do
 		:: true -> 

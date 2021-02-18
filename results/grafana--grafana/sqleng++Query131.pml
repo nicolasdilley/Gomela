@@ -1,4 +1,4 @@
-#define Query_tsdbQuery_Queries  0
+#define Query_tsdbQuery_Queries  3
 
 // https://github.com/grafana/grafana/blob/bedd662c0727fbfd02578f84852f5afdfeb4ba19/pkg/tsdb/sqleng/sql_engine.go#L131
 typedef Wgdef {

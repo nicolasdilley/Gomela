@@ -19,7 +19,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int lenFound=3;
+	int lenFound=0;
 	int keys = FetchReports_keys;
 	
 
@@ -55,16 +55,16 @@ init {
 	if
 	:: 0 != -2 && lenFound-1 != -3 -> 
 				for(i : 0.. lenFound-1) {
-			for20350: skip;
+			for20372: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end350: skip
+			for20_end372: skip
 		};
-		for20_exit350: skip
+		for20_exit372: skip
 	:: else -> 
 		do
 		:: true -> 

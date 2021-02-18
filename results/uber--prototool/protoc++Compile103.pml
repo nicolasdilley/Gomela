@@ -1,4 +1,4 @@
-#define Compile_runtime_NumCPU13036  0
+#define Compile_runtime_NumCPU13036  3
 #define Compile_cmdMetas  1
 
 // https://github.com/uber/prototool/blob/a6d064684c011c8482f4218c681a66a64031fb1d/internal/protoc/compiler.go#L103

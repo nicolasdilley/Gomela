@@ -1,4 +1,4 @@
-#define resolveParallelHarness_input  0
+#define resolveParallelHarness_input  3
 
 // https://github.com/tenta-browser/tenta-dns/blob/8a8ab0bbeb86f54d3a26606118d06ca03e49dfdd/responder/recursive_dns_resolver.go#L251
 typedef Chandef {

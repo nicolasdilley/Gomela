@@ -1,4 +1,4 @@
-#define ub_for22_0  3
+#define ub_for22_0  1
 
 // https://github.com/nsqio/nsq/blob/8adb229f70538c6f6554b98285a33552bcb5832c/internal/protocol/tcp_server.go#L17
 typedef Wgdef {

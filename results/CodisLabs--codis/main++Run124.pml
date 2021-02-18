@@ -1,4 +1,4 @@
-#define Run_args_connlist  3
+#define Run_args_connlist  0
 
 // https://github.com/CodisLabs/codis/blob/de1ad026e329561c22e2a3035fbfe89dc7fef764/extern/deprecated/redis-test/bench/benchmark.go#L124
 typedef Wgdef {

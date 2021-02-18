@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && size-1 != -3 -> 
 				for(i : 0.. size-1) {
-			for20745: skip;
+			for20766: skip;
 			
 
 			if
 			:: queue.async_rcv?state,num_msgs;
 			:: queue.sync?state,num_msgs;
 			fi;
-			for20_end745: skip
+			for20_end766: skip
 		};
-		for20_exit745: skip
+		for20_exit766: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -90,7 +90,7 @@ proctype go_Anonymous0(Chandef queue) {
 		if
 		:: 0 != -2 && 10-1 != -3 -> 
 						for(i : 0.. 10-1) {
-				for11744: skip;
+				for11765: skip;
 				
 
 				if
@@ -105,9 +105,9 @@ proctype go_Anonymous0(Chandef queue) {
 					goto stop_process
 				:: true;
 				fi;
-				for11_end744: skip
+				for11_end765: skip
 			};
-			for11_exit744: skip
+			for11_exit765: skip
 		:: else -> 
 			do
 			:: true -> 

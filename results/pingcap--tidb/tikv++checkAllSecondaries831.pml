@@ -1,4 +1,4 @@
-#define checkAllSecondaries_regions  1
+#define checkAllSecondaries_regions  3
 
 // https://github.com/pingcap/tidb/blob/8ddd41c960caaebbdeb28da33c781fca1464f05f/store/tikv/lock_resolver.go#L831
 typedef Chandef {
@@ -67,7 +67,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20887: skip;
+			for20909: skip;
 			
 
 			if
@@ -81,11 +81,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end887: skip
+			for20_end909: skip
 		:: true -> 
 			break
 		od;
-		for20_exit887: skip
+		for20_exit909: skip
 	fi;
 	goto stop_process
 stop_process:skip

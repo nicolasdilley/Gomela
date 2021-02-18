@@ -1,4 +1,4 @@
-#define NewTBufferedServer_maxQueueSize  1
+#define NewTBufferedServer_maxQueueSize  3
 
 // https://github.com/jaegertracing/jaeger/blob/1cd272535cc11895bbacf7c3fcb7b095ef0935f3/cmd/agent/app/servers/tbuffered_server.go#L73
 typedef Chandef {

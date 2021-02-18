@@ -51,7 +51,7 @@ init {
 	if
 	:: 0 != -2 && ub_for299_1 != -2 -> 
 				for(i : 0.. ub_for299_1) {
-			for20990: skip;
+			for201016: skip;
 			
 
 			if
@@ -59,9 +59,9 @@ init {
 			:: pcchan.sync!false,0 -> 
 				pcchan.sending?state
 			fi;
-			for20_end990: skip
+			for20_end1016: skip
 		};
-		for20_exit990: skip
+		for20_exit1016: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -85,16 +85,16 @@ init {
 	if
 	:: 0 != -2 && procs-1 != -3 -> 
 				for(i : 0.. procs-1) {
-			for30991: skip;
+			for301017: skip;
 			
 
 			if
 			:: symbolizerC.async_rcv?state,num_msgs;
 			:: symbolizerC.sync?state,num_msgs;
 			fi;
-			for30_end991: skip
+			for30_end1017: skip
 		};
-		for30_exit991: skip
+		for30_exit1017: skip
 	:: else -> 
 		do
 		:: true -> 

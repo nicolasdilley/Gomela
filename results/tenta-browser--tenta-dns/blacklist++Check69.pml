@@ -11,22 +11,30 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef responses;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int e_cfg_Blacklists = Check_e_cfg_Blacklists;
 	run sync_monitor(responses);
+	run wgMonitor(wg);
+	wg.Add!e_cfg_Blacklists;
 		for(i : 0.. e_cfg_Blacklists-1) {
 		for10: skip;
 		run go_lookup(responses);
 		for10_end: skip
 	};
 	for10_exit: skip;
+	run go_Anonymous1(responses,wg);
 	do
 	:: true -> 
 		
@@ -42,6 +50,7 @@ init {
 			break
 		:: else -> 
 			for20: skip;
+			wg.Add!-1;
 			
 
 			if
@@ -90,6 +99,15 @@ proctype go_lookup(Chandef responder) {
 		goto stop_process
 	:: true;
 	fi;
+	stop_process: skip
+}
+proctype go_Anonymous1(Chandef responses;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	wg.Wait?0;
+	responses.closing!true;
 	stop_process: skip
 }
 
@@ -167,5 +185,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

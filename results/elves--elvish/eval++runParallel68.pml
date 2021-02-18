@@ -1,4 +1,4 @@
-#define runParallel_functions  3
+#define runParallel_functions  1
 
 // https://github.com/elves/elvish/blob/87519a9d9cdfba7037b1b139b255a09ae3f5c290/pkg/eval/builtin_fn_flow.go#L68
 typedef Wgdef {

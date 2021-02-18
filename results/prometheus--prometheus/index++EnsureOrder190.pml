@@ -1,4 +1,4 @@
-#define EnsureOrder_n  1
+#define EnsureOrder_n  3
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/tsdb/index/postings.go#L190
 typedef Chandef {
@@ -68,7 +68,7 @@ init {
 			:: else -> 
 				do
 				:: true -> 
-					for21518: skip;
+					for21540: skip;
 					
 
 					if
@@ -76,11 +76,11 @@ init {
 					:: workc.sync!false,0 -> 
 						workc.sending?state
 					fi;
-					for21_end518: skip
+					for21_end540: skip
 				:: true -> 
 					break
 				od;
-				for21_exit518: skip
+				for21_exit540: skip
 			fi;
 			for20_end: skip
 		};
@@ -88,13 +88,13 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20519: skip;
+			for20541: skip;
 			
 
 			if
 			:: e-1 != -3 -> 
 								for(i : 0.. e-1) {
-					for21519: skip;
+					for21541: skip;
 					
 
 					if
@@ -102,13 +102,13 @@ init {
 					:: workc.sync!false,0 -> 
 						workc.sending?state
 					fi;
-					for21_end519: skip
+					for21_end541: skip
 				};
-				for21_exit519: skip
+				for21_exit541: skip
 			:: else -> 
 				do
 				:: true -> 
-					for21518519: skip;
+					for21540541: skip;
 					
 
 					if
@@ -116,17 +116,17 @@ init {
 					:: workc.sync!false,0 -> 
 						workc.sending?state
 					fi;
-					for21_end518519: skip
+					for21_end540541: skip
 				:: true -> 
 					break
 				od;
-				for21_exit518519: skip
+				for21_exit540541: skip
 			fi;
-			for20_end519: skip
+			for20_end541: skip
 		:: true -> 
 			break
 		od;
-		for20_exit519: skip
+		for20_exit541: skip
 	fi;
 	workc.closing!true;
 	wg.Wait?0

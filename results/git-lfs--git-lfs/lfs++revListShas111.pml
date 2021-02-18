@@ -1,4 +1,4 @@
-#define revListShas_chanBufSize  1
+#define revListShas_chanBufSize  3
 #define ub_for129_1  -2
 
 // https://github.com/git-lfs/git-lfs/blob/731bcc598b2edd1b400a8908a803fd6afdc255ff/lfs/gitscanner_refs.go#L111
@@ -65,7 +65,7 @@ proctype go_Anonymous0(Chandef revs;Chandef errs) {
 	if
 	:: 0 != -2 && ub_for129_1 != -2 -> 
 				for(i : 0.. ub_for129_1) {
-			for10617: skip;
+			for10636: skip;
 			
 
 			if
@@ -73,9 +73,9 @@ proctype go_Anonymous0(Chandef revs;Chandef errs) {
 			:: revs.sync!false,0 -> 
 				revs.sending?state
 			fi;
-			for10_end617: skip
+			for10_end636: skip
 		};
-		for10_exit617: skip
+		for10_exit636: skip
 	:: else -> 
 		do
 		:: true -> 

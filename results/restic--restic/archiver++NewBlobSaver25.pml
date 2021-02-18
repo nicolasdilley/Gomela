@@ -1,5 +1,5 @@
-#define NewBlobSaver_workers  3
-#define NewBlobSaver_uint3211  0
+#define NewBlobSaver_workers  1
+#define NewBlobSaver_uint3211  3
 
 // https://github.com/restic/restic/blob/aa0faa8c7d7800b6ba7b11164fa2d3683f7f78aa/internal/archiver/blob_saver.go#L25
 typedef Chandef {

@@ -63,7 +63,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201166: skip;
+			for201192: skip;
 			
 
 			if
@@ -71,11 +71,11 @@ init {
 			:: ch.sync!false,0 -> 
 				ch.sending?state
 			fi;
-			for20_end1166: skip
+			for20_end1192: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1166: skip
+		for20_exit1192: skip
 	fi;
 	ch.closing!true;
 	wg.Wait?0

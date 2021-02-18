@@ -1,4 +1,4 @@
-#define Subscribe_s_subscriberClients  1
+#define Subscribe_s_subscriberClients  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/messaging/msgclient/subscriber.go#L100
 typedef Wgdef {

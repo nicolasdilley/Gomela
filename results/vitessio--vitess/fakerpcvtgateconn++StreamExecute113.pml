@@ -81,7 +81,7 @@ init {
 		:: else -> 
 			do
 			:: true -> 
-				for10726: skip;
+				for10747: skip;
 				
 
 				if
@@ -89,11 +89,11 @@ init {
 				:: resultChan.sync!false,0 -> 
 					resultChan.sending?state
 				fi;
-				for10_end726: skip
+				for10_end747: skip
 			:: true -> 
 				break
 			od;
-			for10_exit726: skip
+			for10_exit747: skip
 		fi
 	:: true -> 
 		run sync_monitor(resultChan)

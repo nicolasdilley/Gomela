@@ -1,4 +1,4 @@
-#define RunTests_config_Generate_Worker  1
+#define RunTests_config_Generate_Worker  3
 
 // https://github.com/elastic/beats/blob/1327562b17cf06c430a2ad668ba22a3f836606a4/libbeat/publisher/pipeline/stress/run.go#L51
 typedef Wgdef {

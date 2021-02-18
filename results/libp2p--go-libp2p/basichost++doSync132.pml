@@ -1,6 +1,6 @@
-#define doSync_nmgr_nat_Mappings18520  3
-#define doSync_ports  0
-#define doSync_pports  0
+#define doSync_nmgr_nat_Mappings18520  1
+#define doSync_ports  1
+#define doSync_pports  1
 
 // https://github.com/libp2p/go-libp2p/blob/1c850e1293995d06f65d47b11be9d8502be49fee/p2p/host/basic/natmgr.go#L132
 typedef Wgdef {

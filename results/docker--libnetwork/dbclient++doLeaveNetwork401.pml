@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && ips-1 != -3 -> 
 				for(i : 0.. ips-1) {
-			for20753: skip;
+			for20773: skip;
 			
 
 			if
 			:: doneCh.async_rcv?state,num_msgs;
 			:: doneCh.sync?state,num_msgs;
 			fi;
-			for20_end753: skip
+			for20_end773: skip
 		};
-		for20_exit753: skip
+		for20_exit773: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -1,4 +1,4 @@
-#define Gather_ja_clients  3
+#define Gather_ja_clients  1
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/jolokia2/jolokia_agent.go#L59
 typedef Wgdef {

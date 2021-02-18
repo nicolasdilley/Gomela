@@ -11,10 +11,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef errs;
 	Chandef pages;
 	Chandef results;
@@ -34,8 +39,16 @@ init {
 	fi;
 	run sync_monitor(errs);
 	run go_errorCollator(results,errs);
+	run wgMonitor(wg);
+		for(i : 0.. numWorkers-1) {
+		for20: skip;
+		wg.Add!1;
+		run go_pageRenderer(pages,results,wg);
+		for20_end: skip
+	};
 	for20_exit: skip;
 	pages.closing!true;
+	wg.Wait?0;
 	results.closing!true;
 	
 
@@ -87,6 +100,99 @@ proctype go_errorCollator(Chandef results;Chandef errs) {
 	fi;
 	errs.closing!true;
 	stop_process: skip
+}
+proctype go_pageRenderer(Chandef pages;Chandef results;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	do
+	:: true -> 
+		
+
+		if
+		:: pages.async_rcv?state,num_msgs;
+		:: pages.sync?state,num_msgs;
+		fi;
+		
+
+		if
+		:: state && num_msgs <= 0 -> 
+			break
+		:: else -> 
+			for21: skip;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: true -> 
+					goto for21_end
+				:: true;
+				fi
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				goto for21_end
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				goto for21_end
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				goto for21_end
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: results.async_send!0;
+				:: results.sync!false,0 -> 
+					results.sending?state
+				fi
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: true -> 
+					
+
+					if
+					:: results.async_send!0;
+					:: results.sync!false,0 -> 
+						results.sending?state
+					fi
+				:: true;
+				fi
+			:: true;
+			fi;
+			for21_end: skip
+		fi
+	od;
+	for21_exit: skip;
+	stop_process: skip;
+	wg.Add!-1
 }
 
  /* ================================================================================== */
@@ -163,5 +269,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

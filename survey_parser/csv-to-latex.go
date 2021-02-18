@@ -206,6 +206,8 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	unknown_arg := 0
 	unparsable_function_name := 0
 	unparsable_arg := 0
+	chan_declared_in_struct := 0
+	wg_declared_in_struct := 0
 
 	for model, lines := range features_map {
 
@@ -247,6 +249,10 @@ func parseBound(features_map map[string][]string) map[string][]string {
 					notify++
 				} else if strings.Contains(splitted_line[3], promela.SELECT_WITH_NO_BRANCH) {
 					select_no_branch++
+				} else if strings.Contains(splitted_line[3], promela.CHAN_DECLARED_IN_STRUCT) {
+					chan_declared_in_struct++
+				} else if strings.Contains(splitted_line[3], promela.WG_DECLARED_IN_STRUCT) {
+					wg_declared_in_struct++
 				} else {
 					fmt.Println(splitted_line[3])
 				}
@@ -279,6 +285,8 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	fmt.Println("# of models cant find notify : ", notify)
 	fmt.Println("# of models select without branch : ", select_no_branch)
 	fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
+	fmt.Println("# of models chan declared in struct : ", chan_declared_in_struct)
+	fmt.Println("# of models wg declared in struct : ", wg_declared_in_struct)
 
 	fmt.Println("Num of unsupported features = ", feature_unsupported)
 	fmt.Println("Num of model errors = ", model_errors)
@@ -696,6 +704,7 @@ func parseVerificationResults() {
 		cs_scores_frequency := make(map[string]int)
 
 		for model, scores := range scores {
+
 			toPrint := fmt.Sprint(model, ",", scores.CSScore, ",", scores.GDScore, ",", scores.Commit)
 			if scores.CSScore == 0.0 {
 				cs_scores_frequency["0"]++
@@ -735,6 +744,35 @@ func parseVerificationResults() {
 			}
 		}
 
+		// check if there are some models contained in 30_random that are not in this actual score.
+
+		models := []string{}
+		content, _ := ioutil.ReadFile("/Users/redfloyd/Documents/PhD/gomela-paper/graphs/proj.csv")
+
+		lines := strings.Split(string(content), "\n")
+
+		for _, line := range lines {
+			splitted_line := strings.Split(line, ",")
+			if splitted_line[0] != "" {
+				models = append(models, strings.Split(splitted_line[0], ":")[1])
+			}
+		}
+
+		for _, model := range models {
+			found := false
+
+			for name, _ := range scores {
+
+				model_name := strings.Split(name, ":")[1]
+				if model_name == strings.ReplaceAll(model, "_", "++") {
+					found = true
+				}
+			}
+
+			if !found {
+				fmt.Println(model)
+			}
+		}
 		ioutil.WriteFile("se_frequence_scores.csv", []byte("Safety Error Score, Frequency \n"), 0644)
 		se_file, err := os.OpenFile("se_frequence_scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {

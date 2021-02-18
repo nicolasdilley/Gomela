@@ -1,4 +1,4 @@
-#define Inspect_pricePerType  3
+#define Inspect_pricePerType  1
 
 // https://github.com/wallix/awless/blob/44e892b4961fc09abf82f61de2ffeb66a20c82b7/inspect/inspectors/pricer.go#L44
 typedef Chandef {

@@ -1,4 +1,4 @@
-#define executeCommitter_committers  3
+#define executeCommitter_committers  0
 
 // https://github.com/hyperledger/fabric/blob/8555262cca0e3b0c89e077a71c9c5312920b87b0/core/ledger/kvledger/txmgmt/statedb/statecouchdb/commit_handling.go#L149
 typedef Chandef {

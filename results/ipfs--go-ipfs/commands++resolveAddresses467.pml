@@ -134,7 +134,7 @@ proctype go_Anonymous0(Chandef resolveErrC;Chandef maddrC;Wgdef wg) {
 	:: else -> 
 		do
 		:: true -> 
-			for11878: skip;
+			for11897: skip;
 			
 
 			if
@@ -148,11 +148,11 @@ proctype go_Anonymous0(Chandef resolveErrC;Chandef maddrC;Wgdef wg) {
 				fi
 			:: true;
 			fi;
-			for11_end878: skip
+			for11_end897: skip
 		:: true -> 
 			break
 		od;
-		for11_exit878: skip
+		for11_exit897: skip
 	fi;
 	
 

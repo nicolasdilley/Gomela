@@ -1,5 +1,5 @@
 #define deleteDanglingPods_threadiness  3
-#define deleteDanglingPods_ptd  0
+#define deleteDanglingPods_ptd  1
 
 // https://github.com/virtual-kubelet/virtual-kubelet/blob/fa139bfe27dd478aaca44cc54252d599bb94ead3/node/podcontroller.go#L531
 typedef Chandef {

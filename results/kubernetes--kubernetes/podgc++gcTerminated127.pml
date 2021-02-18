@@ -1,4 +1,4 @@
-#define gcTerminated_deleteCount  0
+#define gcTerminated_deleteCount  3
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/pkg/controller/podgc/gc_controller.go#L127
 typedef Wgdef {

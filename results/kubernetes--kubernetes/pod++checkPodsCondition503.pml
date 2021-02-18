@@ -1,4 +1,4 @@
-#define checkPodsCondition_podNames  3
+#define checkPodsCondition_podNames  0
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/test/e2e/framework/pod/resource.go#L503
 typedef Chandef {
@@ -53,18 +53,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20785: skip;
+			for20816: skip;
 			
 
 			if
 			:: result.async_rcv?state,num_msgs;
 			:: result.sync?state,num_msgs;
 			fi;
-			for20_end785: skip
+			for20_end816: skip
 		:: true -> 
 			break
 		od;
-		for20_exit785: skip
+		for20_exit816: skip
 	fi;
 	goto stop_process
 stop_process:skip

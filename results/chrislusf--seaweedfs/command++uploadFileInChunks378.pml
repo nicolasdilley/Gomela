@@ -1,6 +1,6 @@
-#define uploadFileInChunks_chunkCount  0
+#define uploadFileInChunks_chunkCount  3
 #define uploadFileInChunks_worker_options_concurrenctChunks  1
-#define ub_for391_2  0
+#define ub_for391_2  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/command/filer_copy.go#L378
 typedef Chandef {

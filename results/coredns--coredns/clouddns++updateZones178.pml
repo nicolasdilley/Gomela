@@ -1,4 +1,4 @@
-#define updateZones_h_zones  1
+#define updateZones_h_zones  3
 #define not_found_204  -2
 
 // https://github.com/coredns/coredns/blob/34dbf1e861b895d5c25f1833a96a26587e141ef0/plugin/clouddns/clouddns.go#L178
@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && h_zones-1 != -3 -> 
 				for(i : 0.. h_zones-1) {
-			for20628: skip;
+			for20642: skip;
 			
 
 			if
 			:: errc.async_rcv?state,num_msgs;
 			:: errc.sync?state,num_msgs;
 			fi;
-			for20_end628: skip
+			for20_end642: skip
 		};
-		for20_exit628: skip
+		for20_exit642: skip
 	:: else -> 
 		do
 		:: true -> 

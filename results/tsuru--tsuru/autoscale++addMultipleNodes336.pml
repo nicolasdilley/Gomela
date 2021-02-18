@@ -11,16 +11,23 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef errCh;
 	Chandef nodesCh;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int count = addMultipleNodes_count;
+	run wgMonitor(wg);
+	wg.Add!count;
 	
 
 	if
@@ -39,7 +46,13 @@ init {
 	:: else -> 
 		run sync_monitor(errCh)
 	fi;
+		for(i : 0.. count-1) {
+		for10: skip;
+		run go_Anonymous0(nodesCh,errCh,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Wait?0;
 	nodesCh.closing!true;
 	errCh.closing!true;
 	do
@@ -71,6 +84,35 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef nodesCh;Chandef errCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		
+
+		if
+		:: errCh.async_send!0;
+		:: errCh.sync!false,0 -> 
+			errCh.sending?state
+		fi;
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: nodesCh.async_send!0;
+	:: nodesCh.sync!false,0 -> 
+		nodesCh.sending?state
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -146,5 +188,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

@@ -59,7 +59,7 @@ init {
 	if
 	:: 0 != -2 && ub_for364_0 != -2 -> 
 				for(i : 0.. ub_for364_0) {
-			for10923: skip;
+			for10947: skip;
 			do
 			:: stdoutCh.async_rcv?state,num_msgs -> 
 				break
@@ -86,9 +86,9 @@ init {
 			:: true -> 
 				goto stop_process
 			od;
-			for10_end923: skip
+			for10_end947: skip
 		};
-		for10_exit923: skip
+		for10_exit947: skip
 	:: else -> 
 		do
 		:: true -> 

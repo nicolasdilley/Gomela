@@ -1,5 +1,5 @@
 #define InitWorkers_queueNum  0
-#define InitWorkers_workerNum  1
+#define InitWorkers_workerNum  3
 #define InitWorkers_int641311  1
 
 // https://github.com/appleboy/gorush/blob/36bc4f0f4b09113de93b212b9c35c0da165f088f/gorush/worker.go#L10

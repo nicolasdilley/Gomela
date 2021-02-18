@@ -90,7 +90,7 @@ proctype go_Anonymous0(Chandef uChan;Chandef rChan;int users) {
 	:: else -> 
 		do
 		:: true -> 
-			for201000: skip;
+			for201026: skip;
 			
 
 			if
@@ -98,11 +98,11 @@ proctype go_Anonymous0(Chandef uChan;Chandef rChan;int users) {
 			:: uChan.sync!false,0 -> 
 				uChan.sending?state
 			fi;
-			for20_end1000: skip
+			for20_end1026: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1000: skip
+		for20_exit1026: skip
 	fi;
 	stop_process: skip;
 	uChan.closing!true

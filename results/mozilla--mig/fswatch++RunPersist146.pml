@@ -1,4 +1,4 @@
-#define ub_for511_0  0
+#define ub_for511_0  3
 #define ub_for401_2  1
 
 // https://github.com/mozilla/mig/blob/9e7e4f5258051e9edc94e407821f693e9d8c85ea/modules/fswatch/fswatch.go#L146

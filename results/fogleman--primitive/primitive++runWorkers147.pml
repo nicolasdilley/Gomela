@@ -40,16 +40,16 @@ init {
 	if
 	:: 0 != -2 && wn-1 != -3 -> 
 				for(i : 0.. wn-1) {
-			for20822: skip;
+			for20845: skip;
 			
 
 			if
 			:: ch.async_rcv?state,num_msgs;
 			:: ch.sync?state,num_msgs;
 			fi;
-			for20_end822: skip
+			for20_end845: skip
 		};
-		for20_exit822: skip
+		for20_exit845: skip
 	:: else -> 
 		do
 		:: true -> 

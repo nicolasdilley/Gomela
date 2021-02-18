@@ -1,5 +1,5 @@
-#define Check_c_ConcurrentChecks  3
-#define Check_c_Checkers  0
+#define Check_c_ConcurrentChecks  0
+#define Check_c_Checkers  1
 
 // https://github.com/sourcegraph/checkup/blob/77e7567835d43fc7358b88e8e984f2dd85dacf4f/checkup.go#L51
 typedef Chandef {
@@ -12,10 +12,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef throttle;
 	int num_msgs = 0;
 	bool state = false;
@@ -38,6 +43,7 @@ init {
 	:: else -> 
 		run sync_monitor(throttle)
 	fi;
+	run wgMonitor(wg);
 		for(i : 0.. c_Checkers-1) {
 		for10: skip;
 		
@@ -47,9 +53,12 @@ init {
 		:: throttle.sync!false,0 -> 
 			throttle.sending?state
 		fi;
+		wg.Add!1;
+		run go_Anonymous0(throttle,wg);
 		for10_end: skip
 	};
 	for10_exit: skip;
+	wg.Wait?0;
 	
 
 	if
@@ -61,6 +70,20 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef throttle;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: throttle.async_rcv?state,num_msgs;
+	:: throttle.sync?state,num_msgs;
+	fi;
+	wg.Add!-1;
+	stop_process: skip
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -136,5 +159,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

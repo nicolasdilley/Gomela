@@ -1,4 +1,4 @@
-#define addStorageFolderToHosts_hosts  1
+#define addStorageFolderToHosts_hosts  3
 
 // https://github.com/NebulousLabs/Sia/blob/a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1/siatest/testgroup.go#L118
 typedef Wgdef {

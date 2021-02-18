@@ -1,4 +1,4 @@
-#define AddSectorBatch_maxSectorBatchThreads  1
+#define AddSectorBatch_maxSectorBatchThreads  0
 #define AddSectorBatch_sectorRoots  0
 
 // https://github.com/NebulousLabs/Sia/blob/a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1/modules/host/contractmanager/sectorupdate.go#L404

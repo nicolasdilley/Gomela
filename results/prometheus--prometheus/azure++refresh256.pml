@@ -188,7 +188,7 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 				:: else -> 
 					do
 					:: true -> 
-						for22520: skip;
+						for22538: skip;
 						
 
 						if
@@ -211,11 +211,11 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 							ch.sending?state
 						fi;
 						goto stop_process;
-						for22_end520: skip
+						for22_end538: skip
 					:: true -> 
 						break
 					od;
-					for22_exit520: skip
+					for22_exit538: skip
 				fi
 			:: true;
 			fi;
@@ -225,7 +225,7 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 	:: else -> 
 		do
 		:: true -> 
-			for21521: skip;
+			for21539: skip;
 			
 
 			if
@@ -244,7 +244,7 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 
 			if
 			:: true -> 
-				goto for21_end521
+				goto for21_end539
 			:: true;
 			fi;
 			
@@ -263,7 +263,7 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 				if
 				:: networkInterface_IPConfigurations-1 != -3 -> 
 										for(i : 0.. networkInterface_IPConfigurations-1) {
-						for22521: skip;
+						for22539: skip;
 						
 
 						if
@@ -286,13 +286,13 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 							ch.sending?state
 						fi;
 						goto stop_process;
-						for22_end521: skip
+						for22_end539: skip
 					};
-					for22_exit521: skip
+					for22_exit539: skip
 				:: else -> 
 					do
 					:: true -> 
-						for22520521: skip;
+						for22538539: skip;
 						
 
 						if
@@ -315,19 +315,19 @@ proctype go_Anonymous0(Chandef ch;Wgdef wg) {
 							ch.sending?state
 						fi;
 						goto stop_process;
-						for22_end520521: skip
+						for22_end538539: skip
 					:: true -> 
 						break
 					od;
-					for22_exit520521: skip
+					for22_exit538539: skip
 				fi
 			:: true;
 			fi;
-			for21_end521: skip
+			for21_end539: skip
 		:: true -> 
 			break
 		od;
-		for21_exit521: skip
+		for21_exit539: skip
 	fi;
 	stop_process: skip;
 	wg.Add!-1

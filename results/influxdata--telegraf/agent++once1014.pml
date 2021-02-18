@@ -1,5 +1,5 @@
-#define once_a_Config_AggProcessors  1
-#define once_a_Config_Processors  3
+#define once_a_Config_AggProcessors  3
+#define once_a_Config_Processors  1
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/agent/agent.go#L1014
 typedef Wgdef {

@@ -1,4 +1,4 @@
-#define uploadMultipart_session_TotalParts  0
+#define uploadMultipart_session_TotalParts  3
 
 // https://github.com/ncw/rclone/blob/80e63af4703730923a97b65fae4d5b712de846c9/backend/box/upload.go#L176
 typedef Chandef {

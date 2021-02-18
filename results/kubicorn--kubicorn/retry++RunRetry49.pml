@@ -34,12 +34,12 @@ init {
 	if
 	:: 0 != -2 && r_retries-1 != -3 -> 
 				for(i : 0.. r_retries-1) {
-			for201094: skip;
+			for201120: skip;
 			
 
 			if
 			:: true -> 
-				goto for20_end1094
+				goto for20_end1120
 			:: true;
 			fi;
 			
@@ -50,9 +50,9 @@ init {
 				finish.sending?state
 			fi;
 			goto stop_process;
-			for20_end1094: skip
+			for20_end1120: skip
 		};
-		for20_exit1094: skip
+		for20_exit1120: skip
 	:: else -> 
 		do
 		:: true -> 

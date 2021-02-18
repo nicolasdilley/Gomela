@@ -1,5 +1,5 @@
-#define FetchIndex_keywords  1
-#define FetchIndex_tokenList  3
+#define FetchIndex_keywords  0
+#define FetchIndex_tokenList  1
 
 // https://github.com/Qihoo360/poseidon/blob/9be3a58756c2c604573075b6e7531f13f5ba7c1c/service/searcher/poseidon/inverted_index_gz_client.go#L152
 typedef Chandef {
@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && tokenCount-1 != -3 -> 
 				for(i : 0.. tokenCount-1) {
-			for30529: skip;
+			for30547: skip;
 			do
 			:: ch.async_rcv?state,num_msgs -> 
 				break
 			:: ch.sync?state,num_msgs -> 
 				break
 			od;
-			for30_end529: skip
+			for30_end547: skip
 		};
-		for30_exit529: skip
+		for30_exit547: skip
 	:: else -> 
 		do
 		:: true -> 

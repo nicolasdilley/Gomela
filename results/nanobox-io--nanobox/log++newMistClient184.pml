@@ -57,7 +57,7 @@ proctype go_Anonymous0(Chandef messageChan) {
 	if
 	:: 0 != -2 && ub_for207_0 != -2 -> 
 				for(i : 0.. ub_for207_0) {
-			for1074: skip;
+			for1078: skip;
 			
 
 			if
@@ -78,9 +78,9 @@ proctype go_Anonymous0(Chandef messageChan) {
 			:: messageChan.sync!false,0 -> 
 				messageChan.sending?state
 			fi;
-			for10_end74: skip
+			for10_end78: skip
 		};
-		for10_exit74: skip
+		for10_exit78: skip
 	:: else -> 
 		do
 		:: true -> 

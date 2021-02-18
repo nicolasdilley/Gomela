@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && count-1 != -3 -> 
 				for(i : 0.. count-1) {
-			for20219: skip;
+			for20233: skip;
 			
 
 			if
-			:: errCh.async_rcv?0;
+			:: errCh.async_rcv?state,num_msgs;
 			:: errCh.sync?state,num_msgs;
 			fi;
-			for20_end219: skip
+			for20_end233: skip
 		};
-		for20_exit219: skip
+		for20_exit233: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -50,7 +50,7 @@ init {
 			
 
 			if
-			:: errCh.async_rcv?0;
+			:: errCh.async_rcv?state,num_msgs;
 			:: errCh.sync?state,num_msgs;
 			fi;
 			for20_end: skip

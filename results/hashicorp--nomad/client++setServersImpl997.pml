@@ -1,4 +1,4 @@
-#define setServersImpl_in  0
+#define setServersImpl_in  3
 
 // https://github.com/hashicorp/nomad/blob/bcd4752fc902a785aad603b2819b9630a83ba913/client/client.go#L997
 typedef Wgdef {

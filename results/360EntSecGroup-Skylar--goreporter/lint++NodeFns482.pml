@@ -1,5 +1,5 @@
 #define NodeFns_runtime_NumCPU48653  1
-#define NodeFns_pkgs  3
+#define NodeFns_pkgs  1
 
 // https://github.com/360EntSecGroup-Skylar/goreporter/blob/df1b20f7c5d0f3538a3dc2cc04f68c59ba177fc5/linters/simpler/lint/lint.go#L482
 typedef Chandef {
@@ -12,16 +12,22 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef chNodeFns;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int pkgs = NodeFns_pkgs;
 	int runtime_NumCPU48653 = NodeFns_runtime_NumCPU48653;
+	run wgMonitor(wg);
 	
 
 	if
@@ -31,7 +37,14 @@ init {
 	:: else -> 
 		run sync_monitor(chNodeFns)
 	fi;
+		for(i : 0.. pkgs-1) {
+		for10: skip;
+		wg.Add!1;
+		run go_Anonymous0(chNodeFns,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	run go_Anonymous1(chNodeFns,wg);
 	do
 	:: true -> 
 		
@@ -55,6 +68,30 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef chNodeFns;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: chNodeFns.async_send!0;
+	:: chNodeFns.sync!false,0 -> 
+		chNodeFns.sending?state
+	fi;
+	wg.Add!-1;
+	stop_process: skip
+}
+proctype go_Anonymous1(Chandef chNodeFns;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	wg.Wait?0;
+	chNodeFns.closing!true;
+	stop_process: skip
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -130,5 +167,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

@@ -1,4 +1,4 @@
-#define statusCheck_deployments  3
+#define statusCheck_deployments  1
 
 // https://github.com/GoogleContainerTools/skaffold/blob/11613898940ce017a02da73462a7a44580ce3d6e/pkg/skaffold/deploy/status/status_check.go#L104
 typedef Wgdef {

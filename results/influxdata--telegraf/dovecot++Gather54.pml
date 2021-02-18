@@ -1,5 +1,5 @@
 #define Gather_d_Servers  0
-#define Gather_d_Filters  3
+#define Gather_d_Filters  1
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/dovecot/dovecot.go#L54
 typedef Wgdef {

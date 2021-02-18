@@ -1,5 +1,5 @@
 #define ProcessBackupRequest_state_Groups  3
-#define ProcessBackupRequest_groups  3
+#define ProcessBackupRequest_groups  0
 
 // https://github.com/dgraph-io/dgraph/blob/ee0b99586ab740fbdec6da78605624c7feba2e5d/worker/backup_ee.go#L96
 typedef Chandef {
@@ -142,7 +142,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for30587: skip;
+			for30602: skip;
 			
 
 			if
@@ -155,11 +155,11 @@ init {
 			:: true -> 
 				goto stop_process
 			fi;
-			for30_end587: skip
+			for30_end602: skip
 		:: true -> 
 			break
 		od;
-		for30_exit587: skip
+		for30_exit602: skip
 	fi;
 	goto stop_process
 stop_process:skip

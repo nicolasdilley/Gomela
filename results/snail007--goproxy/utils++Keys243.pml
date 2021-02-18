@@ -1,6 +1,6 @@
 #define Keys_count  1
 #define Keys_SHARD_COUNT  1
-#define Keys_m  1
+#define Keys_m  3
 
 // https://github.com/snail007/goproxy/blob/83cd1d9ff169914e498439c223d1233eb9d81b46/utils/map.go#L243
 typedef Chandef {
@@ -13,6 +13,10 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
@@ -60,10 +64,61 @@ proctype go_Anonymous0(Chandef ch) {
 	int i;
 	bool state;
 	int num_msgs;
+	Wgdef wg;
 	int m = Keys_m;
 	int SHARD_COUNT = Keys_SHARD_COUNT;
+	run wgMonitor(wg);
+	wg.Add!SHARD_COUNT;
+		for(i : 0.. m-1) {
+		for10: skip;
+		run go_Anonymous1(ch,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Wait?0;
 	ch.closing!true;
+	stop_process: skip
+}
+proctype go_Anonymous1(Chandef ch;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	int shard_items=3;
+	
+
+	if
+	:: shard_items-1 != -3 -> 
+				for(i : 0.. shard_items-1) {
+			for11: skip;
+			
+
+			if
+			:: ch.async_send!0;
+			:: ch.sync!false,0 -> 
+				ch.sending?state
+			fi;
+			for11_end: skip
+		};
+		for11_exit: skip
+	:: else -> 
+		do
+		:: true -> 
+			for11555: skip;
+			
+
+			if
+			:: ch.async_send!0;
+			:: ch.sync!false,0 -> 
+				ch.sending?state
+			fi;
+			for11_end555: skip
+		:: true -> 
+			break
+		od;
+		for11_exit555: skip
+	fi;
+	wg.Add!-1;
 	stop_process: skip
 }
 
@@ -142,4 +197,23 @@ fi;
 od
 stop_process:
 }
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
+}
+
 

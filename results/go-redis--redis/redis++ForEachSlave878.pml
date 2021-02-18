@@ -1,4 +1,4 @@
-#define ForEachSlave_state_Slaves  1
+#define ForEachSlave_state_Slaves  3
 
 // https://github.com/go-redis/redis/blob/aa456e55a7213876dfa5e856fb8467237d822771/cluster.go#L878
 typedef Chandef {

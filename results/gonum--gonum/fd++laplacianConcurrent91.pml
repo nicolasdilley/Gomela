@@ -1,5 +1,5 @@
-#define laplacianConcurrent_evals  1
-#define laplacianConcurrent_nWorkers  1
+#define laplacianConcurrent_evals  3
+#define laplacianConcurrent_nWorkers  0
 
 // https://github.com/gonum/gonum/blob/090a5d652c892e8d5460a07eca1c1ddf480b04d9/diff/fd/laplacian.go#L91
 typedef Chandef {
@@ -141,20 +141,20 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 	int i;
 	bool state;
 	int num_msgs;
-	int stencil = -2;
-	int n = -2;
+	int stencil=3;
+	int n=3;
 	
 
 	if
 	:: 0 != -2 && n-1 != -3 -> 
 				for(i : 0.. n-1) {
-			for20371: skip;
+			for20388: skip;
 			
 
 			if
 			:: stencil-1 != -3 -> 
 								for(i : 0.. stencil-1) {
-					for21371: skip;
+					for21388: skip;
 					
 
 					if
@@ -162,13 +162,13 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 					:: send.sync!false,0 -> 
 						send.sending?state
 					fi;
-					for21_end371: skip
+					for21_end388: skip
 				};
-				for21_exit371: skip
+				for21_exit388: skip
 			:: else -> 
 				do
 				:: true -> 
-					for21370371: skip;
+					for21387388: skip;
 					
 
 					if
@@ -176,15 +176,15 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 					:: send.sync!false,0 -> 
 						send.sending?state
 					fi;
-					for21_end370371: skip
+					for21_end387388: skip
 				:: true -> 
 					break
 				od;
-				for21_exit370371: skip
+				for21_exit387388: skip
 			fi;
-			for20_end371: skip
+			for20_end388: skip
 		};
-		for20_exit371: skip
+		for20_exit388: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -208,7 +208,7 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 			:: else -> 
 				do
 				:: true -> 
-					for21370: skip;
+					for21387: skip;
 					
 
 					if
@@ -216,11 +216,11 @@ proctype go_Anonymous2(Chandef send;Chandef ans;Wgdef originWG;Wgdef workerWG) {
 					:: send.sync!false,0 -> 
 						send.sending?state
 					fi;
-					for21_end370: skip
+					for21_end387: skip
 				:: true -> 
 					break
 				od;
-				for21_exit370: skip
+				for21_exit387: skip
 			fi;
 			for20_end: skip
 		:: true -> 
@@ -327,4 +327,5 @@ end: if
 	fi
 od
 }
+
 

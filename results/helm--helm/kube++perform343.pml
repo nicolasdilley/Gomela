@@ -1,4 +1,4 @@
-#define perform_infos  0
+#define perform_infos  3
 
 // https://github.com/helm/helm/blob/ab12382ddcd3a27a974b45ed96e47697de221244/pkg/kube/client.go#L343
 typedef Chandef {

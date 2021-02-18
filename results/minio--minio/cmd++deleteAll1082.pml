@@ -1,6 +1,6 @@
 #define deleteAll_z_serverPools  3
 #define deleteAll_servers_sets  1
-#define deleteAll_set_getDisks108625  0
+#define deleteAll_set_getDisks108625  1
 
 // https://github.com/minio/minio/blob/3163a660aa79b75b725a0c6f152557e6253b900f/cmd/erasure-server-pool.go#L1082
 typedef Wgdef {

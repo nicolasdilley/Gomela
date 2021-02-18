@@ -1,4 +1,4 @@
-#define getJobDetail_js_Jobs  3
+#define getJobDetail_js_Jobs  0
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/jenkins/jenkins.go#L312
 typedef Wgdef {

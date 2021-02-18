@@ -46,7 +46,6 @@ func Print(m *Model) {
 			file_path += "/"
 		}
 	}
-
 	proj_name := strings.Replace(splitted[0], AUTHOR_PROJECT_SEP, "/", -1)
 	stmt += "// https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line) + "\n"
 

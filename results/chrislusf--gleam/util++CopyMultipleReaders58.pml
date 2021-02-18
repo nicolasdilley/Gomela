@@ -1,4 +1,4 @@
-#define CopyMultipleReaders_readers  3
+#define CopyMultipleReaders_readers  0
 
 // https://github.com/chrislusf/gleam/blob/d48afd638bae4e01dbf233e492fc07c840929d45/util/channel_util.go#L58
 typedef Chandef {
@@ -79,7 +79,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for30159: skip;
+			for30173: skip;
 			
 
 			if
@@ -93,11 +93,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end159: skip
+			for30_end173: skip
 		:: true -> 
 			break
 		od;
-		for30_exit159: skip
+		for30_exit173: skip
 	fi;
 	writerChan.closing!true;
 	wg.Wait?0;

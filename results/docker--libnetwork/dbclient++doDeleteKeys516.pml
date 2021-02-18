@@ -21,7 +21,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int numberOfKeys=3;
+	int numberOfKeys=0;
 	int parallelWriters = doDeleteKeys_parallelWriters;
 	
 
@@ -82,16 +82,16 @@ proctype dbclientwaitWriters(Chandef doneCh;int parallelWriters;chan child) {
 	if
 	:: 0 != -2 && parallelWriters-1 != -3 -> 
 				for(i : 0.. parallelWriters-1) {
-			for20757: skip;
+			for20777: skip;
 			
 
 			if
 			:: doneCh.async_rcv?state,num_msgs;
 			:: doneCh.sync?state,num_msgs;
 			fi;
-			for20_end757: skip
+			for20_end777: skip
 		};
-		for20_exit757: skip
+		for20_exit777: skip
 	:: else -> 
 		do
 		:: true -> 

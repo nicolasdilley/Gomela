@@ -11,15 +11,22 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef statuses;
+	Wgdef wait;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int servers = List_servers;
+	run wgMonitor(wait);
+	wait.Add!servers;
 	
 
 	if
@@ -29,7 +36,13 @@ init {
 	:: else -> 
 		run sync_monitor(statuses)
 	fi;
+		for(i : 0.. servers-1) {
+		for10: skip;
+		run go_Anonymous0(statuses,wait);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wait.Wait?0;
 	statuses.closing!true;
 	do
 	:: true -> 
@@ -54,6 +67,21 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef statuses;Wgdef wait) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: statuses.async_send!0;
+	:: statuses.sync!false,0 -> 
+		statuses.sending?state
+	fi;
+	stop_process: skip;
+	wait.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -129,5 +157,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

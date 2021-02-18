@@ -1,4 +1,4 @@
-#define Gather_r_Servers  3
+#define Gather_r_Servers  1
 
 // https://github.com/influxdata/telegraf/blob/6ed1431348c200760443c2a0422b0d54bea927ec/plugins/inputs/rethinkdb/rethinkdb.go#L47
 typedef Wgdef {

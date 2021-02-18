@@ -1,4 +1,4 @@
-#define readSheetsFromZipFile_sheetCount  3
+#define readSheetsFromZipFile_sheetCount  1
 
 // https://github.com/henrylee2cn/pholcus/blob/bf4a87b9aa74fefaec49f991d3ac213a43a313d1/common/xlsx/lib.go#L612
 typedef Chandef {
@@ -49,7 +49,7 @@ init {
 	if
 	:: 0 != -2 && sheetCount-1 != -3 -> 
 				for(i : 0.. sheetCount-1) {
-			for30675: skip;
+			for30696: skip;
 			
 
 			if
@@ -63,9 +63,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end675: skip
+			for30_end696: skip
 		};
-		for30_exit675: skip
+		for30_exit696: skip
 	:: else -> 
 		do
 		:: true -> 
@@ -116,14 +116,14 @@ proctype go_Anonymous0(Chandef sheetChan) {
 	:: else -> 
 		do
 		:: true -> 
-			for20674: skip;
+			for20695: skip;
 			run xlsxreadSheetFromFile(sheetChan,child_xlsxreadSheetFromFile0);
 			child_xlsxreadSheetFromFile0?0;
-			for20_end674: skip
+			for20_end695: skip
 		:: true -> 
 			break
 		od;
-		for20_exit674: skip
+		for20_exit695: skip
 	fi;
 	stop_process: skip
 }

@@ -26,7 +26,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int b_Models=1;
+	int b_Models=3;
 	int n = Predict_n;
 	
 
@@ -76,7 +76,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for301047: skip;
+			for301071: skip;
 			
 
 			if
@@ -84,11 +84,11 @@ init {
 			:: processpipe.sync!false,0 -> 
 				processpipe.sending?state
 			fi;
-			for30_end1047: skip
+			for30_end1071: skip
 		:: true -> 
 			break
 		od;
-		for30_exit1047: skip
+		for30_exit1071: skip
 	fi;
 	processpipe.closing!true;
 	processwait.Wait?0;

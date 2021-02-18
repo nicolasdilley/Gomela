@@ -69,7 +69,7 @@ proctype go_Anonymous0(Chandef graphOpChan) {
 	if
 	:: 0 != -2 && ub_for138_0 != -2 -> 
 				for(i : 0.. ub_for138_0) {
-			for10307: skip;
+			for10322: skip;
 			
 
 			if
@@ -77,9 +77,9 @@ proctype go_Anonymous0(Chandef graphOpChan) {
 			:: graphOpChan.sync!false,0 -> 
 				graphOpChan.sending?state
 			fi;
-			for10_end307: skip
+			for10_end322: skip
 		};
-		for10_exit307: skip
+		for10_exit322: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -1,4 +1,4 @@
-#define ObjectsToPack_objectGroups  1
+#define ObjectsToPack_objectGroups  3
 
 // https://github.com/src-d/go-git/blob/8b0c2116cea2bbcc8d0075e762b887200a1898e1/plumbing/format/packfile/delta_selector.go#L36
 typedef Wgdef {

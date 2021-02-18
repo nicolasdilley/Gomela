@@ -1,4 +1,4 @@
-#define GetSCTs_ctp_groups  1
+#define GetSCTs_ctp_groups  3
 #define GetSCTs_ctp_informational  1
 
 // https://github.com/letsencrypt/boulder/blob/9464d025d1e336ccb5f366e4499ebe9e9596e8d1/ctpolicy/ctpolicy.go#L142
@@ -48,7 +48,7 @@ init {
 	if
 	:: 0 != -2 && ctp_groups-1 != -3 -> 
 				for(i : 0.. ctp_groups-1) {
-			for30444: skip;
+			for30464: skip;
 			
 
 			if
@@ -62,9 +62,9 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for30_end444: skip
+			for30_end464: skip
 		};
-		for30_exit444: skip
+		for30_exit464: skip
 	:: else -> 
 		do
 		:: true -> 

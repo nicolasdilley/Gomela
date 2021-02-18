@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && ub_for310_1 != -2 -> 
 				for(i : 0.. ub_for310_1) {
-			for201222: skip;
+			for201263: skip;
 			
 
 			if
 			:: stopped.async_rcv?state,num_msgs;
 			:: stopped.sync?state,num_msgs;
 			fi;
-			for20_end1222: skip
+			for20_end1263: skip
 		};
-		for20_exit1222: skip
+		for20_exit1263: skip
 	:: else -> 
 		do
 		:: true -> 

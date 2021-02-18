@@ -1,4 +1,4 @@
-#define SearchPostsInTeamForUser_paramsList  3
+#define SearchPostsInTeamForUser_paramsList  1
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/store/sqlstore/post_store.go#L2020
 typedef Chandef {

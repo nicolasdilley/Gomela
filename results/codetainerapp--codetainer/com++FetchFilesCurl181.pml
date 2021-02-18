@@ -1,4 +1,4 @@
-#define FetchFilesCurl_files  3
+#define FetchFilesCurl_files  0
 
 // https://github.com/codetainerapp/codetainer/blob/30b2c5bc1ac527f906d446b7d5b12403b4a13354/Godeps/_workspace/src/github.com/Unknwon/com/http.go#L181
 typedef Chandef {
@@ -60,7 +60,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201152: skip;
+			for201175: skip;
 			
 
 			if
@@ -74,11 +74,11 @@ init {
 				goto stop_process
 			:: true;
 			fi;
-			for20_end1152: skip
+			for20_end1175: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1152: skip
+		for20_exit1175: skip
 	fi;
 	goto stop_process
 stop_process:skip

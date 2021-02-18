@@ -98,7 +98,7 @@ proctype servicesreadinessCheck(Chandef errCh;int urls;chan child) {
 	if
 	:: 0 != -2 && ub_for59_0 != -2 -> 
 				for(i : 0.. ub_for59_0) {
-			for10799: skip;
+			for10821: skip;
 			do
 			:: errCh.async_rcv?state,num_msgs -> 
 				
@@ -138,9 +138,9 @@ proctype servicesreadinessCheck(Chandef errCh;int urls;chan child) {
 				fi;
 				break
 			od;
-			for10_end799: skip
+			for10_end821: skip
 		};
-		for10_exit799: skip
+		for10_exit821: skip
 	:: else -> 
 		do
 		:: true -> 

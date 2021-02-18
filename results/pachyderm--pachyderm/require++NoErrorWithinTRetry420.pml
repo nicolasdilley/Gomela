@@ -42,7 +42,7 @@ proctype go_Anonymous0(Chandef doneCh) {
 	if
 	:: 0 != -2 && ub_for426_0 != -2 -> 
 				for(i : 0.. ub_for426_0) {
-			for1055: skip;
+			for1056: skip;
 			
 
 			if
@@ -51,9 +51,9 @@ proctype go_Anonymous0(Chandef doneCh) {
 				break
 			:: true;
 			fi;
-			for10_end55: skip
+			for10_end56: skip
 		};
-		for10_exit55: skip
+		for10_exit56: skip
 	:: else -> 
 		do
 		:: true -> 

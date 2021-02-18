@@ -1,4 +1,4 @@
-#define mapConcurrent_observers  1
+#define mapConcurrent_observers  3
 
 // https://github.com/juju/juju/blob/af21dceaf489e65417c11a49921a03bf188480cd/apiserver/observer/observer.go#L106
 typedef Wgdef {

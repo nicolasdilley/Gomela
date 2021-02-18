@@ -1,5 +1,5 @@
-#define SyncPlugins_availablePlugins  0
-#define SyncPlugins_pluginSignaturePathMap  0
+#define SyncPlugins_availablePlugins  1
+#define SyncPlugins_pluginSignaturePathMap  3
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/app/plugin.go#L225
 typedef Wgdef {

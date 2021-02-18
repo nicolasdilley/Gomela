@@ -1,5 +1,5 @@
-#define ub_for511_0  0
-#define ub_for401_2  0
+#define ub_for511_0  1
+#define ub_for401_2  3
 
 // https://github.com/mozilla/mig/blob/9e7e4f5258051e9edc94e407821f693e9d8c85ea/modules/audit/audit.go#L114
 typedef Chandef {

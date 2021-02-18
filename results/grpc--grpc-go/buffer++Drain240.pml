@@ -1,5 +1,5 @@
 #define Drain_int2499  0
-#define Drain_qs  0
+#define Drain_qs  1
 
 // https://github.com/grpc/grpc-go/blob/504caa93c53934ac0367ba2636aa1c8147372a43/internal/profiling/buffer/buffer.go#L240
 typedef Wgdef {

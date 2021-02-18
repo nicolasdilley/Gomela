@@ -1,4 +1,4 @@
-#define AttackRoute_targets  0
+#define AttackRoute_targets  3
 
 // https://github.com/Ullaakut/cameradar/blob/8c8ea1209b352671ca99e07eb4de0b96b833506f/attack.go#L104
 typedef Chandef {
@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for201055: skip;
+			for201079: skip;
 			
 
 			if
 			:: resChan.async_rcv?state,num_msgs;
 			:: resChan.sync?state,num_msgs;
 			fi;
-			for20_end1055: skip
+			for20_end1079: skip
 		:: true -> 
 			break
 		od;
-		for20_exit1055: skip
+		for20_exit1079: skip
 	fi;
 	goto stop_process;
 	resChan.closing!true

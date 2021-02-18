@@ -1,4 +1,4 @@
-#define DeleteOutput_tasksLlen-1L_OutputShards  3
+#define DeleteOutput_tasksLlen-1L_OutputShards  1
 #define DeleteOutput_tasks  1
 
 // https://github.com/chrislusf/gleam/blob/d48afd638bae4e01dbf233e492fc07c840929d45/distributed/driver/scheduler/scheduler_dataset_shard.go#L11

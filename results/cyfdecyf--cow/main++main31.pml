@@ -1,4 +1,4 @@
-#define main_listenProxy  3
+#define main_listenProxy  0
 
 // https://github.com/cyfdecyf/cow/blob/41c0fb157c8b939b724ae0d58dad3a1b7cd2e811/main.go#L31
 typedef Chandef {

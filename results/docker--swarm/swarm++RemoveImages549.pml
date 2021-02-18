@@ -1,4 +1,4 @@
-#define RemoveImages_c_listActiveEngines55420  3
+#define RemoveImages_c_listActiveEngines55420  0
 #define RemoveImages_e_Images55525  1
 
 // https://github.com/docker/swarm/blob/3cc018dc2cd0af0880330bd75bd351bbf54fde9c/cluster/swarm/cluster.go#L549

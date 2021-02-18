@@ -1,4 +1,4 @@
-#define ListDir_result  1
+#define ListDir_result  3
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/topo/zk2topo/directory.go#L30
 typedef Wgdef {

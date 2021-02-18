@@ -1,4 +1,4 @@
-#define sendMetrics_dests  3
+#define sendMetrics_dests  1
 
 // https://github.com/stripe/veneur/blob/590f2c060515bd818c0e566047256590cf41b838/proxysrv/server.go#L190
 typedef Chandef {
@@ -11,17 +11,30 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef errCh;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int dests = sendMetrics_dests;
+	run wgMonitor(wg);
+	wg.Add!dests;
 	run sync_monitor(errCh);
+		for(i : 0.. dests-1) {
+		for20: skip;
+		run go_Anonymous0(errCh,wg);
+		for20_end: skip
+	};
 	for20_exit: skip;
+	run go_Anonymous1(errCh,wg);
 	do
 	:: true -> 
 		
@@ -45,6 +58,36 @@ init {
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef errCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		
+
+		if
+		:: errCh.async_send!0;
+		:: errCh.sync!false,0 -> 
+			errCh.sending?state
+		fi
+	:: true;
+	fi;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_Anonymous1(Chandef errCh;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	wg.Wait?0;
+	errCh.closing!true;
+	stop_process: skip
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -120,5 +163,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

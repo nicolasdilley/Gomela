@@ -1,4 +1,4 @@
-#define Serve_listeners  0
+#define Serve_listeners  3
 
 // https://github.com/weaveworks/weave/blob/edd28ab4cbef07574400d8b4fbfab6638515f4fa/proxy/proxy.go#L285
 typedef Chandef {
@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for2035: skip;
+			for2032: skip;
 			
 
 			if
 			:: errs.async_rcv?state,num_msgs;
 			:: errs.sync?state,num_msgs;
 			fi;
-			for20_end35: skip
+			for20_end32: skip
 		:: true -> 
 			break
 		od;
-		for20_exit35: skip
+		for20_exit32: skip
 	fi
 stop_process:skip
 }

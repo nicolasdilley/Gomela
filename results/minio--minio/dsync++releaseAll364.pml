@@ -1,4 +1,4 @@
-#define releaseAll_restClnts  1
+#define releaseAll_restClnts  3
 
 // https://github.com/minio/minio/blob/3163a660aa79b75b725a0c6f152557e6253b900f/pkg/dsync/drwmutex.go#L364
 typedef Wgdef {

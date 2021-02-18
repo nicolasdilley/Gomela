@@ -1,4 +1,4 @@
-#define forAllUids_ts_targets  0
+#define forAllUids_ts_targets  3
 #define forAllUids_target_sources  1
 
 // https://github.com/vitessio/vitess/blob/d09dffef0c60d5d4841cac86bdf4ed777098b60a/go/vt/wrangler/traffic_switcher.go#L1386

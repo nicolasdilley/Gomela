@@ -1,4 +1,4 @@
-#define actionEntry_l_limit  1
+#define actionEntry_l_limit  3
 
 // https://github.com/tsuru/tsuru/blob/acb87a16aa1c971080a7771119155c44e5eab9f2/provision/limiter.go#L41
 typedef Chandef {

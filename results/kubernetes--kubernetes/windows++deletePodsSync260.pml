@@ -1,4 +1,4 @@
-#define deletePodsSync_pods  3
+#define deletePodsSync_pods  1
 
 // https://github.com/kubernetes/kubernetes/blob/d70ee902fddc682863a3cc4f0d8eac0223ebf70b/test/e2e/windows/density.go#L260
 typedef Wgdef {

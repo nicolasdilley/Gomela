@@ -47,16 +47,16 @@ init {
 	if
 	:: 0 != -2 && ub_for160_1 != -2 -> 
 				for(i : 0.. ub_for160_1) {
-			for30221: skip;
+			for30235: skip;
 			
 
 			if
 			:: pools.async_rcv?state,num_msgs;
 			:: pools.sync?state,num_msgs;
 			fi;
-			for30_end221: skip
+			for30_end235: skip
 		};
-		for30_exit221: skip
+		for30_exit235: skip
 	:: else -> 
 		do
 		:: true -> 

@@ -40,7 +40,7 @@ init {
 	if
 	:: 0 != -2 && ips-1 != -3 -> 
 				for(i : 0.. ips-1) {
-			for20755: skip;
+			for20775: skip;
 			
 
 			if
@@ -54,9 +54,9 @@ init {
 			:: true;
 			:: true;
 			fi;
-			for20_end755: skip
+			for20_end775: skip
 		};
-		for20_exit755: skip
+		for20_exit775: skip
 	:: else -> 
 		do
 		:: true -> 

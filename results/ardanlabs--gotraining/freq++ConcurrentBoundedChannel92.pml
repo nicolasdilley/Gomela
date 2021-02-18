@@ -1,4 +1,4 @@
-#define ConcurrentBoundedChannel_g  1
+#define ConcurrentBoundedChannel_g  3
 #define ConcurrentBoundedChannel_text  1
 
 // https://github.com/ardanlabs/gotraining/blob/2a8609213c14c6f4a048c95daad0bc31ba5f4db1/topics/go/algorithms/fun/freq/freq.go#L92
@@ -63,7 +63,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20692: skip;
+			for20713: skip;
 			
 
 			if
@@ -71,11 +71,11 @@ init {
 			:: ch.sync!false,0 -> 
 				ch.sending?state
 			fi;
-			for20_end692: skip
+			for20_end713: skip
 		:: true -> 
 			break
 		od;
-		for20_exit692: skip
+		for20_exit713: skip
 	fi;
 	ch.closing!true;
 	wg.Wait?0;

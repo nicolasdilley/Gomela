@@ -1,5 +1,5 @@
-#define ConcurrentUpdate_concurrentWorkers  0
-#define ConcurrentUpdate_deps  1
+#define ConcurrentUpdate_concurrentWorkers  1
+#define ConcurrentUpdate_deps  0
 
 // https://github.com/Masterminds/glide/blob/b94b39d657d8abcccba6545e148f1201aee6ffec/repo/installer.go#L510
 typedef Chandef {
@@ -78,7 +78,7 @@ init {
 	if
 	:: 0 != -2 && concurrentWorkers-1 != -3 -> 
 				for(i : 0.. concurrentWorkers-1) {
-			for30154: skip;
+			for30164: skip;
 			
 
 			if
@@ -86,9 +86,9 @@ init {
 			:: done.sync!false,0 -> 
 				done.sending?state
 			fi;
-			for30_end154: skip
+			for30_end164: skip
 		};
-		for30_exit154: skip
+		for30_exit164: skip
 	:: else -> 
 		do
 		:: true -> 

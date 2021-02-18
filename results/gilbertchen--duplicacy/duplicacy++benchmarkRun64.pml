@@ -1,4 +1,4 @@
-#define benchmarkRun_chunkCount  1
+#define benchmarkRun_chunkCount  3
 #define benchmarkRun_threads  3
 
 // https://github.com/gilbertchen/duplicacy/blob/ecf51914002752bd46b5c1f5b80763bc14667cdd/src/duplicacy_benchmark.go#L64

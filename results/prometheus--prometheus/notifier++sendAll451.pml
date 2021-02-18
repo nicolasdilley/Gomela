@@ -1,4 +1,4 @@
-#define sendAll_amSets  3
+#define sendAll_amSets  0
 #define sendAll_ams_ams  0
 
 // https://github.com/prometheus/prometheus/blob/b7fe028740b7b36a31c2deda1e2b74aa566fc0ee/notifier/notifier.go#L451

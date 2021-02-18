@@ -65,7 +65,7 @@ proctype go_Anonymous0(Chandef revs;Chandef errs) {
 	if
 	:: 0 != -2 && ub_for122_1 != -2 -> 
 				for(i : 0.. ub_for122_1) {
-			for10615: skip;
+			for10634: skip;
 			
 
 			if
@@ -73,9 +73,9 @@ proctype go_Anonymous0(Chandef revs;Chandef errs) {
 			:: revs.sync!false,0 -> 
 				revs.sending?state
 			fi;
-			for10_end615: skip
+			for10_end634: skip
 		};
-		for10_exit615: skip
+		for10_exit634: skip
 	:: else -> 
 		do
 		:: true -> 

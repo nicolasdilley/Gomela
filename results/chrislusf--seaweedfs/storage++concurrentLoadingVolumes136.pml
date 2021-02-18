@@ -1,4 +1,4 @@
-#define concurrentLoadingVolumes_concurrency  0
+#define concurrentLoadingVolumes_concurrency  3
 
 // https://github.com/chrislusf/seaweedfs/blob/e439b65e387609b2a761d9a976c0efc44060dff5/weed/storage/disk_location.go#L136
 typedef Chandef {
@@ -89,12 +89,12 @@ proctype go_Anonymous0(Chandef task_queue) {
 		:: else -> 
 			do
 			:: true -> 
-				for10805: skip;
+				for10837: skip;
 				
 
 				if
 				:: true -> 
-					goto for10_end805
+					goto for10_end837
 				:: true;
 				fi;
 				
@@ -110,11 +110,11 @@ proctype go_Anonymous0(Chandef task_queue) {
 					fi
 				:: true;
 				fi;
-				for10_end805: skip
+				for10_end837: skip
 			:: true -> 
 				break
 			od;
-			for10_exit805: skip
+			for10_exit837: skip
 		fi
 	:: true;
 	fi;

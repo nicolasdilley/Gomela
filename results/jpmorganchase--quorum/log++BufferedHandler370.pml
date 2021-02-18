@@ -1,4 +1,4 @@
-#define BufferedHandler_bufSize  1
+#define BufferedHandler_bufSize  3
 
 // https://github.com/jpmorganchase/quorum/blob/7b726385216c44e55fc6b6191a022fe598c102d4/log/handler.go#L370
 typedef Chandef {

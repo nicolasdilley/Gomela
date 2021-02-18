@@ -1,4 +1,4 @@
-#define runActionForeachMachine_machines  3
+#define runActionForeachMachine_machines  0
 
 // https://github.com/docker/machine/blob/b170508bf44c3405e079e26d5fdffe35a64c6972/commands/commands.go#L456
 typedef Chandef {
@@ -33,16 +33,16 @@ init {
 	if
 	:: 0 != -2 && numConcurrentActions-1 != -3 -> 
 				for(i : 0.. numConcurrentActions-1) {
-			for201104: skip;
+			for201128: skip;
 			
 
 			if
 			:: errorChan.async_rcv?state,num_msgs;
 			:: errorChan.sync?state,num_msgs;
 			fi;
-			for20_end1104: skip
+			for20_end1128: skip
 		};
-		for20_exit1104: skip
+		for20_exit1128: skip
 	:: else -> 
 		do
 		:: true -> 

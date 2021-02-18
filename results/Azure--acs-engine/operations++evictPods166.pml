@@ -1,4 +1,4 @@
-#define evictPods_pods  0
+#define evictPods_pods  3
 
 // https://github.com/Azure/acs-engine/blob/36d434b2a7102ab8f4219f095787c7ab31b5ddd6/pkg/operations/cordondrainvm.go#L166
 typedef Chandef {

@@ -67,7 +67,7 @@ proctype go_Anonymous0(Chandef ret) {
 	int i;
 	bool state;
 	int num_msgs;
-	int migration=3;
+	int migration=0;
 	
 
 	if
@@ -87,7 +87,7 @@ proctype go_Anonymous0(Chandef ret) {
 	:: else -> 
 		do
 		:: true -> 
-			for10176: skip;
+			for10186: skip;
 			
 
 			if
@@ -95,11 +95,11 @@ proctype go_Anonymous0(Chandef ret) {
 			:: ret.sync!false,0 -> 
 				ret.sending?state
 			fi;
-			for10_end176: skip
+			for10_end186: skip
 		:: true -> 
 			break
 		od;
-		for10_exit176: skip
+		for10_exit186: skip
 	fi;
 	stop_process: skip;
 	ret.closing!true

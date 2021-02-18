@@ -45,18 +45,18 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for20719: skip;
+			for20742: skip;
 			
 
 			if
 			:: barrier.async_rcv?state,num_msgs;
 			:: barrier.sync?state,num_msgs;
 			fi;
-			for20_end719: skip
+			for20_end742: skip
 		:: true -> 
 			break
 		od;
-		for20_exit719: skip
+		for20_exit742: skip
 	fi
 stop_process:skip
 }

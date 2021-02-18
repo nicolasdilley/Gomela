@@ -1,4 +1,4 @@
-#define forEachBucketParallel_buckets  3
+#define forEachBucketParallel_buckets  1
 
 // https://github.com/wallix/awless/blob/44e892b4961fc09abf82f61de2ffeb66a20c82b7/aws/fetch/s3_helpers.go#L18
 typedef Chandef {

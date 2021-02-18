@@ -1,4 +1,4 @@
-#define MentionsToPublicChannels_channelMentions  1
+#define MentionsToPublicChannels_channelMentions  0
 
 // https://github.com/mattermost/mattermost-server/blob/caeda90b246b2830ffc29901efce685a08d638fa/app/command.go#L293
 typedef Chandef {

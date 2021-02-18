@@ -10,11 +10,16 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef compileDone;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
@@ -25,6 +30,7 @@ init {
 		goto stop_process
 	:: true;
 	fi;
+	run wgMonitor(wg);
 	
 
 	if
@@ -33,10 +39,55 @@ init {
 		run AsyncChan(compileDone)
 	:: else -> 
 		run sync_monitor(compileDone)
-	fi
+	fi;
+	wg.Add!2;
+	run go_Anonymous0(compileDone,wg);
+	run go_Anonymous2(compileDone,wg);
+	wg.Wait?0
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef compileDone;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	chan child_maincompileAndStartTestServer0 = [0] of {int};
+	run maincompileAndStartTestServer(compileDone,child_maincompileAndStartTestServer0);
+	child_maincompileAndStartTestServer0?0;
+	wg.Add!-1;
+	stop_process: skip
+}
+proctype maincompileAndStartTestServer(Chandef compileDone;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: compileDone.async_send!0;
+	:: compileDone.sync!false,0 -> 
+		compileDone.sending?state
+	fi;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+proctype go_Anonymous2(Chandef compileDone;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: compileDone.async_rcv?state,num_msgs;
+	:: compileDone.sync?state,num_msgs;
+	fi;
+	wg.Add!-1;
+	stop_process: skip
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -112,5 +163,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

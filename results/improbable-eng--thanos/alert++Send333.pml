@@ -1,5 +1,5 @@
 #define Send_s_alertmanagers  0
-#define Send_am_dispatcher_Endpoints37621  0
+#define Send_am_dispatcher_Endpoints37621  1
 
 // https://github.com/improbable-eng/thanos/blob/d587ac90f67da1894af8ef62547d8e0dfb3cc5f6/pkg/alert/alert.go#L333
 typedef Wgdef {

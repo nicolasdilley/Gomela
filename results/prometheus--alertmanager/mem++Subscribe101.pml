@@ -1,4 +1,4 @@
-#define Subscribe_max10836  1
+#define Subscribe_max10836  3
 
 // https://github.com/prometheus/alertmanager/blob/3f46b62d75da4d68d2098388797e6a61fcc5e043/provider/mem/mem.go#L101
 typedef Chandef {
@@ -21,7 +21,7 @@ init {
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	int alerts=3;
+	int alerts=0;
 	int max10836 = Subscribe_max10836;
 	run sync_monitor(done);
 	
@@ -52,7 +52,7 @@ init {
 	:: else -> 
 		do
 		:: true -> 
-			for10694: skip;
+			for10715: skip;
 			
 
 			if
@@ -60,11 +60,11 @@ init {
 			:: ch.sync!false,0 -> 
 				ch.sending?state
 			fi;
-			for10_end694: skip
+			for10_end715: skip
 		:: true -> 
 			break
 		od;
-		for10_exit694: skip
+		for10_exit715: skip
 	fi;
 	run NewAlertIterator(ch,done,child_NewAlertIterator0);
 	child_NewAlertIterator0?0;

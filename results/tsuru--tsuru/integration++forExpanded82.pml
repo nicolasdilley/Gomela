@@ -1,4 +1,4 @@
-#define forExpanded_maxConcurrency  0
+#define forExpanded_maxConcurrency  1
 #define forExpanded_expanded  0
 
 // https://github.com/tsuru/tsuru/blob/acb87a16aa1c971080a7771119155c44e5eab9f2/integration/flow.go#L82
@@ -12,16 +12,22 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
 	Chandef limiter;
+	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
 	int expanded = forExpanded_expanded;
 	int maxConcurrency = forExpanded_maxConcurrency;
+	run wgMonitor(wg);
 	
 
 	if
@@ -34,12 +40,41 @@ init {
 	expandedloop: skip;
 			for(i : 0.. expanded-1) {
 		for10: skip;
+		
+
+		if
+		:: true -> 
+			wg.Add!1;
+			run go_Anonymous0(limiter,wg)
+		fi;
 		for10_end: skip
 	};
-	for10_exit: skip
+	for10_exit: skip;
+	wg.Wait?0
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef limiter;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: limiter.async_send!0;
+	:: limiter.sync!false,0 -> 
+		limiter.sending?state
+	fi;
+	stop_process: skip;
+	
+
+	if
+	:: limiter.async_rcv?state,num_msgs;
+	:: limiter.sync?state,num_msgs;
+	fi;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -115,5 +150,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 

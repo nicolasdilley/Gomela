@@ -1,4 +1,4 @@
-#define eachListChunkBuffered_p_PageBufferSize  0
+#define eachListChunkBuffered_p_PageBufferSize  3
 
 // https://github.com/kubernetes/client-go/blob/fc034b4b7616a76e021660b265df0211e060f6b6/tools/pager/pager.go#L170
 typedef Chandef {

@@ -100,7 +100,7 @@ proctype go_readUp(Chandef ret) {
 	if
 	:: 0 != -2 && ub_for522_1 != -2 -> 
 				for(i : 0.. ub_for522_1) {
-			for10174: skip;
+			for10184: skip;
 			
 
 			if
@@ -147,7 +147,7 @@ proctype go_readUp(Chandef ret) {
 				:: ret.sync!false,0 -> 
 					ret.sending?state
 				fi;
-				goto for10_end174
+				goto for10_end184
 			:: true;
 			fi;
 			
@@ -240,9 +240,9 @@ proctype go_readUp(Chandef ret) {
 			:: ret.sync!false,0 -> 
 				ret.sending?state
 			fi;
-			for10_end174: skip
+			for10_end184: skip
 		};
-		for10_exit174: skip
+		for10_exit184: skip
 	:: else -> 
 		do
 		:: true -> 

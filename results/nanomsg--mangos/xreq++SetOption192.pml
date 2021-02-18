@@ -1,4 +1,4 @@
-#define SetOption_v  1
+#define SetOption_v  3
 
 // https://github.com/nanomsg/mangos/blob/233273ca2095032478c1e6c44d120e34e8c8536a/protocol/xreq/xreq.go#L192
 typedef Chandef {

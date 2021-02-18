@@ -1,5 +1,5 @@
 #define doNetworkPeers_ips  1
-#define doNetworkPeers_maxRetry  3
+#define doNetworkPeers_maxRetry  0
 
 // https://github.com/docker/libnetwork/blob/954d1ddc998d8b6eb93afb628ae8ca122e53bca8/cmd/networkdb-test/dbclient/ndbClient.go#L415
 typedef Chandef {
@@ -44,16 +44,16 @@ init {
 		if
 		:: 0 != -2 && ips-1 != -3 -> 
 						for(i : 0.. ips-1) {
-				for11754: skip;
+				for11774: skip;
 				
 
 				if
 				:: doneCh.async_rcv?state,num_msgs;
 				:: doneCh.sync?state,num_msgs;
 				fi;
-				for11_end754: skip
+				for11_end774: skip
 			};
-			for11_exit754: skip
+			for11_exit774: skip
 		:: else -> 
 			do
 			:: true -> 

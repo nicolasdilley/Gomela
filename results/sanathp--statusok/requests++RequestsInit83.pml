@@ -1,5 +1,5 @@
-#define RequestsInit_concurrency  1
-#define RequestsInit_data  3
+#define RequestsInit_concurrency  0
+#define RequestsInit_data  1
 
 // https://github.com/sanathp/statusok/blob/da193355eece3c8f87b8d055cb223dae197bd594/requests/requests.go#L83
 typedef Chandef {

@@ -1,4 +1,4 @@
-#define loadEntities_existing  0
+#define loadEntities_existing  1
 #define loadEntities_consts_ExpirationRestoreWorkerCount  1
 
 // https://github.com/hashicorp/vault/blob/654c9ea2e3062b5f2bc8b9ca7964fc154bd80a8e/vault/identity_store_util.go#L181
@@ -12,10 +12,15 @@ typedef Chandef {
 	int num_msgs = 0;
 	bool closed = false;
 }
+typedef Wgdef {
+	chan Add = [0] of {int};
+	chan Wait = [0] of {int};
+	int Counter = 0;}
 
 
 
 init { 
+	Wgdef wg;
 	Chandef result;
 	Chandef errs;
 	Chandef quit;
@@ -52,13 +57,22 @@ init {
 	:: else -> 
 		run sync_monitor(result)
 	fi;
+	run wgMonitor(wg);
+		for(i : 0.. consts_ExpirationRestoreWorkerCount-1) {
+		for10: skip;
+		wg.Add!1;
+		run go_Anonymous0(broker,quit,errs,result,wg);
+		for10_end: skip
+	};
 	for10_exit: skip;
+	wg.Add!1;
+	run go_Anonymous1(broker,quit,errs,result,wg,existing);
 	
 
 	if
 	:: 0 != -2 && existing-1 != -3 -> 
 				for(i : 0.. existing-1) {
-			for20123: skip;
+			for30133: skip;
 			do
 			:: errs.async_rcv?state,num_msgs -> 
 				quit.closing!true;
@@ -71,7 +85,7 @@ init {
 
 				if
 				:: true -> 
-					goto for20_end123
+					goto for30_end133
 				:: true;
 				fi;
 				break
@@ -80,18 +94,18 @@ init {
 
 				if
 				:: true -> 
-					goto for20_end123
+					goto for30_end133
 				:: true;
 				fi;
 				break
 			od;
-			for20_end123: skip
+			for30_end133: skip
 		};
-		for20_exit123: skip
+		for30_exit133: skip
 	:: else -> 
 		do
 		:: true -> 
-			for20: skip;
+			for30: skip;
 			do
 			:: errs.async_rcv?state,num_msgs -> 
 				quit.closing!true;
@@ -104,7 +118,7 @@ init {
 
 				if
 				:: true -> 
-					goto for20_end
+					goto for30_end
 				:: true;
 				fi;
 				break
@@ -113,21 +127,158 @@ init {
 
 				if
 				:: true -> 
-					goto for20_end
+					goto for30_end
 				:: true;
 				fi;
 				break
 			od;
-			for20_end: skip
+			for30_end: skip
 		:: true -> 
 			break
 		od;
-		for20_exit: skip
+		for30_exit: skip
 	fi;
+	wg.Wait?0;
 	goto stop_process
 stop_process:skip
 }
 
+proctype go_Anonymous0(Chandef broker;Chandef quit;Chandef errs;Chandef result;Wgdef wg) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	do
+	:: true -> 
+		for11: skip;
+		do
+		:: broker.async_rcv?state,num_msgs -> 
+			
+
+			if
+			:: true -> 
+				goto stop_process
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: errs.async_send!0;
+				:: errs.sync!false,0 -> 
+					errs.sending?state
+				fi;
+				goto for11_end
+			:: true;
+			fi;
+			
+
+			if
+			:: result.async_send!0;
+			:: result.sync!false,0 -> 
+				result.sending?state
+			fi;
+			break
+		:: broker.sync?state,num_msgs -> 
+			
+
+			if
+			:: true -> 
+				goto stop_process
+			:: true;
+			fi;
+			
+
+			if
+			:: true -> 
+				
+
+				if
+				:: errs.async_send!0;
+				:: errs.sync!false,0 -> 
+					errs.sending?state
+				fi;
+				goto for11_end
+			:: true;
+			fi;
+			
+
+			if
+			:: result.async_send!0;
+			:: result.sync!false,0 -> 
+				result.sending?state
+			fi;
+			break
+		:: quit.async_rcv?state,num_msgs -> 
+			goto stop_process
+		:: quit.sync?state,num_msgs -> 
+			goto stop_process
+		od;
+		for11_end: skip
+	od;
+	for11_exit: skip;
+	stop_process: skip;
+	wg.Add!-1
+}
+proctype go_Anonymous1(Chandef broker;Chandef quit;Chandef errs;Chandef result;Wgdef wg;int existing) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: existing-1 != -3 -> 
+				for(i : 0.. existing-1) {
+			for20: skip;
+			do
+			:: quit.async_rcv?state,num_msgs -> 
+				goto stop_process
+			:: quit.sync?state,num_msgs -> 
+				goto stop_process
+			:: true -> 
+				
+
+				if
+				:: broker.async_send!0;
+				:: broker.sync!false,0 -> 
+					broker.sending?state
+				fi
+			od;
+			for20_end: skip
+		};
+		for20_exit: skip
+	:: else -> 
+		do
+		:: true -> 
+			for20130: skip;
+			do
+			:: quit.async_rcv?state,num_msgs -> 
+				goto stop_process
+			:: quit.sync?state,num_msgs -> 
+				goto stop_process
+			:: true -> 
+				
+
+				if
+				:: broker.async_send!0;
+				:: broker.sync!false,0 -> 
+					broker.sending?state
+				fi
+			od;
+			for20_end130: skip
+		:: true -> 
+			break
+		od;
+		for20_exit130: skip
+	fi;
+	broker.closing!true;
+	stop_process: skip;
+	wg.Add!-1
+}
 
  /* ================================================================================== */
  /* ================================================================================== */
@@ -203,5 +354,23 @@ end1: if
 fi;
 od
 stop_process:
+}
+
+proctype wgMonitor(Wgdef wg) {
+bool closed;
+int i;
+bool state;
+do
+	:: wg.Add?i ->
+		wg.Counter = wg.Counter + i;
+		assert(wg.Counter >= 0)
+	:: wg.Counter == 0 ->
+end: if
+		:: wg.Add?i ->
+			wg.Counter = wg.Counter + i;
+			assert(wg.Counter >= 0)
+		:: wg.Wait!0;
+	fi
+od
 }
 
