@@ -33,7 +33,10 @@ func Print(m *Model) {
 
 	stmt += "\n"
 
-	splitted := strings.Split(strings.Split(m.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")[1], "/")
+	splitted := strings.Split(
+		strings.Split(
+			m.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")[1],
+		"/")
 
 	path := splitted[1:]
 

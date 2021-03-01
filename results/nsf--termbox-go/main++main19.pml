@@ -13,7 +13,7 @@ typedef Chandef {
 
 
 
-init { 
+init {
 	Chandef event_queue;
 	int num_msgs = 0;
 	bool state = false;
@@ -22,23 +22,23 @@ init {
 	run go_Anonymous0(event_queue);
 	loop: skip;
 		do
-	:: true -> 
+	:: true ->
 		for20: skip;
 		do
-		:: event_queue.async_rcv?state,num_msgs -> 
-			
+		:: event_queue.async_rcv?state,num_msgs ->
+
 
 			if
-			:: true -> 
+			:: true ->
 				goto loop
 			:: true;
 			fi;
 			break
-		:: event_queue.sync?state,num_msgs -> 
-			
+		:: event_queue.sync?state,num_msgs ->
+
 
 			if
-			:: true -> 
+			:: true ->
 				goto loop
 			:: true;
 			fi;
@@ -52,18 +52,18 @@ stop_process:skip
 }
 
 proctype go_Anonymous0(Chandef event_queue) {
-	bool closed; 
+	bool closed;
 	int i;
 	bool state;
 	int num_msgs;
 	do
-	:: true -> 
+	:: true ->
 		for10: skip;
-		
+
 
 		if
 		:: event_queue.async_send!0;
-		:: event_queue.sync!false,0 -> 
+		:: event_queue.sync!false,0 ->
 			event_queue.sending?state
 		fi;
 		for10_end: skip
@@ -74,12 +74,12 @@ proctype go_Anonymous0(Chandef event_queue) {
 
  /* ================================================================================== */
  /* ================================================================================== */
- /* ================================================================================== */ 
+ /* ================================================================================== */
 proctype AsyncChan(Chandef ch) {
 do
 :: true ->
 if
-:: ch.closed -> 
+:: ch.closed ->
 end: if
   :: ch.async_send?0-> // cannot send on closed channel
     assert(false)
@@ -100,7 +100,7 @@ end: if
 		      ch.closed = true
 		  :: ch.sending!false;
 		fi;
-	:: ch.num_msgs == 0 -> 
+	:: ch.num_msgs == 0 ->
 end2:		if
 		:: ch.async_send?0 -> // a message has been received
 			ch.num_msgs = ch.num_msgs + 1
@@ -108,7 +108,7 @@ end2:		if
 			ch.closed = true
 		:: ch.sending!false;
 		fi;
-		:: else -> 
+		:: else ->
 		end3: if
 		  :: ch.async_send?0->
 		     ch.num_msgs = ch.num_msgs + 1
@@ -137,7 +137,7 @@ end: if
     assert(false)
   :: ch.sync!true,0; // can always receive on a closed chan
   fi;
-:: else -> 
+:: else ->
 end1: if
     :: ch.sending!false;
     :: ch.closing?true ->

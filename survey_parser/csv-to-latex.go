@@ -124,6 +124,9 @@ func main() {
 			num_models := 0
 
 			for _, pack := range project.Packages {
+				if project.Name == "keybase/client" {
+					fmt.Println(pack.Name)
+				}
 				num_models += len(pack.Models)
 				models_per_packages = append(models_per_packages, float64(len(pack.Models)))
 			}
@@ -346,6 +349,8 @@ func parseFeature(features_map map[string][]string) {
 	chan_bound := 0
 	add_bound := 0
 	for_bound := 0
+	for_upper_bound := 0
+	for_lower_bound := 0
 
 	num_models := len(features_map)
 
@@ -388,11 +393,11 @@ func parseFeature(features_map map[string][]string) {
 			}
 
 			if strings.Contains(feature, "for upper bound") && !strings.Contains(feature, "len") {
-				for_bound += 1
+				for_upper_bound += 1
 			}
 
 			if strings.Contains(feature, "for lower bound") && !strings.Contains(feature, "len") {
-				for_bound += 1
+				for_lower_bound += 1
 			}
 
 			if strings.Contains(feature, "new WaitGroup") {
@@ -582,7 +587,9 @@ func parseFeature(features_map map[string][]string) {
 
 	fmt.Println("Num of chan bounds: ", chan_bound)
 	fmt.Println("Num of add bounds: ", add_bound)
-	fmt.Println("Num of for bounds: ", for_bound)
+	fmt.Println("Num of for range bounds: ", for_bound)
+	fmt.Println("Num of for upper bounds: ", for_upper_bound)
+	fmt.Println("Num of for lower bounds: ", for_lower_bound)
 	// add unsupported everywhere
 	// check occurences that are constaxnts
 	// check type int and Var (And add when litteral)
@@ -632,17 +639,24 @@ func parseVerificationResults() {
 		}
 		data, _ := ioutil.ReadFile(os.Args[3])
 		verification := strings.Split(string(data[:len(data)-1]), "\n")
-
 		verification_map := make(map[string][]string)
 
-		num_tests := len(verification) - 1
+		num_tests := len(verification)
+		num_timeout := 0
+		num_actual_verifications := 0
+		num_unexecutable_models := 0
 		num_gd := 0
 		num_cs := 0
 		false_alarms := 0
+		times := []float64{}
 		total_time := 0
+
+		valuated_longest_time := 0.0
+		valuated_longest_model := ""
+		time_per_projects := make(map[string]float64)
+
 		for _, line := range verification {
 			splitted_line := strings.Split(line, ",")
-			verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
 			// model := splitted_line[0]
 			opt := splitted_line[1] == "1"
 			// num_states := splitted_line[2]
@@ -651,26 +665,77 @@ func parseVerificationResults() {
 			cs_error := splitted_line[4] == "true"
 			gd_error := splitted_line[5] == "true"
 			if err == nil {
+				num_actual_verifications++
+				verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
+				proj_name := strings.Split(splitted_line[0], ":")[0]
+				time_per_projects[proj_name] += float64(time)
 				total_time += time
-			}
-			if cs_error {
-				num_cs++
-			} else if gd_error {
-				num_gd++
+				times = append(times, float64(time))
+
+				if float64(time) > valuated_longest_time {
+					valuated_longest_time = float64(time)
+					valuated_longest_model = splitted_line[0]
+				}
+				if cs_error {
+					num_cs++
+				} else if gd_error {
+					num_gd++
+				} else {
+					if opt {
+						false_alarms++
+					}
+				}
 			} else {
-				if opt {
-					false_alarms++
+				if splitted_line[3] == "" {
+					num_unexecutable_models++
+				} else if splitted_line[3] == "timeout" {
+					num_timeout++
 				}
 			}
 		}
 
+		times_per_projects := []float64{}
+
+		longest_projects := 0.0
+		longest_projects_name := ""
+		for proj, time := range time_per_projects {
+			times_per_projects = append(times_per_projects, time)
+
+			if time > longest_projects {
+				longest_projects = time
+
+				longest_projects_name = proj
+			}
+		}
+
+		times_sd, _ := stats.StandardDeviation(times)
+		times_mean, _ := stats.Mean(times)
+		times_quartiles, _ := stats.Quartile(times)
+		times_max, _ := stats.Max(times)
+		times_min, _ := stats.Min(times)
+
+		fmt.Println("times per valuated model in ms", times_mean, times_sd, times_min, times_quartiles.Q1, times_quartiles.Q2, times_quartiles.Q3, times_max)
+
+		times_per_projects_sd, _ := stats.StandardDeviation(times_per_projects)
+		times_per_projects_mean, _ := stats.Mean(times_per_projects)
+		times_per_projects_quartiles, _ := stats.Quartile(times_per_projects)
+		times_per_projects_max, _ := stats.Max(times_per_projects)
+		times_per_projects_min, _ := stats.Min(times_per_projects)
+
+		fmt.Println("times_per_projects per project in ms", times_per_projects_mean, times_per_projects_sd, times_per_projects_min, times_per_projects_quartiles.Q1, times_per_projects_quartiles.Q2, times_per_projects_quartiles.Q3, times_per_projects_max)
+
 		scores := make(map[string]ModelScore)
 		num_models_with_score_that_are_not_one_not_zero := 0
 
+		times_per_model := []float64{}
+		longest_model := ""
+		longest_time := 0.0
 		for model, verifications := range verification_map {
 			gd_score := 0
 			cs_score := 0
 			commit := ""
+
+			total_time := 0.0
 			for _, v := range verifications {
 				splitted_line := strings.Split(v, ",")
 				commit = splitted_line[len(splitted_line)-2]
@@ -681,6 +746,19 @@ func parseVerificationResults() {
 				} else if gd_error {
 					gd_score++
 				}
+
+				//calculate time for the valuated model
+				time, err := strconv.Atoi(splitted_line[3])
+
+				if err == nil {
+					total_time += float64(time)
+				}
+			}
+
+			times_per_model = append(times_per_model, total_time)
+			if total_time > longest_time {
+				longest_time = total_time
+				longest_model = model
 			}
 
 			if float64(cs_score)/float64(len(verifications)) != 0.0 && float64(cs_score)/float64(len(verifications)) != 1.0 {
@@ -692,6 +770,14 @@ func parseVerificationResults() {
 			score := ModelScore{model: model, GDScore: float64(gd_score) / float64(len(verifications)), CSScore: float64(cs_score) / float64(len(verifications)), Commit: commit}
 			scores[model] = score
 		}
+
+		times_per_model_sd, _ := stats.StandardDeviation(times_per_model)
+		times_per_model_mean, _ := stats.Mean(times_per_model)
+		times_per_model_quartiles, _ := stats.Quartile(times_per_model)
+		times_per_model_max, _ := stats.Max(times_per_model)
+		times_per_model_min, _ := stats.Min(times_per_model)
+
+		fmt.Println("times per model in ms", times_per_model_mean, times_per_model_sd, times_per_model_min, times_per_model_quartiles.Q1, times_per_model_quartiles.Q2, times_per_model_quartiles.Q3, times_per_model_max)
 
 		ioutil.WriteFile("scores.csv", []byte("Project, Channel safety score, Global deadlock score, Link \n"), 0644)
 		file, err := os.OpenFile("scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
@@ -803,7 +889,14 @@ func parseVerificationResults() {
 		}
 
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
+		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))
 		fmt.Println("# of verification : ", num_tests)
+		fmt.Println("# of actual verification : ", num_actual_verifications)
+		fmt.Println("# of timeout : ", num_timeout)
+		fmt.Println("# of unexecutable models : ", num_unexecutable_models)
+		fmt.Println("Longest valuated model is : ", valuated_longest_model, " with ", valuated_longest_time, "ms")
+		fmt.Println("Longest model is : ", longest_model, " with ", longest_time, "ms")
+		fmt.Println("Longest project is : ", longest_projects_name, " with ", longest_projects, "ms")
 		fmt.Println("# of global deadlock : ", num_gd)
 		fmt.Println("# of channel error : ", num_cs)
 		fmt.Println("# of false alarms : ", false_alarms)

@@ -36,7 +36,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 					case *ast.SendStmt:
 						s1, defers, err1 = m.translateSendStmt(stmt)
 					case *ast.GoStmt:
-						s1, defers, err1 = m.TranslateGoStmt(stmt)
+						s1, defers, err1 = m.TranslateGoStmt(stmt, false)
 					case *ast.ReturnStmt:
 						s1, defers, err1 = m.translateReturnStmt(stmt)
 					case *ast.ExprStmt:

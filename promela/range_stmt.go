@@ -33,6 +33,8 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 	}
 
 	s1, for_label, d1, err1 := m.translateBodyOfForLoop(s.Body)
+	m.For_counter.Y++
+	body2, for_label2, _, _ := m.translateBodyOfForLoop(s.Body)
 
 	if m.containsChan(s.X) {
 
@@ -115,8 +117,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 			// else part
 
-			body2, for_label2 := m.UpdateLabels(s1, for_label)
-
 			break_branch := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 			d.Guards = append(d.Guards,
 				&promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body2},
@@ -136,7 +136,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		m.For_counter.In_for = false
 		m.For_counter.Y = 0
 	} else {
-		m.For_counter.Y -= 1
 		m.For_counter.In_for = true
 	}
 	m.For_counter.With_go = had_go

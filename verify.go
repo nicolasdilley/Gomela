@@ -32,7 +32,6 @@ const (
 )
 
 func VerifyModels(models []os.FileInfo, dir_name string) {
-	fmt.Println(dir_name)
 	// Print CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -124,7 +123,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, bound []string) *VerificationRun {
 
-	ver := &VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
+	ver := &VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: false}
 
 	var output bytes.Buffer
 
@@ -136,42 +135,52 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	after := time.Now()
 
 	ver.Spin_timing = after.Sub(pre).Milliseconds()
+	executable := parseResults(output.String(), ver)
 
-	if output.String() == "" {
+	if output.String() == "" || ver.Timeout {
 		toPrint := model_name + ",timeout,timeout,timeout,timeout,timeout,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
-	} else {
-		ver.Timeout = false
-		executable := parseResults(output.String(), ver)
-		toPrint := model_name + ",0,the model is not executable,,,,,\n"
-		if executable {
-			comm_par_info := ""
-			fmt.Println("-------------------------------")
-			fmt.Println("Result for " + model_name)
-			for i, param := range comm_params {
-				comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
-				fmt.Println(param, " = ", bound[i])
-			}
-			fmt.Println("Number of states : ", ver.Num_states)
-			fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-			fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-			fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-			if ver.Err != "" {
-				red := color.New(color.FgRed).SprintFunc()
-				fmt.Printf("Error : %s.\n", red(ver.Err))
-			}
-			fmt.Println("-------------------------------")
-
-			toPrint = model_name + ",0," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + "," + git_link + ",\n"
-
+	} else if !executable {
+		toPrint := model_name + ",0,the model is not executable,,,," +
+			ver.Err +
+			",,\n"
+		if _, err := f.WriteString(toPrint); err != nil {
+			panic(err)
 		}
+	} else {
+		comm_par_info := ""
+		fmt.Println("-------------------------------")
+		fmt.Println("Result for " + model_name)
+		for i, param := range comm_params {
+			comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
+			fmt.Println(param, " = ", bound[i])
+		}
+		fmt.Println("Number of states : ", ver.Num_states)
+		fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+		fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+		fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+		if ver.Err != "" {
+			red := color.New(color.FgRed).SprintFunc()
+			fmt.Printf("Error : %s.\n", red(ver.Err))
+		}
+		fmt.Println("-------------------------------")
+
+		toPrint := model_name + ",0," +
+			fmt.Sprintf("%d", ver.Num_states) + "," +
+			fmt.Sprintf("%d", ver.Spin_timing) + "," +
+			fmt.Sprintf("%t", ver.Safety_error) + "," +
+			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
+			ver.Err + "," +
+			comm_par_info + "," +
+			git_link + ",\n"
 
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
 	}
+
 	return ver
 }
 
@@ -229,46 +238,58 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
 
+					ver.Timeout = false
+					executable := parseResults(output.String(), &ver)
 					num_tests++
-					if output.String() == "" {
+					if output.String() == "" || ver.Timeout {
 						toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
+					} else if !executable {
+						toPrint := model_name + ",0,the model is not executable,,,," +
+							ver.Err +
+							",,\n"
+						if _, err := f.WriteString(toPrint); err != nil {
+							panic(err)
+						}
 					} else {
-						ver.Timeout = false
-						executable := parseResults(output.String(), &ver)
+						comm_par_info := ""
+						fmt.Println("-------------------------------")
+						fmt.Println("Result for " + model_name + " with optional params")
+						for i, param := range comm_params {
+							comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
+							fmt.Println(param, " = ", bound[i])
+						}
+						comm_par_info += fixed_bound + ","
+						fmt.Println(fixed_bound)
 
-						if executable {
-							comm_par_info := ""
-							fmt.Println("-------------------------------")
-							fmt.Println("Result for " + model_name + " with optional params")
-							for i, param := range comm_params {
-								comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
-								fmt.Println(param, " = ", bound[i])
-							}
-							comm_par_info += fixed_bound + ","
-							fmt.Println(fixed_bound)
+						fmt.Println("Number of states : ", ver.Num_states)
+						fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+						fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+						fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+						if ver.Err != "" {
+							red := color.New(color.FgRed).SprintFunc()
+							fmt.Printf("Error : %s.\n", red(ver.Err))
+						}
+						fmt.Println("-------------------------------")
 
-							fmt.Println("Number of states : ", ver.Num_states)
-							fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-							fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
-							fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
-							if ver.Err != "" {
-								red := color.New(color.FgRed).SprintFunc()
-								fmt.Printf("Error : %s.\n", red(ver.Err))
-							}
-							fmt.Println("-------------------------------")
+						toPrint := model_name + ",1," +
+							fmt.Sprintf("%d", ver.Num_states) + "," +
+							fmt.Sprintf("%d", ver.Spin_timing) + "," +
+							fmt.Sprintf("%t", ver.Safety_error) + "," +
+							fmt.Sprintf("%t", ver.Global_deadlock) + "," +
+							ver.Err + "," +
+							comm_par_info + "," +
+							git_link + ",\n"
 
-							toPrint := model_name + ",1," + fmt.Sprintf("%d", ver.Num_states) + "," + fmt.Sprintf("%d", ver.Spin_timing) + "," + fmt.Sprintf("%t", ver.Safety_error) + "," + fmt.Sprintf("%t", ver.Global_deadlock) + "," + ver.Err + "," + comm_par_info + "," + git_link + ",\n"
-							if _, err := f.WriteString(toPrint); err != nil {
-								panic(err)
-							}
+						if _, err := f.WriteString(toPrint); err != nil {
+							panic(err)
+						}
 
-							// add if there is no bug to false alarm bounds
-							if !ver.Global_deadlock {
-								false_alarm_bounds = append(false_alarm_bounds, opt_bound)
-							}
+						// add if there is no bug to false alarm bounds
+						if !ver.Global_deadlock {
+							false_alarm_bounds = append(false_alarm_bounds, opt_bound)
 						}
 					}
 
@@ -300,13 +321,19 @@ func parseResults(result string, ver *VerificationRun) bool {
 	splitted := strings.Split(result, "\n")
 
 	if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
-		fmt.Println("The model is not executable : ")
 
+		fmt.Println("The model is not executable : ")
+		err := ""
 		for _, line := range splitted {
-			fmt.Println(line)
+			err += line
 		}
-		ver.Err = splitted[0]
+		ver.Err = err
 		return false
+	}
+
+	if strings.Contains(splitted[len(splitted)-1], "depth") {
+		// Its a timeout
+		ver.Timeout = true
 	}
 	for _, line := range splitted {
 		if strings.Contains(line, "states, stored") {

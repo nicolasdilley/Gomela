@@ -6,12 +6,39 @@
 
 package nat
 
+import "time"
 func main() {
-	a := make(chan int)
+  zest2 := []int{1,134,65,465,43}
+  err := termbox.Init()
+  if err != nil {
+    panic(err)
+  }
+  defer termbox.Close()
 
-	a <- 0
+  event_queue := make(chan termbox.Event)
+  a := make(chan termbox.Event)
+  go func() {
+    for range zest {
+      event_queue <- termbox.PollEvent()
+    }
+  }()
 
-	a = make(chan int, 10)
-
-	<-a
+  draw()
+loop:
+  for range zest2 {
+    select {
+    case ev := <-event_queue:
+      if ev.Type == termbox.EventKey && ev.Key == termbox.KeyEsc {
+         f(a)
+        break loop
+      }
+    default:
+      draw()
+      time.Sleep(10 * time.Millisecond)
+    }
+  }
 }
+  func f(ch chan int){
+    ch <-1
+  }
+

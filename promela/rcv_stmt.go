@@ -7,22 +7,40 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt, g *promela_ast.GotoStmt) ([]*promela_ast.GuardStmt, *ParseError) {
+func (m *Model) translateRcvStmt(
+	e ast.Expr,
+	body *promela_ast.BlockStmt,
+	body2 *promela_ast.BlockStmt,
+	g *promela_ast.GotoStmt) ([]*promela_ast.GuardStmt, *ParseError) {
 	guards := []*promela_ast.GuardStmt{}
 	var err *ParseError
 
 	if m.containsChan(e) {
 		chan_name := m.getChanStruct(e)
-		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+		async_rcv := &promela_ast.RcvStmt{
+			Chan: &promela_ast.SelectorExpr{
+				X:   chan_name.Name,
+				Sel: &promela_ast.Ident{Name: "async_rcv"}},
+			Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+
+		sync_rcv := &promela_ast.RcvStmt{
+			Chan: &promela_ast.SelectorExpr{
+				X:   chan_name.Name,
+				Sel: &promela_ast.Ident{Name: "sync"}},
+			Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+
 		m.checkForBreak(body, g)
-		async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(e.Pos()), Body: body}
+		m.checkForBreak(body2, g)
 
-		body_bis, _ := m.UpdateLabels(body, nil)
+		async_guard := &promela_ast.GuardStmt{
+			Cond:  async_rcv,
+			Guard: m.Fileset.Position(e.Pos()),
+			Body:  body}
+
 		sync_guard := &promela_ast.GuardStmt{
 			Cond: sync_rcv,
-			Body: body_bis,
+			Body: body2,
 		}
 		guards = []*promela_ast.GuardStmt{async_guard, sync_guard}
 	} else {
@@ -36,7 +54,18 @@ func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt, g *pro
 				case *ast.Ident:
 					if ident.Name == "time" && sel.Sel.Name == "After" {
 						m.checkForBreak(body, g)
-						guards = []*promela_ast.GuardStmt{&promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}}
+						guards = []*promela_ast.GuardStmt{
+							&promela_ast.GuardStmt{
+								Cond: &promela_ast.Ident{Name: "true"},
+								Body: body}}
+						isTimeAfter = true
+					}
+					if ident.Name == "ctx" && sel.Sel.Name == "Done" {
+						m.checkForBreak(body, g)
+						guards = []*promela_ast.GuardStmt{
+							&promela_ast.GuardStmt{
+								Cond: &promela_ast.Ident{Name: "true"},
+								Body: body}}
 						isTimeAfter = true
 					}
 				}
@@ -44,7 +73,9 @@ func (m *Model) translateRcvStmt(e ast.Expr, body *promela_ast.BlockStmt, g *pro
 		}
 
 		if !isTimeAfter {
-			err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(e.Pos()).String())}
+			err = &ParseError{
+				err: errors.New(UNKNOWN_RCV + m.Fileset.Position(e.Pos()).String()),
+			}
 		}
 	}
 

@@ -18,7 +18,10 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
+			fmt.Println("for x: ", m.For_counter.X, "y: ", m.For_counter.Y)
 			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
+			fmt.Println("for x: ", m.For_counter.X, "y: ", m.For_counter.Y)
+
 			if len(d1.List) > 0 {
 				return b, d1, &ParseError{err: errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())}
 			}
@@ -26,18 +29,35 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				return b, defers, err1
 			}
 			if comm.Comm != nil { // check if default select
+				body2, _, _ := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
 				switch com := comm.Comm.(type) {
 				case *ast.SendStmt: // send
 					if m.containsChan(com.Chan) {
 						chan_name := m.getChanStruct(com.Chan)
 
-						async_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_send"}}, Rhs: &promela_ast.Ident{Name: "0"}}
+						async_send := &promela_ast.SendStmt{
+							Chan: &promela_ast.SelectorExpr{
+								X:   chan_name.Name,
+								Sel: &promela_ast.Ident{Name: "async_send"},
+							},
+							Rhs: &promela_ast.Ident{Name: "0"}}
 
-						sync_send := &promela_ast.SendStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "false,0"}}
+						sync_send := &promela_ast.SendStmt{
+							Chan: &promela_ast.SelectorExpr{
+								X:   chan_name.Name,
+								Sel: &promela_ast.Ident{Name: "sync"},
+							},
+							Rhs: &promela_ast.Ident{Name: "false,0"}}
 						m.checkForBreak(body, goto_stmt)
-						async_guard := &promela_ast.GuardStmt{Cond: async_send, Guard: m.Fileset.Position(comm.Pos()), Body: body}
-						sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
+						async_guard := &promela_ast.GuardStmt{
+							Cond:  async_send,
+							Guard: m.Fileset.Position(comm.Pos()),
+							Body:  body}
+						sending_chan := &promela_ast.SelectorExpr{
+							X:   chan_name.Name,
+							Sel: &promela_ast.Ident{Name: "sending"}}
 
+						m.checkForBreak(body2, goto_stmt)
 						sync_guard := &promela_ast.GuardStmt{
 							Cond: sync_send,
 							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
@@ -46,8 +66,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 									Rhs:  &promela_ast.Ident{Name: "state"}}}},
 							Guard: m.Fileset.Position(s.Pos())}
 
-						new_body, _ := m.UpdateLabels(body, nil)
-						sync_guard.Body.List = append(sync_guard.Body.List, new_body.List...)
+						sync_guard.Body.List = append(sync_guard.Body.List, body2.List...)
 
 						i.Guards = append(i.Guards, async_guard, sync_guard)
 					} else {
@@ -62,14 +81,14 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						switch com := rh.(type) {
 						case *ast.UnaryExpr:
 							if com.Op == token.ARROW {
-								guards, err = m.translateRcvStmt(com.X, body, goto_stmt)
+								guards, err = m.translateRcvStmt(com.X, body, body2, goto_stmt)
 								i.Guards = append(i.Guards, guards...)
 							}
 						case *ast.Ident:
-							guards, err = m.translateRcvStmt(com, body, goto_stmt)
+							guards, err = m.translateRcvStmt(com, body, body2, goto_stmt)
 							i.Guards = append(i.Guards, guards...)
 						case *ast.SelectorExpr:
-							guards, err = m.translateRcvStmt(com, body, goto_stmt)
+							guards, err = m.translateRcvStmt(com, body, body2, goto_stmt)
 							i.Guards = append(i.Guards, guards...)
 						}
 					}
@@ -78,7 +97,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 					case *ast.UnaryExpr:
 						if com.Op == token.ARROW {
 							var guards []*promela_ast.GuardStmt
-							guards, err = m.translateRcvStmt(com.X, body, goto_stmt)
+							guards, err = m.translateRcvStmt(com.X, body, body2, goto_stmt)
 							i.Guards = append(i.Guards, guards...)
 						}
 					}

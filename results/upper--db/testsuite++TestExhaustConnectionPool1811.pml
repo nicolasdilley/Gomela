@@ -7,20 +7,20 @@ typedef Wgdef {
 
 
 
-init { 
+init {
 	Wgdef wg;
 	int num_msgs = 0;
 	bool state = false;
 	int i;
-	
+
 
 	if
-	:: true -> 
+	:: true ->
 		goto stop_process
 	:: true;
 	fi;
 	run wgMonitor(wg);
-		for(i : 0.. 100-1) {
+		for(i : 0.. 4-1) {
 		for10: skip;
 		wg.Add!1;
 		run go_Anonymous0(wg);
@@ -32,7 +32,7 @@ stop_process:skip
 }
 
 proctype go_Anonymous0(Wgdef wg) {
-	bool closed; 
+	bool closed;
 	int i;
 	bool state;
 	int num_msgs;
@@ -42,7 +42,7 @@ proctype go_Anonymous0(Wgdef wg) {
 
  /* ================================================================================== */
  /* ================================================================================== */
- /* ================================================================================== */ 
+ /* ================================================================================== */
 proctype wgMonitor(Wgdef wg) {
 bool closed;
 int i;

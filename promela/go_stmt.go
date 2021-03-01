@@ -11,7 +11,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
-func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
@@ -28,15 +28,13 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 	}
 
 	if decl != nil {
-
 		func_name = "go_" + decl.Name.Name
 		prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(call_expr.Pos())}
 
-		hasChan := false
-		known := false
+		hasChan := isMain
+		known := isMain
 		new_mod := m.newModel(pack_name, decl)
 		new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-
 		//. Create a define for each mandatory param
 
 		proc := &promela_ast.Proctype{Name: &promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -183,6 +181,11 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 
 				m.addNewProctypes(new_mod) // adding the new proctypes create in the new model
 
+				if isMain {
+					m.Chans = new_mod.Chans
+					m.WaitGroups = new_mod.WaitGroups
+				}
+
 				if err1 != nil {
 					err = err1
 				}
@@ -219,10 +222,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt) (b *promela_ast.BlockStmt, defers
 			}
 		}
 	}
-
-	// Find Decl if not funclit
-	// Parse body if call does not exists
-	// add run stmt to stmts
 
 	return b, defers, err
 }

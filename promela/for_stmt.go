@@ -50,7 +50,14 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	if err1 != nil {
 		err = err1
 	}
+
 	stmts, for_label, d3, err1 := m.translateBodyOfForLoop(s.Body)
+
+	m.For_counter.Y += 1
+	body2, for_label2, _, _ := m.translateBodyOfForLoop(s.Body)
+
+	fmt.Println(for_label)
+	fmt.Println(for_label2)
 	if err1 != nil {
 		err = err1
 	}
@@ -102,12 +109,18 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 					ub_not_given = promela_ast.BinaryExpr{Lhs: ub, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
 				}
 
-				body2, for_label2 := m.UpdateLabels(stmts, for_label)
-
 				then := &promela_ast.GuardStmt{
 					Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
 						Rhs: &ub_not_given, Op: "&&"},
-					Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: lb, Ub: ub, Body: body2}, for_label2}},
+					Body: &promela_ast.BlockStmt{
+						List: []promela_ast.Stmt{
+							&promela_ast.ForStmt{
+								For:  m.Fileset.Position(s.Pos()),
+								Lb:   lb,
+								Ub:   ub,
+								Body: body2,
+							},
+							for_label2}},
 				}
 				// the else part
 
@@ -131,7 +144,6 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 		m.For_counter.Y = 0
 	} else {
 		m.For_counter.In_for = true
-		m.For_counter.Y -= 1
 	}
 
 	m.For_counter.With_go = had_go
@@ -150,28 +162,4 @@ func (m *Model) translateBodyOfForLoop(s *ast.BlockStmt) (*promela_ast.BlockStmt
 	body.List = append(body.List, for_end_label2)
 
 	return body, for_label, d, err
-}
-
-func (m *Model) UpdateLabels(b *promela_ast.BlockStmt, l *promela_ast.LabelStmt) (*promela_ast.BlockStmt, *promela_ast.LabelStmt) {
-
-	new_block := b.Clone().(*promela_ast.BlockStmt)
-	to_add := fmt.Sprint(LABEL_COUNTER)
-
-	LABEL_COUNTER++
-	if l != nil {
-		l = &promela_ast.LabelStmt{Name: l.Name + to_add, Label: l.Label}
-	}
-	promela_ast.Inspect(new_block, func(s promela_ast.Stmt) bool {
-		switch s := s.(type) {
-		case *promela_ast.LabelStmt:
-			s.Name += to_add
-		case *promela_ast.GotoStmt:
-			if l != nil { // Dont update the goto label if nil cause this would be modifying the exit label
-				s.Label.Name += to_add
-			}
-		}
-		return true
-	})
-	return new_block, l
-
 }
