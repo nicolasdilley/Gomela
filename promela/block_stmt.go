@@ -23,7 +23,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 						err = err1
 					}
 					defer_stmts.Block = m.Fileset.Position(stmt.Pos())
-					addBlock(defer_stmts, s1)
+					defer_stmts.List = append(defer_stmts.List, s1)
 				default:
 					var s1 *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 					var defers *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -34,9 +34,9 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 					case *ast.DeclStmt:
 						s1, err1 = m.translateDeclStmt(stmt)
 					case *ast.SendStmt:
-						s1, defers, err1 = m.translateSendStmt(stmt)
+						s1, err1 = m.translateSendStmt(stmt)
 					case *ast.GoStmt:
-						s1, defers, err1 = m.TranslateGoStmt(stmt, false)
+						s1, err1 = m.TranslateGoStmt(stmt, false)
 					case *ast.ReturnStmt:
 						s1, defers, err1 = m.translateReturnStmt(stmt)
 					case *ast.ExprStmt:

@@ -3,6 +3,7 @@ package promela
 import (
 	"errors"
 	"go/ast"
+	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -19,14 +20,48 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
 			return b, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
-		}
+		case *ast.UnaryExpr:
+			switch spec.Op {
+			case token.NOT:
+				return m.TranslateExpr(spec.X)
+			case token.ARROW:
+				if m.containsChan(spec.X) {
 
-		expr, err1 := m.TranslateExpr(spec)
+					chan_name := TranslateIdent(spec.X, m.Fileset)
+					if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-		if err1 != nil {
-			err = err1
+					async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
+					sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
+
+					async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+					sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+
+					if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
+
+					b.List = append(b.List, if_stmt)
+					ch := m.getChanStruct(spec.X)
+					if len(s.Lhs) == 2 {
+						switch v := s.Lhs[1].(type) {
+						case *ast.Ident:
+							if v.Name != "_" {
+								m.ClosedVars[ch] = append(m.ClosedVars[ch], v)
+							}
+						case *ast.SelectorExpr:
+							m.ClosedVars[ch] = append(m.ClosedVars[ch], v)
+						}
+					}
+				} else {
+					err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(spec.Pos()).String())}
+				}
+			}
+		default:
+			expr, err1 := m.TranslateExpr(spec)
+
+			if err1 != nil {
+				err = err1
+			}
+			addBlock(b, expr)
 		}
-		addBlock(b, expr)
 	}
 
 	return b, err

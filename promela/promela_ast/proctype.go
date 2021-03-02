@@ -1,7 +1,6 @@
 package promela_ast
 
 import (
-	"fmt"
 	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_types"
@@ -56,13 +55,8 @@ func (s *Proctype) Clone() Stmt {
 }
 
 func (p *Proctype) DeclAtStart() {
-	fmt.Println("num : ", len(p.Body.List))
 	decls := DeclInBlock(p.Body)
-	for _, decl := range decls {
-		fmt.Println(decl.Print(0))
-	}
 	p.Body.List = append(decls, p.Body.List...)
-	fmt.Println("num : ", len(p.Body.List))
 }
 
 func DeclInBlock(block *BlockStmt) []Stmt {
@@ -75,7 +69,6 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 			block.List = append(block.List[:i], block.List[i+1:]...)
 			decls = append(decls, stmt)
 		case *IfStmt:
-			fmt.Println("oui")
 			for _, guard := range stmt.Guards {
 				decls = append(decls, DeclInBlock(guard.Body)...)
 			}
@@ -97,11 +90,6 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 			for _, guard := range stmt.Guards {
 				decls = append(decls, DeclInBlock(guard.Body)...)
 			}
-
-		case *BlockStmt:
-
-			fmt.Println(stmt.Print(0))
-
 		}
 	}
 

@@ -11,9 +11,8 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
-func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param + len(proctypes)
 	var pack_name string
@@ -24,7 +23,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	pack_name = pack
 
 	if err1 != nil {
-		return b, defers, err1
+		return b, err1
 	}
 
 	if decl != nil {
@@ -79,7 +78,6 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 										prom_call.Args = append(prom_call.Args, arg)
 										known = true
 									} else {
-										fmt.Println("oui", call_expr.Args[counter])
 										known = false
 									}
 								}
@@ -148,6 +146,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 			candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 			if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
+
 				m.Proctypes = append(m.Proctypes, proc)
 				new_mod.Proctypes = append(new_mod.Proctypes, proc)
 				for _, commPar := range new_mod.CommPars {
@@ -218,12 +217,12 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 					}
 				}
 			} else {
-				return b, defers, err1
+				return b, err1
 			}
 		}
 	}
 
-	return b, defers, err
+	return b, err
 }
 
 func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *ParseError) {
@@ -288,7 +287,6 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 		return fun_decl, pack_name, nil
 
 	default:
-
 		fun := ""
 		// Find the decl of the function
 		switch name := call_expr.Fun.(type) {
@@ -323,6 +321,5 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 
 		}
 	}
-
 	return nil, pack_name, nil
 }

@@ -7,9 +7,8 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	if m.containsChan(s.Chan) {
 		chan_name := m.getChanStruct(s.Chan)
@@ -51,6 +50,6 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, de
 
 	}
 
-	return b, defers, err
+	return b, err
 
 }

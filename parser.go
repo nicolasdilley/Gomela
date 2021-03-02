@@ -38,6 +38,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Proctypes:       []*promela_ast.Proctype{},
 							RecFuncs:        []promela.RecFunc{},
 							SpawningFuncs:   []*promela.SpawningFunc{},
+							ClosedVars:      make(map[*promela.ChanStruct][]ast.Expr),
 							Fun:             decl,
 							Chans:           make(map[ast.Expr]*promela.ChanStruct),
 							WaitGroups:      make(map[ast.Expr]*promela.WaitGroupStruct),

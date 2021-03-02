@@ -1,7 +1,6 @@
 package promela
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -93,7 +92,6 @@ func Print(m *Model) {
 	stmt += "\n"
 
 	for _, proc := range m.Proctypes {
-		fmt.Println(proc.Name)
 		stmt += proc.Print(0)
 	}
 

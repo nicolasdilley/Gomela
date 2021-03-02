@@ -43,15 +43,16 @@ type Model struct {
 	WaitGroups      map[ast.Expr]*WaitGroupStruct // the promela chan used in the module mapped to their go expr
 	ContainsWg      bool
 	ContainsChan    bool
-	Init            *promela_ast.InitDef     // The proctype consisting of the "main" function of the source program
-	Global_vars     []promela_ast.Stmt       // the global variable used in the ltl properties
-	Defines         []promela_ast.DefineStmt // the channel bounds
-	CommPars        []*CommPar               // the communications paramer
-	Features        []Feature                // The features for the survey
-	process_counter int                      // to give unique name to Promela processes
-	func_counter    int                      // to give unique name to inline func call
-	For_counter     *ForCounter              // Used to translate the for loop to break out properly out of them
-	Counter         int                      // used to differentiate call expr channels
+	Init            *promela_ast.InitDef       // The proctype consisting of the "main" function of the source program
+	Global_vars     []promela_ast.Stmt         // the global variable used in the ltl properties
+	Defines         []promela_ast.DefineStmt   // the channel bounds
+	CommPars        []*CommPar                 // the communications paramer
+	Features        []Feature                  // The features for the survey
+	ClosedVars      map[*ChanStruct][]ast.Expr // The variable that are used to test if a channel is closed when receiving (i.e ok in r,ok := >-ch )
+	process_counter int                        // to give unique name to Promela processes
+	func_counter    int                        // to give unique name to inline func call
+	For_counter     *ForCounter                // Used to translate the for loop to break out properly out of them
+	Counter         int                        // used to differentiate call expr channels
 	Default_lb      int
 	Default_ub      int
 	AstMap          map[string]*packages.Package // the map used to find the type of the channels
@@ -121,10 +122,10 @@ func (m *Model) GoToPromela(SEP string) {
 	// 	&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "num_msgs"}, Types: promela_types.Int, Rhs: &promela_ast.Ident{Name: "0"}})
 	// s1, defers, err := m.TranslateBlockStmt(m.Fun.Body)
 
-	b, defers, err := m.TranslateGoStmt(
+	b, err := m.TranslateGoStmt(
 		&ast.GoStmt{
 			Go:   m.Fun.Pos(),
-			Call: &ast.CallExpr{Fun: m.Fun.Name, Args: []ast.Expr{}},
+			Call: &ast.CallExpr{Fun: m.Fun.Name, Args: make([]ast.Expr, m.Fun.Type.Params.NumFields())},
 		}, true)
 
 	m.Init = &promela_ast.InitDef{
@@ -134,16 +135,8 @@ func (m *Model) GoToPromela(SEP string) {
 	// generate the model only if it contains a chan or a wg
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
 		if err == nil {
-
 			m.Init.Body.List = append(m.Init.Body.List,
 				b.List...)
-
-			for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
-				defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
-			} // reverse defer stmts
-
-			m.Init.Body.List = append(m.Init.Body.List,
-				defers.List...)
 
 			// clean the model by removing empty for loops and unused opt param
 			m.Features = Features
@@ -176,6 +169,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 		switch unary := call.(type) {
 		case *ast.UnaryExpr:
 			call = unary.X
+
 		}
 		switch call := call.(type) {
 		case *ast.SelectorExpr:
@@ -302,7 +296,6 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 									switch sel := sel.X.(type) {
 									case *ast.Ident:
 										if sel.Name == "sync" {
-											fmt.Println("2 ++++++++++++++++++++++++++++++++")
 
 											return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(s.Pos()).String())}
 										}
@@ -327,7 +320,6 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 		var prom_wg_name promela_ast.Ident
 		switch name.(type) {
 		case *ast.SelectorExpr:
-			fmt.Println("3 ++++++++++++++++++++++++++++++++")
 			return b, &ParseError{err: errors.New(WG_DECLARED_IN_STRUCT + m.Fileset.Position(name.Pos()).String())}
 		default:
 
@@ -855,6 +847,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) Model {
 		AstMap:          m.AstMap,
 		Chan_closing:    m.Chan_closing,
 		Projects_folder: m.Projects_folder,
+		ClosedVars:      make(map[*ChanStruct][]ast.Expr),
 	}
 }
 
