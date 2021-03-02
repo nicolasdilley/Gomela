@@ -56,8 +56,6 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	m.For_counter.Y += 1
 	body2, for_label2, _, _ := m.translateBodyOfForLoop(s.Body)
 
-	fmt.Println(for_label)
-	fmt.Println(for_label2)
 	if err1 != nil {
 		err = err1
 	}

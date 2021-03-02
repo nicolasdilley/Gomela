@@ -18,9 +18,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
-			fmt.Println("for x: ", m.For_counter.X, "y: ", m.For_counter.Y)
 			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
-			fmt.Println("for x: ", m.For_counter.X, "y: ", m.For_counter.Y)
 
 			if len(d1.List) > 0 {
 				return b, d1, &ParseError{err: errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())}
@@ -108,6 +106,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 
 			} else { // it is default
 				i.Has_default = true
+				m.checkForBreak(body, goto_stmt)
 				i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: body})
 			}
 

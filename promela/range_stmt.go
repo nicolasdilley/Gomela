@@ -126,7 +126,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			els := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d, for_label2}}}
 
 			if_stmt.Guards = []*promela_ast.GuardStmt{then, els}
-
 			b.List = append(b.List, if_stmt)
 
 		}

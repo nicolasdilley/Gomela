@@ -177,8 +177,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 						Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
 					})
 				}
-
-				args = append(args, &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)})
+				child_func_name := "child_" + func_name + strconv.Itoa(m.Counter)
+				args = append(args, &promela_ast.Ident{Name: child_func_name})
 				// add child param
 				proc.Params = append(proc.Params, &promela_ast.Param{Name: "child", Types: promela_types.Chan})
 
@@ -205,9 +205,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 				// add a call to it
 				stmts.List = append(stmts.List,
-					&promela_ast.Chandef{Name: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Size: &promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
+					&promela_ast.Chandef{Name: &promela_ast.Ident{Name: child_func_name}, Size: &promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
 					&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Args: args}},
-					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: "child_" + func_name + strconv.Itoa(m.Counter)}, Rhs: &promela_ast.Ident{Name: "0"}},
+					&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: child_func_name}, Rhs: &promela_ast.Ident{Name: "0"}},
 				)
 				m.Counter++
 

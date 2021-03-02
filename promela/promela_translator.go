@@ -133,7 +133,6 @@ func (m *Model) GoToPromela(SEP string) {
 	}
 	// generate the model only if it contains a chan or a wg
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 {
-		fmt.Println("bah ici")
 		if err == nil {
 
 			m.Init.Body.List = append(m.Init.Body.List,

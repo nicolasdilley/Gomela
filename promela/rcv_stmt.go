@@ -3,6 +3,7 @@ package promela
 import (
 	"errors"
 	"go/ast"
+	"go/types"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -60,13 +61,24 @@ func (m *Model) translateRcvStmt(
 								Body: body}}
 						isTimeAfter = true
 					}
-					if ident.Name == "ctx" && sel.Sel.Name == "Done" {
-						m.checkForBreak(body, g)
-						guards = []*promela_ast.GuardStmt{
-							&promela_ast.GuardStmt{
-								Cond: &promela_ast.Ident{Name: "true"},
-								Body: body}}
-						isTimeAfter = true
+					if sel.Sel.Name == "Done" {
+
+						// look if the type is context.Context
+						isContext := false
+						switch t := m.AstMap[m.Package].TypesInfo.TypeOf(ident).(type) {
+						case *types.Named:
+							if t.String() == "context.Context" {
+								isContext = true
+							}
+						}
+						if ident.Name == "ctx" || isContext {
+							m.checkForBreak(body, g)
+							guards = []*promela_ast.GuardStmt{
+								&promela_ast.GuardStmt{
+									Cond: &promela_ast.Ident{Name: "true"},
+									Body: body}}
+							isTimeAfter = true
+						}
 					}
 				}
 			}

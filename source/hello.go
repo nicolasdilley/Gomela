@@ -6,7 +6,10 @@
 
 package nat
 
-import "time"
+import (
+  "time"
+  "context"
+)
 func main() {
   zest2 := []int{1,134,65,465,43}
   err := termbox.Init()
@@ -24,6 +27,7 @@ func main() {
   }()
 
   draw()
+  var ctx context.Context
 loop:
   for range zest2 {
     select {
@@ -32,9 +36,11 @@ loop:
          f(a)
         break loop
       }
+    case <-ctx.Done():
     default:
       draw()
       time.Sleep(10 * time.Millisecond)
+      break
     }
   }
 }

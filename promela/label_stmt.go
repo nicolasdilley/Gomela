@@ -20,9 +20,11 @@ func (m *Model) translateLabeledStmt(s *ast.LabeledStmt) (b *promela_ast.BlockSt
 
 	case *ast.ForStmt,
 		*ast.RangeStmt:
-		b.List = append(b.List, stmts, label)
+		b.List = append(b.List, stmts.List...)
+		b.List = append(b.List, label)
 	default:
-		b.List = append(b.List, label, stmts)
+		b.List = append(b.List, label)
+		b.List = append(b.List, stmts.List...)
 	}
 
 	return b, defers, err
