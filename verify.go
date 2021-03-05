@@ -18,13 +18,14 @@ import (
 )
 
 type VerificationRun struct {
-	Spin_timing      int64  // time in milli to verify the program
-	Safety_error     bool   // is there any safety errors
-	Global_deadlock  bool   // is there any global deadlock
-	Partial_deadlock bool   // is there any partial deadlock
-	Num_states       int    // the number of states in the model
-	Timeout          bool   // Has the verification timedout
-	Err              string // if there is another error
+	Spin_timing                   int64  // time in milli to verify the program
+	Close_safety_error            bool   // is there any safety errors
+	Send_on_close_safety_error    bool   // is there any safety errors
+	Negative_counter_safety_error bool   // is there any safety errors
+	Global_deadlock               bool   // is there any global deadlock
+	Num_states                    int    // the number of states in the model
+	Timeout                       bool   // Has the verification timedout
+	Err                           string // if there is another error
 }
 
 const (
@@ -123,7 +124,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, bound []string) *VerificationRun {
 
-	ver := &VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: false}
+	ver := &VerificationRun{Send_on_close_safety_error: false, Close_safety_error: false, Negative_counter_safety_error: false, Global_deadlock: true, Timeout: false}
 
 	var output bytes.Buffer
 
@@ -138,7 +139,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	executable := parseResults(output.String(), ver)
 
 	if output.String() == "" || ver.Timeout {
-		toPrint := model_name + ",timeout,timeout,timeout,timeout,timeout,\n"
+		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
@@ -159,7 +160,9 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		}
 		fmt.Println("Number of states : ", ver.Num_states)
 		fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-		fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+		fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
+		fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
+		fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 		fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
 		if ver.Err != "" {
 			red := color.New(color.FgRed).SprintFunc()
@@ -170,7 +173,9 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		toPrint := model_name + ",0," +
 			fmt.Sprintf("%d", ver.Num_states) + "," +
 			fmt.Sprintf("%d", ver.Spin_timing) + "," +
-			fmt.Sprintf("%t", ver.Safety_error) + "," +
+			fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
+			fmt.Sprintf("%t", ver.Close_safety_error) + "," +
+			fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
 			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
 			ver.Err + "," +
 			comm_par_info + "," +
@@ -226,7 +231,12 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 					ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
 
-					ver := VerificationRun{Safety_error: true, Partial_deadlock: true, Global_deadlock: true, Timeout: true}
+					ver := VerificationRun{
+						Send_on_close_safety_error:    false,
+						Close_safety_error:            false,
+						Negative_counter_safety_error: false,
+						Global_deadlock:               true,
+						Timeout:                       false}
 					var output bytes.Buffer
 
 					// Verify with SPIN
@@ -238,11 +248,10 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
 
-					ver.Timeout = false
 					executable := parseResults(output.String(), &ver)
 					num_tests++
 					if output.String() == "" || ver.Timeout {
-						toPrint := model_name + ",timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
+						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
@@ -266,7 +275,9 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 						fmt.Println("Number of states : ", ver.Num_states)
 						fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-						fmt.Printf("Channel safety error : %s.\n", colorise(ver.Safety_error))
+						fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
+						fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
+						fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 						fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
@@ -277,7 +288,9 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						toPrint := model_name + ",1," +
 							fmt.Sprintf("%d", ver.Num_states) + "," +
 							fmt.Sprintf("%d", ver.Spin_timing) + "," +
-							fmt.Sprintf("%t", ver.Safety_error) + "," +
+							fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
+							fmt.Sprintf("%t", ver.Close_safety_error) + "," +
+							fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
 							fmt.Sprintf("%t", ver.Global_deadlock) + "," +
 							ver.Err + "," +
 							comm_par_info + "," +
@@ -305,7 +318,16 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 func parseResults(result string, ver *VerificationRun) bool {
 
 	if !strings.Contains(result, "assertion violated") {
-		ver.Safety_error = false
+		if strings.Contains(result, "wg.Counter >= 0") {
+			ver.Negative_counter_safety_error = true
+		}
+
+		if strings.Contains(result, "assert(1 == 0)") {
+			ver.Send_on_close_safety_error = true
+		}
+		if strings.Contains(result, "assert(2 == 0)") {
+			ver.Close_safety_error = true
+		}
 	}
 	if strings.Contains(result, "errors: 0") {
 		ver.Global_deadlock = false
@@ -313,7 +335,9 @@ func parseResults(result string, ver *VerificationRun) bool {
 	if strings.Contains(result, "too many processes") {
 		ver.Err = "too many processes"
 		ver.Global_deadlock = false
-		ver.Safety_error = false
+		ver.Negative_counter_safety_error = false
+		ver.Close_safety_error = false
+		ver.Send_on_close_safety_error = false
 	}
 
 	// Calculates the number of states

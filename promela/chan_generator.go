@@ -46,11 +46,11 @@ func generateSyncChanMonitor() string {
 		":: ch.closed ->\n" +
 		"end: if\n" +
 		"  :: ch.async_send?0-> // cannot send on closed channel\n" +
-		"    assert(false)\n" +
+		"    assert(1 == 0)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
-		"    assert(false)\n" +
+		"    assert(2 == 0)\n" +
 		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
-		"    assert(false)\n" +
+		"    assert(1 == 0)\n" +
 		"  :: ch.sync!true,0; // can always receive on a closed chan\n" +
 		"  fi;\n" +
 		":: else -> \n" +
@@ -73,11 +73,11 @@ func GenerateAsyncMonitor() string {
 		":: ch.closed -> \n" +
 		"end: if\n" +
 		"  :: ch.async_send?0-> // cannot send on closed channel\n" +
-		"    assert(false)\n" +
+		"    assert(1 == 0)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
-		"    assert(false)\n" +
+		"    assert(2 == 0)\n" +
 		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
-		"    assert(false)\n" +
+		"    assert(1 == 0)\n" +
 		"  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan\n" +
 		"		 ch.num_msgs = ch.num_msgs - 1\n" +
 		"  fi;\n" +
@@ -168,25 +168,6 @@ func GenerateNeitherChanMonitor() string {
 		"  :: ch.sending!false ->  // sending channel is open\n" +
 		"     run neitherChan(ch)\n" +
 		"fi;\n" +
-		"}\n\n"
-}
-
-// Return the Promela AST of an empty async chan monitor proctype
-func GenerateClosedChanMonitor() string {
-
-	return "proctype closedChan(Chandef ch) {\n" +
-		"end: if\n" +
-		"  :: ch.async_send?0-> // cannot send on closed channel\n" +
-		"    assert(false)\n" +
-		"  :: ch.closing?true -> // cannot close twice a channel\n" +
-		"    assert(false)\n" +
-		"  :: ch.is_closed!true -> // sending state of channel (closed)\n" +
-		"    run closedChan(ch)\n" +
-		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
-		"    assert(false)\n" +
-		"  :: ch.sync!0 -> // can always receive on a closed chan\n" +
-		"    run closedChan(ch)\n" +
-		"  fi;\n" +
 		"}\n\n"
 }
 

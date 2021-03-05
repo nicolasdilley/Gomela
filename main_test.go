@@ -17,11 +17,13 @@ const (
 )
 
 type Model struct {
-	Name      string
-	commit    string
-	numParams int
-	glScore   string
-	seScore   string
+	Name            string
+	commit          string
+	numParams       int
+	glScore         string
+	SendScore       string
+	CloseScore      string
+	NegCounterScore string
 }
 
 func TestMain(t *testing.T) {
@@ -40,14 +42,19 @@ func TestMain(t *testing.T) {
 		project := strings.ReplaceAll(strings.Split(model_line, ":")[0], AUTHOR_PROJECT_SEP, "/")
 
 		num_params, _ := strconv.Atoi(splitted[2])
-		gl_score := fmt.Sprintf("%.2f", strings.Split(splitted[4], "\r")[0])
-		se_score := fmt.Sprintf("%.2f", splitted[3])
+		send_score := truncate(splitted[3])
+		close_score := truncate(splitted[4])
+		neg_counter_score := truncate(splitted[5])
+		gl_score := truncate(strings.Split(splitted[6], "\r")[0])
+
 		model := Model{
-			Name:      strings.Split(splitted[0], ":")[1],
-			commit:    splitted[1],
-			numParams: num_params,
-			glScore:   gl_score,
-			seScore:   se_score,
+			Name:            strings.Split(splitted[0], ":")[1],
+			commit:          splitted[1],
+			numParams:       num_params,
+			glScore:         gl_score,
+			SendScore:       send_score,
+			CloseScore:      close_score,
+			NegCounterScore: neg_counter_score,
 		}
 
 		projects[project] = append(projects[project], model)
@@ -192,12 +199,16 @@ func TestMain(t *testing.T) {
 	}
 
 	fmt.Println("Testing that all models are reported as deadlocks")
-	exec.Command("./survey_parser/survey_parser", "./"+RESULTS_FOLDER+"/log.csv", "./projects.txt", "./"+RESULTS_FOLDER+"/verification.csv").Run()
+	survey_parser := exec.Command("./survey_parser/survey_parser", "./"+RESULTS_FOLDER+"/log.csv", "./projects.txt", "./"+RESULTS_FOLDER+"/verification.csv")
 
-	scores, err2 := ioutil.ReadFile("./survey_parser/scores.csv")
+	survey_parser.Stdout = os.Stdout
+	survey_parser.Stderr = os.Stdout
+
+	survey_parser.Run()
+
+	scores, err2 := ioutil.ReadFile("./scores.csv")
 	if err2 != nil {
-		t.Error("could not open scores.csv")
-		t.Fail()
+		t.Fatal("could not open scores.csv")
 	}
 
 	result_projects := make(map[string][]Model)
@@ -210,14 +221,19 @@ func TestMain(t *testing.T) {
 		project := strings.ReplaceAll(strings.Split(model_line, ":")[0], AUTHOR_PROJECT_SEP, "/")
 
 		num_params, _ := strconv.Atoi(splitted[2])
-		gl_score := fmt.Sprintf("%.2f", splitted[4])
-		se_score := fmt.Sprintf("%.2f", splitted[3])
+		send_score := truncate(splitted[3])
+		close_score := truncate(splitted[4])
+		neg_counter_score := truncate(splitted[5])
+		gl_score := truncate(strings.Split(splitted[6], "\r")[0])
+
 		model := Model{
-			Name:      strings.Split(splitted[0], ":")[1],
-			commit:    splitted[1],
-			numParams: num_params,
-			glScore:   gl_score,
-			seScore:   se_score,
+			Name:            strings.Split(splitted[0], ":")[1],
+			commit:          splitted[1],
+			numParams:       num_params,
+			glScore:         gl_score,
+			SendScore:       send_score,
+			CloseScore:      close_score,
+			NegCounterScore: neg_counter_score,
 		}
 
 		result_projects[project] = append(result_projects[project], model)
@@ -245,12 +261,27 @@ func TestMain(t *testing.T) {
 				if result.glScore != model.glScore {
 					t.Errorf("Model %s was expected to have a GL score of %s but had a score of %s", model.Name, model.glScore, result.glScore)
 				}
-				if result.seScore != model.seScore {
-					t.Errorf("Model %s was expected to have a SE score of %s but had a score of %s", model.Name, model.seScore, result.seScore)
+				if result.SendScore != model.SendScore {
+					t.Errorf("Model %s was expected to have a send score of %s but had a score of %s", model.Name, model.SendScore, result.SendScore)
+				}
+				if result.CloseScore != model.CloseScore {
+					t.Errorf("Model %s was expected to have a close score of %s but had a score of %s", model.Name, model.CloseScore, result.CloseScore)
+				}
+				if result.NegCounterScore != model.NegCounterScore {
+					t.Errorf("Model %s was expected to have a neg counter score of %s but had a score of %s", model.Name, model.NegCounterScore, result.NegCounterScore)
 				}
 			}
 		} else {
 			t.Errorf("Project " + p + "did not generate any models.")
 		}
 	}
+}
+
+func truncate(s string) string {
+
+	new_s := s
+	if len(s) > 4 {
+		new_s = s[:4]
+	}
+	return new_s
 }

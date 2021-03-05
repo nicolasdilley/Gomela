@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -38,11 +39,13 @@ const (
 )
 
 type ModelScore struct {
-	model      string
-	num_params string
-	GDScore    float64
-	CSScore    float64
-	Commit     string
+	model             string
+	num_params        string
+	GDScore           float64
+	SendOnCloseScore  float64
+	CloseOnCloseScore float64
+	NegCounterScore   float64
+	Commit            string
 }
 
 func main() {
@@ -125,9 +128,6 @@ func main() {
 			num_models := 0
 
 			for _, pack := range project.Packages {
-				if project.Name == "keybase/client" {
-					fmt.Println(pack.Name)
-				}
 				num_models += len(pack.Models)
 				models_per_packages = append(models_per_packages, float64(len(pack.Models)))
 			}
@@ -152,7 +152,7 @@ func main() {
 
 		fmt.Println("Top 5 projects :")
 
-		for i := 0; i < NUM_TOP_PROJECTS; i++ {
+		for i := 0; i < int(math.Min(float64(NUM_TOP_PROJECTS), float64(len(project_map.Projects)))); i++ {
 			num_models := numOfModels(project_map.Projects[i])
 			fmt.Println(i+1, ": ", project_map.Projects[i].Name, "# of models = ", num_models, "# of packages = ", len(project_map.Projects[i].Packages), "# of models per packages = ", float64(num_models)/float64(len(project_map.Projects[i].Packages)))
 		}
@@ -647,7 +647,9 @@ func parseVerificationResults() {
 		num_actual_verifications := 0
 		num_unexecutable_models := 0
 		num_gd := 0
-		num_cs := 0
+		num_send_on_close := 0
+		num_close := 0
+		num_neg_counter := 0
 		false_alarms := 0
 		times := []float64{}
 		total_time := 0
@@ -662,35 +664,39 @@ func parseVerificationResults() {
 			opt := splitted_line[1] == "1"
 			// num_states := splitted_line[2]
 
-			time, err := strconv.Atoi(splitted_line[3])
-			cs_error := splitted_line[4] == "true"
-			gd_error := splitted_line[5] == "true"
-			if err == nil {
-				num_actual_verifications++
-				verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
-				proj_name := strings.Split(splitted_line[0], ":")[0]
-				time_per_projects[proj_name] += float64(time)
-				total_time += time
-				times = append(times, float64(time))
-
-				if float64(time) > valuated_longest_time {
-					valuated_longest_time = float64(time)
-					valuated_longest_model = splitted_line[0]
-				}
-				if cs_error {
-					num_cs++
-				} else if gd_error {
-					num_gd++
-				} else {
-					if opt {
-						false_alarms++
-					}
-				}
+			if splitted_line[3] == "timeout" {
+				num_timeout++
+			} else if splitted_line[3] == "" {
+				num_unexecutable_models++
 			} else {
-				if splitted_line[3] == "" {
-					num_unexecutable_models++
-				} else if splitted_line[3] == "timeout" {
-					num_timeout++
+				time, err := strconv.Atoi(splitted_line[3])
+
+				if splitted_line[4] == "true" {
+					num_send_on_close++
+				} else if splitted_line[5] == "true" {
+					num_close++
+				} else if splitted_line[6] == "true" {
+					num_neg_counter++
+				} else if splitted_line[7] == "true" {
+					num_gd++
+				} else if opt {
+					false_alarms++
+				}
+
+				if err == nil {
+					num_actual_verifications++
+					verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
+					proj_name := strings.Split(splitted_line[0], ":")[0]
+					time_per_projects[proj_name] += float64(time)
+					total_time += time
+					times = append(times, float64(time))
+
+					if float64(time) > valuated_longest_time {
+						valuated_longest_time = float64(time)
+						valuated_longest_model = splitted_line[0]
+					}
+				} else {
+					panic("should not happen")
 				}
 			}
 		}
@@ -733,7 +739,9 @@ func parseVerificationResults() {
 		longest_time := 0.0
 		for model, verifications := range verification_map {
 			gd_score := 0
-			cs_score := 0
+			send_score := 0
+			close_score := 0
+			neg_counter_score := 0
 			commit := ""
 
 			total_time := 0.0
@@ -742,19 +750,25 @@ func parseVerificationResults() {
 
 				splitted_line := strings.Split(v, ",")
 				commit = strings.Split(splitted_line[len(splitted_line)-2], "/")[6]
-				cs_error := splitted_line[4] == "true"
-				gd_error := splitted_line[5] == "true"
+				if splitted_line[4] == "true" {
+					send_score++
+				}
+				if splitted_line[5] == "true" {
+					close_score++
+				}
+				if splitted_line[6] == "true" {
+					neg_counter_score++
+				}
+
+				if splitted_line[7] == "true" {
+					gd_score++
+				}
 
 				if splitted_line[1] == "1" {
 					params := findNumParams(v)
 					if params > num_params {
 						num_params = params
 					}
-				}
-				if cs_error {
-					cs_score++
-				} else if gd_error {
-					gd_score++
 				}
 
 				//calculate time for the valuated model
@@ -771,13 +785,26 @@ func parseVerificationResults() {
 				longest_model = model
 			}
 
-			if float64(cs_score)/float64(len(verifications)) != 0.0 && float64(cs_score)/float64(len(verifications)) != 1.0 {
+			if float64(send_score)/float64(len(verifications)) != 0.0 && float64(send_score)/float64(len(verifications)) != 1.0 {
+				num_models_with_score_that_are_not_one_not_zero++
+			}
+			if float64(close_score)/float64(len(verifications)) != 0.0 && float64(close_score)/float64(len(verifications)) != 1.0 {
+				num_models_with_score_that_are_not_one_not_zero++
+			}
+			if float64(neg_counter_score)/float64(len(verifications)) != 0.0 && float64(neg_counter_score)/float64(len(verifications)) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			} else if float64(gd_score)/float64(len(verifications)) != 0.0 && float64(gd_score)/float64(len(verifications)) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
 
-			score := ModelScore{model: model, num_params: strconv.Itoa(num_params), GDScore: float64(gd_score) / float64(len(verifications)), CSScore: float64(cs_score) / float64(len(verifications)), Commit: commit}
+			score := ModelScore{
+				model:             model,
+				num_params:        strconv.Itoa(num_params),
+				GDScore:           float64(gd_score) / float64(len(verifications)),
+				SendOnCloseScore:  float64(send_score) / float64(len(verifications)),
+				CloseOnCloseScore: float64(close_score) / float64(len(verifications)),
+				NegCounterScore:   float64(neg_counter_score) / float64(len(verifications)),
+				Commit:            commit}
 			scores[model] = score
 		}
 
@@ -796,43 +823,10 @@ func parseVerificationResults() {
 		}
 		defer file.Close()
 
-		gb_scores_frequency := make(map[string]int)
-		cs_scores_frequency := make(map[string]int)
-
 		for model, scores := range scores {
 
-			toPrint := fmt.Sprint(model, ",", scores.Commit, ",", scores.num_params, ",", scores.CSScore, ",", scores.GDScore)
-			if scores.CSScore == 0.0 {
-				cs_scores_frequency["0"]++
-			} else if scores.CSScore < 0.2 {
-				cs_scores_frequency["0 - 0.2"]++
-			} else if scores.CSScore < 0.4 {
-				cs_scores_frequency["0.2 - 0.4"]++
-			} else if scores.CSScore < 0.6 {
-				cs_scores_frequency["0.4 - 0.6"]++
-			} else if scores.CSScore < 0.8 {
-				cs_scores_frequency["0.6 - 0.8"]++
-			} else if scores.CSScore < 1.0 {
-				cs_scores_frequency["0.8 - 1"]++
-			} else {
-				cs_scores_frequency["1"]++
-			}
+			toPrint := fmt.Sprint(model, ",", scores.Commit, ",", scores.num_params, ",", scores.SendOnCloseScore, ",", scores.CloseOnCloseScore, ",", scores.NegCounterScore, ",", scores.GDScore)
 
-			if scores.GDScore == 0.0 {
-				gb_scores_frequency["0"]++
-			} else if scores.GDScore == 1.0 {
-				gb_scores_frequency["1"]++
-			} else if scores.GDScore < 0.2 {
-				gb_scores_frequency["0 - 0.2"]++
-			} else if scores.GDScore < 0.4 {
-				gb_scores_frequency["0.2 - 0.4"]++
-			} else if scores.GDScore < 0.6 {
-				gb_scores_frequency["0.4 - 0.6"]++
-			} else if scores.GDScore < 0.8 {
-				gb_scores_frequency["0.6 - 0.8"]++
-			} else {
-				gb_scores_frequency["0.8 - 1"]++
-			}
 			//Append second line
 
 			if _, err := file.WriteString(toPrint + "\n"); err != nil {
@@ -869,34 +863,6 @@ func parseVerificationResults() {
 				fmt.Println(model)
 			}
 		}
-		ioutil.WriteFile("se_frequence_scores.csv", []byte("Safety Error Score, Frequency \n"), 0644)
-		se_file, err := os.OpenFile("se_frequence_scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Println(err)
-		}
-
-		// Print frequency score
-		// Print cs score
-		for score, frequency := range cs_scores_frequency {
-			if _, err := se_file.WriteString(score + "," + fmt.Sprint(frequency) + "\n"); err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		ioutil.WriteFile("gb_frequence_scores.csv", []byte("Global Deadlock Score, Frequency \n"), 0644)
-		gb_file, err := os.OpenFile("gb_frequence_scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Println(err)
-		}
-
-		// Print frequency score
-		// PRint gb score
-		for score, frequency := range gb_scores_frequency {
-
-			if _, err := gb_file.WriteString(score + "," + fmt.Sprint(frequency) + "\n"); err != nil {
-				log.Fatal(err)
-			}
-		}
 
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
 		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))
@@ -908,7 +874,9 @@ func parseVerificationResults() {
 		fmt.Println("Longest model is : ", longest_model, " with ", longest_time, "ms")
 		fmt.Println("Longest project is : ", longest_projects_name, " with ", longest_projects, "ms")
 		fmt.Println("# of global deadlock : ", num_gd)
-		fmt.Println("# of channel error : ", num_cs)
+		fmt.Println("# of send on close safety error : ", num_send_on_close)
+		fmt.Println("# of close on close safety error : ", num_close)
+		fmt.Println("# of negative counter error : ", num_neg_counter)
 		fmt.Println("# of false alarms : ", false_alarms)
 		fmt.Println("# of average verification time : ", total_time/num_tests)
 		fmt.Println("Total verification time: ", total_time)
@@ -999,7 +967,7 @@ func unparsedProjects(models map[string]bool) {
 
 func findNumParams(v string) int {
 	splitted := strings.Split(v, ",")
-	first_params_index := 7
+	first_params_index := 9
 
 	// no params
 	if splitted[first_params_index] == "" {
