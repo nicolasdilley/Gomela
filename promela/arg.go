@@ -85,6 +85,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, bounds []promel
 		return m.TranslateArg(expr.X)
 	case *ast.ParenExpr:
 		return m.TranslateArg(expr.X)
+	case nil:
 	default:
 		err = &ParseError{err: errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())}
 

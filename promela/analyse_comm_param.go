@@ -31,28 +31,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 
-		// case *ast.CompositeLit:
-		// 	for _, elt := range rhs.Elts {
-		// 		switch elt := elt.(type) {
-		// 		case *ast.KeyValueExpr:
-		// 			switch call := elt.Value.(type) {
-		// 			case *ast.CallExpr:
-		// 				switch ident := call.Fun.(type) {
-		// 				case *ast.Ident:
-		// 					if ident.Name == "make" && len(call.Args) > 0 { // possibly a new chan
-		// 						switch call.Args[0].(type) {
-		// 						case *ast.ChanType:
-		// 							params = m.Upgrade(fun, params, m.Vid(fun, call.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the length of the chan.
-
-		// 						}
-		// 					}
-		// 				}
-
-		// 			}
-		// 		}
-
-		// 	}
-
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
@@ -172,17 +150,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				}
 
 			}
-
-			// contains_chan := false
-			// found, fun_decl := m.FindDecl(pack, fun, len(stmt.Args), ast_map)
-			// if found {
-			// 	for _, param := range fun_decl.Type.Params.List {
-			// 		switch param.Type.(type) {
-			// 		case *ast.ChanType:
-			// 			contains_chan = true
-			// 		}
-			// 	}
-
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
 				found, fun_decl := m.FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
@@ -191,6 +158,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					new_model := m.newModel(fun_pack, fun_decl)
 					new_model.RecFuncs = m.RecFuncs
 					// new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
+
 					params_1 := new_model.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
@@ -205,18 +173,18 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				}
 			}
 		case *ast.GoStmt: // m.Upgrade if the args of the function are mapped to a MP or OP
-			fun := ""
+			fun_name := ""
 			// check if the call has a chan as param by looking at func decl
 			switch f := stmt.Call.Fun.(type) {
 			case *ast.Ident:
-				fun = f.Name
+				fun_name = f.Name
 			case *ast.SelectorExpr:
 				pack = m.getIdent(f.X).Name
-				fun = f.Sel.Name
+				fun_name = f.Sel.Name
 			}
 			contains_chan := false
 
-			found, fun_decl := m.FindDecl(pack, fun, len(stmt.Call.Args), ast_map)
+			found, fun_decl := m.FindDecl(pack, fun_name, len(stmt.Call.Args), ast_map)
 
 			if found {
 				for _, param := range fun_decl.Type.Params.List {
@@ -239,7 +207,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				}
 
 				if contains_chan {
-					if !m.ContainsRecFunc(pack, fun) {
+					if !m.ContainsRecFunc(pack, fun_name) {
 
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
@@ -249,10 +217,11 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 						for _, param := range params_1 {
 							if !param.Candidate {
+
 								// m.upgrade all params with its respective arguments
 								// give only the arguments that are either MP or OP
 								// first apply m.Vid to extract all variables of the arguments
-								params = m.Upgrade(fun_decl, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log), log)
+								params = m.Upgrade(fun, params, m.Vid(fun_decl, stmt.Call.Args[param.Pos], param.Mandatory, log), log)
 							}
 						}
 					}

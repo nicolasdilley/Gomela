@@ -41,7 +41,7 @@ func CaptureOutput(block func()) []string {
 	result := make(chan []string)
 
 	go captureOutputAsyncronously(doneWriting, result, r)
-
+	go a(doneWriting)
 	block()
 	w.Close()
 	doneWriting <- true
@@ -75,4 +75,10 @@ func captureOutputAsyncronously(doneWriting <-chan bool, result chan<- []string,
 	}
 
 	result <- strings.Split(readingString, "\n")
+}
+
+func a(ch chan int){
+	if !ok {
+		close(ch)
+	}
 }

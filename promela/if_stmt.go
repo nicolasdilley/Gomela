@@ -98,7 +98,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			}
 		}
 	case *ast.Ident: // check if we have a if !ok {}
-		if found = m.containsIsClosed(expr); found { // check if we have a if !ok {}
+		if found = m.containsIsClosed(expr); found { // check if we have a if ok {}
 			cond = &promela_ast.Ident{Name: "!state"}
 			isClosed = true
 		}

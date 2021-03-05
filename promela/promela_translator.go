@@ -87,41 +87,6 @@ func (m *Model) GoToPromela(SEP string) {
 
 	AUTHOR_PROJECT_SEP = SEP
 	Features = []Feature{}
-	// m.CommPars = m.AnalyseCommParam(m.Package, m.Fun, m.AstMap, true)
-
-	//. Create a define for each mandatory param
-	// m.Init = &promela_ast.InitDef{Def: m.Fileset.Position(m.Fun.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-	// for _, commPar := range m.CommPars {
-	// 	if commPar.Mandatory {
-	// 		def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
-	// 		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
-	// 	} else {
-	// 		m.Init.Body.List = append(m.Init.Body.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
-	// 	}
-
-	// 	name := "Actual Param"
-	// 	if commPar.Candidate {
-	// 		name = "Candidate Param"
-	// 	}
-	// 	Features = append(Features, Feature{
-	// 		Proj_name: m.Project_name,
-	// 		Model:     m.Name,
-	// 		Fun:       m.Fun.Name.String(),
-	// 		Name:      name,
-	// 		Mandatory: fmt.Sprint(commPar.Mandatory),
-	// 		Info:      commPar.Name.Name,
-	// 		Line:      0,
-	// 		Commit:    m.Commit,
-	// 		Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-	// 	})
-	// }
-
-	// m.Init.Body.List = append(m.Init.Body.List,
-	// 	&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "i"}, Types: promela_types.Int},
-	// 	&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "state"}, Types: promela_types.Bool, Rhs: &promela_ast.Ident{Name: "false"}},
-	// 	&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "num_msgs"}, Types: promela_types.Int, Rhs: &promela_ast.Ident{Name: "0"}})
-	// s1, defers, err := m.TranslateBlockStmt(m.Fun.Body)
-
 	b, err := m.TranslateGoStmt(
 		&ast.GoStmt{
 			Go:   m.Fun.Pos(),

@@ -33,7 +33,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 		hasChan := isMain
 		known := isMain
 		new_mod := m.newModel(pack_name, decl)
+
 		new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
+
 		//. Create a define for each mandatory param
 
 		proc := &promela_ast.Proctype{Name: &promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -132,7 +134,13 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 					if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
 						prom_call.Args = append(prom_call.Args, arg)
 					} else { // the arguments passed as a commparam cannot be translated
-						ident := &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Args[commPar.Pos].Pos()).Line)}
+
+						var ident *promela_ast.Ident
+						if call_expr.Args[commPar.Pos] != nil {
+							ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+						} else {
+							ident = &promela_ast.Ident{Name: commPar.Name.Name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+						}
 						if commPar.Mandatory {
 							m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
 						} else {

@@ -38,10 +38,11 @@ const (
 )
 
 type ModelScore struct {
-	model   string
-	GDScore float64
-	CSScore float64
-	Commit  string
+	model      string
+	num_params string
+	GDScore    float64
+	CSScore    float64
+	Commit     string
 }
 
 func main() {
@@ -736,11 +737,20 @@ func parseVerificationResults() {
 			commit := ""
 
 			total_time := 0.0
+			num_params := findNumParams(verifications[0])
 			for _, v := range verifications {
+
 				splitted_line := strings.Split(v, ",")
-				commit = splitted_line[len(splitted_line)-2]
+				commit = strings.Split(splitted_line[len(splitted_line)-2], "/")[6]
 				cs_error := splitted_line[4] == "true"
 				gd_error := splitted_line[5] == "true"
+
+				if splitted_line[1] == "1" {
+					params := findNumParams(v)
+					if params > num_params {
+						num_params = params
+					}
+				}
 				if cs_error {
 					cs_score++
 				} else if gd_error {
@@ -767,7 +777,7 @@ func parseVerificationResults() {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
 
-			score := ModelScore{model: model, GDScore: float64(gd_score) / float64(len(verifications)), CSScore: float64(cs_score) / float64(len(verifications)), Commit: commit}
+			score := ModelScore{model: model, num_params: strconv.Itoa(num_params), GDScore: float64(gd_score) / float64(len(verifications)), CSScore: float64(cs_score) / float64(len(verifications)), Commit: commit}
 			scores[model] = score
 		}
 
@@ -779,7 +789,7 @@ func parseVerificationResults() {
 
 		fmt.Println("times per model in ms", times_per_model_mean, times_per_model_sd, times_per_model_min, times_per_model_quartiles.Q1, times_per_model_quartiles.Q2, times_per_model_quartiles.Q3, times_per_model_max)
 
-		ioutil.WriteFile("scores.csv", []byte("Project, Channel safety score, Global deadlock score, Link \n"), 0644)
+		ioutil.WriteFile("scores.csv", []byte(""), 0644)
 		file, err := os.OpenFile("scores.csv", os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Println(err)
@@ -791,7 +801,7 @@ func parseVerificationResults() {
 
 		for model, scores := range scores {
 
-			toPrint := fmt.Sprint(model, ",", scores.CSScore, ",", scores.GDScore, ",", scores.Commit)
+			toPrint := fmt.Sprint(model, ",", scores.Commit, ",", scores.num_params, ",", scores.CSScore, ",", scores.GDScore)
 			if scores.CSScore == 0.0 {
 				cs_scores_frequency["0"]++
 			} else if scores.CSScore < 0.2 {
@@ -985,6 +995,18 @@ func unparsedProjects(models map[string]bool) {
 	}
 
 	fmt.Println("Num of unparsable projects : ", could_not_parse, "/", len(models)-1)
+}
+
+func findNumParams(v string) int {
+	splitted := strings.Split(v, ",")
+	first_params_index := 7
+
+	// no params
+	if splitted[first_params_index] == "" {
+		return 0
+	}
+
+	return len(splitted[first_params_index : len(splitted)-3])
 }
 
 func numOfModels(project Project) int {
