@@ -19,11 +19,19 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	call_expr := s.Call
 
 	// First generate list of params (ParamList) and arguments to the run stmt
-	decl, pack, err1 := m.findFunDecl(s.Call)
-	pack_name = pack
+	var decl *ast.FuncDecl
 
-	if err1 != nil {
-		return b, err1
+	if isMain {
+		decl = m.Fun
+		pack_name = m.Package
+	} else {
+		var pack string
+		var err1 *ParseError
+		decl, pack, err1 = m.findFunDecl(s.Call)
+		pack_name = pack
+		if err1 != nil {
+			return b, err1
+		}
 	}
 
 	if decl != nil {
@@ -52,7 +60,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 						proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 						new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
 
-						arg, _, err1 := m.TranslateArg(call_expr.Args[counter])
+						arg, err1 := m.TranslateArg(call_expr.Args[counter])
 						if err1 != nil {
 							err = err1
 						}
@@ -73,7 +81,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 										wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 										proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 										new_mod.WaitGroups[name] = wg
-										arg, _, err1 := m.TranslateArg(call_expr.Args[counter])
+										arg, err1 := m.TranslateArg(call_expr.Args[counter])
 										if err1 != nil {
 											err = err1
 										}
@@ -96,7 +104,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 									wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
 									proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 									new_mod.WaitGroups[name] = wg
-									arg, _, err1 := m.TranslateArg(call_expr.Args[counter])
+									arg, err1 := m.TranslateArg(call_expr.Args[counter])
 									if err1 != nil {
 										err = err1
 									}
@@ -130,7 +138,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 				} else {
 					proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
 
-					arg, _, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
+					arg, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
 					if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
 						prom_call.Args = append(prom_call.Args, arg)
 					} else { // the arguments passed as a commparam cannot be translated
@@ -194,7 +202,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 				}
 
 				if err1 != nil {
-					err = err1
+					return b, err1
 				}
 				proc.Body.List = append(candidatesParams.List, stmt.List...)
 				proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
@@ -239,7 +247,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 	switch name := call_expr.Fun.(type) {
 	case *ast.FuncLit: // in the case we have an anonymous func call
 		fun_decl := &ast.FuncDecl{Body: &ast.BlockStmt{List: []ast.Stmt{}}, Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}}}
-		func_name := fmt.Sprint("Anonymous", len(m.Proctypes))
+		func_name := fmt.Sprint("Anonymous", m.Fun.Name.Name, m.Fileset.Position(name.Pos()).Line)
 		ident := &ast.Ident{Name: func_name, NamePos: name.Pos()}
 		fun_decl.Name = ident
 		fun_decl.Type = name.Type

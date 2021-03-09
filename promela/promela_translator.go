@@ -580,6 +580,7 @@ func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map m
 				for _, decl := range file.Decls {
 					switch decl := decl.(type) {
 					case *ast.FuncDecl:
+
 						if func_name == decl.Name.Name {
 							if decl.Type.Params.NumFields() == param_num {
 								return true, decl
@@ -589,6 +590,10 @@ func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map m
 				}
 			}
 		}
+	}
+
+	if pack != m.Package {
+		return m.FindDecl(m.Package, func_name, param_num, ast_map)
 	}
 
 	return false, nil
@@ -769,7 +774,7 @@ func (m *Model) AddRecFunc(pkg string, name string) {
 	m.RecFuncs = append(m.RecFuncs, RecFunc{Pkg: pkg, Name: name})
 }
 
-func (m *Model) notDefine(name string) bool {
+func (m *Model) inDefine(name string) bool {
 	found := false
 
 	for _, define := range m.Defines {

@@ -38,7 +38,6 @@ lightningnetwork--lnd:htlcswitch++waitForPayFuncResult741.pml,ff897db293ab0e59ab
 kubernetes--client-go:portforward++handleConnection324.pml,fc034b4b7616a76e021660b265df0211e060f6b6,0,0,0,0,1
 vuvuzela--vuvuzela:coordinator++loop273.pml,55ba49f81ad006877ae6b4d76c0958a3ee956441,1,0,0,0,1
 Azure--acs-engine:kubernetesupgrade++Validate74.pml,36d434b2a7102ab8f4219f095787c7ab31b5ddd6,0,0,0,0,1
-elastic--beats:pipeline++Close199.pml,1327562b17cf06c430a2ad668ba22a3f836606a4,0,0,0,0,1
 schachmat--wego:backends++Fetch222.pml,994e4f141759a1070d7b0c8fbe5fad2cc7ee7d45,0,0,0,0,1
 surgemq--surgemq:main++WebsocketTcpProxy82.pml,5bbaa1a27fa3a81192dfe07d7e3dc8bd58826f71,0,0,0,0,1
 convox--rack:helpers++Pipe13.pml,ee5e31801fa5f2e69aa3bd41339db0b4f64c82fe,0,0,0,0,1
@@ -56,7 +55,6 @@ dropbox--godropbox:cinterop++StartServer48.pml,52ad444d35023d078d496d305d75511e7
 google--novm:control++handle57.pml,278237d9ebcaea19695a08151e64555e634442f3,0,0,0,0,1
 ginuerzh--gost:gost++transportPacket336.pml,1a56a878ac446d9cfc14a1c7fb11ef43d8dc61f4,0,0,0,0,1
 intelsdi-x--snap:control++LoadPlugin356.pml,e3a6c8e39994b3980df0c7b069d5ede810622952,1,0,0,0,1
-jpillora--overseer:overseer++release55.pml,94fc750bf4dc84fc627d444eb29c54028e201083,0,0,0,0,1
 keybase--client:libkb++GetKeybasePassphrase12.pml,cd76ccb97183c2be78b869fab9aed4b6f5b11086,0,0,0,0,1
 getlantern--lantern:dns++Shutdown416.pml,c972d9c24cf83d18709fa1eb29079f28c3d620c9,0,0,0,0,1
 jpmorganchase--quorum:testing++trigger81.pml,7b726385216c44e55fc6b6191a022fe598c102d4,0,0,0,0,1
@@ -115,4 +113,4 @@ gilbertchen--duplicacy:duplicacy++benchmarkRun64.pml,ecf51914002752bd46b5c1f5b80
 Masterminds--glide:repo++ConcurrentUpdate510.pml,b94b39d657d8abcccba6545e148f1201aee6ffec,2,0,0,0,0.2222222222222220
 NebulousLabs--Sia:contractmanager++AddSectorBatch404.pml,a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1,2,0,0,0,0.2222222222222220
 virtual-kubelet--virtual-kubelet:node++deleteDanglingPods531.pml,fa139bfe27dd478aaca44cc54252d599bb94ead3,2,0,0,0,0.2222222222222220
-NebulousLabs--Sia:contractmanager++RemoveSectorBatch476.pml,a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1,2,0,0,0,0.2222222222222220,0,0
+NebulousLabs--Sia:contractmanager++RemoveSectorBatch476.pml,a25183288df2fc0ba6e43ef2d1b9644d0ec29ba1,2,0,0,0,0.2222222222222220

@@ -17,13 +17,13 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 			if stmt != nil {
 				switch stmt := stmt.(type) {
 				case *ast.DeferStmt:
-					s1, err1 := m.TranslateExpr(stmt.Call)
-
+					s1, err1 := m.translateDeferStmt(stmt)
 					if err1 != nil {
-						err = err1
+						return nil, nil, err1
 					}
-					defer_stmts.Block = m.Fileset.Position(stmt.Pos())
-					defer_stmts.List = append(defer_stmts.List, s1)
+					if len(s1.List) > 0 {
+						defer_stmts.List = append(defer_stmts.List, s1)
+					}
 				default:
 					var s1 *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 					var defers *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}

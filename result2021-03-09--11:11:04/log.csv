@@ -1,0 +1,3 @@
+Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
+hello.go,main++main3,main,new channel,false,Name :ch,4,https://github.com/hello.go/blob//#L3,
+hello.go,main++main3,main,new channel,false,Name :ch1,5,https://github.com/hello.go/blob//#L3,

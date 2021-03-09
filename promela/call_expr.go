@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/token"
 	"path/filepath"
 	"strconv"
 
@@ -41,10 +40,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	case *ast.FuncLit:
 		panic("Promela_translator.go : Should not have a funclit here")
 	}
-
 	if !m.ContainsRecFunc(pack_name, func_name) {
-		if found, decl := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 
+		if found, decl := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 			hasChan := false
 			known := true                                      // Do we know all the channel that it might take as args ?? (if time.After() given as arg then we dont translate the call)
 			var args []promela_ast.Expr = []promela_ast.Expr{} // building the new call's args
@@ -68,7 +66,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 										params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 										new_wg[name] = wg
 										if m.containsWaitgroup(call_expr.Args[x+y]) {
-											arg, _, err1 := m.TranslateArg(call_expr.Args[x+y])
+											arg, err1 := m.TranslateArg(call_expr.Args[x+y])
 											if err1 != nil {
 												err = err1
 											}
@@ -87,7 +85,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 						params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 						new_chans[name] = ch
 						if m.getChanStruct(call_expr.Args[x+y]) != nil {
-							arg, _, err1 := m.TranslateArg(call_expr.Args[x+y])
+							arg, err1 := m.TranslateArg(call_expr.Args[x+y])
 							if err1 != nil {
 								err = err1
 							}
@@ -105,7 +103,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 									params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 									new_wg[name] = wg
 									if m.containsWaitgroup(call_expr.Args[x+y]) {
-										arg, _, err1 := m.TranslateArg(call_expr.Args[x+y])
+										arg, err1 := m.TranslateArg(call_expr.Args[x+y])
 										if err1 != nil {
 											err = err1
 										}
@@ -142,7 +140,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 					if !commPar.Candidate {
 						name = "Actual Param"
 						proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
-						arg, _, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
+						arg, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
 						if err1 == nil {
 							args = append(args, arg)
 						} else { // the arguments passed as a commparam cannot be translated
@@ -334,30 +332,38 @@ func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, 
 
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, arg := range call_expr.Args {
-		switch e := arg.(type) {
-		case *ast.UnaryExpr:
-			if e.Op == token.ARROW {
+		// switch e := arg.(type) {
+		// case *ast.UnaryExpr:
+		// 	if e.Op == token.ARROW {
 
-				if m.containsChan(e.X) {
-					chan_name := m.getChanStruct(e.X)
-					async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+		// 		if m.containsChan(e.X) {
+		// 			chan_name := m.getChanStruct(e.X)
+		// 			async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-					sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+		// 			sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-					async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		// 			async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(arg.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
-					sync_guard := &promela_ast.GuardStmt{
-						Cond: sync_rcv,
-						Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
-					}
-					i := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}}
-					stmts.List = append(stmts.List, i)
+		// 			sync_guard := &promela_ast.GuardStmt{
+		// 				Cond: sync_rcv,
+		// 				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+		// 			}
+		// 			i := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}}
+		// 			stmts.List = append(stmts.List, i)
 
-				} else {
-					return stmts, &ParseError{err: errors.New(UNKNOWN_ARG + m.Fileset.Position(call_expr.Pos()).String())}
-				}
-			}
+		// 		} else {
+		// 			return stmts, &ParseError{err: errors.New(UNKNOWN_ARG + m.Fileset.Position(call_expr.Pos()).String())}
+		// 		}
+		// 	}
+		// }
+
+		expr, e := m.TranslateExpr(arg)
+
+		if e != nil {
+			return stmts, e
 		}
+
+		stmts.List = append(stmts.List, expr)
 	}
 
 	return stmts, nil

@@ -80,15 +80,16 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 	}
 
 	if !well_formed {
-		ub_decl := promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: fmt.Sprintf("ub_for%d_%d", m.Fileset.Position(s.Pos()).Line, len(m.Defines))}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}}
+		ub_decl := promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: fmt.Sprintf("ub_for%d_%d", m.Fileset.Position(s.Pos()).Line, m.Fileset.Position(s.Pos()).Column)}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}}
 		mandatory := "false"
 		if spawns {
 			mandatory = "true"
 			ub_decl.Rhs = &promela_ast.Ident{Name: DEFAULT_BOUND}
 		}
 
-		m.Defines = append(m.Defines, ub_decl) // adding ub
-
+		if !m.inDefine(ub_decl.Name.Name) {
+			m.Defines = append(m.Defines, ub_decl) // adding ub
+		}
 		Features = append(Features, Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
@@ -154,11 +155,12 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 		mandatory = "true"
 		bound = "add bound"
 	}
-	i1, names, err1 := m.TranslateArg(expr)
+	i1, err1 := m.TranslateArg(expr)
 
 	if err1 != nil { // the arguments could not be parsed properly
 
 		name := &promela_ast.Ident{Name: "not_found_" + m.getIdent(expr).Name + strconv.Itoa(m.Fileset.Position(expr.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Pos()).Column)}
+
 		ident = name
 
 		Features = append(Features, Feature{
@@ -181,24 +183,30 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 	} else {
 		ident = i1
 	}
-	for _, name := range names {
-		Features = append(Features, Feature{
-			Proj_name: m.Project_name,
-			Model:     m.Name,
-			Fun:       m.Fun.Name.String(),
-			Name:      "Comm Param",
-			Mandatory: mandatory,
-			Info:      name.Name,
-			Line:      m.Fileset.Position(expr.Pos()).Line,
-			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(expr.Pos()).Filename,
-		})
-	}
+
+	promela_ast.Inspect(i1, func(n promela_ast.Stmt) bool {
+		switch name := n.(type) {
+		case *promela_ast.Ident:
+			Features = append(Features, Feature{
+				Proj_name: m.Project_name,
+				Model:     m.Name,
+				Fun:       m.Fun.Name.String(),
+				Name:      "Comm Param",
+				Mandatory: mandatory,
+				Info:      name.Name,
+				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			})
+		}
+
+		return true
+	})
 
 	m.PrintCommParFeature(expr, bound, mandatory)
 
-	if err == nil {
-		return &promela_ast.Ident{Name: ident.Print(0)}, nil
+	if err != nil {
+		return &promela_ast.Ident{Name: "null"}, err
 	}
-	return &promela_ast.Ident{Name: "null"}, err
+	return &promela_ast.Ident{Name: ident.Print(0)}, nil
 }

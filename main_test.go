@@ -64,7 +64,6 @@ func TestMain(t *testing.T) {
 	fmt.Println("Removing result2021 folders")
 	filepath.Walk(".", func(path string, file os.FileInfo, err error) error {
 		if file.IsDir() {
-			fmt.Println(file.Name())
 			if strings.Contains(file.Name(), "result20") {
 				os.RemoveAll(path)
 			}
@@ -95,6 +94,7 @@ func TestMain(t *testing.T) {
 
 	fmt.Println("Starting the modelling phase")
 	modelling := exec.Command("./gomela", "-l", test_projects)
+	modelling.Stderr = os.Stdout
 	modelling.Stdout = os.Stdout
 	err := modelling.Run()
 
@@ -201,9 +201,6 @@ func TestMain(t *testing.T) {
 	fmt.Println("Testing that all models are reported as deadlocks")
 	survey_parser := exec.Command("./survey_parser/survey_parser", "./"+RESULTS_FOLDER+"/log.csv", "./projects.txt", "./"+RESULTS_FOLDER+"/verification.csv")
 
-	survey_parser.Stdout = os.Stdout
-	survey_parser.Stderr = os.Stdout
-
 	survey_parser.Run()
 
 	scores, err2 := ioutil.ReadFile("./scores.csv")
@@ -253,22 +250,23 @@ func TestMain(t *testing.T) {
 				if result == nil {
 					t.Errorf("Could not find model %s in project %s ", model.Name, p)
 					t.Fail()
-				}
+				} else {
 
-				if result.numParams != model.numParams {
-					t.Errorf("Model %s was expected to have %d parameters but had %d", model.Name, model.numParams, result.numParams)
-				}
-				if result.glScore != model.glScore {
-					t.Errorf("Model %s was expected to have a GL score of %s but had a score of %s", model.Name, model.glScore, result.glScore)
-				}
-				if result.SendScore != model.SendScore {
-					t.Errorf("Model %s was expected to have a send score of %s but had a score of %s", model.Name, model.SendScore, result.SendScore)
-				}
-				if result.CloseScore != model.CloseScore {
-					t.Errorf("Model %s was expected to have a close score of %s but had a score of %s", model.Name, model.CloseScore, result.CloseScore)
-				}
-				if result.NegCounterScore != model.NegCounterScore {
-					t.Errorf("Model %s was expected to have a neg counter score of %s but had a score of %s", model.Name, model.NegCounterScore, result.NegCounterScore)
+					if result.numParams != model.numParams {
+						t.Errorf("Model %s was expected to have %d parameters but had %d", model.Name, model.numParams, result.numParams)
+					}
+					if result.glScore != model.glScore {
+						t.Errorf("Model %s was expected to have a GL score of %s but had a score of %s", model.Name, model.glScore, result.glScore)
+					}
+					if result.SendScore != model.SendScore {
+						t.Errorf("Model %s was expected to have a send score of %s but had a score of %s", model.Name, model.SendScore, result.SendScore)
+					}
+					if result.CloseScore != model.CloseScore {
+						t.Errorf("Model %s was expected to have a close score of %s but had a score of %s", model.Name, model.CloseScore, result.CloseScore)
+					}
+					if result.NegCounterScore != model.NegCounterScore {
+						t.Errorf("Model %s was expected to have a neg counter score of %s but had a score of %s", model.Name, model.NegCounterScore, result.NegCounterScore)
+					}
 				}
 			}
 		} else {

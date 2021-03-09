@@ -88,7 +88,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.ChanType:
 						// definitely a new chan
 						if len(stmt.Args) > 1 {
-							_, _, err1 := m.TranslateArg(stmt.Args[1])
+							_, err1 := m.TranslateArg(stmt.Args[1])
 							if err1 == nil {
 								params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 							}
@@ -435,6 +435,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 				is_spawning = true
 			}
 		case *ast.GoStmt:
+
 			switch stmt.Call.Fun.(type) {
 			case *ast.FuncLit:
 				is_spawning = true
@@ -488,7 +489,6 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 		})
 
 	}
-
 	return is_spawning
 }
 
@@ -548,7 +548,6 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 			if found {
 				// look inter procedurally
 				call_spawning = m.spawns(fun_decl.Body, log)
-
 				spawning_func.is_spawning = call_spawning
 
 				// add the call we have just analysed. to the spawning calls

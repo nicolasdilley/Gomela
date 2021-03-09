@@ -144,6 +144,7 @@ func main() {
 		filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
 			if file.IsDir() {
 				if file.Name() != "vendor" && file.Name() != "third_party" {
+					path, _ = filepath.Abs(path)
 					packages = append(packages, path)
 				} else {
 					return filepath.SkipDir
