@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-git/go-git"
-	"github.com/go-git/go-git/plumbing"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 func CloneRepo(url string, commit string) (string, string, error) {
