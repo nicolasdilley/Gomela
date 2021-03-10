@@ -34,13 +34,13 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 	addBlock(b, stmts1)
 
 	body, defer_stmts2, err1 := m.TranslateBlockStmt(s.Body)
-
-	if len(defer_stmts2.List) > 0 {
-		return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
-	}
 	if err1 != nil {
 		return b, defer_stmts, err1
 	}
+	if len(defer_stmts2.List) > 0 {
+		return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+	}
+
 	contains := false
 	if len(body.List) != 0 {
 		contains = true

@@ -324,7 +324,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 			fun = name.Sel.Name
 		}
 
-		if found, decl := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
+		if found, decl, pack_name := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 			return decl, pack_name, nil
 		} else { // The declaration of the function could not be found
 			// If the goroutines takes one of our channel as input return an error

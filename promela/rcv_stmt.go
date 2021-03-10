@@ -22,14 +22,14 @@ func (m *Model) translateRcvStmt(
 		async_rcv := &promela_ast.RcvStmt{
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
-				Sel: &promela_ast.Ident{Name: "async_rcv"}},
+				Sel: &promela_ast.Ident{Name: "deq"}},
 			Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
 		sync_rcv := &promela_ast.RcvStmt{
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "sync"}},
-			Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+			Rhs: &promela_ast.Ident{Name: "state"}}
 
 		m.checkForBreak(body, g)
 		m.checkForBreak(body2, g)
@@ -39,9 +39,20 @@ func (m *Model) translateRcvStmt(
 			Guard: m.Fileset.Position(e.Pos()),
 			Body:  body}
 
+		sync_guard_body := &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+			&promela_ast.SendStmt{
+				Chan: &promela_ast.SelectorExpr{
+					X:   chan_name.Name,
+					Sel: &promela_ast.Ident{Name: "rcving"},
+				},
+				Rhs: &promela_ast.Ident{Name: "false"},
+			},
+		}}
+
+		sync_guard_body.List = append(sync_guard_body.List, body2.List...)
 		sync_guard := &promela_ast.GuardStmt{
 			Cond: sync_rcv,
-			Body: body2,
+			Body: sync_guard_body,
 		}
 		guards = []*promela_ast.GuardStmt{async_guard, sync_guard}
 	} else {

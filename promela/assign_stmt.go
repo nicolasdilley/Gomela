@@ -30,11 +30,19 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 					chan_name := TranslateIdent(spec.X, m.Fileset)
 					if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-					async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
-					sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
+					dequeue := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
+					sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(spec.Pos())}
 
-					async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-					sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+					async_guard := &promela_ast.GuardStmt{Cond: dequeue, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+					sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+						&promela_ast.SendStmt{
+							Chan: &promela_ast.SelectorExpr{
+								X:   &chan_name,
+								Sel: &promela_ast.Ident{Name: "rcving"},
+							},
+							Rhs: &promela_ast.Ident{Name: "false"},
+						},
+					}}}
 
 					if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
 
@@ -60,7 +68,10 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 			if err1 != nil {
 				err = err1
 			}
-			addBlock(b, expr)
+
+			if len(expr.List) > 0 {
+				addBlock(b, expr)
+			}
 		}
 	}
 

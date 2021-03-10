@@ -67,7 +67,9 @@ func (m *Model) translateDeclStmt(stmt *ast.DeclStmt) (b *promela_ast.BlockStmt,
 					if err1 != nil {
 						err = err1
 					}
-					addBlock(b, expr)
+					if len(expr.List) > 0 {
+						addBlock(b, expr)
+					}
 				}
 			}
 

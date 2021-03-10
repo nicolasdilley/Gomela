@@ -52,15 +52,22 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 		do_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
 
-		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
-		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
+		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}}
 
 		async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		sync_guard := &promela_ast.GuardStmt{
 			Cond: sync_rcv,
-			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+				&promela_ast.SendStmt{
+					Chan: &promela_ast.SelectorExpr{
+						X:   chan_name.Name,
+						Sel: &promela_ast.Ident{Name: "rcving"},
+					},
+					Rhs: &promela_ast.Ident{Name: "false"},
+				}}},
 		}
 		rcv := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 

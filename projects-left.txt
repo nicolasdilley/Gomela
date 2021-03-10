@@ -659,6 +659,7 @@ hashicorp/go-plugin
 wercker/stern
 genuinetools/binctr
 asdine/storm
+jpillora/overseer
 funny/link
 matryer/vice
 rach/pome

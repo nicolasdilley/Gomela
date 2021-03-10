@@ -71,6 +71,9 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 					if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
 						optional_params += 1
 					}
+					if strings.Contains(line, "-2") && strings.Contains(line, "#define") {
+						optional_params += 1
+					}
 
 					if strings.Contains(line, "github.com") && git_link == "" {
 						git_link = strings.Split(line, "// ")[1]
@@ -213,6 +216,12 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 								line = strings.Replace(line, "-2", fmt.Sprint(b), 1)
 								new_lines[i] = strings.Replace(line, " = ", "=", 1)
 								fixed_bound += strings.Trim(new_lines[i]+" ", "\t")
+								break
+							}
+
+							if strings.Contains(line, "-2") && strings.Contains(line, "#define") {
+								// we found an optional param
+								new_lines[i] = strings.Replace(line, "-2", fmt.Sprint(b), 1)
 								break
 							}
 						}

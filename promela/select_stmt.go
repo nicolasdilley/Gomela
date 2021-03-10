@@ -36,7 +36,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						async_send := &promela_ast.SendStmt{
 							Chan: &promela_ast.SelectorExpr{
 								X:   chan_name.Name,
-								Sel: &promela_ast.Ident{Name: "async_send"},
+								Sel: &promela_ast.Ident{Name: "enq"},
 							},
 							Rhs: &promela_ast.Ident{Name: "0"}}
 
@@ -59,9 +59,9 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						sync_guard := &promela_ast.GuardStmt{
 							Cond: sync_send,
 							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-								&promela_ast.RcvStmt{
+								&promela_ast.SendStmt{
 									Chan: sending_chan,
-									Rhs:  &promela_ast.Ident{Name: "state"}}}},
+									Rhs:  &promela_ast.Ident{Name: "false"}}}},
 							Guard: m.Fileset.Position(s.Pos())}
 
 						sync_guard.Body.List = append(sync_guard.Body.List, body2.List...)

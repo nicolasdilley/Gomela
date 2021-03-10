@@ -42,7 +42,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	}
 	if !m.ContainsRecFunc(pack_name, func_name) {
 
-		if found, decl := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
+		if found, decl, pack_name := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
 			hasChan := false
 			known := true                                      // Do we know all the channel that it might take as args ?? (if time.After() given as arg then we dont translate the call)
 			var args []promela_ast.Expr = []promela_ast.Expr{} // building the new call's args
@@ -234,7 +234,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 									async_send := &promela_ast.SendStmt{
 										Chan: &promela_ast.SelectorExpr{
 											X:   chan_name.Name,
-											Sel: &promela_ast.Ident{Name: "async_send"}},
+											Sel: &promela_ast.Ident{Name: "enq"}},
 										Rhs:  &promela_ast.Ident{Name: "0"},
 										Send: m.Fileset.Position(call_expr.Pos())}
 
@@ -244,9 +244,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 										Cond: sync_send,
 										Body: &promela_ast.BlockStmt{
 											List: []promela_ast.Stmt{
-												&promela_ast.RcvStmt{
+												&promela_ast.SendStmt{
 													Chan: sending_chan,
-													Rhs:  &promela_ast.Ident{Name: "0"}},
+													Rhs:  &promela_ast.Ident{Name: "false"}},
 												&promela_ast.Ident{Name: "break"},
 											},
 										},
@@ -282,7 +282,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 				} else {
 					var stmts1 *promela_ast.BlockStmt
 					stmts1, err = m.ParseFuncArgs(call_expr)
-					addBlock(stmts, stmts1)
+					if len(stmts1.List) > 0 {
+						addBlock(stmts, stmts1)
+					}
 				}
 			}
 		} else {
@@ -301,7 +303,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			} else {
 				var stmts1 *promela_ast.BlockStmt
 				stmts1, err = m.ParseFuncArgs(call_expr)
-				addBlock(stmts, stmts1)
+				if len(stmts1.List) > 0 {
+					addBlock(stmts, stmts1)
+				}
 			}
 		}
 	} else {
@@ -321,7 +325,9 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 			var stmts1 *promela_ast.BlockStmt
 			stmts1, err = m.ParseFuncArgs(call_expr)
-			addBlock(stmts, stmts1)
+			if len(stmts1.List) > 0 {
+				addBlock(stmts, stmts1)
+			}
 		}
 	}
 
@@ -362,8 +368,7 @@ func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, 
 		if e != nil {
 			return stmts, e
 		}
-
-		stmts.List = append(stmts.List, expr)
+		stmts.List = append(stmts.List, expr.List...)
 	}
 
 	return stmts, nil
@@ -405,7 +410,7 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Filename:  m.Fileset.Position(name.Pos()).Filename,
 			})
 		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".Add"}, Rhs: ub})
+		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: ub})
 
 	}
 	if name.Sel.Name == "Done" {
@@ -422,10 +427,10 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Filename:  m.Fileset.Position(name.Pos()).Filename,
 			})
 		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".Add"}, Rhs: &promela_ast.Ident{Name: "-1"}})
+		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: &promela_ast.Ident{Name: "-1"}})
 	}
 	if name.Sel.Name == "Wait" {
-		stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".Wait"}, Rhs: &promela_ast.Ident{Name: "0"}})
+		stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"}, Rhs: &promela_ast.Ident{Name: "0"}})
 	}
 
 	return stmts, err

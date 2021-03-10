@@ -54,12 +54,13 @@ func Print(m *Model) {
 
 	// add chans to the chandef
 	chan_struct := promela_ast.ChanStructDef{Name: &promela_ast.Ident{Name: "Chandef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
-	sync := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sync"}, Types: []promela_types.Types{promela_types.Bool, promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
-	async_send := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "async_send"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
-	async_rcv := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "async_rcv"}, Types: []promela_types.Types{promela_types.Bool, promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
-	sending := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sending"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
+	sync := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sync"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	enqueue := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "enq"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
+	deq := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "deq"}, Types: []promela_types.Types{promela_types.Bool, promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
+	sending := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sending"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	rcving := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "rcving"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
 	closing := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "closing"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
-	chan_struct.Defs = append(chan_struct.Defs, sync, async_send, async_rcv, sending, closing)
+	chan_struct.Defs = append(chan_struct.Defs, sync, enqueue, deq, sending, rcving, closing)
 
 	// add attributes to the chandef
 	size := &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: "size"}, Rhs: &promela_ast.Ident{Name: "0"}, Types: promela_types.Int}
@@ -69,8 +70,8 @@ func Print(m *Model) {
 
 	// print Wgdef
 	wg_struct := promela_ast.WgStructDef{Name: &promela_ast.Ident{Name: "Wgdef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
-	add := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "Add"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
-	wait := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "Wait"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
+	add := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "update"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
+	wait := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "wait"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
 	wg_struct.Defs = append(wg_struct.Defs, add, wait)
 
 	b := promela_ast.BlockStmt{List: []promela_ast.Stmt{}}

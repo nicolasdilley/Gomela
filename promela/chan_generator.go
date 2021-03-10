@@ -45,17 +45,19 @@ func generateSyncChanMonitor() string {
 		"if\n" +
 		":: ch.closed ->\n" +
 		"end: if\n" +
-		"  :: ch.async_send?0-> // cannot send on closed channel\n" +
+		"  :: ch.enq?0-> // cannot send on closed channel\n" +
 		"    assert(1 == 0)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
 		"    assert(2 == 0)\n" +
-		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
+		"  :: ch.sending?false -> // sending state of channel (closed)\n" +
 		"    assert(1 == 0)\n" +
-		"  :: ch.sync!true,0; // can always receive on a closed chan\n" +
+		"  :: ch.rcving?false;\n" +
+		"  :: ch.sync!true; // can always receive on a closed chan\n" +
 		"  fi;\n" +
 		":: else -> \n" +
 		"end1: if\n" +
-		"    :: ch.sending!false;\n" +
+		"    :: ch.rcving?false ->\n " +
+		"      ch.sending?false;\n" +
 		"    :: ch.closing?true ->\n" +
 		"      ch.closed = true\n" +
 		"    fi;\n" +
@@ -72,42 +74,46 @@ func GenerateAsyncMonitor() string {
 		"if\n" +
 		":: ch.closed -> \n" +
 		"end: if\n" +
-		"  :: ch.async_send?0-> // cannot send on closed channel\n" +
+		"  :: ch.enq?0-> // cannot send on closed channel\n" +
 		"    assert(1 == 0)\n" +
 		"  :: ch.closing?true -> // cannot close twice a channel\n" +
 		"    assert(2 == 0)\n" +
-		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
+		"  :: ch.rcving?false;\n" +
+		"  :: ch.sending?false -> // sending state of channel (closed)\n" +
 		"    assert(1 == 0)\n" +
-		"  :: ch.sync!true,ch.num_msgs -> // can always receive on a closed chan\n" +
+		"  :: ch.sync!true -> \n" +
 		"		 ch.num_msgs = ch.num_msgs - 1\n" +
 		"  fi;\n" +
 		":: else ->\n" +
 		"	if\n" +
 		"	:: ch.num_msgs == ch.size ->\n" +
 		"		end1: if\n" +
-		"		  :: ch.async_rcv!false,ch.num_msgs ->\n" +
+		"		  :: ch.deq!false,ch.num_msgs ->\n" +
 		"		    ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing?true -> // closing the channel\n" +
-		"		      ch.closed = true\n" +
-		"		  :: ch.sending!false;\n" +
+		"		    ch.closed = true\n" +
+		"		   :: ch.rcving?false ->\n " +
+		"		    ch.sending?false;\n" +
 		"		fi;\n" +
 		"	:: ch.num_msgs == 0 -> \n" +
 		"end2:		if\n" +
-		"		:: ch.async_send?0 -> // a message has been received\n" +
+		"		:: ch.enq?0 -> // a message has been received\n" +
 		"			ch.num_msgs = ch.num_msgs + 1\n" +
 		"		:: ch.closing?true -> // closing the channel\n" +
 		"			ch.closed = true\n" +
-		"		:: ch.sending!false;\n" +
+		"		:: ch.rcving?false ->\n " +
+		"		    ch.sending?false;\n" +
 		"		fi;\n" +
 		"		:: else -> \n" +
 		"		end3: if\n" +
-		"		  :: ch.async_send?0->\n" +
+		"		  :: ch.enq?0->\n" +
 		"		     ch.num_msgs = ch.num_msgs + 1\n" +
-		"		  :: ch.async_rcv!false,ch.num_msgs\n" +
+		"		  :: ch.deq!false,ch.num_msgs\n" +
 		"		     ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing?true -> // closing the channel\n" +
-		"		      ch.closed = true\n" +
-		"		  :: ch.sending!false;  // sending channel is open\n" +
+		"		     ch.closed = true\n" +
+		"		  :: ch.rcving?false ->\n " +
+		"		    ch.sending?false;\n" +
 		"		fi;\n" +
 		"	fi;\n" +
 		"fi;\n" +
@@ -122,7 +128,7 @@ func GenerateFullChanMonitor() string {
 
 	return "proctype fullChan(Chandef ch) {\n" +
 		"end: if\n" +
-		"  :: ch.async_rcv!0 ->\n" +
+		"  :: ch.deq!0 ->\n" +
 		"    ch.num_msgs = ch.num_msgs - 1\n" +
 		"    if\n" +
 		"    :: ch.num_msgs == 0 ->\n" +
@@ -134,7 +140,7 @@ func GenerateFullChanMonitor() string {
 		"      run closedChan(ch)\n" +
 		"  :: ch.is_closed!false -> // sending channel is open \n" +
 		"      run fullChan(ch)\n" +
-		"  :: ch.sending!false ->\n" +
+		"  :: ch.sending?false ->\n" +
 		"      run fullChan(ch)\n" +
 		"fi;\n" +
 		"}\n\n"
@@ -145,7 +151,7 @@ func GenerateNeitherChanMonitor() string {
 
 	return "proctype neitherChan(Chandef ch) {\n" +
 		"end: if\n" +
-		"  :: ch.async_send?0->\n" +
+		"  :: ch.enq?0->\n" +
 		"     ch.num_msgs = ch.num_msgs + 1\n" +
 		"     if\n" +
 		"     :: ch.num_msgs == ch.size ->\n" +
@@ -153,7 +159,7 @@ func GenerateNeitherChanMonitor() string {
 		"     :: else ->\n" +
 		"        run neitherChan(ch)\n" +
 		"    fi;\n" +
-		"  :: ch.async_rcv!0\n" +
+		"  :: ch.deq!0\n" +
 		"     ch.num_msgs = ch.num_msgs - 1\n" +
 		"     if\n" +
 		"     :: ch.num_msgs == 0 ->\n" +
@@ -165,7 +171,7 @@ func GenerateNeitherChanMonitor() string {
 		"      run closedChan(ch)\n" +
 		"  :: ch.is_closed!false ->  // sending channel is open\n" +
 		"     run neitherChan(ch)\n" +
-		"  :: ch.sending!false ->  // sending channel is open\n" +
+		"  :: ch.sending?false ->  // sending channel is open\n" +
 		"     run neitherChan(ch)\n" +
 		"fi;\n" +
 		"}\n\n"
@@ -176,12 +182,12 @@ func GenerateNeitherChanMonitor() string {
 // proctype wgmonitor(Wgdef s) {
 //   int num
 //   do
-//   :: s.Add?num ->
+//   :: s.update?num ->
 //     s.Counter = s.Counter + num
 //     assert(s.Counter >= 0)
 //   :: s.Counter == 0 ->
 //     if
-//     :: s.Add?num ->
+//     :: s.update?num ->
 //     s.Counter = s.Counter + num
 //     assert(s.Counter >= 0)
 //     :: s.Wait?0;
@@ -195,15 +201,15 @@ func GenerateStructMonitor() string {
 		"int i;\n" +
 		"bool state;\n" +
 		"do\n" +
-		"	:: wg.Add?i ->\n" +
+		"	:: wg.update?i ->\n" +
 		"		wg.Counter = wg.Counter + i;\n" +
 		"		assert(wg.Counter >= 0)\n" +
 		"	:: wg.Counter == 0 ->\n" +
 		"end: if\n" +
-		"		:: wg.Add?i ->\n" +
+		"		:: wg.update?i ->\n" +
 		"			wg.Counter = wg.Counter + i;\n" +
 		"			assert(wg.Counter >= 0)\n" +
-		"		:: wg.Wait!0;\n" +
+		"		:: wg.wait!0;\n" +
 		"	fi\n" +
 		"od\n" +
 		"}\n\n"

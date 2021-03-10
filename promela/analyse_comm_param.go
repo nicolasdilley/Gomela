@@ -151,15 +151,15 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 			}
 			if !m.ContainsRecFunc(fun_pack, fun_name) {
-				found, fun_decl := m.FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
+				found, fun_decl, pack := m.FindDecl(fun_pack, fun_name, len(stmt.Args), ast_map)
 
 				if contains_chan && found {
 					// look inter procedurally
-					new_model := m.newModel(fun_pack, fun_decl)
+					new_model := m.newModel(pack, fun_decl)
 					new_model.RecFuncs = m.RecFuncs
 					// new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 
-					params_1 := new_model.AnalyseCommParam(fun_pack, fun_decl, ast_map, log)
+					params_1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 					for _, param := range params_1 {
 						// m.upgrade all params with its respective arguments
@@ -184,7 +184,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 			}
 			contains_chan := false
 
-			found, fun_decl := m.FindDecl(pack, fun_name, len(stmt.Call.Args), ast_map)
+			found, fun_decl, pack := m.FindDecl(pack, fun_name, len(stmt.Call.Args), ast_map)
 
 			if found {
 				for _, param := range fun_decl.Type.Params.List {
@@ -543,7 +543,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 		spawning_func := &SpawningFunc{Rec_func: RecFunc{Name: fun, Pkg: fun_pack}}
 		m.SpawningFuncs = append(m.SpawningFuncs, spawning_func)
 		if contains_chan || contains_wg && fun != "len" {
-			found, fun_decl := m.FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
+			found, fun_decl, _ := m.FindDecl(fun_pack, fun, len(call_expr.Args), m.AstMap)
 
 			if found {
 				// look inter procedurally

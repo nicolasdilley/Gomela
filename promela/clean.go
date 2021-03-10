@@ -1,7 +1,6 @@
 package promela
 
 import (
-	"fmt"
 	"go/ast"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -47,7 +46,6 @@ func Clean(m *Model) {
 		}
 
 		if !is_used {
-			fmt.Println(commPar.Name.Name)
 			m.Defines = append(m.Defines[:i], m.Defines[i+1:]...)
 		}
 	}

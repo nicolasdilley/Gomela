@@ -275,6 +275,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 
 		}
 	}
+
 	return b, err
 }
 
@@ -493,7 +494,10 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 				if err1 != nil {
 					err = err1
 				}
-				addBlock(stmts, call)
+
+				if len(call.List) > 0 {
+					addBlock(stmts, call)
+				}
 			}
 
 		case *ast.SelectorExpr:
@@ -533,11 +537,18 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 				chan_name := TranslateIdent(expr.X, m.Fileset)
 				if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "async_rcv"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
-				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
+				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
+				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(expr.Pos())}
 
 				async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-				sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+				sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+					&promela_ast.SendStmt{
+						Chan: &promela_ast.SelectorExpr{
+							X:   &chan_name,
+							Sel: &promela_ast.Ident{Name: "rcving"},
+						},
+						Rhs: &promela_ast.Ident{Name: "false"},
+					}}}}
 
 				if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
 
@@ -572,7 +583,7 @@ func (m *Model) getChanStruct(expr ast.Expr) *ChanStruct {
 	return nil
 }
 
-func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map map[string]*packages.Package) (bool, *ast.FuncDecl) {
+func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map map[string]*packages.Package) (bool, *ast.FuncDecl, string) {
 
 	if ast_map[pack] != nil {
 		for _, file := range ast_map[pack].Syntax {
@@ -583,7 +594,7 @@ func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map m
 
 						if func_name == decl.Name.Name {
 							if decl.Type.Params.NumFields() == param_num {
-								return true, decl
+								return true, decl, pack
 							}
 						}
 					}
@@ -596,7 +607,7 @@ func (m *Model) FindDecl(pack string, func_name string, param_num int, ast_map m
 		return m.FindDecl(m.Package, func_name, param_num, ast_map)
 	}
 
-	return false, nil
+	return false, nil, ""
 }
 
 func (m *Model) containsChan(expr ast.Expr) bool {

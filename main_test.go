@@ -122,12 +122,8 @@ func TestMain(t *testing.T) {
 	}
 	RESULTS_FOLDER = result_folder_path
 
-	fmt.Println(result_folder_path)
 	folders, err := ioutil.ReadDir(result_folder_path)
 
-	for _, folder := range folders {
-		fmt.Println(folder.Name())
-	}
 	if err != nil {
 		t.Errorf("Could not look at the number of file in %s", result_folder_path)
 		t.Fail()
@@ -149,10 +145,10 @@ func TestMain(t *testing.T) {
 				}
 			}
 
-			fmt.Println("The projects not found are :")
-			for _, s := range not_found {
-				fmt.Println(s)
-			}
+			// fmt.Println("The projects not found are :")
+			// for _, s := range not_found {
+			// 	fmt.Println(s)
+			// }
 		}
 	}
 
