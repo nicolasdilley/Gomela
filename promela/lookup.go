@@ -90,7 +90,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 		if !m.inDefine(ub_decl.Name.Name) {
 			m.Defines = append(m.Defines, ub_decl) // adding ub
 		}
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
@@ -105,7 +105,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 		ub = ub_decl.Name
 
 		if !(s.Init == nil && s.Cond == nil && s.Post == nil) {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
@@ -163,7 +163,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 
 		ident = name
 
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
@@ -187,7 +187,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 	promela_ast.Inspect(i1, func(n promela_ast.Stmt) bool {
 		switch name := n.(type) {
 		case *promela_ast.Ident:
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),

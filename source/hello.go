@@ -1,31 +1,39 @@
 package main
 
-// cacheReader will split the stream of a reader to be cached at the same time it is read by the original source
-func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn io.Reader)) {
-  // create the pipe and tee reader
-  pr, pw := io.Pipe()
-  tr := io.TeeReader(u, pw)
+import (
+  "context"
+  "testing"
+  "time"
 
-  // create channel to synchronize
-  done := make(chan bool)
-  defer close(done)
+  grpc "github.com/nicolasdilley/projects/grpc--grpc-go"
+)
 
-  go func() {
-    // notify the cache reader that we're complete after the source FS finishes
-    defer func() {
-      done <- true
+package cockroach18101
 
-    }()
+import (
+  "context"
+  "testing"
+)
+
+const chanSize = 6
+
+func restore(ctx context.Context) bool {
+  readyForImportCh := make(chan bool, chanSize)
+  go func() { // G2
+    defer close(readyForImportCh)
+    splitAndScatter(ctx, readyForImportCh)
   }()
+  for readyForImportSpan := range readyForImportCh {
+    select {
+    case <-ctx.Done():
+      return readyForImportSpan
+    }
+  }
+  return true
+}
 
-  go func() {
-
-    // signal complete
-    done <- true
-  }()
-
-  // wait until both are done
-  for c := 0; c < 2; c++ {
-    <-done
+func splitAndScatter(ctx context.Context, readyForImportCh chan bool) {
+  for i := 0; i < chanSize+2; i++ {
+    readyForImportCh <- (false || i != 0)
   }
 }

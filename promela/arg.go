@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"strconv"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -18,6 +17,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 		e1 = &name
 		return e1, nil
 	}
+
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		name := promela_ast.Ident{Name: expr.Name, Ident: m.Fileset.Position(expr.Pos())}
@@ -61,9 +61,11 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 		arg, err1 := m.TranslateArg(expr.Fun)
 
 		if err1 == nil {
+
 			err = err1
 
-			name := promela_ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), Ident: m.Fileset.Position(expr.Pos())}
+			name := TranslateIdent(expr, m.Fileset)
+
 			e1 = &name
 
 		} else {

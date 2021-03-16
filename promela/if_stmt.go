@@ -93,13 +93,13 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 	case *ast.UnaryExpr:
 		if expr.Op == token.NOT {
 			if found = m.containsIsClosed(expr.X); found { // check if we have a if !ok {}
-				cond = &promela_ast.Ident{Name: "state"}
+				cond = &promela_ast.Ident{Name: "state && num_msgs > 0"}
 				isClosed = true
 			}
 		}
-	case *ast.Ident: // check if we have a if !ok {}
+	case *ast.Ident: // check if we have a if ok {}
 		if found = m.containsIsClosed(expr); found { // check if we have a if ok {}
-			cond = &promela_ast.Ident{Name: "!state"}
+			cond = &promela_ast.Ident{Name: "!(state && num_msgs > 0)"}
 			isClosed = true
 		}
 	}

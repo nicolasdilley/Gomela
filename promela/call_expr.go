@@ -163,7 +163,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 						candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: bound}, Types: promela_types.Int})
 					}
 
-					Features = append(Features, Feature{
+					m.PrintFeature(Feature{
 						Proj_name: m.Project_name,
 						Model:     m.Name,
 						Fun:       new_mod.Fun.Name.String(),
@@ -398,7 +398,7 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 		}
 
 		if m.For_counter.In_for {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
@@ -415,7 +415,7 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 	}
 	if name.Sel.Name == "Done" {
 		if m.For_counter.In_for {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),

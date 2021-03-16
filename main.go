@@ -71,6 +71,8 @@ func main() {
 
 	ver := &VerificationInfo{}
 
+	projects := flag.String("p", "", "a folder that contains all the projects.")
+
 	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
@@ -79,11 +81,14 @@ func main() {
 	ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
 
 	flag.Parse()
-
+	if *projects != "" {
+		PROJECTS_FOLDER = *projects
+	}
 	promela.CreateCSV(RESULTS_FOLDER)
 
 	if *ver.verify {
-		toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
+		// toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
+		toPrint := ""
 
 		// Print CSV
 		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
@@ -152,6 +157,7 @@ func main() {
 			}
 			return nil
 		})
+
 		inferProject(path, filepath.Base(path), "", packages, ver)
 
 	}
@@ -185,6 +191,9 @@ func parseProject(project_name string, commit string, ver *VerificationInfo) {
 			return nil
 		})
 
+		for _, p := range packages {
+			fmt.Println(p)
+		}
 		inferProject(path_to_dir, project_name, commit_hash, packages, ver)
 		if err != nil {
 			fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)
@@ -199,6 +208,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 	// Partition program
 	dir_name = strings.Replace(dir_name, "/", AUTHOR_PROJECT_SEP, -1)
 	f, ast_map := GenerateAst(path, packages, dir_name)
+
 	if f != nil {
 		projects_folder, _ := filepath.Abs(PROJECTS_FOLDER)
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER, projects_folder)
@@ -247,6 +257,33 @@ func inferProject(path string, dir_name string, commit string, packages []string
 		}
 		if *ver.verify {
 			VerifyModels(models, dir_name)
+
+			if *ver.single_project != "" {
+				// verify with GCatch
+
+				filename, err := filepath.Abs(PROJECTS_FOLDER)
+
+				if err != nil {
+					panic("Could not find absolute path of " + PROJECTS_FOLDER)
+				}
+
+				if strings.Contains(filename, "src") {
+					fmt.Println("Running GCatch")
+					f, _ := os.OpenFile("gcatch.log",
+						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+					fmt.Println(filename)
+					command := exec.Command("GCatch", "-r", "-path="+filename+"/"+dir_name, "-checker=BMOC", "-compile-error")
+					command.Stdout = f
+
+					command.Run()
+
+					fmt.Println("Done")
+
+				} else {
+					panic("Please provide a projects path that is contained in the $GOPATH " + filename)
+				}
+			}
 		}
 
 	} else {

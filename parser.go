@@ -28,26 +28,27 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl) {
 						var m promela.Model = promela.Model{
-							Result_fodler:   result_folder,
-							Project_name:    proj_name,
-							Package:         pack_name,
-							Name:            pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
-							AstMap:          ast_map,
-							Fileset:         fileSet,
-							FuncDecls:       []*ast.FuncDecl{},
-							Proctypes:       []*promela_ast.Proctype{},
-							RecFuncs:        []promela.RecFunc{},
-							SpawningFuncs:   []*promela.SpawningFunc{},
-							ClosedVars:      make(map[*promela.ChanStruct][]ast.Expr),
-							Fun:             decl,
-							Chans:           make(map[ast.Expr]*promela.ChanStruct),
-							WaitGroups:      make(map[ast.Expr]*promela.WaitGroupStruct),
-							Commit:          commit,
-							Global_vars:     []promela_ast.Stmt{},
-							For_counter:     &promela.ForCounter{},
-							Default_ub:      *ver.ub,
-							Default_lb:      *ver.lb,
-							Projects_folder: projects_folder,
+							Result_fodler:    result_folder,
+							Project_name:     proj_name,
+							Package:          pack_name,
+							Name:             pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
+							AstMap:           ast_map,
+							Fileset:          fileSet,
+							FuncDecls:        []*ast.FuncDecl{},
+							Proctypes:        []*promela_ast.Proctype{},
+							RecFuncs:         []promela.RecFunc{},
+							SpawningFuncs:    []*promela.SpawningFunc{},
+							ClosedVars:       make(map[*promela.ChanStruct][]ast.Expr),
+							Fun:              decl,
+							Chans:            make(map[ast.Expr]*promela.ChanStruct),
+							WaitGroups:       make(map[ast.Expr]*promela.WaitGroupStruct),
+							Commit:           commit,
+							Global_vars:      []promela_ast.Stmt{},
+							For_counter:      &promela.ForCounter{},
+							Default_ub:       *ver.ub,
+							Default_lb:       *ver.lb,
+							Projects_folder:  projects_folder,
+							GenerateFeatures: true,
 						}
 
 						m.GoToPromela(AUTHOR_PROJECT_SEP)
@@ -62,7 +63,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 // Generate the GO ast for each packages in packages_names
 func GenerateAst(dir string, package_names []string, dir_name string) (*token.FileSet, map[string]*packages.Package) {
 	var ast_map map[string]*packages.Package = make(map[string]*packages.Package)
-	var cfg *packages.Config = &packages.Config{Mode: packages.LoadAllSyntax, Fset: &token.FileSet{}, Dir: dir}
+	var cfg *packages.Config = &packages.Config{Mode: packages.LoadAllSyntax, Fset: &token.FileSet{}, Dir: dir, Tests: true}
 
 	package_names = append([]string{"."}, package_names...)
 	lpkgs, err := packages.Load(cfg, package_names...)

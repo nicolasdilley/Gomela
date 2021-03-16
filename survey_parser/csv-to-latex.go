@@ -73,7 +73,7 @@ func main() {
 				others_map[splitted_line[0]] = false
 			}
 		}
-		printProjectList(features[1:])
+		//printProjectList(features[1:]) used to generate projects-commits
 		unparsedProjects(others_map)
 		supported_models_map := parseBound(features_map) // get all the lines from the csv
 		parseFeature(supported_models_map)               // get all the lines from the csv
@@ -696,7 +696,8 @@ func parseVerificationResults() {
 						valuated_longest_model = splitted_line[0]
 					}
 				} else {
-					panic("should not happen")
+					fmt.Println(err)
+					panic("should not happen ")
 				}
 			}
 		}

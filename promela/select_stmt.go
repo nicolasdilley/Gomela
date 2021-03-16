@@ -27,7 +27,11 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				return b, defers, err1
 			}
 			if comm.Comm != nil { // check if default select
+
+				// turns of the printing for the survey on the second translation of the body
+				m.GenerateFeatures = false
 				body2, _, _ := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
+				m.GenerateFeatures = true
 				switch com := comm.Comm.(type) {
 				case *ast.SendStmt: // send
 					if m.containsChan(com.Chan) {

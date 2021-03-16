@@ -22,7 +22,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	// update 'for' counter to generate the appropriate label
 	m.For_counter.With_go = false
 
-	if m.For_counter.In_for {
+	if was_in_for {
 		m.For_counter.Y += 1
 	} else {
 		m.For_counter.X += 1
@@ -54,7 +54,10 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	stmts, for_label, d3, err1 := m.translateBodyOfForLoop(s.Body)
 
 	m.For_counter.Y += 1
+	// turns of the printing for the survey on the second translation of the body
+	m.GenerateFeatures = false
 	body2, for_label2, _, _ := m.translateBodyOfForLoop(s.Body)
+	m.GenerateFeatures = true
 
 	if err1 != nil {
 		err = err1

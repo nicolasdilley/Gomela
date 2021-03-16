@@ -157,7 +157,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					// look inter procedurally
 					new_model := m.newModel(pack, fun_decl)
 					new_model.RecFuncs = m.RecFuncs
-					// new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
+					new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 
 					params_1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
@@ -327,9 +327,12 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 					params = m.Upgrade(fun, params, m.Vid(fun, expr.Args[0], mandatory, log), log)
 					return params
 				}
+			} else if ident.Name == "int" {
+				params = m.Upgrade(fun, params, m.Vid(fun, expr.Args[0], mandatory, log), log)
+				return params
 			}
 		}
-		name := &ast.Ident{Name: m.getIdent(expr.Fun).Name + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Fun.Pos()).Column), NamePos: expr.Pos()}
+		name := &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}
 		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: name}}, log)
 	case *ast.BinaryExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
@@ -372,7 +375,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.ChanType:
 		return &ast.Ident{Name: fmt.Sprint(expr.Value), NamePos: expr.Pos()}
 	case *ast.FuncLit:
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Anonymous function as ident",
@@ -384,7 +387,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.FuncType:
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "High order function",
@@ -477,7 +480,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 	})
 
 	if recursive && log {
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Recursive call",

@@ -34,11 +34,14 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 	s1, for_label, d1, err1 := m.translateBodyOfForLoop(s.Body)
 	m.For_counter.Y++
+	// turns of the printing for the survey on the second translation of the body
+	m.GenerateFeatures = false
 	body2, for_label2, _, _ := m.translateBodyOfForLoop(s.Body)
+	m.GenerateFeatures = true
 
 	if m.containsChan(s.X) {
 
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),

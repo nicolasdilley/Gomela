@@ -16,7 +16,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 	case *ast.UnaryExpr:
 
 		if expr.Op == token.ARROW {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
@@ -28,7 +28,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 				Filename:  m.Fileset.Position(expr.Pos()).Filename,
 			})
 		} else if expr.Op == token.AND {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
@@ -43,7 +43,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 
 	case *ast.CallExpr:
 		// Function as a comm param
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
@@ -55,7 +55,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
 		if m.getIdent(expr.Fun).Name == "len" {
-			Features = append(Features, Feature{
+			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
@@ -71,7 +71,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 	case *ast.SelectorExpr:
 
 		// Struct as a bound
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
@@ -83,7 +83,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Filename:  m.Fileset.Position(expr.Pos()).Filename,
 		})
 	case *ast.IndexExpr:
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Name:      "Uses an item of a list as a " + bound,
 			Mandatory: mandatory,
 			Info:      "UNSUPPORTED",
@@ -96,7 +96,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 		})
 
 	case *ast.CompositeLit:
-		Features = append(Features, Feature{
+		m.PrintFeature(Feature{
 			Name:      "List as a " + bound,
 			Info:      "Name :" + fmt.Sprint(expr.Type),
 			Mandatory: mandatory,
@@ -115,7 +115,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			switch Types := Types.(type) {
 			case *types.Struct:
 				// Struct as a bound
-				Features = append(Features, Feature{
+				m.PrintFeature(Feature{
 					Proj_name: m.Project_name,
 					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
@@ -130,7 +130,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			case *types.Basic:
 
 				if isConstant(expr) != "not found" {
-					Features = append(Features, Feature{
+					m.PrintFeature(Feature{
 						Proj_name: m.Project_name,
 						Model:     m.Name,
 						Fun:       m.Fun.Name.String(),
@@ -142,7 +142,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 						Filename:  m.Fileset.Position(expr.Pos()).Filename,
 					})
 				} else {
-					Features = append(Features, Feature{
+					m.PrintFeature(Feature{
 						Proj_name: m.Project_name,
 						Model:     m.Name,
 						Fun:       m.Fun.Name.String(),
@@ -156,7 +156,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 				}
 
 			case *types.Slice:
-				Features = append(Features, Feature{
+				m.PrintFeature(Feature{
 					Proj_name: m.Project_name,
 					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
@@ -168,7 +168,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Map:
-				Features = append(Features, Feature{
+				m.PrintFeature(Feature{
 					Proj_name: m.Project_name,
 					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),
@@ -180,7 +180,7 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Filename:  m.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Named:
-				Features = append(Features, Feature{
+				m.PrintFeature(Feature{
 					Proj_name: m.Project_name,
 					Model:     m.Name,
 					Fun:       m.Fun.Name.String(),

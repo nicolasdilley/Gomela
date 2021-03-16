@@ -83,8 +83,8 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 				model_name := strings.Replace(filepath.Base(dir_name), "&", "/", -1) + ":" + model.Name()
 				fmt.Println("there is ", optional_params, " optionnal params.")
 				if len(comm_params) == 0 {
-					ver := verifyModel(path, model_name, git_link, f, []string{}, []string{})
-					if optional_params > 0 {
+					ver, ok := verifyModel(path, model_name, git_link, f, []string{}, []string{})
+					if optional_params > 0 && ok {
 						verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params)
 					}
 				} else if len(comm_params) > 5 {
@@ -113,7 +113,10 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 						for _, b := range bound {
 							bound_str = append(bound_str, fmt.Sprint(b))
 						}
-						ver := verifyModel(path, model_name, git_link, f, comm_params, bound_str)
+						ver, ok := verifyModel(path, model_name, git_link, f, comm_params, bound_str)
+						if !ok {
+							break
+						}
 						if optional_params > 0 {
 							verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params)
 						}
@@ -125,7 +128,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 }
 
-func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, bound []string) *VerificationRun {
+func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, bound []string) (*VerificationRun, bool) {
 
 	ver := &VerificationRun{Send_on_close_safety_error: false, Close_safety_error: false, Negative_counter_safety_error: false, Global_deadlock: true, Timeout: false}
 
@@ -153,6 +156,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
+		return ver, executable
 	} else {
 		comm_par_info := ""
 		fmt.Println("-------------------------------")
@@ -189,7 +193,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		}
 	}
 
-	return ver
+	return ver, executable
 }
 
 func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int) {
@@ -364,7 +368,7 @@ func parseResults(result string, ver *VerificationRun) bool {
 		return false
 	}
 
-	if strings.Contains(splitted[len(splitted)-1], "depth") {
+	if strings.Contains(splitted[len(splitted)-1], "Depth=") {
 		// Its a timeout
 		ver.Timeout = true
 	}
