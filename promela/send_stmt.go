@@ -47,7 +47,6 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 		b.List = append(b.List, if_stmt)
 	} else {
 		err = &ParseError{err: errors.New(UNKNOWN_SEND + m.Fileset.Position(s.Pos()).String())}
-
 	}
 
 	return b, err

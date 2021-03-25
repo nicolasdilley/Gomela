@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
+	"log"
 	"os"
 
 	"github.com/nicolasdilley/gomela/promela"
@@ -26,7 +28,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 			for _, decl := range file.Decls {
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
-					if !takeChanAsParam(decl) {
+					if !takeChanAsParam(decl, ast_map[pack_name]) {
 						var m promela.Model = promela.Model{
 							Result_fodler:    result_folder,
 							Project_name:     proj_name,
@@ -42,6 +44,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Fun:              decl,
 							Chans:            make(map[ast.Expr]*promela.ChanStruct),
 							WaitGroups:       make(map[ast.Expr]*promela.WaitGroupStruct),
+							Mutexes:          []ast.Expr{},
 							Commit:           commit,
 							Global_vars:      []promela_ast.Stmt{},
 							For_counter:      &promela.ForCounter{},
@@ -95,11 +98,94 @@ func GenerateAst(dir string, package_names []string, dir_name string) (*token.Fi
 	return cfg.Fset, ast_map
 }
 
-func takeChanAsParam(decl *ast.FuncDecl) bool {
+func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
+
+	// check if the args are not structures that contains channels, wg or mutex
+
 	for _, field := range decl.Type.Params.List {
 		switch field.Type.(type) {
 		case *ast.ChanType:
 			return true
+		}
+
+		var ident ast.Expr
+		switch t := field.Type.(type) {
+		case *ast.StarExpr:
+			ident = t.X
+		}
+		switch ident := ident.(type) {
+		case *ast.Ident:
+			obj := pack.TypesInfo.ObjectOf(ident)
+
+			switch t := obj.Type().(type) {
+			case *types.Named:
+				if structContainsChan(t, []*types.Named{t}) {
+					return true
+				}
+
+			}
+		default:
+			log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident, ")
+
+		}
+	}
+
+	if decl.Recv != nil {
+		for _, field := range decl.Recv.List {
+
+			var ident ast.Expr
+			switch t := field.Type.(type) {
+			case *ast.StarExpr:
+				ident = t.X
+			}
+			switch ident := ident.(type) {
+			case *ast.Ident:
+				obj := pack.TypesInfo.ObjectOf(ident)
+
+				switch t := obj.Type().(type) {
+				case *types.Named:
+					return structContainsChan(t, []*types.Named{t})
+
+				}
+			default:
+				log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident, ")
+
+			}
+		}
+	}
+
+	return false
+}
+
+func structContainsChan(t types.Type, seen []*types.Named) bool {
+
+	if t.String() == "sync.WaitGroup" {
+		return true
+	} else if t.String() == "sync.Mutex" {
+		return true
+	}
+	switch t := t.Underlying().(type) {
+	case *types.Struct:
+		for i := 0; i < t.NumFields(); i++ {
+
+			field_type := promela.GetElemIfPointer(t.Field(i).Type())
+
+			switch field := field_type.(type) {
+			case *types.Named:
+				contains := false
+
+				for _, s := range seen {
+					if s.String() == field.String() {
+						contains = true
+					}
+				}
+				if !contains {
+					return structContainsChan(field, append(seen, field))
+				}
+			case *types.Chan:
+				return true
+			}
+
 		}
 	}
 	return false

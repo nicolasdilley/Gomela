@@ -10,7 +10,6 @@ import (
 
 func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, err *ParseError) {
 
-	// look if the struct is a struct that contains the "automatic" declaration of a new WaitGroup
 	b, err = m.translateNewVar(s, s.Lhs, s.Rhs)
 
 	if err != nil {
@@ -22,16 +21,27 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 			return b, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
 		case *ast.UnaryExpr:
 			switch spec.Op {
-			case token.NOT:
-				return m.TranslateExpr(spec.X)
+
 			case token.ARROW:
 				if m.containsChan(spec.X) {
 
 					chan_name := TranslateIdent(spec.X, m.Fileset)
 					if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-					dequeue := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(spec.Pos())}
-					sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(spec.Pos())}
+					dequeue := &promela_ast.RcvStmt{
+						Chan: &promela_ast.SelectorExpr{
+							X:   &chan_name,
+							Sel: &promela_ast.Ident{Name: "deq"},
+						},
+						Rhs: &promela_ast.Ident{Name: "state,num_msgs"},
+						Rcv: m.Fileset.Position(spec.Pos())}
+					sync_rcv := &promela_ast.RcvStmt{
+						Chan: &promela_ast.SelectorExpr{
+							X:   &chan_name,
+							Sel: &promela_ast.Ident{Name: "sync"},
+						},
+						Rhs: &promela_ast.Ident{Name: "state"},
+						Rcv: m.Fileset.Position(spec.Pos())}
 
 					async_guard := &promela_ast.GuardStmt{Cond: dequeue, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 					sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
@@ -61,12 +71,22 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 				} else {
 					err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(spec.Pos()).String())}
 				}
+			default:
+				expr, err1 := m.TranslateExpr(spec.X)
+
+				if err1 != nil {
+					return expr, err1
+				}
+
+				if len(expr.List) > 0 {
+					addBlock(b, expr)
+				}
 			}
 		default:
 			expr, err1 := m.TranslateExpr(spec)
 
 			if err1 != nil {
-				err = err1
+				return expr, err1
 			}
 
 			if len(expr.List) > 0 {

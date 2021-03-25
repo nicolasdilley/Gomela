@@ -1,6 +1,7 @@
 package promela_ast
 
 import (
+	"go/ast"
 	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_types"
@@ -12,6 +13,7 @@ type Proctype struct {
 	Active bool       // is it an active process ?
 	Body   *BlockStmt // the body of the process
 	Params []*Param
+	Decl   *ast.FuncDecl
 }
 
 func (p *Proctype) GoNode() token.Position {

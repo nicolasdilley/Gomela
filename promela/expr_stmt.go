@@ -13,7 +13,8 @@ func (m *Model) translateExprStmt(s *ast.ExprStmt) (b *promela_ast.BlockStmt, de
 	expr, err1 := m.TranslateExpr(s.X)
 
 	if err1 != nil {
-		err = err1
+
+		return b, defers, err1
 	}
 	addBlock(b, expr)
 	return b, defers, err

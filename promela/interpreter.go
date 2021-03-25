@@ -74,6 +74,14 @@ func Print(m *Model) {
 	wait := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "wait"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
 	wg_struct.Defs = append(wg_struct.Defs, add, wait)
 
+	// print Wgdef
+	mutex_struct := promela_ast.MutexStructDef{Name: &promela_ast.Ident{Name: "Mutexdef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
+	lock := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "Lock"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	unlock := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "Unlock"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	RLock := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "RLock"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	RUnlock := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "RUnlock"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
+	mutex_struct.Defs = append(mutex_struct.Defs, lock, unlock, RLock, RUnlock)
+
 	b := promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	// setting the size of the int chan
@@ -86,6 +94,10 @@ func Print(m *Model) {
 	if m.ContainsWg {
 		stmt += wg_struct.Print(0)
 	}
+	if m.ContainsMutexes {
+		stmt += mutex_struct.Print(0)
+	}
+
 	stmt += "\n"
 	stmt += b.Print(0)
 	stmt += "\n\n"
@@ -105,6 +117,9 @@ func Print(m *Model) {
 
 	if m.ContainsWg {
 		stmt += GenerateStructMonitor()
+	}
+	if m.ContainsMutexes {
+		stmt += GenerateMutexMonitor()
 	}
 
 	folder := "./" + m.Result_fodler + "/" + strings.Replace(m.Project_name, "/", "-", -1)

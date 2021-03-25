@@ -27,7 +27,8 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	} else {
 		var pack string
 		var err1 *ParseError
-		decl, pack, err1 = m.findFunDecl(s.Call)
+		decl, pack, err1 = m.findFunDecl(call_expr)
+
 		pack_name = pack
 		if err1 != nil {
 			return b, err1
@@ -35,188 +36,33 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	}
 
 	if decl != nil {
-		func_name = "go_" + decl.Name.Name
-		prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(call_expr.Pos())}
 
-		hasChan := isMain
-		known := isMain
+		// Check if we have not seen it already !
+
+		// check if its a call on a struct that contains a chan, mutex or wgs
+
+		func_name = "go_" + decl.Name.Name
+
 		new_mod := m.newModel(pack_name, decl)
+		if isMain {
+			m.Chans = new_mod.Chans
+			m.WaitGroups = new_mod.WaitGroups
+			m.Mutexes = new_mod.Mutexes
+		}
 
 		new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-
 		//. Create a define for each mandatory param
 
-		proc := &promela_ast.Proctype{Name: &promela_ast.Ident{Name: func_name}, Pos: m.Fileset.Position(call_expr.Pos()), Active: false, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-		proc.Params = []*promela_ast.Param{}
+		params, args, hasChan, known, err1 := m.translateParams(new_mod, decl, call_expr, isMain)
 
-		counter := 0
-		for _, field := range decl.Type.Params.List {
-			for _, name := range field.Names {
-				switch sel := field.Type.(type) {
-				case *ast.ChanType:
-					hasChan = true
-
-					if m.containsChan(call_expr.Args[counter]) {
-						proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
-						new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
-
-						arg, err1 := m.TranslateArg(call_expr.Args[counter])
-						if err1 != nil {
-							err = err1
-						}
-						prom_call.Args = append(prom_call.Args, arg)
-						known = true
-					} else {
-						known = false
-					}
-				case *ast.StarExpr:
-					switch sel := sel.X.(type) {
-					case *ast.SelectorExpr:
-						switch ident := sel.X.(type) {
-						case *ast.Ident:
-							if ident.Name == "sync" {
-								if sel.Sel.Name == "WaitGroup" {
-									hasChan = true
-									if m.containsWaitgroup(call_expr.Args[counter]) {
-										wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
-										proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
-										new_mod.WaitGroups[name] = wg
-										arg, err1 := m.TranslateArg(call_expr.Args[counter])
-										if err1 != nil {
-											err = err1
-										}
-										prom_call.Args = append(prom_call.Args, arg)
-										known = true
-									} else {
-										known = false
-									}
-								}
-							}
-						}
-					}
-				case *ast.SelectorExpr:
-					switch ident := sel.X.(type) {
-					case *ast.Ident:
-						if ident.Name == "sync" {
-							if sel.Sel.Name == "WaitGroup" {
-								hasChan = true
-								if m.containsWaitgroup(call_expr.Args[counter]) {
-									wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
-									proc.Params = append(proc.Params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
-									new_mod.WaitGroups[name] = wg
-									arg, err1 := m.TranslateArg(call_expr.Args[counter])
-									if err1 != nil {
-										err = err1
-									}
-									prom_call.Args = append(prom_call.Args, arg)
-									known = true
-								} else {
-									known = false
-								}
-							}
-						}
-					}
-				default:
-					// the arg is not a channel therefore we include what it does before the call
-
-					stmt, err1 := m.TranslateExpr(call_expr.Args[counter])
-					if err1 != nil {
-						err = err1
-					}
-					addBlock(b, stmt)
-				}
-
-				counter++
-			}
+		// translate args
+		if err1 != nil {
+			return b, err1
 		}
 
 		if hasChan && known {
-			// Add the commparam to the param of the new proc
-			for _, commPar := range new_mod.CommPars {
-				if commPar.Candidate {
-					proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
-				} else {
-					proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
+			return m.translateCommParams(new_mod, s, func_name, decl, params, args)
 
-					arg, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
-					if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
-						prom_call.Args = append(prom_call.Args, arg)
-					} else { // the arguments passed as a commparam cannot be translated
-
-						var ident *promela_ast.Ident
-						if call_expr.Args[commPar.Pos] != nil {
-							ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
-						} else {
-							ident = &promela_ast.Ident{Name: commPar.Name.Name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
-						}
-						if commPar.Mandatory {
-							m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
-						} else {
-							m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
-						}
-						prom_call.Args = append(prom_call.Args, ident)
-					}
-				}
-			}
-
-			candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-
-			if !m.CallExists(func_name) { // add the new proctype if the call doesnt exists yet
-
-				m.Proctypes = append(m.Proctypes, proc)
-				new_mod.Proctypes = append(new_mod.Proctypes, proc)
-				for _, commPar := range new_mod.CommPars {
-
-					name := "Actual Param"
-					if commPar.Candidate {
-						name = "Candidate Param"
-						if commPar.Mandatory {
-							def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
-							candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
-						} else {
-							candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
-						}
-					}
-
-					Features = append(Features, Feature{
-						Proj_name: m.Project_name,
-						Model:     m.Name,
-						Fun:       new_mod.Fun.Name.String(),
-						Name:      name,
-						Mandatory: fmt.Sprint(commPar.Mandatory),
-						Info:      commPar.Name.Name,
-						Line:      0,
-						Commit:    m.Commit,
-						Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-					})
-				}
-				stmt, defers, err1 := new_mod.TranslateBlockStmt(decl.Body)
-				m.ContainsChan = new_mod.ContainsChan
-				m.ContainsWg = new_mod.ContainsWg
-
-				m.addNewProctypes(new_mod) // adding the new proctypes create in the new model
-
-				if isMain {
-					m.Chans = new_mod.Chans
-					m.WaitGroups = new_mod.WaitGroups
-				}
-
-				if err1 != nil {
-					return b, err1
-				}
-				proc.Body.List = append(candidatesParams.List, stmt.List...)
-				proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
-				for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
-					defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
-				}
-				proc.Body.List = append(proc.Body.List, defers.List...)
-
-			}
-			prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
-
-			r := &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())}
-
-			b.List = append(b.List, r)
 		}
 	} else { // Could not find the decl of the function
 		// So lets check if it takes a receive as an arg
@@ -241,6 +87,239 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	return b, err
 }
 
+// s can be either the go stmt or the call expr
+func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr) (*promela_ast.BlockStmt, *ParseError) {
+
+	call_expr := &ast.CallExpr{}
+	switch expr := s.(type) {
+	case *ast.CallExpr:
+		call_expr = expr
+	case *ast.GoStmt:
+		call_expr = expr.Call
+	default:
+		panic("s can only be a call expr or a go stmt ! Found: " + fmt.Sprint(s))
+	}
+	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(s.Pos())}
+
+	prom_call.Args = args
+	proc := &promela_ast.Proctype{
+		Name:   &promela_ast.Ident{Name: func_name},
+		Pos:    m.Fileset.Position(s.Pos()),
+		Active: false,
+		Body:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+		Params: params,
+		Decl:   decl,
+	}
+
+	candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
+	// Parses the args
+	for _, commPar := range new_mod.CommPars {
+		name := "Actual Param"
+		if commPar.Candidate {
+			name = "Candidate Param"
+			if commPar.Mandatory {
+				def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+				candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
+			} else {
+				candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
+			}
+			proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
+		} else {
+			proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
+
+			arg, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
+
+			if err1 != nil {
+				return b, err1
+			}
+			if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset).Name}}); found && err1 == nil {
+				prom_call.Args = append(prom_call.Args, arg)
+			} else { // the arguments passed as a commparam cannot be translated
+
+				var ident *promela_ast.Ident
+				if call_expr.Args[commPar.Pos] != nil {
+					ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+				} else {
+					ident = &promela_ast.Ident{Name: commPar.Name.Name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+				}
+				if commPar.Mandatory {
+					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+				} else {
+					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
+				}
+				prom_call.Args = append(prom_call.Args, ident)
+			}
+
+		}
+
+		m.PrintFeature(Feature{
+			Proj_name: m.Project_name,
+			Model:     m.Name,
+			Fun:       new_mod.Fun.Name.String(),
+			Name:      name,
+			Mandatory: fmt.Sprint(commPar.Mandatory),
+			Info:      commPar.Name.Name,
+			Line:      0,
+			Commit:    m.Commit,
+			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+		})
+	}
+
+	exist, err1 := m.CallExists(decl)
+
+	if err1 != nil {
+		return b, err1
+	}
+	if !exist { // add the new proctype if the call doesnt exists yet
+
+		new_mod.Proctypes = append(new_mod.Proctypes, proc)
+
+		stmt, defers, err1 := new_mod.TranslateBlockStmt(decl.Body)
+
+		if err1 != nil {
+			return b, err1
+		}
+		proc.Body.List = append(candidatesParams.List, stmt.List...)
+		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
+		for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
+			defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
+		}
+		proc.Body.List = append(proc.Body.List, defers.List...)
+
+	}
+	prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
+
+	m.addNewProctypes(new_mod) // adding the new proctypes create in the new model
+
+	m.ContainsChan = m.ContainsChan || new_mod.ContainsChan
+	m.ContainsWg = m.ContainsWg || new_mod.ContainsWg
+	m.ContainsMutexes = m.ContainsMutexes || new_mod.ContainsMutexes
+
+	switch s.(type) {
+	case *ast.CallExpr:
+		child_func_name := "child_" + func_name + strconv.Itoa(m.Counter)
+		args = append(args, &promela_ast.Ident{Name: child_func_name})
+		// add child param
+		proc.Params = append(proc.Params, &promela_ast.Param{Name: "child", Types: promela_types.Chan})
+		m.Counter++
+
+		b.List = append(b.List,
+			&promela_ast.Chandef{Name: &promela_ast.Ident{Name: child_func_name}, Size: &promela_ast.Ident{Name: "0"}, Types: []promela_types.Types{promela_types.Int}},
+			&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Args: args}},
+			&promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: child_func_name}, Rhs: &promela_ast.Ident{Name: "0"}},
+		)
+
+		proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
+
+	case *ast.GoStmt:
+		b.List = append(b.List, &promela_ast.RunStmt{X: prom_call, Run: m.Fileset.Position(s.Pos())})
+	}
+
+	return b, nil
+}
+
+func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *ast.CallExpr, isMain bool) ([]*promela_ast.Param, []promela_ast.Expr, bool, bool, *ParseError) {
+	hasChan := isMain
+	known := true
+	params := []*promela_ast.Param{}
+	args := []promela_ast.Expr{}
+
+	counter := 0
+	for _, field := range decl.Type.Params.List {
+		for _, name := range field.Names {
+			switch sel := field.Type.(type) {
+			case *ast.ChanType:
+				hasChan = true
+				if m.containsChan(call_expr.Args[counter]) {
+					params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
+					new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
+
+					arg, err1 := m.TranslateArg(call_expr.Args[counter])
+					if err1 != nil {
+						return params, args, false, false, err1
+					}
+					args = append(args, arg)
+				} else {
+					known = false
+				}
+			case *ast.StarExpr:
+				switch sel := sel.X.(type) {
+				case *ast.SelectorExpr:
+					switch ident := sel.X.(type) {
+					case *ast.Ident:
+						if ident.Name == "sync" {
+							if sel.Sel.Name == "WaitGroup" {
+								hasChan = true
+								if m.containsWaitgroup(call_expr.Args[counter]) {
+									wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
+									params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
+									new_mod.WaitGroups[name] = wg
+									arg, err1 := m.TranslateArg(call_expr.Args[counter])
+									if err1 != nil {
+										return params, args, false, false, err1
+									}
+									args = append(args, arg)
+								} else {
+									known = false
+								}
+							} else if sel.Sel.Name == "Mutex" {
+								hasChan = true
+								if m.containsMutex(call_expr.Args[counter]) {
+									new_mod.Mutexes = append(new_mod.Mutexes, name)
+									params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Mutexdef})
+
+									arg, err1 := m.TranslateArg(call_expr.Args[counter])
+									if err1 != nil {
+										return params, args, false, false, err1
+									}
+									args = append(args, arg)
+
+								} else {
+									known = false
+								}
+							}
+						}
+
+					}
+				}
+			case *ast.SelectorExpr:
+				switch ident := sel.X.(type) {
+				case *ast.Ident:
+					if ident.Name == "sync" {
+						if sel.Sel.Name == "WaitGroup" {
+							hasChan = true
+							if m.containsWaitgroup(call_expr.Args[counter]) {
+								wg := &WaitGroupStruct{
+									Name: &promela_ast.Ident{
+										Name:  name.Name,
+										Ident: m.Fileset.Position(name.Pos()),
+									},
+									Wait: m.Fileset.Position(name.Pos()),
+								}
+								params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
+								new_mod.WaitGroups[name] = wg
+								arg, err1 := m.TranslateArg(call_expr.Args[counter])
+								if err1 != nil {
+									return params, args, false, false, err1
+								}
+								args = append(args, arg)
+							} else {
+								known = false
+							}
+						}
+					}
+				}
+			}
+
+			counter++
+		}
+	}
+
+	return params, args, hasChan, known, nil
+}
+
 func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *ParseError) {
 	pack_name := m.Package
 
@@ -252,9 +331,9 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 		fun_decl.Name = ident
 		fun_decl.Type = name.Type
 		fun_decl.Body = name.Body
-		chans, wgs := AnalyseFuncCall(m.Fileset, m.Fun, call_expr, m.AstMap[m.Package]) // Returns the channels that are declared before the call
-		names := []*ast.Ident{}                                                         // the names of the chans
-		for _, ch := range chans {
+
+		names := []*ast.Ident{} // the names of the chans
+		for ch, _ := range m.Chans {
 			if !containsExpr(call_expr.Args, ch) {
 				chan_name := TranslateIdent(ch, m.Fileset)
 				names = append(names, &ast.Ident{Name: chan_name.Name, NamePos: ch.Pos()})
@@ -276,7 +355,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 				exprs = append(exprs, arg)
 			}
 		}
-		for _, wg := range wgs {
+		for wg, _ := range m.WaitGroups {
 			if !containsExpr(exprs, wg) {
 				wg_names = append(wg_names, &ast.Ident{Name: TranslateIdent(wg, m.Fileset).Name, NamePos: wg.Pos()})
 				call_expr.Args = append(call_expr.Args, wg)
@@ -288,6 +367,22 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 				Names: wg_names,
 				Type: &ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "sync"},
 					Sel: &ast.Ident{Name: "WaitGroup"}}}})
+		}
+
+		mu_names := []*ast.Ident{}
+
+		for _, mu := range m.Mutexes {
+			if !containsExpr(exprs, mu) {
+				mu_names = append(mu_names, &ast.Ident{Name: TranslateIdent(mu, m.Fileset).Name, NamePos: mu.Pos()})
+				call_expr.Args = append(call_expr.Args, mu)
+			}
+		}
+
+		if len(mu_names) > 0 {
+			fun_decl.Type.Params.List = append(fun_decl.Type.Params.List, &ast.Field{
+				Names: mu_names,
+				Type: &ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "sync"},
+					Sel: &ast.Ident{Name: "Mutex"}}}})
 		}
 		// Add all commParam as args
 		field := &ast.Field{Names: []*ast.Ident{}, Type: &ast.Ident{Name: "int"}}
@@ -303,39 +398,210 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, string, *Pa
 		return fun_decl, pack_name, nil
 
 	default:
-		fun := ""
-		// Find the decl of the function
-		switch name := call_expr.Fun.(type) {
-		case *ast.Ident:
-			fun = name.Name
-
-		case *ast.SelectorExpr:
-
-			sel := m.AstMap[m.Package].TypesInfo.Selections[name]
-
-			pack_name = TranslateIdent(name.X, m.Fileset).Name
-			if sel != nil {
-				if sel.Obj() != nil {
-					if sel.Obj().Pkg() != nil {
-						pack_name = sel.Obj().Pkg().Name()
-					}
-				}
-			}
-			fun = name.Sel.Name
-		}
-
-		if found, decl, pack_name := m.FindDecl(pack_name, fun, len(call_expr.Args), m.AstMap); found {
-			return decl, pack_name, nil
+		if found, decl, pack_name := m.FindDecl(call_expr); found {
+			new_decl := m.updateDeclWithRcv(*decl, call_expr)
+			return new_decl, pack_name, nil
 		} else { // The declaration of the function could not be found
 			// If the goroutines takes one of our channel as input return an error
 			// Otherwise check if the args are a receive on a channel
 			for _, arg := range call_expr.Args {
-				if m.containsChan(arg) || m.containsWaitgroup(arg) {
-					return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_GO_FUNC + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
+				expr := arg
+				switch arg := arg.(type) {
+				case *ast.UnaryExpr:
+					expr = arg.X
 				}
+				if m.containsChan(expr) || m.containsWaitgroup(expr) || m.containsMutex(expr) {
+					return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
+				}
+			}
+
+			// also check if the function is not a method on a struct that contains
+			// a mutex, a chan or a wg !
+			if m.isStructWithChans(call_expr.Fun) {
+				return nil, pack_name, &ParseError{err: errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
 			}
 
 		}
 	}
 	return nil, pack_name, nil
+}
+
+func (m *Model) isStructWithChans(expr ast.Expr) bool {
+	switch expr := expr.(type) {
+	case *ast.SelectorExpr:
+		// might be!
+		for name, _ := range m.Chans {
+			switch name := name.(type) {
+			case *ast.SelectorExpr:
+				return isSubsetOfExpr(expr.X, name.X)
+			}
+		}
+		for name, _ := range m.WaitGroups {
+			switch name := name.(type) {
+			case *ast.SelectorExpr:
+				return isSubsetOfExpr(expr.X, name.X)
+			}
+		}
+		for _, name := range m.Mutexes {
+			switch name := name.(type) {
+			case *ast.SelectorExpr:
+				return isSubsetOfExpr(expr.X, name.X)
+			}
+		}
+	}
+
+	return false
+}
+
+func (m *Model) updateDeclWithRcv(decl ast.FuncDecl, call_expr *ast.CallExpr) *ast.FuncDecl {
+
+	ptr_decl := decl
+	new_decl := &ptr_decl
+
+	if new_decl.Recv != nil {
+		switch s := call_expr.Fun.(type) {
+		case *ast.SelectorExpr:
+
+			for _, field := range new_decl.Recv.List {
+				for _, name := range field.Names {
+					exprs_in_rcv := [][]*ast.SelectorExpr{}
+
+					chans := []ast.Expr{}
+					for name, _ := range m.Chans {
+						chans = append(chans, name)
+					}
+					exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(chans, s))
+
+					wgs := []ast.Expr{}
+					for name, _ := range m.WaitGroups {
+						wgs = append(wgs, name)
+					}
+
+					exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(wgs, s))
+
+					mutexes := []ast.Expr{}
+
+					for _, name := range m.Mutexes {
+						mutexes = append(mutexes, name)
+					}
+
+					exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(mutexes, s))
+
+					// adding chans and wg
+
+					chans_fields := generateFields(s, name, exprs_in_rcv[0], &ast.ChanType{})
+					wgs_fields := generateFields(s, name, exprs_in_rcv[1], &ast.StarExpr{
+						X: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "sync"},
+							Sel: &ast.Ident{Name: "WaitGroup"},
+						},
+					})
+
+					mutexes_fields := generateFields(s, name, exprs_in_rcv[2], &ast.StarExpr{
+						X: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "sync"},
+							Sel: &ast.Ident{Name: "Mutex"},
+						},
+					})
+					fields_to_add := append(chans_fields, wgs_fields...)
+
+					fields_to_add = append(fields_to_add, mutexes_fields...)
+
+					args_to_add := []ast.Expr{}
+					for _, exprs := range exprs_in_rcv {
+						for _, expr := range exprs {
+							args_to_add = append(args_to_add, expr)
+						}
+					}
+
+					// Add the new args of the function
+					call_expr.Args = append(args_to_add, call_expr.Args...)
+
+					// Add the new parameter to the function decleration
+					var func_type ast.FuncType = *decl.Type
+
+					params_list := *decl.Type.Params
+					params_list.List = []*ast.Field{}
+					for _, field := range decl.Type.Params.List {
+						params_list.List = append(params_list.List, field)
+					}
+					params_list.List = append(fields_to_add, params_list.List...)
+					func_type.Params = &params_list
+					new_decl.Type = &func_type
+				}
+			}
+		}
+	}
+	return new_decl
+}
+
+// if types.Interface and take channel or wg or mutex abort otherwise skip
+
+// generate the field from the exprs with type t. Returns also the exprs that are contained.
+func generateFields(call_expr *ast.SelectorExpr, rcv_name *ast.Ident, exprs []*ast.SelectorExpr, t ast.Expr) []*ast.Field {
+	fields := []*ast.Field{}
+	for _, expr := range exprs {
+		fields = append(fields,
+			&ast.Field{
+				Names: []*ast.Ident{&ast.Ident{Name: translateIdent(renameBaseOfExprWithOther(expr, call_expr.X, rcv_name)).Name}},
+				Type:  t,
+			})
+
+	}
+
+	return fields
+}
+
+func renameBaseOfExprWithOther(from *ast.SelectorExpr, old ast.Expr, n *ast.Ident) *ast.SelectorExpr {
+	if !isSubsetOfExpr(old, from) {
+		panic("Should be a subset")
+	}
+	return &ast.SelectorExpr{X: replaceExpr(from.X, old, n), Sel: from.Sel}
+
+	// find old and replace is with new
+
+}
+
+func replaceExpr(from ast.Expr, old ast.Expr, n *ast.Ident) ast.Expr {
+
+	if IdenticalExpr(from, old) {
+		return n
+	}
+
+	switch from := from.(type) {
+	case *ast.SelectorExpr:
+		return &ast.SelectorExpr{X: replaceExpr(from.X, old, n), Sel: from.Sel}
+	default:
+		panic("Cannot find subset")
+	}
+
+}
+
+func addIdenticalSelectorExprs(exprs []ast.Expr, s *ast.SelectorExpr) []*ast.SelectorExpr {
+	to_return := []*ast.SelectorExpr{}
+
+	for _, name := range exprs {
+		switch name := name.(type) {
+		case *ast.SelectorExpr:
+			if isSubsetOfExpr(s.X, name.X) {
+				to_return = append(to_return, name)
+			}
+		}
+	}
+
+	return to_return
+}
+
+// check if sub is contained in set (t, t.wg) > yes, (t.t, t.wg) > no, (t.t, t.t.wg) > Yes
+func isSubsetOfExpr(sub ast.Expr, set ast.Expr) bool {
+
+	if !IdenticalExpr(sub, set) {
+		switch set := set.(type) {
+		case *ast.SelectorExpr:
+			return isSubsetOfExpr(sub, set.X)
+		}
+	} else {
+		return true
+	}
+	return false
 }

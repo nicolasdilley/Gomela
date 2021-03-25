@@ -23,3 +23,9 @@ type WaitGroupStruct struct {
 
 	Counter int // The size of the counter
 }
+
+type MutexStruct struct {
+	Name  *promela_ast.Ident
+	Mutex token.Position
+	Chans []*promela_ast.Chandef // the chans of the struct (add,done and wait)
+}

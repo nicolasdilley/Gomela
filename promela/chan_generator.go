@@ -197,9 +197,7 @@ func GenerateNeitherChanMonitor() string {
 func GenerateStructMonitor() string {
 
 	return "proctype wgMonitor(Wgdef wg) {\n" +
-		"bool closed;\n" +
 		"int i;\n" +
-		"bool state;\n" +
 		"do\n" +
 		"	:: wg.update?i ->\n" +
 		"		wg.Counter = wg.Counter + i;\n" +
@@ -214,4 +212,37 @@ func GenerateStructMonitor() string {
 		"od\n" +
 		"}\n\n"
 
+}
+
+func GenerateMutexMonitor() string {
+
+	return "proctype mutexMonitor(Mutexdef m) {\n" +
+		"bool locked = false;\n" +
+		"do\n" +
+		":: true ->\n" +
+		"	if\n" +
+		"	:: m.Counter > 0 ->\n" +
+		"		if \n" +
+		"		:: m.RUnlock?false -> \n" +
+		"			m.Counter = m.Counter - 1;\n" +
+		"		:: m.RLock?false -> \n" +
+		"			m.Counter = m.Counter + 1;\n" +
+		"		fi;\n" +
+		"	:: locked ->\n" +
+		"		m.Unlock?false;\n" +
+		"		locked = false;\n" +
+		"	:: else ->" +
+		"	 end:	if\n" +
+		"		:: m.Unlock?false ->\n" +
+		"			assert(0==32);" +
+		"		:: m.Lock?false ->\n" +
+		"			locked =true;\n" +
+		"		:: m.RUnlock?false ->\n" +
+		"			assert(0==33);" +
+		"		:: m.RLock?false ->\n" +
+		"			m.Counter = m.Counter + 1;\n" +
+		"		fi;\n" +
+		"	fi;\n" +
+		"od\n" +
+		"}\n\n"
 }
