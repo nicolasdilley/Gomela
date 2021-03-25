@@ -46,7 +46,6 @@ type Model struct {
 	ContainsWg       bool
 	ContainsChan     bool
 	ContainsMutexes  bool
-	ContainsMutexes  bool
 	Init             *promela_ast.InitDef       // The proctype consisting of the "main" function of the source program
 	Global_vars      []promela_ast.Stmt         // the global variable used in the ltl properties
 	Defines          []promela_ast.DefineStmt   // the channel bounds
