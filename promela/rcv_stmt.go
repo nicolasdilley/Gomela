@@ -2,6 +2,7 @@ package promela
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/types"
 
@@ -16,6 +17,8 @@ func (m *Model) translateRcvStmt(
 	guards := []*promela_ast.GuardStmt{}
 	var err *ParseError
 
+	fmt.Println("icii ", m.Chans)
+	fmt.Println("e : ", e)
 	if m.containsChan(e) {
 		chan_name := m.getChanStruct(e)
 
@@ -57,45 +60,13 @@ func (m *Model) translateRcvStmt(
 		guards = []*promela_ast.GuardStmt{async_guard, sync_guard}
 	} else {
 
-		isTimeAfter := false
-		switch call := e.(type) {
-		case *ast.CallExpr:
-			switch sel := call.Fun.(type) {
-			case *ast.SelectorExpr:
-				switch ident := sel.X.(type) {
-				case *ast.Ident:
-					if ident.Name == "time" && sel.Sel.Name == "After" {
-						m.checkForBreak(body, g)
-						guards = []*promela_ast.GuardStmt{
-							&promela_ast.GuardStmt{
-								Cond: &promela_ast.Ident{Name: "true"},
-								Body: body}}
-						isTimeAfter = true
-					}
-					if sel.Sel.Name == "Done" {
-
-						// look if the type is context.Context
-						isContext := false
-						switch t := m.AstMap[m.Package].TypesInfo.TypeOf(ident).(type) {
-						case *types.Named:
-							if t.String() == "context.Context" {
-								isContext = true
-							}
-						}
-						if ident.Name == "ctx" || isContext {
-							m.checkForBreak(body, g)
-							guards = []*promela_ast.GuardStmt{
-								&promela_ast.GuardStmt{
-									Cond: &promela_ast.Ident{Name: "true"},
-									Body: body}}
-							isTimeAfter = true
-						}
-					}
-				}
-			}
-		}
-
-		if !isTimeAfter {
+		if m.IsTimeAfter(e) {
+			m.checkForBreak(body, g)
+			guards = []*promela_ast.GuardStmt{
+				&promela_ast.GuardStmt{
+					Cond: &promela_ast.Ident{Name: "true"},
+					Body: body}}
+		} else {
 			err = &ParseError{
 				err: errors.New(UNKNOWN_RCV + m.Fileset.Position(e.Pos()).String()),
 			}
@@ -103,4 +74,59 @@ func (m *Model) translateRcvStmt(
 	}
 
 	return guards, err
+}
+
+func (m *Model) IsTimeAfter(e ast.Expr) bool {
+
+	switch call := e.(type) {
+	case *ast.SelectorExpr:
+		// Checking if timeout.C channel and change it to a true branche
+		if t := m.AstMap[m.Package].TypesInfo.TypeOf(call.X); t != nil {
+			t = GetElemIfPointer(t)
+			switch t := t.(type) {
+			case *types.Named:
+				if t.String() == "time.Ticker" || t.String() == "time.Timer" {
+
+					return true
+				}
+			}
+		}
+	case *ast.CallExpr:
+		switch sel := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			switch ident := sel.X.(type) {
+			case *ast.Ident:
+				if ident.Name == "time" && sel.Sel.Name == "After" {
+					return true
+				}
+			}
+
+			if sel.Sel.Name == "Done" {
+				// look if the type is context.Context
+				isContext := false
+				t := m.AstMap[m.Package].TypesInfo.TypeOf(sel.X)
+
+				if t != nil {
+					switch u := t.(type) {
+					case *types.Pointer:
+						t = u.Elem()
+					}
+					switch t.(type) {
+					case *types.Named:
+						if t.String() == "context.Context" {
+							isContext = true
+						}
+					}
+					if sel.Sel.Name == "ctx" || isContext {
+						return true
+					}
+				} else {
+					return sel.Sel.Name == "ctx"
+				}
+			}
+
+		}
+	}
+
+	return false
 }

@@ -1,0 +1,9 @@
+Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
+hello.go,cockroach24808++TestCockroach2480835,TestCockroach24808,new channel,false,Name :stopper_stopper,36,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,TestCockroach24808,new WaitGroup,false,Name :stopper_stop,36,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,TestCockroach24808,Comm Param,true,1,41,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,TestCockroach24808,Integer as a chan bound,true,1,41,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,TestCockroach24808,new channel,false,Name :compactor_ch,41,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,Start,Comm Param,true,1,19,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,Start,Integer as a add bound,true,1,19,https://github.com/hello.go/blob//#L35,
+hello.go,cockroach24808++TestCockroach2480835,AnonymousStart21,Candidate Param,false,ub_for24_3,0,https://github.com/hello.go/blob//#L35,

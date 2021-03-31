@@ -38,6 +38,7 @@ func NewStopper() *Stopper {
 	s := &Stopper{
 		stopper: make(chan struct{}),
 	}
+
 	return s
 }
 

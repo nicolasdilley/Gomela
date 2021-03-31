@@ -20,7 +20,10 @@ func TestIsSubsetOfExpr(t *testing.T) {
 		t.Error("result was incorrect, got: false, want: true")
 	}
 	if isSubsetOfExpr(&ast.Ident{Name: "u"}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}) {
-		t.Error("result was incorrect, got: true, want: true")
+		t.Error("result was incorrect, got: true, want: false")
+	}
+	if !isSubsetOfExpr(&ast.Ident{Name: "u"}, &ast.Ident{Name: "u_u_c"}) {
+		t.Error("result was incorrect, got: false, want: true")
 	}
 
 }
@@ -49,6 +52,12 @@ func TestAddIdenticalSelectorExprs(t *testing.T) {
 
 	exprs = []ast.Expr{&ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "wg"}}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}}
 	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "a"}})
+	if len(new_expr) != 1 {
+		t.Error("result was incorrect, got: false, want: true")
+	}
+
+	exprs = []ast.Expr{&ast.Ident{Name: "t_wg"}}
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "a"}})
 	if len(new_expr) != 1 {
 		t.Error("result was incorrect, got: false, want: true")
 	}

@@ -130,8 +130,7 @@ func setupAuthStore() (store *authStore, teardownfunc func()) {
 ///											stk.run()
 ///	ts.assignSimpleTokenToUser()
 ///	t.simpleTokensMu.Lock()
-///	t.simpleTokenKeeper.addSimpleToken()
-///	tm.addSimpleTokenCh <- true
+///	t.simpleenCh <- true
 ///											<-tm.addSimpleTokenCh
 ///	t.simpleTokensMu.Unlock()
 ///	ts.assignSimpleTokenToUser()

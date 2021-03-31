@@ -19,7 +19,7 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 			return nil, &ParseError{err: errors.New(UNKNOWN_MUTEX_OP + m.Fileset.Position(call_expr.Pos()).String())}
 		}
 
-		if m.containsMutex(&ast.Ident{Name: translateIdent(name.X).Name}) {
+		if m.containsMutex(name.X) {
 
 			b.List = append(b.List,
 				&promela_ast.RcvStmt{
@@ -41,11 +41,10 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 
 func (m *Model) containsMutex(expr ast.Expr) bool {
 	for _, e := range m.Mutexes {
-		if IdenticalExpr(e, expr) {
+		if IdenticalExpr(&ast.Ident{Name: translateIdent(e).Name}, &ast.Ident{Name: translateIdent(expr).Name}) {
 			return true
 		}
-
-		if IdenticalExpr(e, &ast.Ident{Name: translateIdent(expr).Name}) {
+		if isSubsetOfExpr(expr, e) {
 			return true
 		}
 	}

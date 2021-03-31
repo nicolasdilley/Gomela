@@ -15,6 +15,7 @@ import (
 
 func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
 	// if obj != nil {
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param
 	var pack_name string = m.Package
@@ -52,7 +53,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			}
 
 			if hasChan && known {
-				return m.translateCommParams(new_mod, call_expr, func_name, decl, params, args)
+				return m.translateCommParams(new_mod, call_expr, func_name, decl, params, args, false)
 			} else {
 
 				switch name := call_expr.Fun.(type) {

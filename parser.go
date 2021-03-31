@@ -29,6 +29,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl, ast_map[pack_name]) {
+						fmt.Println("Parsing ", decl.Name)
 						var m promela.Model = promela.Model{
 							Result_fodler:    result_folder,
 							Project_name:     proj_name,
@@ -113,21 +114,18 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 		case *ast.StarExpr:
 			ident = t.X
 		}
-		switch ident := ident.(type) {
-		case *ast.Ident:
-			obj := pack.TypesInfo.ObjectOf(ident)
 
-			switch t := obj.Type().(type) {
-			case *types.Named:
+		t := pack.TypesInfo.TypeOf(ident)
+
+		switch t := t.(type) {
+		case *types.Named:
+			if t.String() != "testing.T" {
 				if structContainsChan(t, []*types.Named{t}) {
 					return true
 				}
-
 			}
-		default:
-			log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident, ")
-
 		}
+
 	}
 
 	if decl.Recv != nil {
@@ -140,15 +138,19 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 			}
 			switch ident := ident.(type) {
 			case *ast.Ident:
-				obj := pack.TypesInfo.ObjectOf(ident)
+				t := pack.TypesInfo.TypeOf(ident)
+				if t != nil {
+					switch t := t.(type) {
+					case *types.Named:
 
-				switch t := obj.Type().(type) {
-				case *types.Named:
-					return structContainsChan(t, []*types.Named{t})
+						return structContainsChan(t, []*types.Named{t})
 
+					}
+				} else {
+					log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The type of the receiver of func ", decl.Name.Name, " could not be found ")
 				}
 			default:
-				log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident, ")
+				log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident")
 
 			}
 		}
@@ -159,9 +161,10 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 
 func structContainsChan(t types.Type, seen []*types.Named) bool {
 
+	t = promela.GetElemIfPointer(t)
 	if t.String() == "sync.WaitGroup" {
 		return true
-	} else if t.String() == "sync.Mutex" {
+	} else if t.String() == "sync.Mutex" || t.String() == "sync.RWMutex" {
 		return true
 	}
 	switch t := t.Underlying().(type) {
@@ -171,6 +174,10 @@ func structContainsChan(t types.Type, seen []*types.Named) bool {
 			field_type := promela.GetElemIfPointer(t.Field(i).Type())
 
 			switch field := field_type.(type) {
+			case *types.Struct:
+				if structContainsChan(field, seen) {
+					return true
+				}
 			case *types.Named:
 				contains := false
 
@@ -180,7 +187,9 @@ func structContainsChan(t types.Type, seen []*types.Named) bool {
 					}
 				}
 				if !contains {
-					return structContainsChan(field, append(seen, field))
+					if structContainsChan(field, append(seen, field)) {
+						return true
+					}
 				}
 			case *types.Chan:
 				return true

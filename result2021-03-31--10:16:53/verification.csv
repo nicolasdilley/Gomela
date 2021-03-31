@@ -1,0 +1,1 @@
+source:cockroach24808++TestCockroach2480835.pml,0,the model is not executable,,,,spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2021-03-31--10:16:53/source/cockroach24808++TestCockroach2480835.pml:53, Error: undeclared variable: compactor	saw '',' = 44',,
