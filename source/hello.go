@@ -1,45 +1,105 @@
-package cockroach24808
+package istio17860
 
 import (
+	"context"
+
 	"sync"
 	"testing"
+	"time"
 )
 
-type Compactor struct {
-	ch chan struct{}
+type Proxy interface {
+	IsLive() bool
 }
 
-type Stopper struct {
-	stop    sync.WaitGroup
-	stopper chan struct{}
+type TestProxy struct {
+	live func() bool
 }
 
-func (c *Compactor) Start(stopper *Stopper) {
-	c.ch <- struct{}{}
-	stopper.stop.Add(1)
+func (tp TestProxy) IsLive() bool {
+	if tp.live == nil {
+		return true
+	}
+	return tp.live()
+}
 
-	go func() {
-		defer stopper.stop.Done()
+type exitStatus int
 
-		for {
-			select {
-			case <-stopper.stopper:
+type agent struct {
+	proxy        Proxy
+	mu           *sync.Mutex
+	statusCh     chan exitStatus
+	currentEpoch int
+	activeEpochs map[int]struct{}
+}
+
+func (a *agent) Run(ctx context.Context) {
+	for {
+		select {
+		case status := <-a.statusCh:
+			a.mu.Lock()
+			delete(a.activeEpochs, int(status))
+			active := len(a.activeEpochs)
+			a.mu.Unlock()
+			if active == 0 {
 				return
-			case <-c.ch:
 			}
+		case <-ctx.Done():
+			return
 		}
+	}
+}
+
+func (a *agent) Restart() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.waitUntilLive()
+	a.currentEpoch++
+	a.activeEpochs[a.currentEpoch] = struct{}{}
+
+	go a.runWait(a.currentEpoch)
+}
+
+func (a *agent) runWait(epoch int) {
+	a.statusCh <- exitStatus(epoch)
+}
+
+func (a *agent) waitUntilLive() {
+	if len(a.activeEpochs) == 0 {
+		return
+	}
+
+	interval := time.NewTicker(30 * time.Nanosecond)
+	timer := time.NewTimer(100 * time.Nanosecond)
+	defer func() {
+		interval.Stop()
+		timer.Stop()
 	}()
 
+	for {
+		select {
+		case <-timer.C:
+			return
+		case <-interval.C:
+
+		}
+	}
 }
 
-func TestCockroach24808(t *testing.T) {
-	stopper := &Stopper{
-		stopper: make(chan struct{}),
+func TestIstio17860(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	a := &agent{
+		mu:           &sync.Mutex{},
+		statusCh:     make(chan exitStatus),
+		activeEpochs: make(map[int]struct{}),
 	}
-	defer close(stopper.stopper)
+	go func() { a.Run(ctx) }()
 
-	compactor := &Compactor{ch: make(chan struct{}, 1)}
-	compactor.ch <- struct{}{}
+	a.Restart()
+	go a.Restart()
 
-	compactor.Start(stopper)
+	time.Sleep(200 * time.Nanosecond)
 }

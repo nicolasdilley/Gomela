@@ -8,6 +8,7 @@ import (
 
 func (m *Model) translateDeferStmt(s *ast.DeferStmt) (*promela_ast.BlockStmt, *ParseError) {
 	s1, err := m.TranslateExpr(s.Call)
+
 	if containsMSP(s1) {
 		return s1, err
 	} else {

@@ -166,6 +166,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 			if t != nil {
 				t = GetElemIfPointer(t)
 				switch t := t.(type) {
+
 				case *types.Named:
 					b1, err1 := m.translateStruct(s, lh, t, []*types.Named{t})
 					if err1 != nil {
@@ -221,7 +222,7 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 					if elem.String() == "sync.WaitGroup" {
 						return b, &ParseError{err: errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())}
 					}
-					if elem.String() == "sync.Mutex" {
+					if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
 						return b, &ParseError{err: errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())}
 					}
 				}
@@ -234,7 +235,7 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 					if elem.String() == "sync.WaitGroup" {
 						return b, &ParseError{err: errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())}
 					}
-					if elem.String() == "sync.Mutex" {
+					if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
 						return b, &ParseError{err: errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())}
 					}
 				}
@@ -247,12 +248,13 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 					if elem.String() == "sync.WaitGroup" {
 						return b, &ParseError{err: errors.New(WG_IN_MAP + m.Fileset.Position(s.Pos()).String())}
 					}
-					if elem.String() == "sync.Mutex" {
+					if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
 						return b, &ParseError{err: errors.New(MUTEX_IN_MAP + m.Fileset.Position(s.Pos()).String())}
 					}
 				}
 
 			case *types.Struct:
+
 				b1, err1 := m.translateStruct(
 					s,
 					&ast.SelectorExpr{
@@ -288,7 +290,6 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 	// this is to accomodate struct that have a Mutex, Waitgroup embedded
 	switch t := t.(type) {
 	case *types.Struct:
-
 		for i := 0; i < t.NumFields(); i++ {
 			switch t := t.Field(i).Type().(type) {
 			case *types.Named:
@@ -361,7 +362,15 @@ func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr) (b *promela_ast.BlockSt
 		return m.lookForChans(lhs, c.X)
 	case *ast.CompositeLit:
 		for _, f := range c.Elts {
-			switch expr := f.(type) {
+
+			var expr ast.Expr = f
+
+			switch u := f.(type) {
+			case *ast.UnaryExpr:
+				expr = u.X
+			}
+
+			switch expr := expr.(type) {
 			case *ast.KeyValueExpr:
 
 				switch ident := expr.Key.(type) {
@@ -379,6 +388,17 @@ func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr) (b *promela_ast.BlockSt
 						panic(fmt.Sprint("A key on a struct must be an Ident at pos : ", m.Fileset.Position(c.Pos()), " with ", expr, " and key :", expr.Key))
 					}
 				}
+
+			case *ast.CompositeLit:
+				b1, err1 := m.lookForChans(lhs, expr)
+
+				if err1 != nil {
+					return b, err1
+				}
+
+				addBlock(b, b1)
+			default:
+				ast.Print(m.Fileset, expr)
 
 			}
 		}
@@ -589,6 +609,7 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 
 func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
 	switch expr := expr.(type) {
 	case *ast.BinaryExpr:
 		e1, err1 := m.TranslateExpr(expr.X)
@@ -611,6 +632,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 				ch := TranslateIdent(expr.Args[0], m.Fileset)
 
+				fmt.Println(m.Chans)
 				if m.containsChan(expr.Args[0]) {
 					send.Chan = &promela_ast.SelectorExpr{
 						X: &ch, Sel: &promela_ast.Ident{Name: "closing"},
@@ -771,13 +793,22 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 		}
 
 		if x != nil {
-			switch x.Type().(type) {
+			t := GetElemIfPointer(x.Type())
+			switch t.(type) {
 			case *types.Named:
 				if x.Pkg() != nil {
 					pack_name = x.Pkg().Name()
 				}
 				is_method_call = true
 				method_type = x.Type()
+			case *types.Struct:
+				if x.Pkg() != nil {
+					pack_name = x.Pkg().Name()
+				}
+				is_method_call = true
+				method_type = x.Type()
+			default:
+				fmt.Println(" icii ", x.Type())
 			}
 		}
 		func_name = name.Sel.Name
@@ -814,6 +845,7 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 									}
 								}
 							} else {
+								fmt.Println("iciii")
 								return true, decl, pack_name
 							}
 						}
@@ -859,6 +891,16 @@ func (m *Model) containsChan(expr ast.Expr) bool {
 	}
 	return false
 }
+func (m *Model) isChan(expr ast.Expr) bool {
+
+	for e, _ := range m.Chans {
+
+		if IdenticalExpr(&ast.Ident{Name: translateIdent(e).Name}, &ast.Ident{Name: translateIdent(expr).Name}) {
+			return true
+		}
+	}
+	return false
+}
 
 func (m *Model) containsWaitgroup(expr ast.Expr) bool {
 
@@ -878,6 +920,26 @@ func (m *Model) containsWaitgroup(expr ast.Expr) bool {
 		}
 
 		if isSubsetOfExpr(expr, e) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Model) isWaitgroup(expr ast.Expr) bool {
+
+	switch ptr := expr.(type) {
+	case *ast.UnaryExpr:
+		expr = ptr.X
+	}
+
+	for e, _ := range m.WaitGroups {
+
+		if IdenticalExpr(e, expr) {
+			return true
+		}
+
+		if IdenticalExpr(e, &ast.Ident{Name: translateIdent(expr).Name}) {
 			return true
 		}
 	}

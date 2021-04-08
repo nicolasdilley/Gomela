@@ -22,6 +22,7 @@ type VerificationRun struct {
 	Close_safety_error            bool   // is there any safety errors
 	Send_on_close_safety_error    bool   // is there any safety errors
 	Negative_counter_safety_error bool   // is there any safety errors
+	Double_unlock                 bool   // is there a double lock ?
 	Global_deadlock               bool   // is there any global deadlock
 	Num_states                    int    // the number of states in the model
 	Timeout                       bool   // Has the verification timedout
@@ -170,6 +171,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
 		fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
 		fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
+		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 		fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
 		if ver.Err != "" {
 			red := color.New(color.FgRed).SprintFunc()
@@ -330,60 +332,69 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 func parseResults(result string, ver *VerificationRun) bool {
 
-	if !strings.Contains(result, "assertion violated") {
-		if strings.Contains(result, "wg.Counter >= 0") {
+	fmt.Println(result)
+	if strings.Contains(result, "assertion violated") {
+
+		if strings.Contains(result, "wg.Counter>=0") {
 			ver.Negative_counter_safety_error = true
 		}
 
-		if strings.Contains(result, "assert(1 == 0)") {
+		if strings.Contains(result, "(1==0)") {
+			fmt.Println("oui")
 			ver.Send_on_close_safety_error = true
 		}
-		if strings.Contains(result, "assert(2 == 0)") {
+		if strings.Contains(result, "(0==32)") {
+			ver.Double_unlock = true
+		}
+		if strings.Contains(result, "(2==0)") {
 			ver.Close_safety_error = true
 		}
-	}
-	if strings.Contains(result, "errors: 0") {
 		ver.Global_deadlock = false
-	}
-	if strings.Contains(result, "too many processes") {
-		ver.Err = "too many processes"
-		ver.Global_deadlock = false
-		ver.Negative_counter_safety_error = false
-		ver.Close_safety_error = false
-		ver.Send_on_close_safety_error = false
-	}
-
-	// Calculates the number of states
-
-	splitted := strings.Split(result, "\n")
-
-	if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
-
-		fmt.Println("The model is not executable : ")
-		err := ""
-		for _, line := range splitted {
-			err += line
+	} else {
+		if strings.Contains(result, "errors: 0") {
+			ver.Global_deadlock = false
 		}
-		ver.Err = err
-		return false
-	}
+		if strings.Contains(result, "too many processes") {
+			ver.Err = "too many processes"
+			ver.Global_deadlock = false
+			ver.Negative_counter_safety_error = false
+			ver.Close_safety_error = false
+			ver.Send_on_close_safety_error = false
+			ver.Double_unlock = false
+		}
 
-	if strings.Contains(splitted[len(splitted)-1], "Depth=") {
-		// Its a timeout
-		ver.Timeout = true
-	}
-	for _, line := range splitted {
-		if strings.Contains(line, "states, stored") {
+		// Calculates the number of states
 
-			lines := strings.Split(line, "states, stored")
-			r := strings.Replace(lines[0], " ", "", -1)
+		splitted := strings.Split(result, "\n")
 
-			states, err := strconv.Atoi(r)
-			if err != nil {
-				fmt.Println("There was an error in parsing the number of states : ", r)
+		if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
+
+			fmt.Println("The model is not executable : ")
+			err := ""
+			for _, line := range splitted {
+				err += line
 			}
+			ver.Err = err
+			return false
+		}
 
-			ver.Num_states = states
+		if strings.Contains(splitted[len(splitted)-1], "Depth=") {
+			// Its a timeout
+			ver.Timeout = true
+		}
+		for _, line := range splitted {
+			if strings.Contains(line, "states, stored") {
+
+				lines := strings.Split(line, "states, stored")
+				r := strings.Replace(lines[0], " ", "", -1)
+
+				states, err := strconv.Atoi(r)
+				if err != nil {
+					fmt.Println("There was an error in parsing the number of states : ", r)
+				}
+
+				ver.Num_states = states
+			}
 		}
 	}
 

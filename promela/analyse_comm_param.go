@@ -457,7 +457,7 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 					case *types.Pointer:
 						switch typ := typ.Elem().(type) {
 						case *types.Named:
-							if typ.String() == "sync.WaitGroup" {
+							if typ.String() == "sync.WaitGroup" || typ.String() == "sync.Mutex" {
 								contains_wg = true
 							}
 						}
@@ -538,7 +538,7 @@ func (m *Model) isCallSpawning(call_expr *ast.CallExpr, log bool) (recursive boo
 			case *types.Pointer:
 				switch typ := typ.Elem().(type) {
 				case *types.Named:
-					if typ.String() == "sync.WaitGroup" {
+					if typ.String() == "sync.WaitGroup" || typ.String() == "sync.Mutex" {
 						contains_wg = true
 					}
 				}

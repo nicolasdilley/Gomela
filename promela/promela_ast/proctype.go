@@ -92,6 +92,8 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 			for _, guard := range stmt.Guards {
 				decls = append(decls, DeclInBlock(guard.Body)...)
 			}
+		case *BlockStmt:
+			decls = append(decls, DeclInBlock(stmt)...)
 		}
 	}
 

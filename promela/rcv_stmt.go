@@ -2,7 +2,6 @@ package promela
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/types"
 
@@ -17,8 +16,6 @@ func (m *Model) translateRcvStmt(
 	guards := []*promela_ast.GuardStmt{}
 	var err *ParseError
 
-	fmt.Println("icii ", m.Chans)
-	fmt.Println("e : ", e)
 	if m.containsChan(e) {
 		chan_name := m.getChanStruct(e)
 

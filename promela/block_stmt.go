@@ -19,7 +19,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 				case *ast.DeferStmt:
 					s1, err1 := m.translateDeferStmt(stmt)
 					if err1 != nil {
-						return nil, nil, err1
+						return block_stmt, defer_stmts, err1
 					}
 					if len(s1.List) > 0 {
 						defer_stmts.List = append(defer_stmts.List, s1)

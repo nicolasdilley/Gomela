@@ -3,8 +3,29 @@ package cockroach35073
 import (
 	"sync"
 	"sync/atomic"
-	"testing"
 )
+
+func main() {
+	outbox := &outbox{}
+	outbox.init()
+
+	var wg sync.WaitGroup
+	for i := 0; i < outboxBufRows; i++ {
+		outbox.Push()
+	}
+
+	var blockedPusherWg sync.WaitGroup
+	blockedPusherWg.Add(1)
+	go func() {
+		outbox.Push()
+		blockedPusherWg.Done()
+	}()
+
+	outbox.start(&wg)
+
+	wg.Wait()
+	outbox.RowChannel.Push()
+}
 
 type ConsumerStatus uint32
 
@@ -84,26 +105,4 @@ func (m *outbox) run(wg *sync.WaitGroup) {
 
 func (m *outbox) mainLoop() {
 	return
-}
-
-func TestCockroach35073(t *testing.T) {
-	outbox := &outbox{}
-	outbox.init()
-
-	var wg sync.WaitGroup
-	for i := 0; i < outboxBufRows; i++ {
-		outbox.Push()
-	}
-
-	var blockedPusherWg sync.WaitGroup
-	blockedPusherWg.Add(1)
-	go func() {
-		outbox.Push()
-		blockedPusherWg.Done()
-	}()
-
-	outbox.start(&wg)
-
-	wg.Wait()
-	outbox.RowChannel.Push()
 }

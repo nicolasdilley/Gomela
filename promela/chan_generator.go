@@ -238,7 +238,7 @@ func GenerateMutexMonitor() string {
 		"		:: m.Lock?false ->\n" +
 		"			locked =true;\n" +
 		"		:: m.RUnlock?false ->\n" +
-		"			assert(0==33);" +
+		"			assert(0==32);" +
 		"		:: m.RLock?false ->\n" +
 		"			m.Counter = m.Counter + 1;\n" +
 		"		fi;\n" +

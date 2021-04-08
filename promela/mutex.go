@@ -22,7 +22,7 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 		if m.containsMutex(name.X) {
 
 			b.List = append(b.List,
-				&promela_ast.RcvStmt{
+				&promela_ast.SendStmt{
 					Chan: &promela_ast.SelectorExpr{
 						X: &promela_ast.Ident{
 							Name: translateIdent(name.X).Name},
@@ -45,6 +45,15 @@ func (m *Model) containsMutex(expr ast.Expr) bool {
 			return true
 		}
 		if isSubsetOfExpr(expr, e) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Model) isMutex(expr ast.Expr) bool {
+	for _, e := range m.Mutexes {
+		if IdenticalExpr(&ast.Ident{Name: translateIdent(e).Name}, &ast.Ident{Name: translateIdent(expr).Name}) {
 			return true
 		}
 	}

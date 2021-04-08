@@ -29,34 +29,37 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 		pack_name = getPackName(name).Name
 
-		if m.containsWaitgroup(&ast.Ident{Name: translateIdent(name.X).Name}) {
+		if m.isWaitgroup(&ast.Ident{Name: translateIdent(name.X).Name}) {
 			return m.parseWgFunc(call_expr, name)
 		}
 
 	case *ast.FuncLit:
 		panic("Promela_translator.go : Should not have a funclit here")
 	}
+
 	if !m.ContainsRecFunc(pack_name, func_name) {
 
-		decl, pack_name, err1 := m.findFunDecl(call_expr)
+		decl, new_call_expr, pack_name, err1 := m.findFunDecl(call_expr)
+
 		if err1 != nil {
 			return stmts, err1
 		} else if decl != nil {
 			new_mod := m.newModel(pack_name, decl)
 
 			new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
-			params, args, hasChan, known, err1 := m.translateParams(new_mod, decl, call_expr, false)
+
+			params, args, hasChan, known, err1 := m.translateParams(new_mod, decl, new_call_expr, false)
 
 			// translate args
 			if err1 != nil {
 				return stmts, err1
 			}
-
 			if hasChan && known {
-				return m.translateCommParams(new_mod, call_expr, func_name, decl, params, args, false)
+
+				return m.translateCommParams(new_mod, new_call_expr, func_name, decl, params, args, false)
 			} else {
 
-				switch name := call_expr.Fun.(type) {
+				switch name := new_call_expr.Fun.(type) {
 				case *ast.SelectorExpr:
 					switch ident := name.X.(type) {
 					case *ast.Ident:
@@ -64,22 +67,22 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 							if name.Sel.Name == "Notify" {
 
 								// Send guard
-								if m.containsChan(call_expr.Args[0]) {
+								if m.containsChan(new_call_expr.Args[0]) {
 
-									chan_name := m.getChanStruct(call_expr.Args[0])
+									chan_name := m.getChanStruct(new_call_expr.Args[0])
 
 									sync_send := &promela_ast.SendStmt{
 										Chan: &promela_ast.SelectorExpr{
 											X:   chan_name.Name,
 											Sel: &promela_ast.Ident{Name: "sync"}},
 										Rhs:  &promela_ast.Ident{Name: "false,0"},
-										Send: m.Fileset.Position(call_expr.Pos())}
+										Send: m.Fileset.Position(new_call_expr.Pos())}
 									async_send := &promela_ast.SendStmt{
 										Chan: &promela_ast.SelectorExpr{
 											X:   chan_name.Name,
 											Sel: &promela_ast.Ident{Name: "enq"}},
 										Rhs:  &promela_ast.Ident{Name: "0"},
-										Send: m.Fileset.Position(call_expr.Pos())}
+										Send: m.Fileset.Position(new_call_expr.Pos())}
 
 									sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
 
@@ -93,8 +96,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 												&promela_ast.Ident{Name: "break"},
 											},
 										},
-										Guard: m.Fileset.Position(call_expr.Pos())}
-									async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(call_expr.Pos())}
+										Guard: m.Fileset.Position(new_call_expr.Pos())}
+									async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(new_call_expr.Pos())}
 
 									// true guard
 									true_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
@@ -103,7 +106,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 									stmts.List = append(stmts.List, select_stmt)
 								} else {
-									return stmts, &ParseError{err: errors.New(UNKNOWN_NOTIFY + m.Fileset.Position(call_expr.Pos()).String())}
+									return stmts, &ParseError{err: errors.New(UNKNOWN_NOTIFY + m.Fileset.Position(new_call_expr.Pos()).String())}
 								}
 							}
 						}

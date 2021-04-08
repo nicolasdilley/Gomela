@@ -174,4 +174,12 @@ BUG FOUND BY GCATCH IN GRPC
 
 3 -> File: /Users/nicolasdilley/go/src/github.com/system-pclub/GCatch/GCatch/testdata/grpc-buggy/src/google.golang.org/grpc/internal/testutils/pipe_listener_test.go:53
 	Found by Gomela 
-4 -> 
+4 ->
+
+
+
+
+// inlining channel creation
+// inline high order function
+// Structs flattening
+// Changing methods into functions

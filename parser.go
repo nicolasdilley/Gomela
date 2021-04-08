@@ -142,7 +142,6 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 				if t != nil {
 					switch t := t.(type) {
 					case *types.Named:
-
 						return structContainsChan(t, []*types.Named{t})
 
 					}
