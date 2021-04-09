@@ -113,7 +113,6 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				m.checkForBreak(body, goto_stmt)
 				i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: body})
 			}
-
 		}
 	}
 

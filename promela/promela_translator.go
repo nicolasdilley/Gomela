@@ -397,8 +397,8 @@ func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr) (b *promela_ast.BlockSt
 				}
 
 				addBlock(b, b1)
-			default:
-				ast.Print(m.Fileset, expr)
+				// default:
+				// 	ast.Print(m.Fileset, expr)
 
 			}
 		}
@@ -456,6 +456,7 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 
 func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
 	if !m.For_counter.In_for {
 
 		if !m.containsMutex(prom_mutex_name) {
@@ -497,6 +498,8 @@ func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela
 
 func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
+
+	fmt.Println("iciii ", go_chan_name)
 	if !m.For_counter.In_for {
 		// a new channel is found lets change its name, rename it in function and add to struct
 		prom_chan_name := translateIdent(go_chan_name)
@@ -632,7 +635,6 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 				ch := TranslateIdent(expr.Args[0], m.Fileset)
 
-				fmt.Println(m.Chans)
 				if m.containsChan(expr.Args[0]) {
 					send.Chan = &promela_ast.SelectorExpr{
 						X: &ch, Sel: &promela_ast.Ident{Name: "closing"},
@@ -807,8 +809,6 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 				}
 				is_method_call = true
 				method_type = x.Type()
-			default:
-				fmt.Println(" icii ", x.Type())
 			}
 		}
 		func_name = name.Sel.Name
@@ -845,7 +845,6 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 									}
 								}
 							} else {
-								fmt.Println("iciii")
 								return true, decl, pack_name
 							}
 						}

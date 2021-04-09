@@ -156,6 +156,7 @@ func (m *Model) translateBodyOfForLoop(s *ast.BlockStmt) (*promela_ast.BlockStmt
 	label_name := fmt.Sprintf("for%d%d", m.For_counter.X, m.For_counter.Y)
 	for_label := &promela_ast.LabelStmt{Name: label_name + "_exit"}
 	for_end_label2 := &promela_ast.LabelStmt{Name: label_name + "_end"}
+
 	stmts, d, err := m.TranslateBlockStmt(s)
 	body := &promela_ast.BlockStmt{List: append(
 		[]promela_ast.Stmt{&promela_ast.LabelStmt{Name: label_name}},

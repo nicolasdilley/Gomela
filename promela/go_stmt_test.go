@@ -44,24 +44,45 @@ func TestReplaceExpr(t *testing.T) {
 
 func TestAddIdenticalSelectorExprs(t *testing.T) {
 
-	exprs := []ast.Expr{&ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "wg"}}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}}
+	exprs := []ast.Expr{&ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "a"}}, Sel: &ast.Ident{Name: "wg"}}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}}
 	new_expr := addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "a"}})
-	if len(new_expr) != 2 {
+	if len(new_expr) != 1 {
 		t.Error("result was incorrect, got: false, want: true")
 	}
 
 	exprs = []ast.Expr{&ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "wg"}}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}}
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}})
+	if len(new_expr) != 1 {
+		t.Error("result was incorrect, got: false, want: true")
+	}
+
+	exprs = []ast.Expr{&ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "s"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "wg"}}, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "wg"}}}
 	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "t"}}, Sel: &ast.Ident{Name: "a"}})
-	if len(new_expr) != 1 {
+	if len(new_expr) != 0 {
 		t.Error("result was incorrect, got: false, want: true")
 	}
 
+	exprs = []ast.Expr{&ast.Ident{Name: "s_wg"}}
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "s"}, Sel: &ast.Ident{Name: "wg"}})
+	if len(new_expr) != 1 {
+		t.Error("result was incorrect, got: false, want: true")
+	}
 	exprs = []ast.Expr{&ast.Ident{Name: "t_wg"}}
-	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "a"}})
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.Ident{Name: "t"})
+	if len(new_expr) != 1 {
+		t.Error("result was incorrect, got: false, want: true")
+	}
+	exprs = []ast.Expr{&ast.Ident{Name: "t"}}
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.Ident{Name: "t"})
 	if len(new_expr) != 1 {
 		t.Error("result was incorrect, got: false, want: true")
 	}
 
+	exprs = []ast.Expr{&ast.Ident{Name: "s_wg"}}
+	new_expr = addIdenticalSelectorExprs(exprs, &ast.SelectorExpr{X: &ast.Ident{Name: "t"}, Sel: &ast.Ident{Name: "a"}})
+	if len(new_expr) != 0 {
+		t.Error("result was incorrect, got: false, want: true")
+	}
 }
 
 func TestRenameBaseOfExprWithOther(t *testing.T) {

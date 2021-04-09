@@ -30,6 +30,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	} else {
 		var pack string
 		var err1 *ParseError
+
 		decl, new_call_expr, pack, err1 = m.findFunDecl(call_expr)
 
 		pack_name = pack
@@ -44,7 +45,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 
 		// check if its a call on a struct that contains a chan, mutex or wgs
 
-		func_name = decl.Name.Name
+		func_name = decl.Name.Name + fmt.Sprint(m.Fileset.Position(decl.Pos()).Line)
 
 		new_mod := m.newModel(pack_name, decl)
 
@@ -97,6 +98,7 @@ func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string
 	default:
 		panic("s can only be a call expr or a go stmt ! Found: " + fmt.Sprint(s))
 	}
+
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(s.Pos())}
 
@@ -477,6 +479,7 @@ func (m *Model) updateDeclWithRcvAndStructs(decl ast.FuncDecl, call_expr *ast.Ca
 	// params and args
 	counter := 0
 
+	fmt.Println("decl ", decl.Name)
 	for _, field := range new_fields {
 		for _, name := range field.Names {
 
@@ -485,8 +488,10 @@ func (m *Model) updateDeclWithRcvAndStructs(decl ast.FuncDecl, call_expr *ast.Ca
 
 			chans := []ast.Expr{}
 			for name, _ := range m.Chans {
+
 				chans = append(chans, name)
 			}
+
 			exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(chans, s))
 
 			wgs := []ast.Expr{}
@@ -553,16 +558,13 @@ func generateFields(call_expr ast.Expr, rcv_name *ast.Ident, exprs []ast.Expr, t
 
 	sub_expr := call_expr
 
-	switch sel := sub_expr.(type) {
-	case *ast.SelectorExpr:
-		sub_expr = sel.X
-	}
+	// switch sel := sub_expr.(type) {
+	// case *ast.SelectorExpr:
+	// 	sub_expr = sel.X
+	// }
 
 	for _, expr := range exprs {
-		fmt.Println("expr : ", expr)
-		fmt.Println("sub_expr : ", sub_expr)
-		fmt.Println("rcv name : ", rcv_name)
-		fmt.Println(translateIdent(renameBaseOfExprWithOther(expr, sub_expr, rcv_name)).Name)
+		fmt.Println(call_expr, expr, rcv_name)
 		fields = append(fields,
 			&ast.Field{
 				Names: []*ast.Ident{
@@ -585,7 +587,7 @@ func renameBaseOfExprWithOther(from ast.Expr, old ast.Expr, n *ast.Ident) ast.Ex
 
 	switch from := from.(type) {
 	case *ast.SelectorExpr:
-		return &ast.SelectorExpr{X: replaceExpr(from.X, old, n), Sel: from.Sel}
+		return replaceExpr(from, old, n)
 	case *ast.Ident:
 		idents := strings.Split(from.Name, "_")
 		lhs := exprsToSelector(idents)
@@ -625,25 +627,33 @@ func replaceExpr(from ast.Expr, old ast.Expr, n *ast.Ident) ast.Expr {
 
 }
 
+// Add the expression in exprs that contains s.
+
+// Ie: if s == c and exprs == [c.ch] -> c.ch cause s contains one expr in exprs
 func addIdenticalSelectorExprs(exprs []ast.Expr, s ast.Expr) []ast.Expr {
 	to_return := []ast.Expr{}
 
 	sub_expr := s
 
-	switch call := s.(type) {
-	case *ast.SelectorExpr:
-		sub_expr = call.X
-	}
+	// switch call := s.(type) {
+	// case *ast.SelectorExpr:
+	// 	sub_expr = call.X
+	// }
+
 	for _, name := range exprs {
-		switch name := name.(type) {
-		case *ast.SelectorExpr:
-			if isSubsetOfExpr(sub_expr, name.X) {
-				to_return = append(to_return, name)
-			}
-		case *ast.Ident:
-			idents := strings.Split(name.Name, "_")
-			if isSubsetOfExpr(sub_expr, exprsToSelector(idents)) {
-				to_return = append(to_return, name)
+		if IdenticalExpr(name, s) {
+			to_return = append(to_return, name)
+		} else {
+			switch name := name.(type) {
+			case *ast.SelectorExpr:
+				if isSubsetOfExpr(sub_expr, name.X) {
+					to_return = append(to_return, name)
+				}
+			case *ast.Ident:
+				idents := strings.Split(name.Name, "_")
+				if isSubsetOfExpr(sub_expr, exprsToSelector(idents)) {
+					to_return = append(to_return, name)
+				}
 			}
 		}
 
@@ -654,6 +664,10 @@ func addIdenticalSelectorExprs(exprs []ast.Expr, s ast.Expr) []ast.Expr {
 
 // check if sub is contained in set (t, t.wg) > yes, (t.t, t.wg) > no, (t.t, t.t.wg) > Yes
 func isSubsetOfExpr(sub ast.Expr, sel ast.Expr) bool {
+
+	if IdenticalExpr(sub, sel) {
+		return true
+	}
 	switch sel := sel.(type) {
 	case *ast.SelectorExpr:
 
