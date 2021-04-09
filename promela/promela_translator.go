@@ -499,7 +499,6 @@ func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela
 func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
-	fmt.Println("iciii ", go_chan_name)
 	if !m.For_counter.In_for {
 		// a new channel is found lets change its name, rename it in function and add to struct
 		prom_chan_name := translateIdent(go_chan_name)

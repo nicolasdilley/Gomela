@@ -479,7 +479,6 @@ func (m *Model) updateDeclWithRcvAndStructs(decl ast.FuncDecl, call_expr *ast.Ca
 	// params and args
 	counter := 0
 
-	fmt.Println("decl ", decl.Name)
 	for _, field := range new_fields {
 		for _, name := range field.Names {
 
@@ -564,7 +563,6 @@ func generateFields(call_expr ast.Expr, rcv_name *ast.Ident, exprs []ast.Expr, t
 	// }
 
 	for _, expr := range exprs {
-		fmt.Println(call_expr, expr, rcv_name)
 		fields = append(fields,
 			&ast.Field{
 				Names: []*ast.Ident{
