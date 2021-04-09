@@ -21,6 +21,12 @@ After running the installation, Go will be installed in your home folder.
 The second requirement is SPIN. The manual for installation on various OS
 can be found [here](http://spinroot.com/spin/Man/README.html#S2).
 
+The third and final requirement is timeout, which is installed natively on linux.
+
+To install timeout on MacOS, 
+* ``` brew install coreutils ```
+
+
 To install Gomela you need to run to run a few commands in the terminal by running :
 * ```go get github.com/nicolasdilley/gomela && cd ~/go/src/github.com/nicolasdilley/gomela && go install```
 

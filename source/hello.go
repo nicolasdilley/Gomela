@@ -14,8 +14,8 @@ func sender(a chan int, x int) {
 
 func receiver(a chan int, x int) {
 	for i := 0; i < x; i++ {
-		x := <-a
-		fmt.Println(x)
+		u := <-a
+		fmt.Println(u)
 	}
 }
 

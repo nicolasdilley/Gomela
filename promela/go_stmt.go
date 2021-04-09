@@ -199,14 +199,14 @@ func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string
 	m.ContainsMutexes = m.ContainsMutexes || new_mod.ContainsMutexes
 
 	child_func_name := "child_" + func_name + strconv.Itoa(m.Counter)
-	args = append(args, &promela_ast.Ident{Name: child_func_name})
+	prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: child_func_name})
 	// add child param
 	proc.Params = append(proc.Params, &promela_ast.Param{Name: "child", Types: promela_types.Chan})
 	m.Counter++
 
 	b.List = append(b.List,
 		&promela_ast.Chandef{Name: &promela_ast.Ident{Name: child_func_name}, Size: &promela_ast.Ident{Name: "1"}, Types: []promela_types.Types{promela_types.Int}},
-		&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Args: args}},
+		&promela_ast.RunStmt{X: prom_call},
 	)
 	proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
 	switch s.(type) {
@@ -538,6 +538,10 @@ func (m *Model) updateDeclWithRcvAndStructs(decl ast.FuncDecl, call_expr *ast.Ca
 
 			// Add the new parameter to the function decleration
 			params_list.List = append(params_list.List, fields_to_add...)
+			if len(args_to_add) == 0 && len(fields_to_add) == 0 {
+				new_args = append(new_args, s)
+				params_list.List = append(params_list.List, field)
+			}
 
 			counter++
 		}

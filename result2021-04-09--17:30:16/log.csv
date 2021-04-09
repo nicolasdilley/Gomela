@@ -1,8 +1,0 @@
-Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
-hello.go,main++main22,main,new channel,false,Name :a,24,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,sender,Var as a for upper bound,false,Name :x,10,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,sender,Comm Param,false,0,10,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,sender,Integer as a for lower bound,false,0,10,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,receiver,Var as a for upper bound,false,Name :x,16,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,receiver,Comm Param,false,0,16,https://github.com/hello.go/blob//#L22,
-hello.go,main++main22,receiver,Integer as a for lower bound,false,0,16,https://github.com/hello.go/blob//#L22,

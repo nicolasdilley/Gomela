@@ -242,9 +242,11 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 // fun_decl), two list of Commpar and updates the commPar mandatory with the one
 // from args
 func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar, log bool) []*CommPar {
+
 	for _, arg := range args {
 		if contains, param := containsArgs(fun.Type.Params.List, arg); contains {
 
+			arg.Candidate = false
 			inCommPar := false
 			for _, commPar := range commPars {
 				if param.Name.Name == commPar.Name.Name {
@@ -270,6 +272,7 @@ func (m *Model) Upgrade(fun *ast.FuncDecl, commPars []*CommPar, args []*CommPar,
 			}
 		}
 	}
+
 	return commPars
 }
 
@@ -278,6 +281,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 	pos := 0
 	for _, field := range fields {
 		for _, name := range field.Names {
+
 			if name.Name == arg.Name.Name {
 
 				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name}
