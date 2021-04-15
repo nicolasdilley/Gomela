@@ -146,12 +146,12 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	executable := parseResults(output.String(), ver)
 
 	if output.String() == "" || ver.Timeout {
-		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,\n"
+		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
 	} else if !executable {
-		toPrint := model_name + ",0,the model is not executable,,,," +
+		toPrint := model_name + ",0,the model is not executable,,,,,," +
 			ver.Err +
 			",,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
@@ -185,6 +185,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
 			fmt.Sprintf("%t", ver.Close_safety_error) + "," +
 			fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
+			fmt.Sprintf("%t", ver.Double_unlock) + "," +
 			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
 			ver.Err + "," +
 			comm_par_info + "," +
@@ -266,12 +267,12 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					executable := parseResults(output.String(), &ver)
 					num_tests++
 					if output.String() == "" || ver.Timeout {
-						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,\n"
+						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
 					} else if !executable {
-						toPrint := model_name + ",0,the model is not executable,,,," +
+						toPrint := model_name + ",0,the model is not executable,,,,," +
 							ver.Err +
 							",,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
@@ -293,6 +294,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
 						fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
 						fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
+						fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 						fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
@@ -306,6 +308,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 							fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
 							fmt.Sprintf("%t", ver.Close_safety_error) + "," +
 							fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
+							fmt.Sprintf("%t", ver.Double_unlock) + "," +
 							fmt.Sprintf("%t", ver.Global_deadlock) + "," +
 							ver.Err + "," +
 							comm_par_info + "," +

@@ -167,13 +167,13 @@ https://github.com/openshift/source-to-image/blob/master/pkg/util/interrupt/inte
 
 
 
-BUG FOUND BY GCATCH IN GRPC 
+BUG FOUND BY GCATCH IN GRPC
 
 2 -> File: /Users/nicolasdilley/go/src/github.com/system-pclub/GCatch/GCatch/testdata/grpc-buggy/src/google.golang.org/grpc/internal/transport/keepalive_test.go:192
 	 unsupported because uses time.NewTimer(), however when tweaked, gomela finds it too.
 
 3 -> File: /Users/nicolasdilley/go/src/github.com/system-pclub/GCatch/GCatch/testdata/grpc-buggy/src/google.golang.org/grpc/internal/testutils/pipe_listener_test.go:53
-	Found by Gomela 
+	Found by Gomela
 4 ->
 
 
@@ -182,4 +182,27 @@ BUG FOUND BY GCATCH IN GRPC
 // inlining channel creation
 // inline high order function
 // Structs flattening
+
+
+
+
+ Make sure that what is reported by the tool with godel2 makes sense.
+
+finish the script
+
+-> godel2 benchmarks
+-> Add five example
+
 // Changing methods into functions
+
+
+1. preload
+2. FindAll
+3. kubernetes negative counter
+4. Circular for i < 3
+5. x sender x receiver
+
+3 categories for each chart (UNS, missed bugs, bug found)
+
+
+Don't take into account valuation that fails (have a bug) and that contains at least one star (unknown)

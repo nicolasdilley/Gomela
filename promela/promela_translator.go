@@ -595,6 +595,7 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 	contains := false
 	promela_ast.Inspect(b, func(stmt promela_ast.Stmt) bool {
 		switch stmt := stmt.(type) {
+
 		case *promela_ast.Ident:
 			if stmt.Name == "break" {
 				contains = true
@@ -602,6 +603,8 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 		case *promela_ast.ForStmt:
 			return false
 		case *promela_ast.DoStmt:
+			return false
+		case *promela_ast.SelectStmt:
 			return false
 		}
 		return true

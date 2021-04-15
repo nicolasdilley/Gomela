@@ -15,7 +15,7 @@ require (
 	github.com/nicksnyder/go-i18n v1.10.1 // indirect
 	github.com/nicolasdilley/gobench v0.0.0-20210408085502-219ef55dfdb1 // indirect
 	github.com/schwarmco/go-cartesian-product v0.0.0-20180515110546-d5ee747a6dc9
-	github.com/system-pclub/GCatch v0.0.0-20210312172934-90af8eb02c6b // indirect
+	github.com/system-pclub/GCatch v0.0.0-20210322080539-01c0e0281d70 // indirect
 	github.com/system-pclub/GCatch/GFix/dispatcher/tools v0.0.0-20210312172934-90af8eb02c6b // indirect
 	golang.org/x/tools v0.1.0
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20191105091915-95d230a53780 // indirect

@@ -147,6 +147,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/system-pclub/GCatch v0.0.0-20210312172934-90af8eb02c6b h1:IgqpjOVvltvVpL9eLHIxDycFgWbkeIi5eHmhR7BV+FM=
 github.com/system-pclub/GCatch v0.0.0-20210312172934-90af8eb02c6b/go.mod h1:fT8axsERJutkbUxGrsk+H4Rh2KjrwMUlGZh17sOlceQ=
+github.com/system-pclub/GCatch v0.0.0-20210322080539-01c0e0281d70 h1:BqEBozPvFjsRw2PRk0kgKK1dfMee5Sv1QyouRX3pbZo=
+github.com/system-pclub/GCatch v0.0.0-20210322080539-01c0e0281d70/go.mod h1:fT8axsERJutkbUxGrsk+H4Rh2KjrwMUlGZh17sOlceQ=
 github.com/system-pclub/GCatch/GFix/dispatcher/tools v0.0.0-20210312172934-90af8eb02c6b h1:yPGtgfccZ/xTJeYXRdbcAQKST4VFwV1Ow9IWmEjSyno=
 github.com/system-pclub/GCatch/GFix/dispatcher/tools v0.0.0-20210312172934-90af8eb02c6b/go.mod h1:fqENpW3s51s/vwb7mAiELSwcsUrFs/2h9gmpeyLc+dQ=
 github.com/urfave/cli v1.22.2/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=

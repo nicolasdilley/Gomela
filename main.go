@@ -29,6 +29,7 @@ type ProjectResult struct {
 }
 
 type VerificationInfo struct {
+	multi_list     *string
 	multi_projects *string
 	single_project *string
 	// single_file    *string
@@ -73,7 +74,7 @@ func main() {
 
 	projects := flag.String("p", "", "a folder that contains all the projects.")
 
-	ver.multi_projects = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
+	ver.multi_list = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
 	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
@@ -103,15 +104,15 @@ func main() {
 		}
 
 	}
-	if *ver.multi_projects != "" {
+	if *ver.multi_list != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
-			if strings.HasSuffix(*ver.multi_projects, ".csv") {
+			if strings.HasSuffix(*ver.multi_list, ".csv") {
 
 				// parse each projects
-				data, e := ioutil.ReadFile(*ver.multi_projects)
+				data, e := ioutil.ReadFile(*ver.multi_list)
 				if e != nil {
-					fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_projects, e)
+					fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_list, e)
 					return
 				}
 				proj_listings := strings.Split(string(data), "\n")
@@ -134,6 +135,16 @@ func main() {
 
 		// parse project given
 		parseProject(*ver.single_project, "master", ver)
+
+	} else if *ver.multi_projects != "" {
+		path := os.Args[len(os.Args)-1]
+		PROJECTS_FOLDER = path
+
+		files, _ := ioutil.ReadDir(path)
+
+		for _, f := range files {
+			parseFolder(path+f.Name(), ver)
+		}
 
 	} else {
 
@@ -162,6 +173,39 @@ func main() {
 
 	}
 
+}
+
+func parseFolder(path string, ver *VerificationInfo) {
+	files, _ := ioutil.ReadDir(path)
+
+	containsGoFile := false
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".go") {
+			containsGoFile = true
+		}
+	}
+
+	if containsGoFile {
+		packages := []string{}
+		filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
+			if file.IsDir() {
+				if file.Name() != "vendor" && file.Name() != "third_party" {
+					path, _ = filepath.Abs(path)
+					packages = append(packages, path)
+				} else {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		})
+
+		inferProject(path, filepath.Base(path), "", packages, ver)
+
+	} else {
+		for _, f := range files {
+			parseFolder(path+f.Name(), ver)
+		}
+	}
 }
 
 func parseProject(project_name string, commit string, ver *VerificationInfo) {

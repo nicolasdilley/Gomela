@@ -232,7 +232,6 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 
 	for _, field := range decl.Type.Params.List {
 		for _, name := range field.Names {
-
 			t := field.Type
 			switch sel := field.Type.(type) {
 			case *ast.StarExpr:
@@ -241,6 +240,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 			switch sel := t.(type) {
 			case *ast.ChanType:
 				hasChan = true
+
 				if m.containsChan(call_expr.Args[counter]) {
 					params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Chandef})
 					new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: name.Name}, Chan: m.Fileset.Position(name.Pos())}
@@ -480,70 +480,96 @@ func (m *Model) updateDeclWithRcvAndStructs(decl ast.FuncDecl, call_expr *ast.Ca
 	counter := 0
 
 	for _, field := range new_fields {
-		for _, name := range field.Names {
 
-			s := new_call_expr.Args[counter]
-			exprs_in_rcv := [][]ast.Expr{}
+		isConcurrent := false
+		switch t := getElemIfStar(field.Type).(type) {
+		case *ast.ChanType:
+			isConcurrent = true
+		case *ast.SelectorExpr:
+			isConcurrent = t.Sel.Name == "WaitGroup" || t.Sel.Name == "Mutex"
+		}
+		if !isConcurrent {
 
-			chans := []ast.Expr{}
-			for name, _ := range m.Chans {
-
-				chans = append(chans, name)
-			}
-
-			exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(chans, s))
-
-			wgs := []ast.Expr{}
-			for name, _ := range m.WaitGroups {
-				wgs = append(wgs, name)
-			}
-
-			exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(wgs, s))
-			mutexes := []ast.Expr{}
-
-			for _, name := range m.Mutexes {
-				mutexes = append(mutexes, name)
-			}
-
-			exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(mutexes, s))
-
-			// adding chans and wg
-			chans_fields := generateFields(s, name, exprs_in_rcv[0], &ast.ChanType{})
-			wgs_fields := generateFields(s, name, exprs_in_rcv[1], &ast.StarExpr{
-				X: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "sync"},
-					Sel: &ast.Ident{Name: "WaitGroup"},
-				},
-			})
-
-			mutexes_fields := generateFields(s, name, exprs_in_rcv[2], &ast.StarExpr{
-				X: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "sync"},
-					Sel: &ast.Ident{Name: "Mutex"},
-				},
-			})
-			fields_to_add := append(chans_fields, wgs_fields...)
-
-			fields_to_add = append(fields_to_add, mutexes_fields...)
-
+			fields_to_add := []*ast.Field{}
 			args_to_add := []ast.Expr{}
-			for _, exprs := range exprs_in_rcv {
-				for _, expr := range exprs {
-					args_to_add = append(args_to_add, expr)
+
+			new_counter := counter
+			for _, name := range field.Names {
+				s := new_call_expr.Args[new_counter]
+				exprs_in_rcv := [][]ast.Expr{}
+
+				chans := []ast.Expr{}
+				for name, _ := range m.Chans {
+
+					chans = append(chans, name)
 				}
+
+				exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(chans, s))
+
+				wgs := []ast.Expr{}
+				for name, _ := range m.WaitGroups {
+					wgs = append(wgs, name)
+				}
+
+				exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(wgs, s))
+				mutexes := []ast.Expr{}
+
+				for _, name := range m.Mutexes {
+					mutexes = append(mutexes, name)
+				}
+
+				exprs_in_rcv = append(exprs_in_rcv, addIdenticalSelectorExprs(mutexes, s))
+
+				// adding chans and wg
+				chans_fields := generateFields(s, name, exprs_in_rcv[0], &ast.ChanType{})
+				wgs_fields := generateFields(s, name, exprs_in_rcv[1], &ast.StarExpr{
+					X: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "sync"},
+						Sel: &ast.Ident{Name: "WaitGroup"},
+					},
+				})
+
+				mutexes_fields := generateFields(s, name, exprs_in_rcv[2], &ast.StarExpr{
+					X: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "sync"},
+						Sel: &ast.Ident{Name: "Mutex"},
+					},
+				})
+				fields_to_add = append(chans_fields, wgs_fields...)
+
+				fields_to_add = append(fields_to_add, mutexes_fields...)
+
+				for _, exprs := range exprs_in_rcv {
+					for _, expr := range exprs {
+						args_to_add = append(args_to_add, expr)
+					}
+				}
+
+				// Add the new parameter to the function decleration
+				params_list.List = append(params_list.List, fields_to_add...)
+				new_args = append(new_args, args_to_add...)
+
+				// Add the new args of the function
+				new_counter++
 			}
 
-			// Add the new args of the function
-			new_args = append(new_args, args_to_add...)
-
-			// Add the new parameter to the function decleration
-			params_list.List = append(params_list.List, fields_to_add...)
 			if len(args_to_add) == 0 && len(fields_to_add) == 0 {
-				new_args = append(new_args, s)
+				for range field.Names {
+					new_args = append(new_args, new_call_expr.Args[counter])
+					counter++
+				}
 				params_list.List = append(params_list.List, field)
+			} else {
+				counter = new_counter
 			}
 
-			counter++
+		} else {
+
+			params_list.List = append(params_list.List, field)
+			for range field.Names {
+				new_args = append(new_args, new_call_expr.Args[counter])
+				counter++
+			}
 		}
 	}
 

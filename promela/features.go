@@ -35,9 +35,17 @@ func CreateCSV(result_folder string) {
 
 func logFeature(feature Feature, m *Model) {
 
-	splitted := strings.Split(strings.Split(m.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")[1], "/")
+	name := strings.Split(
+		m.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")
+	path := []string{m.Fileset.Position(m.Fun.Pos()).Filename}
 
-	path := splitted[1:]
+	splitted := []string{""}
+	if len(name) > 1 {
+		splitted = strings.Split(
+			name[1],
+			"/")
+		path = splitted[1:]
+	}
 
 	file_path := ""
 
