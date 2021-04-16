@@ -75,6 +75,7 @@ func main() {
 	projects := flag.String("p", "", "a folder that contains all the projects.")
 
 	ver.multi_list = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
+	ver.multi_projects = flag.String("mp", "", "Recursively loop through the folder given and parse all folder that contains a go file.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
 	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
