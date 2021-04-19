@@ -119,9 +119,13 @@ func main() {
 				proj_listings := strings.Split(string(data), "\n")
 				fmt.Println(len(proj_listings), " projects to parse")
 				for _, project := range proj_listings[:len(proj_listings)-1] {
-					project_info := strings.Split(project, ",")
-					if len(proj_listings) > 1 {
-						parseProject(project_info[0], project_info[1], ver)
+					if strings.Contains(project, ",") {
+						project_info := strings.Split(project, ",")
+						if len(proj_listings) > 1 {
+							parseProject(project_info[0], project_info[1], ver)
+						}
+					} else {
+						parseProject(project, "master", ver)
 					}
 				}
 
@@ -235,10 +239,6 @@ func parseProject(project_name string, commit string, ver *VerificationInfo) {
 			}
 			return nil
 		})
-
-		for _, p := range packages {
-			fmt.Println(p)
-		}
 		inferProject(path_to_dir, project_name, commit_hash, packages, ver)
 		if err != nil {
 			fmt.Printf("Error walking the path %q: %v\n", path_to_dir, err)

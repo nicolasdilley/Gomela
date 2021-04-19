@@ -37,4 +37,5 @@ const (
 	MUTEX_OP_ON_NON_SEL                         = "A lock or unlock on a sync.mutex was done on a mutex which is not a selector expr at pos: "
 	UNKNOWN_MUTEX_OP                            = "An operation that could not be determined on a sync.Mutex at pos: "
 	METHOD_USED_WITH_DIFFERENT_NUMBER_OF_PARAMS = "A method is used with a different number of parameters"
+	ELLIPSIS                                    = "A call expression with ellipsis as args was found at pos : "
 )

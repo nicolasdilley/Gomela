@@ -159,6 +159,22 @@ func getPackName(sel ast.Expr) *ast.Ident {
 		name = getPackName(sel.Fun)
 	case *ast.UnaryExpr:
 		name = getPackName(sel.X)
+	case *ast.StarExpr:
+		name = getPackName(sel.X)
+	case *ast.ParenExpr:
+		name = getPackName(sel.X)
+	case *ast.KeyValueExpr:
+		name = getPackName(sel.Value)
+	case *ast.TypeAssertExpr:
+		name = getPackName(sel.X)
+	case *ast.SliceExpr:
+		name = getPackName(sel.X)
+	case *ast.IndexExpr:
+		name = getPackName(sel.X)
+	case *ast.BinaryExpr:
+		name = getPackName(sel.X)
+	default:
+		name = &ast.Ident{Name: "Unknown"}
 	}
 
 	return name

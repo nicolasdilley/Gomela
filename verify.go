@@ -335,7 +335,6 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 
 func parseResults(result string, ver *VerificationRun) bool {
 
-	fmt.Println(result)
 	if strings.Contains(result, "assertion violated") {
 
 		if strings.Contains(result, "wg.Counter>=0") {
@@ -343,7 +342,6 @@ func parseResults(result string, ver *VerificationRun) bool {
 		}
 
 		if strings.Contains(result, "(1==0)") {
-			fmt.Println("oui")
 			ver.Send_on_close_safety_error = true
 		}
 		if strings.Contains(result, "(0==32)") {

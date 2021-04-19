@@ -779,13 +779,10 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 
 		sel := m.AstMap[m.Package].TypesInfo.ObjectOf(name.Sel)
 
-		var upper_name *ast.Ident
+		var upper_name *ast.Ident = getIdent(name.X)
 
-		switch id := name.X.(type) {
-		case *ast.Ident:
-			upper_name = id
-		case *ast.SelectorExpr:
-			upper_name = id.Sel
+		if upper_name == nil {
+			return false, nil, ""
 		}
 		x := m.AstMap[m.Package].TypesInfo.ObjectOf(upper_name)
 
@@ -826,23 +823,30 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 						if func_name == decl.Name.Name {
 							// lets check its type
 							if is_method_call {
-								for _, f := range decl.Recv.List {
-									for _, n := range f.Names {
+								if decl.Recv != nil {
+									for _, f := range decl.Recv.List {
+										for _, n := range f.Names {
 
-										obj := m.AstMap[m.Package].TypesInfo.ObjectOf(n)
-										t := obj.Type()
+											obj := m.AstMap[m.Package].TypesInfo.ObjectOf(n)
 
-										switch c := obj.Type().(type) {
-										case *types.Pointer:
-											switch method_type.(type) {
-											case *types.Pointer:
-											default:
-												t = c.Elem()
+											if obj != nil {
+												t := obj.Type()
+
+												switch c := obj.Type().(type) {
+												case *types.Pointer:
+													switch method_type.(type) {
+													case *types.Pointer:
+													default:
+														t = c.Elem()
+													}
+												}
+
+												if types.Identical(method_type, t) {
+													return true, decl, pack_name
+												}
+											} else {
+												return false, decl, pack_name
 											}
-										}
-
-										if types.Identical(method_type, t) {
-											return true, decl, pack_name
 										}
 									}
 								}
@@ -1197,6 +1201,19 @@ func (m *Model) addNewProctypes(new_model *Model) {
 			m.Defines = append(m.Defines, def)
 		}
 	}
+}
+
+func getIdent(expr ast.Expr) *ast.Ident {
+	switch expr := expr.(type) {
+	case *ast.Ident:
+		return expr
+	case *ast.SelectorExpr:
+		return expr.Sel
+	case *ast.CallExpr:
+		return getIdent(expr.Fun)
+	}
+
+	return nil
 }
 
 func prettyPrint(expr ast.Expr) string {
