@@ -1,6 +1,7 @@
 package promela
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -20,13 +21,13 @@ type CommPar struct {
 }
 
 // Return the parameters that are mandatory and optional
-func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) []*CommPar {
+func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, *ParseError) {
 
 	params := []*CommPar{}
-
+	var err *ParseError
 	m.AddRecFunc(pack, fun.Name.Name)
 	if fun.Body == nil {
-		return params
+		return params, err
 	}
 
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
@@ -155,13 +156,27 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				if contains_chan {
 					found, fun_decl, pack := m.FindDecl(stmt)
 					if found {
+
+						// check if contqins ellipsis arg
+
+						for _, param := range fun_decl.Type.Params.List {
+							switch param.Type.(type) {
+							case *ast.Ellipsis:
+								err = &ParseError{err: errors.New(ELLIPSIS + m.Fileset.Position(fun_decl.Pos()).String())}
+								return false
+							}
+						}
+
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
 						new_model.RecFuncs = m.RecFuncs
 						new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 
-						params_1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
+						params_1, err1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
+						if err1 != nil {
+							err = err1
+						}
 						for _, param := range params_1 {
 							// m.upgrade all params with its respective arguments
 							// give only the arguments that are either MP or OP
@@ -215,8 +230,11 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						new_model := m.newModel(pack, fun_decl)
 						new_model.RecFuncs = m.RecFuncs
 						// new_model.AddRecFunc(pack, fun) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
-						params_1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
+						params_1, err1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
+						if err1 != nil {
+							err = err1
+						}
 						for _, param := range params_1 {
 							if !param.Candidate {
 
@@ -235,7 +253,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 		return true
 	})
 
-	return params
+	return params, err
 }
 
 // Takes a list of parameter (Used to get the position of the commPar in the

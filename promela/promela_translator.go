@@ -105,6 +105,7 @@ func (m *Model) GoToPromela(SEP string) {
 	if err != nil {
 		fmt.Println(err.err)
 	}
+
 	// generate the model only if it contains a chan or a wg
 	if len(m.Chans) > 0 || len(m.WaitGroups) > 0 || len(m.Mutexes) > 0 {
 		if err == nil {
@@ -113,7 +114,9 @@ func (m *Model) GoToPromela(SEP string) {
 
 			// clean the model by removing empty for loops and unused opt param
 			m.Features = Features
+
 			Clean(m)
+
 			Print(m) // print the model
 			PrintFeatures(m.Features, m)
 		} else {
@@ -758,6 +761,10 @@ func (m *Model) getChanStruct(expr ast.Expr) *ChanStruct {
 		}
 
 		if IdenticalExpr(e, &ast.Ident{Name: translateIdent(expr).Name}) {
+			return s
+		}
+
+		if isSubsetOfExpr(expr, e) {
 			return s
 		}
 	}

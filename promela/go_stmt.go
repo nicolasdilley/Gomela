@@ -27,6 +27,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 	if isMain {
 		decl = m.Fun
 		pack_name = m.Package
+		new_call_expr = s.Call
 	} else {
 		var pack string
 		var err1 *ParseError
@@ -49,18 +50,21 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 
 		new_mod := m.newModel(pack_name, decl)
 
-		new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
+		var err1 *ParseError
+		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 		//. Create a define for each mandatory param
 
-		params, args, hasChan, known, err1 := m.translateParams(new_mod, decl, new_call_expr, isMain)
-
-		// translate args
 		if err1 != nil {
 			return b, err1
 		}
+		params, args, hasChan, known, err2 := m.translateParams(new_mod, decl, new_call_expr, isMain)
 
+		// translate args
+		if err2 != nil {
+			return b, err2
+		}
 		if hasChan && known {
-			return m.translateCommParams(new_mod, s, func_name, decl, params, args, isMain)
+			return m.translateCommParams(new_mod, true, new_call_expr, func_name, decl, params, args, isMain)
 
 		}
 	} else { // Could not find the decl of the function
@@ -87,32 +91,20 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 }
 
 // s can be either the go stmt or the call expr
-func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, *ParseError) {
-
-	call_expr := &ast.CallExpr{}
-	switch expr := s.(type) {
-	case *ast.CallExpr:
-		call_expr = expr
-	case *ast.GoStmt:
-		call_expr = expr.Call
-	default:
-		panic("s can only be a call expr or a go stmt ! Found: " + fmt.Sprint(s))
-	}
+func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.CallExpr, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, *ParseError) {
 
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(s.Pos())}
+	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(call_expr.Pos())}
 
 	prom_call.Args = args
 	proc := &promela_ast.Proctype{
 		Name:   &promela_ast.Ident{Name: func_name},
-		Pos:    m.Fileset.Position(s.Pos()),
+		Pos:    m.Fileset.Position(call_expr.Pos()),
 		Active: false,
 		Body:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
 		Params: params,
 		Decl:   decl,
 	}
-
-	candidatesParams := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	// Parses the args
 	for _, commPar := range new_mod.CommPars {
@@ -121,11 +113,10 @@ func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string
 			name = "Candidate Param"
 			if commPar.Mandatory {
 				def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
-				candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int})
+				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
 			} else {
-				candidatesParams.List = append(candidatesParams.List, &promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int})
+				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 			}
-			proc.Body.List = append([]promela_ast.Stmt{&promela_ast.DeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 		} else {
 			proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
 
@@ -182,7 +173,8 @@ func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string
 		if err1 != nil {
 			return b, err1
 		}
-		proc.Body.List = append(candidatesParams.List, stmt.List...)
+
+		proc.Body.List = append(proc.Body.List, stmt.List...)
 		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 		for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
 			defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
@@ -209,8 +201,8 @@ func (m *Model) translateCommParams(new_mod *Model, s ast.Node, func_name string
 		&promela_ast.RunStmt{X: prom_call},
 	)
 	proc.Body.List = append(proc.Body.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: "child"}, Rhs: &promela_ast.Ident{Name: "0"}})
-	switch s.(type) {
-	case *ast.CallExpr:
+	if !isGo {
+
 		b.List = append(b.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: child_func_name}, Rhs: &promela_ast.Ident{Name: "0"}})
 	}
 

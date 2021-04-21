@@ -45,6 +45,7 @@ type ModelScore struct {
 	SendOnCloseScore  float64
 	CloseOnCloseScore float64
 	NegCounterScore   float64
+	MutexScore        float64
 	Commit            string
 }
 
@@ -650,6 +651,7 @@ func parseVerificationResults() {
 		num_send_on_close := 0
 		num_close := 0
 		num_neg_counter := 0
+		num_mutex_counter := 0
 		false_alarms := 0
 		times := []float64{}
 		total_time := 0
@@ -678,6 +680,8 @@ func parseVerificationResults() {
 				} else if splitted_line[6] == "true" {
 					num_neg_counter++
 				} else if splitted_line[7] == "true" {
+					num_mutex_counter++
+				} else if splitted_line[8] == "true" {
 					num_gd++
 				} else if opt {
 					false_alarms++
@@ -685,7 +689,9 @@ func parseVerificationResults() {
 
 				if err == nil {
 					num_actual_verifications++
-					verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
+					if !strings.Contains(line, "=-2") {
+						verification_map[splitted_line[0]] = append(verification_map[splitted_line[0]], line)
+					}
 					proj_name := strings.Split(splitted_line[0], ":")[0]
 					time_per_projects[proj_name] += float64(time)
 					total_time += time
@@ -805,6 +811,7 @@ func parseVerificationResults() {
 				SendOnCloseScore:  float64(send_score) / float64(len(verifications)),
 				CloseOnCloseScore: float64(close_score) / float64(len(verifications)),
 				NegCounterScore:   float64(neg_counter_score) / float64(len(verifications)),
+				MutexScore:        float64(mutex_score) / float64(len(verifications)),
 				Commit:            commit}
 			scores[model] = score
 		}
@@ -878,6 +885,7 @@ func parseVerificationResults() {
 		fmt.Println("# of send on close safety error : ", num_send_on_close)
 		fmt.Println("# of close on close safety error : ", num_close)
 		fmt.Println("# of negative counter error : ", num_neg_counter)
+		fmt.Println("# of mutex error : ", num_mutex_counter)
 		fmt.Println("# of false alarms : ", false_alarms)
 		fmt.Println("# of average verification time : ", total_time/num_tests)
 		fmt.Println("Total verification time: ", total_time)

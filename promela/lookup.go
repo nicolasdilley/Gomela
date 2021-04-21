@@ -58,20 +58,16 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 					ub.Name = ident.Print(0)
 
 					// look for lower bound
-					switch stmt := s.Init.(type) {
+					switch s.Init.(type) {
 					case *ast.AssignStmt:
-						for _, rh := range stmt.Rhs {
-							ident, err1 := m.lookUp(rh, LOWER_FOR_BOUND, spawns)
-							if err1 != nil {
-								err = err1
-							}
-							lb.Name = ident.Print(0)
 
-							if cond.Op == token.LSS {
-								ub.Name += "-1"
-							}
-							well_formed = true
+						lb.Name = "0"
+
+						if cond.Op == token.LSS {
+
+							ub.Name += "-1"
 						}
+						well_formed = true
 					}
 				}
 			}

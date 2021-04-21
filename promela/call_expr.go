@@ -46,17 +46,20 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 		func_name = decl.Name.Name + fmt.Sprint(m.Fileset.Position(decl.Pos()).Line)
 		new_mod := m.newModel(pack_name, decl)
 
-		new_mod.CommPars = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
+		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 
-		params, args, hasChan, known, err1 := m.translateParams(new_mod, decl, new_call_expr, false)
-
-		// translate args
 		if err1 != nil {
 			return stmts, err1
 		}
+		params, args, hasChan, known, err2 := m.translateParams(new_mod, decl, new_call_expr, false)
+
+		// translate args
+		if err2 != nil {
+			return stmts, err2
+		}
 		if hasChan && known {
 
-			return m.translateCommParams(new_mod, new_call_expr, func_name, decl, params, args, false)
+			return m.translateCommParams(new_mod, false, new_call_expr, func_name, decl, params, args, false)
 		} else {
 
 			switch name := new_call_expr.Fun.(type) {

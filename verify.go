@@ -83,43 +83,48 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 
 				model_name := strings.Replace(filepath.Base(dir_name), "&", "/", -1) + ":" + model.Name()
 				fmt.Println("there is ", optional_params, " optionnal params.")
-				if len(comm_params) == 0 {
-					ver, ok := verifyModel(path, model_name, git_link, f, []string{}, []string{})
-					if optional_params > 0 && ok {
-						verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params)
-					}
-				} else if len(comm_params) > 5 {
+
+				if len(comm_params)+optional_params > 5 {
+
 					toPrint := filepath.Base(dir_name) + ":" + model.Name() + ",too many comm params : " + strconv.Itoa(len(comm_params)) + ",,,,,\n"
 					if _, err := f.WriteString(toPrint); err != nil {
 						panic(err)
 					}
 				} else {
 
-					d := cartesian.Iter(bounds...)
+					if len(comm_params) > 0 {
 
-					for bound := range d {
-						toPrint := file_content
-						for _, b := range bound {
-							toPrint = strings.Replace(toPrint, "??", fmt.Sprint(b), 1)
-						}
+						d := cartesian.Iter(bounds...)
 
-						err := os.Remove(path)
-						if err != nil {
-							log.Fatal(err)
-						}
-						ioutil.WriteFile(path, []byte(toPrint), 0644)
+						for bound := range d {
+							toPrint := file_content
+							for _, b := range bound {
+								toPrint = strings.Replace(toPrint, "??", fmt.Sprint(b), 1)
+							}
 
-						lines = strings.Split(toPrint, "\n")
-						bound_str := []string{}
-						for _, b := range bound {
-							bound_str = append(bound_str, fmt.Sprint(b))
+							err := os.Remove(path)
+							if err != nil {
+								log.Fatal(err)
+							}
+							ioutil.WriteFile(path, []byte(toPrint), 0644)
+
+							lines = strings.Split(toPrint, "\n")
+							bound_str := []string{}
+							for _, b := range bound {
+								bound_str = append(bound_str, fmt.Sprint(b))
+							}
+							ver, ok := verifyModel(path, model_name, git_link, f, comm_params, bound_str)
+							if !ok {
+								break
+							}
+							if optional_params > 0 {
+								verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params)
+							}
 						}
-						ver, ok := verifyModel(path, model_name, git_link, f, comm_params, bound_str)
-						if !ok {
-							break
-						}
-						if optional_params > 0 {
-							verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params)
+					} else {
+						ver, ok := verifyModel(path, model_name, git_link, f, []string{}, []string{})
+						if optional_params > 0 && ok {
+							verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params)
 						}
 					}
 				}

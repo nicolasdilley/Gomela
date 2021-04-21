@@ -1,25 +1,14 @@
 package main
 
-import (
-	"os"
-	"strconv"
-)
+func main() {
+	ch := make(chan int)
 
-func sender(a chan int, x int) {
-	for i := 0; i < x; i++ {
-		a <- i
-	}
+	add()
 }
-
-func receiver(a chan int, x int) {
-	for i := 0; i < x+1; i++ {
+func add() {
+	a := make(chan int)
+	x := 0
+	for i, lcpIndex := 0, len(path); i < lcpIndex; i++ {
 		<-a
 	}
-}
-
-func main() {
-	x, _ := strconv.Atoi(os.Args[1])
-	a := make(chan int)
-	go sender(a, x)
-	receiver(a, x)
 }

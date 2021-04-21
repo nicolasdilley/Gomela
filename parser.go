@@ -29,7 +29,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
 					if !takeChanAsParam(decl, ast_map[pack_name]) {
-						fmt.Println("Parsing ", decl.Name)
+						// fmt.Println("Parsing ", decl.Name)
 						var m promela.Model = promela.Model{
 							Result_fodler:    result_folder,
 							Project_name:     proj_name,

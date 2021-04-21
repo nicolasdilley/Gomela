@@ -52,7 +52,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			Filename:  m.Fileset.Position(s.X.Pos()).Filename,
 		})
 		chan_name := m.getChanStruct(s.X)
-
 		do_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
 
 		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
