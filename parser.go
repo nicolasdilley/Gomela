@@ -49,8 +49,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Commit:           commit,
 							Global_vars:      []promela_ast.Stmt{},
 							For_counter:      &promela.ForCounter{},
-							Default_ub:       *ver.ub,
-							Default_lb:       *ver.lb,
 							Projects_folder:  projects_folder,
 							GenerateFeatures: true,
 						}

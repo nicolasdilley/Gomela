@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -9,11 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/nicolasdilley/gomela/promela"
+	"github.com/nicolasdilley/gomela/stats"
 )
 
 type ProjectResult struct {
@@ -33,10 +34,6 @@ type VerificationInfo struct {
 	multi_projects *string
 	single_project *string
 	// single_file    *string
-	verify *bool
-	run    *bool
-	lb     *int
-	ub     *int
 }
 
 var (
@@ -52,9 +49,6 @@ func main() {
 
 	// connecting to github to parse all git projects
 	// add timestamps to name of folder
-	t := time.Now().Local().Format("2006-01-02--15:04:05")
-	RESULTS_FOLDER += t
-	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
 
 	_, err := os.Stat(PROJECTS_FOLDER)
 
@@ -77,10 +71,6 @@ func main() {
 	ver.multi_list = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
 	ver.multi_projects = flag.String("mp", "", "Recursively loop through the folder given and parse all folder that contains a go file.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
-	ver.verify = flag.Bool("v", false, "Specify that the models need to be verified.")
-	ver.run = flag.Bool("r", false, "Specify that the models need to be run.")
-	ver.lb = flag.Int("lb", -1, "The default lower bound value to give to not well formed for loop.")
-	ver.ub = flag.Int("ub", -1, "The default upper bound value to give to not well formed for loop.")
 
 	flag.Parse()
 	if *projects != "" {
@@ -88,23 +78,122 @@ func main() {
 	}
 	promela.CreateCSV(RESULTS_FOLDER)
 
-	if *ver.verify {
-		// toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
-		toPrint := ""
+	switch os.Args[1] {
+	case "model": // the user wants to generate the model
+		t := time.Now().Local().Format("2006-01-02--15:04:05")
+		RESULTS_FOLDER += t
+		os.Mkdir(RESULTS_FOLDER, os.ModePerm)
 
-		// Print CSV
-		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
-			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		model(ver)
+	case "verify": // the user wants to verify a .pml file with specifics bounds
 
-		if err != nil {
-			fmt.Println("Could not create file verification.csv")
-			return
+		if len(os.Args) > 2 && strings.Contains(os.Args[2], ".pml") {
+			model_to_verify := os.Args[2]
+
+			// parse how many comm pars are in the file
+
+			content, err := ioutil.ReadFile(model_to_verify)
+
+			if err != nil {
+				panic("Please provide a valid file , err : " + err.Error())
+			}
+
+			mand_params, opt_params := findNumCommParam(string(content))
+
+			if len(os.Args)-3-mand_params-opt_params != 0 {
+				panic("Please provide a value for each comm parameter in the order they appear in the program, num params = " + fmt.Sprint(mand_params+opt_params) + ", num args given " + fmt.Sprint(len(os.Args)))
+			} else {
+				verifyModelWithSpecificValues(string(content), os.Args[3:])
+			}
+		} else {
+			panic("Please provide a .pml file : ie. gomela verify hello.pml")
 		}
-		if _, err := f.WriteString(toPrint); err != nil {
-			panic(err)
+	case "stats": // Generate a set of stats for each projects and models
+		stats.Stats()
+	case "bmc": // Full scale model -> verify -> stats
+		model(ver)
+		verify(ver)
+
+	case "commit": // produce a list of commit from given list of projects
+		commit(ver)
+
+	default:
+		panic("You need to provide a projects list as a .csv file. ie 'gomela commit projects.csv'")
+	}
+
+}
+
+func findNumCommParam(content string) (int, int) {
+	mand_params := 0
+	opt_params := 0
+
+	lines := strings.Split(content, "\n")
+
+	for _, line := range lines {
+		if strings.Contains(line, "num_mand_comm_params") {
+			splitted := strings.Split(line, "num_mand_comm_params=")
+
+			n, _ := strconv.Atoi(splitted[1])
+
+			mand_params += n
+		}
+
+		if strings.Contains(line, "num_opt_comm_params") {
+			splitted := strings.Split(line, "num_opt_comm_params=")
+
+			n, _ := strconv.Atoi(splitted[1])
+
+			opt_params += n
 		}
 
 	}
+
+	return mand_params, opt_params
+}
+
+func commit(ver *VerificationInfo) {
+
+	// parse multiple projects
+	if len(os.Args) > 2 {
+		if strings.HasSuffix(os.Args[2], ".csv") || strings.HasSuffix(os.Args[2], ".txt") {
+
+			// parse each projects
+			data, e := ioutil.ReadFile(os.Args[2])
+			if e != nil {
+				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_list, e)
+				return
+			}
+			projects_commit := ""
+			proj_listings := strings.Split(string(data), "\n")
+			fmt.Println(len(proj_listings), " projects to parse")
+			for _, project := range proj_listings[:len(proj_listings)-1] {
+				if strings.Contains(project, ",") {
+					project_info := strings.Split(project, ",")
+					if len(project_info) > 1 {
+						panic("Commit already present")
+
+					} else {
+
+						// clone repo and get commit
+						commit := CloneRepoAndGetCommit(project)
+						projects_commit += project + "," + commit + "\n"
+					}
+				} else {
+					// clone repo and get commit
+					commit := CloneRepoAndGetCommit(project)
+					projects_commit += project + "," + commit + "\n"
+				}
+			}
+
+			ioutil.WriteFile("commits.csv", []byte(projects_commit), 0664)
+
+		} else {
+			fmt.Println("Please provide a .csv or .txt file containing the list of projects to be parsed")
+		}
+	}
+}
+
+func model(ver *VerificationInfo) {
 	if *ver.multi_list != "" {
 		// parse multiple projects
 		if len(os.Args) > 2 {
@@ -177,7 +266,56 @@ func main() {
 		inferProject(path, filepath.Base(path), "", packages, ver)
 
 	}
+}
 
+func verify(ver *VerificationInfo) {
+	// toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
+
+	toPrint := ""
+
+	// Print CSV
+	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	if err != nil {
+		fmt.Println("Could not create file verification.csv")
+		return
+	}
+	if _, err := f.WriteString(toPrint); err != nil {
+		panic(err)
+	}
+
+	path := os.Args[len(os.Args)-1]
+	dir_name := filepath.Base(path)
+	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
+	if err != nil {
+		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
+	}
+	VerifyModels(models, dir_name)
+
+	if *ver.single_project != "" {
+		// verify with GCatch
+
+		filename, err := filepath.Abs(PROJECTS_FOLDER)
+
+		if err != nil {
+			panic("Could not find absolute path of " + PROJECTS_FOLDER)
+		}
+
+		if strings.Contains(filename, "src") {
+			fmt.Println("Running GCatch")
+			f, _ := os.OpenFile("gcatch.log",
+				os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+			command := exec.Command("GCatch", "-r", "-path="+filename+"/"+dir_name, "-checker=BMOC", "-compile-error")
+			command.Stdout = f
+
+			command.Run()
+
+		} else {
+			panic("Please provide a projects path that is contained in the $GOPATH " + filename)
+		}
+	}
 }
 
 func parseFolder(path string, ver *VerificationInfo) {
@@ -258,78 +396,7 @@ func inferProject(path string, dir_name string, commit string, packages []string
 		projects_folder, _ := filepath.Abs(PROJECTS_FOLDER)
 		ParseAst(f, dir_name, commit, ast_map, ver, RESULTS_FOLDER, projects_folder)
 
-		models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
-		if err != nil {
-			fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
-		}
-
 		// Have a way to give values to individual candidates and unknown parameter
-		if *ver.run {
-
-			fmt.Println("Running the models.")
-
-			num_of_models_in_project := 0
-			num_of_executable_models_in_project := 0
-
-			for _, model := range models {
-				if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
-					path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
-					var output bytes.Buffer
-
-					// Verify with SPIN
-					command := exec.Command("timeout", "2", "spin", path)
-					command.Stdout = &output
-					command.Run()
-
-					NUM_OF_MODELS++
-					num_of_models_in_project++
-					if !strings.Contains(output.String(), "error") && !strings.Contains(output.String(), "Error") {
-						NUM_OF_EXECUTABLE_MODELS++
-						num_of_executable_models_in_project++
-					}
-
-					f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/run.csv",
-						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					first_line := strings.Split(output.String(), "\n")[0]
-
-					// Print CSV
-					toPrint := dir_name + "," + first_line + ",\n"
-					f.WriteString(toPrint)
-				}
-			}
-
-			fmt.Println(num_of_executable_models_in_project, "/", num_of_models_in_project, " executable model")
-		}
-		if *ver.verify {
-			VerifyModels(models, dir_name)
-
-			if *ver.single_project != "" {
-				// verify with GCatch
-
-				filename, err := filepath.Abs(PROJECTS_FOLDER)
-
-				if err != nil {
-					panic("Could not find absolute path of " + PROJECTS_FOLDER)
-				}
-
-				if strings.Contains(filename, "src") {
-					fmt.Println("Running GCatch")
-					f, _ := os.OpenFile("gcatch.log",
-						os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-
-					fmt.Println(filename)
-					command := exec.Command("GCatch", "-r", "-path="+filename+"/"+dir_name, "-checker=BMOC", "-compile-error")
-					command.Stdout = f
-
-					command.Run()
-
-					fmt.Println("Done")
-
-				} else {
-					panic("Please provide a projects path that is contained in the $GOPATH " + filename)
-				}
-			}
-		}
 
 	} else {
 		fmt.Println("Error while parsing project")

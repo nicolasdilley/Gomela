@@ -21,15 +21,12 @@ func Print(m *Model) {
 
 	stmt := ""
 
-	// print the bounds
-	for _, c := range m.Defines {
-		stmt += c.Print(0) + "\n"
-	}
+	// print meta-data
 
-	// print the function inline
-	for _, c := range m.Inlines {
-		stmt += c.Print(0) + "\n"
-	}
+	num_mand_param_in_model, num_opt_param_in_model := numCommParInModel(m)
+	stmt += "// num_comm_params=" + strconv.Itoa(num_mand_param_in_model+num_opt_param_in_model) + "\n"
+	stmt += "// num_mand_comm_params=" + strconv.Itoa(num_mand_param_in_model) + "\n"
+	stmt += "// num_opt_comm_params=" + strconv.Itoa(num_opt_param_in_model) + "\n"
 
 	stmt += "\n"
 
@@ -55,8 +52,17 @@ func Print(m *Model) {
 		}
 	}
 	proj_name := strings.Replace(splitted[0], AUTHOR_PROJECT_SEP, "/", -1)
-	stmt += "// https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line) + "\n"
+	stmt += "// git_link=https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line) + "\n"
 
+	// print the bounds
+	for _, c := range m.Defines {
+		stmt += c.Print(0) + "\n"
+	}
+
+	// print the function inline
+	for _, c := range m.Inlines {
+		stmt += c.Print(0) + "\n"
+	}
 	// add chans to the chandef
 	chan_struct := promela_ast.ChanStructDef{Name: &promela_ast.Ident{Name: "Chandef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
 	sync := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sync"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
@@ -141,4 +147,39 @@ func Print(m *Model) {
 		panic(err)
 	}
 
+}
+
+func numCommParInModel(m *Model) (int, int) {
+	num_mand_param := 0
+	num_opt_param := 0
+	findParam := func(s promela_ast.Stmt) bool {
+		switch s := s.(type) {
+		case *promela_ast.DeclStmt:
+			switch rhs := s.Rhs.(type) {
+			case *promela_ast.Ident:
+				if rhs.Name == OPTIONAL_BOUND {
+					num_opt_param++
+				}
+			}
+		}
+		return true
+	}
+	promela_ast.Inspect(m.Init.Body, findParam)
+	for _, proc := range m.Proctypes {
+		promela_ast.Inspect(proc.Body, findParam)
+	}
+
+	for _, define := range m.Defines {
+		switch rhs := define.Rhs.(type) {
+		case *promela_ast.Ident:
+			if rhs.Name == "??" {
+				num_mand_param++
+			}
+			if rhs.Name == "-2" {
+				num_opt_param++
+			}
+		}
+	}
+
+	return num_mand_param, num_opt_param
 }

@@ -74,15 +74,29 @@ func GenerateAsyncMonitor() string {
 		"if\n" +
 		":: ch.closed -> \n" +
 		"end: if\n" +
-		"  :: ch.enq?0-> // cannot send on closed channel\n" +
-		"    assert(1 == 0)\n" +
-		"  :: ch.closing?true -> // cannot close twice a channel\n" +
-		"    assert(2 == 0)\n" +
-		"  :: ch.rcving?false;\n" +
-		"  :: ch.sending?false -> // sending state of channel (closed)\n" +
-		"    assert(1 == 0)\n" +
-		"  :: ch.sync!true -> \n" +
-		"		 ch.num_msgs = ch.num_msgs - 1\n" +
+		"  :: ch.num_msgs > 0 -> // cannot send on closed channel\n" +
+		"    end4: if\n" +
+		"    :: ch.enq?0-> // cannot send on closed channel\n" +
+		"      assert(1 == 0)\n" +
+		"    :: ch.closing?true -> // cannot close twice a channel\n" +
+		"      assert(2 == 0)\n" +
+		"    :: ch.rcving?false;\n" +
+		"    :: ch.sending?false -> // sending state of channel (closed)\n" +
+		"      assert(1 == 0)\n" +
+		"    :: ch.deq!true,ch.num_msgs -> \n" +
+		"  		 ch.num_msgs = ch.num_msgs - 1\n" +
+		"    fi;\n" +
+		"  :: else ->" +
+		"    end5: if\n" +
+		"    :: ch.enq?0-> // cannot send on closed channel\n" +
+		"      assert(1 == 0)\n" +
+		"    :: ch.closing?true -> // cannot close twice a channel\n" +
+		"      assert(2 == 0)\n" +
+		"    :: ch.rcving?false;\n" +
+		"    :: ch.sending?false -> // sending state of channel (closed)\n" +
+		"      assert(1 == 0)\n" +
+		"    :: ch.sync!true; \n" +
+		"    fi;\n" +
 		"  fi;\n" +
 		":: else ->\n" +
 		"	if\n" +
@@ -118,62 +132,6 @@ func GenerateAsyncMonitor() string {
 		"	fi;\n" +
 		"fi;\n" +
 		"od;\n" +
-		"}\n\n"
-}
-
-// Return the Promela AST of an empty async chan monitor proctype
-
-// Return the Promela AST of an empty async chan monitor proctype
-func GenerateFullChanMonitor() string {
-
-	return "proctype fullChan(Chandef ch) {\n" +
-		"end: if\n" +
-		"  :: ch.deq!0 ->\n" +
-		"    ch.num_msgs = ch.num_msgs - 1\n" +
-		"    if\n" +
-		"    :: ch.num_msgs == 0 ->\n" +
-		"      run emptyChan(ch)\n" +
-		"    :: else ->\n" +
-		"      run neitherChan(ch)\n" +
-		"    fi;\n" +
-		"  :: ch.closing?true -> // closing the channel\n" +
-		"      run closedChan(ch)\n" +
-		"  :: ch.is_closed!false -> // sending channel is open \n" +
-		"      run fullChan(ch)\n" +
-		"  :: ch.sending?false ->\n" +
-		"      run fullChan(ch)\n" +
-		"fi;\n" +
-		"}\n\n"
-}
-
-// Return the Promela AST of an empty async chan monitor proctype
-func GenerateNeitherChanMonitor() string {
-
-	return "proctype neitherChan(Chandef ch) {\n" +
-		"end: if\n" +
-		"  :: ch.enq?0->\n" +
-		"     ch.num_msgs = ch.num_msgs + 1\n" +
-		"     if\n" +
-		"     :: ch.num_msgs == ch.size ->\n" +
-		"        run fullChan(ch)\n" +
-		"     :: else ->\n" +
-		"        run neitherChan(ch)\n" +
-		"    fi;\n" +
-		"  :: ch.deq!0\n" +
-		"     ch.num_msgs = ch.num_msgs - 1\n" +
-		"     if\n" +
-		"     :: ch.num_msgs == 0 ->\n" +
-		"      run emptyChan(ch)\n" +
-		"     :: else ->\n" +
-		"      run neitherChan(ch)\n" +
-		"     fi;\n" +
-		"  :: ch.closing?true -> // closing the channel\n" +
-		"      run closedChan(ch)\n" +
-		"  :: ch.is_closed!false ->  // sending channel is open\n" +
-		"     run neitherChan(ch)\n" +
-		"  :: ch.sending?false ->  // sending channel is open\n" +
-		"     run neitherChan(ch)\n" +
-		"fi;\n" +
 		"}\n\n"
 }
 

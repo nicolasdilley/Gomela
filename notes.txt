@@ -206,3 +206,44 @@ finish the script
 
 
 Don't take into account valuation that fails (have a bug) and that contains at least one star (unknown)
+
+
+
+
+3358 generated models
+36 models that timeout 
+66 valuation that timeout
+112 not executable models.
+10 projects with more than 5 comm params
+
+
+https://github.com/rclone/rclone/blob/master/fs/march/march.go#L128 
+
+real bug 
+
+https://github.com/kubernetes/kubernetes/blob/master/test/integration/master/synthetic_master_test.go#L715 look further if real bug
+
+Finish table
+more explanation FALSE ALARMS expand
+
+Read paper,
+CLOC 
+
+
+cloc is installed need to run it on 100 project and take output
+
+
+
+
+Wrap up gomela (github anonmyous), the benchmark, and the csv that reports on the results of the benchmarks, results of parsing the projects. 
+use sed to change nicolas dilley to anonymous.
+
+
+
+
+Three possible thing, 
+
+1. Implement the asynchronous change (Need to find commit of project annalysed)
+2. Refactor tool
+3. Start Thesis
+4. Look at bug reported by Gomela to find false alarm rates etc.

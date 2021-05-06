@@ -46,18 +46,16 @@ type Model struct {
 	ContainsWg       bool
 	ContainsChan     bool
 	ContainsMutexes  bool
-	Init             *promela_ast.InitDef       // The proctype consisting of the "main" function of the source program
-	Global_vars      []promela_ast.Stmt         // the global variable used in the ltl properties
-	Defines          []promela_ast.DefineStmt   // the channel bounds
-	CommPars         []*CommPar                 // the communications paramer
-	Features         []Feature                  // The features for the survey
-	ClosedVars       map[*ChanStruct][]ast.Expr // The variable that are used to test if a channel is closed when receiving (i.e ok in r,ok := >-ch )
-	process_counter  int                        // to give unique name to Promela processes
-	func_counter     int                        // to give unique name to inline func call
-	For_counter      *ForCounter                // Used to translate the for loop to break out properly out of them
-	Counter          int                        // used to differentiate call expr channels
-	Default_lb       int
-	Default_ub       int
+	Init             *promela_ast.InitDef         // The proctype consisting of the "main" function of the source program
+	Global_vars      []promela_ast.Stmt           // the global variable used in the ltl properties
+	Defines          []promela_ast.DefineStmt     // the channel bounds
+	CommPars         []*CommPar                   // the communications paramer
+	Features         []Feature                    // The features for the survey
+	ClosedVars       map[*ChanStruct][]ast.Expr   // The variable that are used to test if a channel is closed when receiving (i.e ok in r,ok := >-ch )
+	process_counter  int                          // to give unique name to Promela processes
+	func_counter     int                          // to give unique name to inline func call
+	For_counter      *ForCounter                  // Used to translate the for loop to break out properly out of them
+	Counter          int                          // used to differentiate call expr channels
 	AstMap           map[string]*packages.Package // the map used to find the type of the channels
 	Chan_closing     bool
 	Projects_folder  string
@@ -1172,8 +1170,6 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		func_counter:     0,
 		For_counter:      m.For_counter,
 		Counter:          m.Counter,
-		Default_lb:       m.Default_lb,
-		Default_ub:       m.Default_lb,
 		AstMap:           m.AstMap,
 		Chan_closing:     m.Chan_closing,
 		Projects_folder:  m.Projects_folder,

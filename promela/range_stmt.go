@@ -83,8 +83,8 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		if err1 != nil {
 			err = err1
 		}
-
-		do_guard.Body = &promela_ast.BlockStmt{List: []promela_ast.Stmt{rcv, i}}
+		num_msgs_0 := &promela_ast.AssignStmt{Lhs: &promela_ast.Ident{Name: "num_msgs"}, Rhs: &promela_ast.Ident{Name: "0"}}
+		do_guard.Body = &promela_ast.BlockStmt{List: []promela_ast.Stmt{num_msgs_0, rcv, i}}
 		d.Guards = append(d.Guards, do_guard)
 		b.List = append(b.List, d, for_label)
 

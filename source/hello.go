@@ -1,14 +1,22 @@
 package main
 
 func main() {
-	ch := make(chan int)
+	a := 1
+	ch := make(chan int, a)
+	ch1 := make(chan int)
 
-	add()
-}
-func add() {
-	a := make(chan int)
-	x := 0
-	for i, lcpIndex := 0, len(path); i < lcpIndex; i++ {
-		<-a
+	go func() {
+		for range ch {
+			ch1 <- 0
+		}
+	}()
+
+	for i := 0; i < 1; i++ {
+		ch <- i
+	}
+	close(ch)
+
+	for i := 0; i < 1; i++ {
+		<-ch1
 	}
 }
