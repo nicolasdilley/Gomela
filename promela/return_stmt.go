@@ -34,6 +34,6 @@ func (m *Model) translateReturnStmt(s *ast.ReturnStmt) (b *promela_ast.BlockStmt
 		addBlock(b, expr)
 	}
 
-	b.List = append(b.List, &promela_ast.GotoEndStmt{Goto: m.Fileset.Position(s.Pos())})
+	b.List = append(b.List, &promela_ast.GotoEndStmt{Goto: m.Fileset.Position(s.Pos()), Name: m.Current_return_label})
 	return b, defers, err
 }

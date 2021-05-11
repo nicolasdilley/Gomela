@@ -21,6 +21,8 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 					if err1 != nil {
 						return block_stmt, defer_stmts, err1
 					}
+
+					s1.List = append([]promela_ast.Stmt{&promela_ast.LabelStmt{Name: m.Current_return_label}}, s1.List...)
 					if len(s1.List) > 0 {
 						defer_stmts.List = append(defer_stmts.List, s1)
 					}

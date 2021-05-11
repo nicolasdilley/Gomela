@@ -49,7 +49,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 								X:   chan_name.Name,
 								Sel: &promela_ast.Ident{Name: "sync"},
 							},
-							Rhs: &promela_ast.Ident{Name: "false,0"}}
+							Rhs: &promela_ast.Ident{Name: "false"}}
 						m.checkForBreak(body, goto_stmt)
 						async_guard := &promela_ast.GuardStmt{
 							Cond:  async_send,

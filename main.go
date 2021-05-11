@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -76,14 +75,9 @@ func main() {
 	if *projects != "" {
 		PROJECTS_FOLDER = *projects
 	}
-	promela.CreateCSV(RESULTS_FOLDER)
 
 	switch os.Args[1] {
 	case "model": // the user wants to generate the model
-		t := time.Now().Local().Format("2006-01-02--15:04:05")
-		RESULTS_FOLDER += t
-		os.Mkdir(RESULTS_FOLDER, os.ModePerm)
-
 		model(ver)
 	case "verify": // the user wants to verify a .pml file with specifics bounds
 
@@ -160,7 +154,7 @@ func commit(ver *VerificationInfo) {
 			// parse each projects
 			data, e := ioutil.ReadFile(os.Args[2])
 			if e != nil {
-				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_list, e)
+				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", os.Args[2], e)
 				return
 			}
 			projects_commit := ""
@@ -193,17 +187,22 @@ func commit(ver *VerificationInfo) {
 	}
 }
 
-func model(ver *VerificationInfo) {
-	if *ver.multi_list != "" {
+// genreate a model based on input and return the flags left
+func model(ver *VerificationInfo) []string {
+	t := time.Now().Local().Format("2006-01-02--15:04:05")
+	RESULTS_FOLDER += t
+	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
+	promela.CreateCSV(RESULTS_FOLDER)
+	switch os.Args[2] {
+	case "l":
 		// parse multiple projects
-		if len(os.Args) > 2 {
-			if strings.HasSuffix(*ver.multi_list, ".csv") {
+		if len(os.Args) > 3 {
+			if strings.HasSuffix(os.Args[3], ".csv") {
 
 				// parse each projects
-				data, e := ioutil.ReadFile(*ver.multi_list)
+				data, e := ioutil.ReadFile(os.Args[3])
 				if e != nil {
-					fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", *ver.multi_list, e)
-					return
+					panic(fmt.Sprintf("prevent panic by handling failure accessing a path %q: %v\n", os.Args[3], e))
 				}
 				proj_listings := strings.Split(string(data), "\n")
 				fmt.Println(len(proj_listings), " projects to parse")
@@ -224,34 +223,34 @@ func model(ver *VerificationInfo) {
 				fmt.Println("Please provide a .csv file containing the list of projects to be parsed")
 			}
 		}
-
-	} else if *ver.single_project != "" {
-
-		// parse project given
-		parseProject(*ver.single_project, "master", ver)
-
-	} else if *ver.multi_projects != "" {
-		path := os.Args[len(os.Args)-1]
-		PROJECTS_FOLDER = path
+		return os.Args[3:]
+	case "mp":
+		path := os.Args[3]
+		// PROJECTS_FOLDER = path
 
 		files, _ := ioutil.ReadDir(path)
 
 		for _, f := range files {
 			parseFolder(path+f.Name(), ver)
 		}
+		return os.Args[3:]
+	case "s":
+		// parse project given
+		parseProject(os.Args[3], "master", ver)
+		return os.Args[3:]
+	default:
 
-	} else {
-
-		path := os.Args[len(os.Args)-1]
-		PROJECTS_FOLDER = path
+		path := os.Args[2]
+		// PROJECTS_FOLDER = path
 
 		_, err := ioutil.ReadDir(path)
 
 		if err != nil {
-			fmt.Println("please give a valid folder to parse.")
+			panic("please give a valid folder to parse.")
 		}
 		packages := []string{}
 		filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
+
 			if file.IsDir() {
 				if file.Name() != "vendor" && file.Name() != "third_party" {
 					path, _ = filepath.Abs(path)
@@ -264,8 +263,18 @@ func model(ver *VerificationInfo) {
 		})
 
 		inferProject(path, filepath.Base(path), "", packages, ver)
-
+		if len(os.Args) > 3 {
+			return os.Args[3:]
+		}
+		return []string{}
 	}
+
+	if len(os.Args) > 4 {
+		return os.Args[4:]
+	}
+
+	return []string{}
+
 }
 
 func verify(ver *VerificationInfo) {
@@ -285,37 +294,35 @@ func verify(ver *VerificationInfo) {
 		panic(err)
 	}
 
-	path := os.Args[len(os.Args)-1]
-	dir_name := filepath.Base(path)
-	models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + dir_name)
+	bounds_to_check := []interface{}{}
+	if len(os.Args) > 4 {
+		for _, b := range os.Args[3:] {
+			num, err := strconv.Atoi(b)
+
+			if err != nil {
+				panic("Should provide a number for the bounds. Got : " + b)
+			}
+
+			bounds_to_check = append(bounds_to_check, num)
+		}
+	}
+	projects, err := ioutil.ReadDir(RESULTS_FOLDER)
 	if err != nil {
-		fmt.Println("Could not read folder :", RESULTS_FOLDER+"/"+dir_name)
+		fmt.Println("Could not read folder :", RESULTS_FOLDER)
 	}
-	VerifyModels(models, dir_name)
 
-	if *ver.single_project != "" {
-		// verify with GCatch
+	for _, p := range projects {
+		if p.IsDir() {
+			//verify the models inside the projects
 
-		filename, err := filepath.Abs(PROJECTS_FOLDER)
-
-		if err != nil {
-			panic("Could not find absolute path of " + PROJECTS_FOLDER)
-		}
-
-		if strings.Contains(filename, "src") {
-			fmt.Println("Running GCatch")
-			f, _ := os.OpenFile("gcatch.log",
-				os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-
-			command := exec.Command("GCatch", "-r", "-path="+filename+"/"+dir_name, "-checker=BMOC", "-compile-error")
-			command.Stdout = f
-
-			command.Run()
-
-		} else {
-			panic("Please provide a projects path that is contained in the $GOPATH " + filename)
+			models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + p.Name())
+			if err != nil {
+				fmt.Println("Could not read folder :", p)
+			}
+			VerifyModels(models, p.Name(), bounds_to_check)
 		}
 	}
+
 }
 
 func parseFolder(path string, ver *VerificationInfo) {

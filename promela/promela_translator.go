@@ -14,52 +14,55 @@ import (
 )
 
 var (
-	CHAN_NAME          = "_ch"
-	DEFAULT_BOUND      = "??"
-	OPTIONAL_BOUND     = "-2"
-	CHAN_BOUND         = 0
-	ADD_BOUND          = 1
-	LOWER_FOR_BOUND    = 2
-	UPPER_FOR_BOUND    = 3
-	RANGE_BOUND        = 4
-	AUTHOR_PROJECT_SEP = "--"
+	CHAN_NAME             = "_ch"
+	DEFAULT_BOUND         = "??"
+	OPTIONAL_BOUND        = "-2"
+	CHAN_BOUND            = 0
+	ADD_BOUND             = 1
+	LOWER_FOR_BOUND       = 2
+	UPPER_FOR_BOUND       = 3
+	RANGE_BOUND           = 4
+	AUTHOR_PROJECT_SEP    = "--"
+	MAX_STRUCTS_INTER_PRO = 3
 
 	Features = []Feature{}
 )
 
 type Model struct {
-	Result_fodler    string // the name of the folder where the model need to ne printed
-	Project_name     string // the full name of  project (eg. "nicolasdilley/Gomela")
-	Package          string // the name of the package
-	Name             string // the name of the file that will be generated. (Composed of "pack_functionName")
-	Commit           string // the commit of the project
-	RecFuncs         []RecFunc
-	SpawningFuncs    []*SpawningFunc
-	Fileset          *token.FileSet
-	FuncDecls        []*ast.FuncDecl               // A list of all the funcdecl declared in the function being modelled (ie, fun := func(){ return true})
-	Proctypes        []*promela_ast.Proctype       // the processes representing the functions of the model
-	Inlines          []*promela_ast.Inline         // the inlines function that represent the commpar args that are function calls
-	Fun              *ast.FuncDecl                 // the function being modelled
-	Chans            map[ast.Expr]*ChanStruct      // the promela chan used in the module mapped to their go expr
-	WaitGroups       map[ast.Expr]*WaitGroupStruct // the promela chan used in the module mapped to their go expr
-	Mutexes          []ast.Expr                    // The promela mutex declaration
-	ContainsWg       bool
-	ContainsChan     bool
-	ContainsMutexes  bool
-	Init             *promela_ast.InitDef         // The proctype consisting of the "main" function of the source program
-	Global_vars      []promela_ast.Stmt           // the global variable used in the ltl properties
-	Defines          []promela_ast.DefineStmt     // the channel bounds
-	CommPars         []*CommPar                   // the communications paramer
-	Features         []Feature                    // The features for the survey
-	ClosedVars       map[*ChanStruct][]ast.Expr   // The variable that are used to test if a channel is closed when receiving (i.e ok in r,ok := >-ch )
-	process_counter  int                          // to give unique name to Promela processes
-	func_counter     int                          // to give unique name to inline func call
-	For_counter      *ForCounter                  // Used to translate the for loop to break out properly out of them
-	Counter          int                          // used to differentiate call expr channels
-	AstMap           map[string]*packages.Package // the map used to find the type of the channels
-	Chan_closing     bool
-	Projects_folder  string
-	GenerateFeatures bool // should the model print features ?
+	Result_fodler        string // the name of the folder where the model need to ne printed
+	Project_name         string // the full name of  project (eg. "nicolasdilley/Gomela")
+	Package              string // the name of the package
+	Name                 string // the name of the file that will be generated. (Composed of "pack_functionName")
+	Commit               string // the commit of the project
+	RecFuncs             []RecFunc
+	SpawningFuncs        []*SpawningFunc
+	Fileset              *token.FileSet
+	FuncDecls            []*ast.FuncDecl               // A list of all the funcdecl declared in the function being modelled (ie, fun := func(){ return true})
+	Proctypes            []*promela_ast.Proctype       // the processes representing the functions of the model
+	Inlines              []*promela_ast.Inline         // the inlines function that represent the commpar args that are function calls
+	Fun                  *ast.FuncDecl                 // the function being modelled
+	Chans                map[ast.Expr]*ChanStruct      // the promela chan used in the module mapped to their go expr
+	WaitGroups           map[ast.Expr]*WaitGroupStruct // the promela chan used in the module mapped to their go expr
+	Mutexes              []ast.Expr                    // The promela mutex declaration
+	ContainsWg           bool
+	ContainsChan         bool
+	ContainsMutexes      bool
+	Init                 *promela_ast.InitDef         // The proctype consisting of the "main" function of the source program
+	Global_vars          []promela_ast.Stmt           // the global variable used in the ltl properties
+	Defines              []promela_ast.DefineStmt     // the channel bounds
+	CommPars             []*CommPar                   // the communications paramer
+	Features             []Feature                    // The features for the survey
+	ClosedVars           map[*ChanStruct][]ast.Expr   // The variable that are used to test if a channel is closed when receiving (i.e ok in r,ok := >-ch )
+	process_counter      int                          // to give unique name to Promela processes
+	func_counter         int                          // to give unique name to inline func call
+	For_counter          *ForCounter                  // Used to translate the for loop to break out properly out of them
+	Counter              int                          // used to differentiate call expr channels
+	AstMap               map[string]*packages.Package // the map used to find the type of the channels
+	Chan_closing         bool
+	Projects_folder      string
+	GenerateFeatures     bool // should the model print features ?
+	Current_return_label string
+	defer_counter        int
 }
 
 // Used to represent a function for recursive calls
@@ -119,13 +122,13 @@ func (m *Model) GoToPromela(SEP string) {
 			PrintFeatures(m.Features, m)
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
-			fmt.Println(err.err.Error())
+			fmt.Println(err.err)
 
 			logFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
-				Name:      "MODEL ERROR = " + fmt.Sprintf(err.err.Error()),
+				Name:      "MODEL ERROR = " + fmt.Sprint(err.err),
 				Mandatory: "false",
 				Line:      0,
 				Commit:    m.Commit,
@@ -169,7 +172,7 @@ func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *
 				switch t := t.(type) {
 
 				case *types.Named:
-					b1, err1 := m.translateStruct(s, lh, t, []*types.Named{t})
+					b1, err1 := m.translateStruct(s, lh, t, []*types.Named{t}, 0)
 					if err1 != nil {
 						return b, err1
 					}
@@ -192,7 +195,7 @@ func GetElemIfPointer(t types.Type) types.Type {
 	}
 }
 
-func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*types.Named) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*types.Named, inter_pro int) (b *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	// Tests if one of the field of the assign structs is a WG
 	// We have the definition of a struct
@@ -256,18 +259,20 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 
 			case *types.Struct:
 
-				b1, err1 := m.translateStruct(
-					s,
-					&ast.SelectorExpr{
-						X: lhs,
-						Sel: &ast.Ident{
-							Name: t.Field(i).Name()}},
-					field, seen)
+				if inter_pro <= MAX_STRUCTS_INTER_PRO {
+					b1, err1 := m.translateStruct(
+						s,
+						&ast.SelectorExpr{
+							X: lhs,
+							Sel: &ast.Ident{
+								Name: t.Field(i).Name()}},
+						field, seen, inter_pro+1)
 
-				if err1 != nil {
-					return b, err1
+					if err1 != nil {
+						return b, err1
+					}
+					addBlock(b, b1)
 				}
-				addBlock(b, b1)
 			case *types.Named:
 
 				if !t.Field(i).Embedded() {
@@ -330,7 +335,7 @@ func (m *Model) translateNamed(s ast.Stmt, name ast.Expr, t *types.Named, seen [
 
 		return m.translateStruct(s,
 			name,
-			t, new_seen)
+			t, new_seen, 0)
 	}
 
 	return b, nil
@@ -1144,37 +1149,38 @@ func (m *Model) PrintFeature(f Feature) {
 
 func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 	return &Model{
-		Result_fodler:    m.Result_fodler,
-		Project_name:     m.Project_name,
-		Package:          pack,
-		Name:             m.Name,
-		Commit:           m.Commit,
-		RecFuncs:         []RecFunc{},
-		SpawningFuncs:    m.SpawningFuncs,
-		Fileset:          m.Fileset,
-		Proctypes:        m.Proctypes,
-		Inlines:          m.Inlines,
-		Fun:              fun,
-		ContainsChan:     m.ContainsChan,
-		ContainsWg:       m.ContainsWg,
-		Chans:            make(map[ast.Expr]*ChanStruct),
-		WaitGroups:       make(map[ast.Expr]*WaitGroupStruct),
-		Mutexes:          []ast.Expr{},
-		Init:             m.Init,
-		Global_vars:      m.Global_vars,
-		Defines:          m.Defines,
-		CommPars:         []*CommPar{},
-		FuncDecls:        []*ast.FuncDecl{},
-		Features:         []Feature{},
-		process_counter:  0,
-		func_counter:     0,
-		For_counter:      m.For_counter,
-		Counter:          m.Counter,
-		AstMap:           m.AstMap,
-		Chan_closing:     m.Chan_closing,
-		Projects_folder:  m.Projects_folder,
-		ClosedVars:       make(map[*ChanStruct][]ast.Expr),
-		GenerateFeatures: m.GenerateFeatures,
+		Result_fodler:        m.Result_fodler,
+		Project_name:         m.Project_name,
+		Package:              pack,
+		Name:                 m.Name,
+		Commit:               m.Commit,
+		RecFuncs:             []RecFunc{},
+		SpawningFuncs:        m.SpawningFuncs,
+		Fileset:              m.Fileset,
+		Proctypes:            m.Proctypes,
+		Inlines:              m.Inlines,
+		Fun:                  fun,
+		ContainsChan:         m.ContainsChan,
+		ContainsWg:           m.ContainsWg,
+		Chans:                make(map[ast.Expr]*ChanStruct),
+		WaitGroups:           make(map[ast.Expr]*WaitGroupStruct),
+		Mutexes:              []ast.Expr{},
+		Init:                 m.Init,
+		Global_vars:          m.Global_vars,
+		Defines:              m.Defines,
+		CommPars:             []*CommPar{},
+		FuncDecls:            []*ast.FuncDecl{},
+		Features:             []Feature{},
+		process_counter:      0,
+		func_counter:         0,
+		For_counter:          m.For_counter,
+		Counter:              m.Counter,
+		AstMap:               m.AstMap,
+		Chan_closing:         m.Chan_closing,
+		Projects_folder:      m.Projects_folder,
+		ClosedVars:           make(map[*ChanStruct][]ast.Expr),
+		GenerateFeatures:     m.GenerateFeatures,
+		Current_return_label: "stop_process",
 	}
 }
 

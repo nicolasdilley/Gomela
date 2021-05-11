@@ -3,6 +3,7 @@ package promela
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -175,11 +176,11 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 		}
 
 		proc.Body.List = append(proc.Body.List, stmt.List...)
-		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 		for i, j := 0, len(defers.List)-1; i < j; i, j = i+1, j-1 {
 			defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
 		}
 		proc.Body.List = append(proc.Body.List, defers.List...)
+		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 
 	}
 	prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
@@ -664,7 +665,7 @@ func replaceExpr(from ast.Expr, old ast.Expr, n *ast.Ident) ast.Expr {
 
 // Ie: if s == c and exprs == [c.ch] -> c.ch cause s contains one expr in exprs
 func addIdenticalSelectorExprs(exprs []ast.Expr, s ast.Expr) []ast.Expr {
-	to_return := []ast.Expr{}
+	to_return := Names{}
 
 	sub_expr := s
 
@@ -672,6 +673,8 @@ func addIdenticalSelectorExprs(exprs []ast.Expr, s ast.Expr) []ast.Expr {
 	// case *ast.SelectorExpr:
 	// 	sub_expr = call.X
 	// }
+
+	// Reorder them in alphabetical order ?
 
 	for _, name := range exprs {
 		if IdenticalExpr(name, s) {
@@ -691,6 +694,7 @@ func addIdenticalSelectorExprs(exprs []ast.Expr, s ast.Expr) []ast.Expr {
 		}
 
 	}
+	sort.Sort(to_return)
 
 	return to_return
 }

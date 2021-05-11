@@ -31,26 +31,27 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 					if !takeChanAsParam(decl, ast_map[pack_name]) {
 						// fmt.Println("Parsing ", decl.Name)
 						var m promela.Model = promela.Model{
-							Result_fodler:    result_folder,
-							Project_name:     proj_name,
-							Package:          pack_name,
-							Name:             pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
-							AstMap:           ast_map,
-							Fileset:          fileSet,
-							FuncDecls:        []*ast.FuncDecl{},
-							Proctypes:        []*promela_ast.Proctype{},
-							RecFuncs:         []promela.RecFunc{},
-							SpawningFuncs:    []*promela.SpawningFunc{},
-							ClosedVars:       make(map[*promela.ChanStruct][]ast.Expr),
-							Fun:              decl,
-							Chans:            make(map[ast.Expr]*promela.ChanStruct),
-							WaitGroups:       make(map[ast.Expr]*promela.WaitGroupStruct),
-							Mutexes:          []ast.Expr{},
-							Commit:           commit,
-							Global_vars:      []promela_ast.Stmt{},
-							For_counter:      &promela.ForCounter{},
-							Projects_folder:  projects_folder,
-							GenerateFeatures: true,
+							Result_fodler:        result_folder,
+							Project_name:         proj_name,
+							Package:              pack_name,
+							Name:                 pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
+							AstMap:               ast_map,
+							Fileset:              fileSet,
+							FuncDecls:            []*ast.FuncDecl{},
+							Proctypes:            []*promela_ast.Proctype{},
+							RecFuncs:             []promela.RecFunc{},
+							SpawningFuncs:        []*promela.SpawningFunc{},
+							ClosedVars:           make(map[*promela.ChanStruct][]ast.Expr),
+							Fun:                  decl,
+							Chans:                make(map[ast.Expr]*promela.ChanStruct),
+							WaitGroups:           make(map[ast.Expr]*promela.WaitGroupStruct),
+							Mutexes:              []ast.Expr{},
+							Commit:               commit,
+							Global_vars:          []promela_ast.Stmt{},
+							For_counter:          &promela.ForCounter{},
+							Projects_folder:      projects_folder,
+							GenerateFeatures:     true,
+							Current_return_label: "stop_process",
 						}
 
 						m.GoToPromela(AUTHOR_PROJECT_SEP)
@@ -133,6 +134,8 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 			switch t := field.Type.(type) {
 			case *ast.StarExpr:
 				ident = t.X
+			default:
+				ident = t
 			}
 			switch ident := ident.(type) {
 			case *ast.Ident:
@@ -144,10 +147,11 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 
 					}
 				} else {
-					log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The type of the receiver of func ", decl.Name.Name, " could not be found ")
+					log.Print(pack.Name, ":", decl.Name.Name, ":", "MODEL ERROR = The type of the receiver of func ", decl.Name.Name, " could not be found ")
 				}
 			default:
-				log.Printf(pack.Name, ",", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident")
+
+				log.Print(pack.Name, ":", decl.Name.Name, ",", "MODEL ERROR = The receiver of func ", decl.Name.Name, " was not an ident ", ident)
 
 			}
 		}

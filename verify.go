@@ -33,7 +33,11 @@ const (
 	MAX_NUMBER_TESTS = 256
 )
 
-func VerifyModels(models []os.FileInfo, dir_name string) {
+func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []interface{}) {
+
+	if len(bounds_to_check) == 0 {
+		bounds_to_check = []interface{}{0, 1, 3}
+	}
 	// Print CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -44,6 +48,7 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 		return
 	}
 
+	fmt.Println(models)
 	// verify each model
 	for _, model := range models {
 		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
@@ -58,7 +63,6 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 				file_content := string(content)
 				lines := strings.Split(file_content, "\n")
 
-				bounds_to_check := []interface{}{0, 1, 3}
 				bounds := [][]interface{}{}
 				comm_params := []string{} // the name of the mandatory param
 
@@ -118,13 +122,13 @@ func VerifyModels(models []os.FileInfo, dir_name string) {
 								break
 							}
 							if optional_params > 0 {
-								verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params)
+								verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params, bounds_to_check)
 							}
 						}
 					} else {
 						ver, ok := verifyModel(path, model_name, git_link, f, []string{}, optional_params, []string{})
 						if optional_params > 0 && ok {
-							verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params)
+							verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params, bounds_to_check)
 						}
 					}
 				}
@@ -207,11 +211,11 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	return ver, executable
 }
 
-func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int) {
+func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int, bounds_to_check []interface{}) {
 	if (ver.Global_deadlock) && !ver.Timeout && ver.Err == "" {
 		// add values to the candidates param
 
-		opt_bounds := generateOptBounds(num_optionnal)
+		opt_bounds := generateOptBounds(num_optionnal, bounds_to_check)
 
 		num_tests := 0
 		false_alarm_bounds := [][]interface{}{}
@@ -447,8 +451,9 @@ func parseResults(result string, ver *VerificationRun) bool {
 	return true
 }
 
-func generateOptBounds(num_optionnals int) [][]interface{} {
-	bounds_to_check := []interface{}{-2, 0, 1, 3}
+func generateOptBounds(num_optionnals int, bounds_to_check []interface{}) [][]interface{} {
+
+	bounds_to_check = append([]interface{}{-2}, bounds_to_check...)
 	bounds := [][]interface{}{}
 	for i := 0; i < num_optionnals; i++ {
 		bounds = append(bounds, bounds_to_check)

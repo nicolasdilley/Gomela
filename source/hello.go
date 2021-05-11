@@ -1,22 +1,28 @@
 package main
 
-func main() {
-	a := 1
-	ch := make(chan int, a)
-	ch1 := make(chan int)
+import "sync"
 
-	go func() {
-		for range ch {
-			ch1 <- 0
-		}
-	}()
+func (p *pool) release(s string) {
 
-	for i := 0; i < 1; i++ {
-		ch <- i
+	var mtx *sync.Mutex
+	mtx.RLock()
+	interned, ok := pool[s]
+	mtx.RUnlock()
+
+	if !ok {
+		noReferenceReleases.Inc()
+		return
 	}
-	close(ch)
 
-	for i := 0; i < 1; i++ {
-		<-ch1
+	refs := interned.refs.Dec()
+	if refs > 0 {
+		return
 	}
+
+	mtx.Lock()
+	defer mtx.Unlock()
+	if interned.refs.Load() != 0 {
+		return
+	}
+	delete(pool, s)
 }

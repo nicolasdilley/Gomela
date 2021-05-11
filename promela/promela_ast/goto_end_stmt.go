@@ -5,6 +5,7 @@ import "go/token"
 // GotoStmt is a jump statement that goes to the label specified
 type GotoEndStmt struct {
 	Goto token.Position
+	Name string
 }
 
 func (i *GotoEndStmt) GoNode() token.Position {
@@ -12,7 +13,7 @@ func (i *GotoEndStmt) GoNode() token.Position {
 }
 
 func (i *GotoEndStmt) Print(num_tabs int) string {
-	return "goto stop_process"
+	return "goto " + i.Name
 }
 
 func (s *GotoEndStmt) Clone() Stmt {
