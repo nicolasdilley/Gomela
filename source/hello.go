@@ -1,12 +1,12 @@
 package main
 
-func (p *pool) release(s string) {
+func release(s string) {
 
-	ch := make(chan int, n)
+	c := make(chan int)
 
-	ch <- 0
-	ch <- 0
+	if 1 > 2 {
+		return
+	}
 
-	<-ch
-	<-ch
+	defer close(c)
 }
