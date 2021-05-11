@@ -297,7 +297,7 @@ func verify(ver *VerificationInfo, toParse string) {
 		panic("The folder given cannot be parsed")
 	}
 	bounds_to_check := []interface{}{}
-	if len(os.Args) > 4 {
+	if len(os.Args) > 3 {
 		for _, b := range os.Args[3:] {
 			num, err := strconv.Atoi(b)
 
@@ -308,6 +308,7 @@ func verify(ver *VerificationInfo, toParse string) {
 			bounds_to_check = append(bounds_to_check, num)
 		}
 	}
+
 	if f.IsDir() {
 		RESULTS_FOLDER = toParse
 		// Print CSV

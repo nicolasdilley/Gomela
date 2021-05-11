@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -99,39 +98,43 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 					}
 				} else {
 
+					copy_path := strings.Replace(path, ".pml", "-copy.pml", 1)
 					if len(comm_params) > 0 {
 
 						d := cartesian.Iter(bounds...)
 
 						for bound := range d {
+
 							toPrint := file_content
 							for _, b := range bound {
 								toPrint = strings.Replace(toPrint, "??", fmt.Sprint(b), 1)
 							}
 
-							err := os.Remove(path)
-							if err != nil {
-								log.Fatal(err)
-							}
-							ioutil.WriteFile(path, []byte(toPrint), 0644)
+							ioutil.WriteFile(copy_path, []byte(toPrint), 0644)
 
 							lines = strings.Split(toPrint, "\n")
 							bound_str := []string{}
 							for _, b := range bound {
 								bound_str = append(bound_str, fmt.Sprint(b))
 							}
-							ver, ok := verifyModel(path, model_name, git_link, f, comm_params, optional_params, bound_str)
+							ver, ok := verifyModel(copy_path, model_name, git_link, f, comm_params, optional_params, bound_str)
 							if !ok {
+								os.Remove(copy_path)
 								break
 							}
 							if optional_params > 0 {
-								verifyWithOptParams(ver, path, model_name, lines, git_link, f, comm_params, bound_str, optional_params, bounds_to_check)
+								verifyWithOptParams(ver, copy_path, model_name, lines, git_link, f, comm_params, bound_str, optional_params, bounds_to_check)
+							} else {
+								os.Remove(copy_path)
 							}
 						}
 					} else {
-						ver, ok := verifyModel(path, model_name, git_link, f, []string{}, optional_params, []string{})
+						ioutil.WriteFile(copy_path, []byte(file_content), 0644)
+						ver, ok := verifyModel(copy_path, model_name, git_link, f, []string{}, optional_params, []string{})
 						if optional_params > 0 && ok {
-							verifyWithOptParams(ver, path, model_name, lines, git_link, f, []string{}, []string{}, optional_params, bounds_to_check)
+							verifyWithOptParams(ver, copy_path, model_name, lines, git_link, f, []string{}, []string{}, optional_params, bounds_to_check)
+						} else {
+							os.Remove(copy_path)
 						}
 					}
 				}
@@ -147,9 +150,12 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 
 	var output bytes.Buffer
 
+	// Copy file and verify the copied file
+
 	// Verify with SPIN
 	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m100000000", "-w26", path, "-f")
 	command.Stdout = &output
+
 	pre := time.Now()
 	command.Run()
 	after := time.Now()
@@ -252,17 +258,13 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						}
 					}
 
-					err := os.Remove(path) // delete previous model
-					if err != nil {
-						log.Fatal(err)
-					}
-
 					toPrint := ""
 
 					for _, l1 := range new_lines { // generate new content of file with updated value for opt param
 						toPrint += l1 + "\n"
 					}
 
+					os.Remove(path)
 					ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
 
 					ver := VerificationRun{
@@ -279,7 +281,6 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					pre := time.Now()
 					command.Run()
 					after := time.Now()
-
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
 
 					executable := parseResults(output.String(), &ver)
@@ -348,24 +349,33 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 				break
 			}
 		}
+
+		os.Remove(path)
 	}
 }
 
 func verifyModelWithSpecificValues(model string, params []string) {
 	lines := strings.Split(model, "\n")
+	replaced := 0
 	for _, param := range params {
 
 		for i, line := range lines {
 			if strings.Contains(line, "-2") && strings.Contains(line, "int") && strings.Contains(line, " = ") {
 				lines[i] = strings.Replace(line, "-2", param, 1)
+				replaced++
 				break
 			}
 
 			if strings.Contains(line, "??") {
 				lines[i] = strings.Replace(line, "??", param, 1)
+				replaced++
 				break
 			}
 		}
+	}
+
+	if replaced != len(params) {
+		panic(fmt.Sprintf("The number of values for comm params %d does not match the number of comm param in the model %d", len(params), replaced))
 	}
 
 	toPrint := ""
