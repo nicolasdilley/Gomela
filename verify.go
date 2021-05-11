@@ -53,8 +53,11 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 	for _, model := range models {
 		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
 			fmt.Println("Verifying model : " + model.Name())
-			path, _ := filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
 
+			path := RESULTS_FOLDER + "/" + model.Name()
+			if dir_name != "" {
+				path, _ = filepath.Abs(RESULTS_FOLDER + "/" + dir_name + "/" + model.Name())
+			}
 			content, err := ioutil.ReadFile(path)
 			if err != nil {
 				fmt.Println("Could not read content of : ", path, err)

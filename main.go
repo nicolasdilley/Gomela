@@ -104,10 +104,17 @@ func main() {
 		}
 	case "stats": // Generate a set of stats for each projects and models
 		stats.Stats()
-	case "bmc": // Full scale model -> verify -> stats
+	case "fs": // Full scale model -> verify -> stats
 		model(ver)
-		verify(ver)
+		verify(ver, RESULTS_FOLDER)
 
+	case "bmc":
+
+		if len(os.Args) > 2 {
+			verify(ver, os.Args[2])
+		} else {
+			panic("Please provide a folder that contains the .pml that you want to parse or a pml that you want to verify.")
+		}
 	case "commit": // produce a list of commit from given list of projects
 		commit(ver)
 
@@ -277,23 +284,18 @@ func model(ver *VerificationInfo) []string {
 
 }
 
-func verify(ver *VerificationInfo) {
+func verify(ver *VerificationInfo, toParse string) {
 	// toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
 
 	toPrint := ""
 
-	// Print CSV
-	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// check if toParse is a folder or a .pml file
+
+	f, err := os.Stat(toParse)
 
 	if err != nil {
-		fmt.Println("Could not create file verification.csv")
-		return
+		panic("The folder given cannot be parsed")
 	}
-	if _, err := f.WriteString(toPrint); err != nil {
-		panic(err)
-	}
-
 	bounds_to_check := []interface{}{}
 	if len(os.Args) > 4 {
 		for _, b := range os.Args[3:] {
@@ -306,21 +308,41 @@ func verify(ver *VerificationInfo) {
 			bounds_to_check = append(bounds_to_check, num)
 		}
 	}
-	projects, err := ioutil.ReadDir(RESULTS_FOLDER)
-	if err != nil {
-		fmt.Println("Could not read folder :", RESULTS_FOLDER)
-	}
+	if f.IsDir() {
+		RESULTS_FOLDER = toParse
+		// Print CSV
+		f, err := os.OpenFile("./"+toParse+"/verification.csv",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
-	for _, p := range projects {
-		if p.IsDir() {
-			//verify the models inside the projects
-
-			models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + p.Name())
-			if err != nil {
-				fmt.Println("Could not read folder :", p)
-			}
-			VerifyModels(models, p.Name(), bounds_to_check)
+		if err != nil {
+			fmt.Println("Could not create file verification.csv")
+			return
 		}
+		if _, err := f.WriteString(toPrint); err != nil {
+			panic(err)
+		}
+
+		projects, err := ioutil.ReadDir(RESULTS_FOLDER)
+		if err != nil {
+			fmt.Println("Could not read folder :", RESULTS_FOLDER)
+		}
+
+		for _, p := range projects {
+			if p.IsDir() {
+				//verify the models inside the projects
+
+				models, err := ioutil.ReadDir(RESULTS_FOLDER + "/" + p.Name())
+				if err != nil {
+					fmt.Println("Could not read folder :", p)
+				}
+				VerifyModels(models, p.Name(), bounds_to_check)
+			}
+		}
+	} else { // a single .pml has been given as arg
+
+		path, _ := filepath.Abs("./")
+		RESULTS_FOLDER = path
+		VerifyModels([]os.FileInfo{f}, "", bounds_to_check)
 	}
 
 }
