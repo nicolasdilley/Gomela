@@ -1,0 +1,10 @@
+Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
+,main++release3,release,Candidate Param,true,n,0,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,release,Candidate Param,false,k,0,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,release,Candidate Param,false,g,0,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,release,Comm Param,true,n,5,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,release,new channel,false,Name :c,5,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,release,Comm Param,false,k,7,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,a,Actual Param,false,g,0,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,a,Comm Param,false,g,20,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++release3,a,Var as a for upper bound,false,Name :g,20,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,

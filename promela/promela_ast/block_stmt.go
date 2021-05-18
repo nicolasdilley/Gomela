@@ -23,7 +23,12 @@ func (b *BlockStmt) Print(num_tabs int) (stmt string) {
 		stmt += utils.GetTabs(num_tabs)
 		stmt += s.Print(num_tabs)
 		if i < len(b.List)-1 {
-			stmt += ";\n"
+			switch s.(type) {
+			case *CommParamDeclStmt:
+				stmt += "\n"
+			default:
+				stmt += ";\n"
+			}
 		}
 
 	}
