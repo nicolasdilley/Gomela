@@ -102,8 +102,10 @@ func main() {
 		} else {
 			panic("Please provide a .pml file : ie. gomela verify hello.pml")
 		}
-	case "stats": // Generate a set of stats for each projects and models
+	case "full_stats": // Generate a set of stats for each projects and models
 		stats.Stats()
+	case "stats":
+		printStats()
 	case "fs": // Full scale model -> verify -> stats
 		model(ver)
 		verify(ver, RESULTS_FOLDER)
@@ -413,6 +415,57 @@ func parseProject(project_name string, commit string, ver *VerificationInfo) {
 		}
 	} else {
 		fmt.Println("Could not download project ", project_name)
+	}
+}
+
+type Param struct {
+	Name      string
+	Mandatory bool
+}
+
+func printStats() {
+	if len(os.Args) > 2 {
+		// read file
+		data, e := ioutil.ReadFile(os.Args[2])
+
+		if e != nil {
+			panic("The file provided " + os.Args[2] + " could not be open")
+		}
+
+		// print stats
+
+		lines := strings.Split(string(data), "\n")
+
+		params := []Param{}
+
+		for _, line := range lines {
+			if strings.Contains(line, "//") && (strings.Contains(line, " opt ") || strings.Contains(line, " mand ")) {
+				splitted := strings.Split(line, "//")
+				splitted = strings.Split(splitted[1], " ")
+				param := Param{Name: splitted[2], Mandatory: splitted[1] == "mand"}
+				params = append(params, param)
+			}
+		}
+
+		fmt.Println("Num comm params : ", len(params))
+		fmt.Println("Mandatory Param : ")
+		for _, param := range params {
+
+			if param.Mandatory {
+				fmt.Println(param.Name)
+			}
+		}
+
+		fmt.Println("Optionnal Param : ")
+		for _, param := range params {
+
+			if !param.Mandatory {
+				fmt.Println(param.Name)
+			}
+
+		}
+	} else {
+		panic("Please provide a .pml file : ie, gomela stats hello.pml")
 	}
 }
 

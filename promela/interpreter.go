@@ -161,11 +161,20 @@ func numCommParInModel(m *Model) (int, int) {
 	num_opt_param := 0
 	findParam := func(s promela_ast.Stmt) bool {
 		switch s := s.(type) {
-		case *promela_ast.DeclStmt:
+		case *promela_ast.CommParamDeclStmt:
+			if s.Mandatory {
+				num_mand_param++
+			} else {
+				num_opt_param++
+			}
+
+		case *promela_ast.DefineStmt:
 			switch rhs := s.Rhs.(type) {
 			case *promela_ast.Ident:
-				if rhs.Name == OPTIONAL_BOUND {
+				if strings.Contains(rhs.Name, "opt") {
 					num_opt_param++
+				} else if strings.Contains(rhs.Name, "mand") {
+					num_mand_param++
 				}
 			}
 		}
