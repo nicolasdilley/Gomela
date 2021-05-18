@@ -14,6 +14,28 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos())}
 
+	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
+	had_go := m.For_counter.With_go
+	// update 'for' counter to generate the appropriate label
+	m.For_counter.With_go = false
+
+	if was_in_for {
+		m.For_counter.Y += 1
+	} else {
+		m.For_counter.X += 1
+	}
+
+	defer func() {
+		if !was_in_for { // if outer loop set in for to false and reset y
+			m.For_counter.In_for = false
+			m.For_counter.Y = 0
+		} else {
+			m.For_counter.In_for = true
+		}
+
+		m.For_counter.With_go = had_go
+
+	}()
 	goto_stmt := &promela_ast.GotoStmt{Label: &promela_ast.LabelStmt{Name: fmt.Sprintf("for%d%d_exit", m.For_counter.X, m.For_counter.Y)}}
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
@@ -117,7 +139,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	}
 
 	if len(i.Guards) > 0 {
-		b.List = append(b.List, i)
+		b.List = append(b.List, i, goto_stmt.Label)
 	} else {
 		return nil, nil, &ParseError{err: errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())}
 

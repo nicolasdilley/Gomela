@@ -204,3 +204,10 @@ func GenerateMutexMonitor() string {
 		"od\n" +
 		"}\n\n"
 }
+
+func GenerateReceiverProcess() string {
+
+	return "proctype receiver(chan c) {\n" +
+		"c?0\n" +
+		"}\n\n"
+}

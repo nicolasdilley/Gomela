@@ -205,6 +205,14 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 	if !isGo {
 
 		b.List = append(b.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: child_func_name}, Rhs: &promela_ast.Ident{Name: "0"}})
+	} else {
+		// Add the receiver call
+		b.List = append(b.List, &promela_ast.RunStmt{
+			X: &promela_ast.CallExpr{
+				Fun: &promela_ast.Ident{
+					Name: "receiver"},
+				Args: []promela_ast.Expr{&promela_ast.Ident{Name: child_func_name}}}})
+		m.ContainsReceiver = true
 	}
 
 	if isMain {

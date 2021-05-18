@@ -429,17 +429,14 @@ func parseResults(result string, ver *VerificationRun) bool {
 		splitted := strings.Split(result, "\n")
 
 		if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
-
-			fmt.Println("The model is not executable : ")
-			err := ""
-			for _, line := range splitted {
-				err += line
+			if strings.Contains(splitted[0], "VECTORSZ too small") {
+				err = "VECTORSZ too small"
+			} else {
+				err := splitted[0]
 			}
 			ver.Err = err
 			return false
 		}
-
-		fmt.Println(splitted[len(splitted)-1])
 
 		if strings.Contains(splitted[len(splitted)-1], "Depth=") {
 			// Its a timeout

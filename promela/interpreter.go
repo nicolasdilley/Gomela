@@ -59,10 +59,13 @@ func Print(m *Model) {
 		stmt += c.Print(0) + "\n"
 	}
 
+	// Print global variables
+
 	// print the function inline
 	for _, c := range m.Inlines {
 		stmt += c.Print(0) + "\n"
 	}
+
 	// add chans to the chandef
 	chan_struct := promela_ast.ChanStructDef{Name: &promela_ast.Ident{Name: "Chandef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
 	sync := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "sync"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
@@ -131,6 +134,10 @@ func Print(m *Model) {
 	}
 	if m.ContainsMutexes {
 		stmt += GenerateMutexMonitor()
+	}
+
+	if m.ContainsReceiver {
+		stmt += GenerateReceiverProcess()
 	}
 
 	folder := "./" + m.Result_fodler + "/" + strings.Replace(m.Project_name, "/", "-", -1)

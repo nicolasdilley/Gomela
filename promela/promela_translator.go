@@ -47,6 +47,7 @@ type Model struct {
 	ContainsWg           bool
 	ContainsChan         bool
 	ContainsMutexes      bool
+	ContainsReceiver     bool
 	Init                 *promela_ast.InitDef         // The proctype consisting of the "main" function of the source program
 	Global_vars          []promela_ast.Stmt           // the global variable used in the ltl properties
 	Defines              []promela_ast.DefineStmt     // the channel bounds
@@ -1162,6 +1163,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		Fun:                  fun,
 		ContainsChan:         m.ContainsChan,
 		ContainsWg:           m.ContainsWg,
+		ContainsReceiver:     m.ContainsReceiver,
 		Chans:                make(map[ast.Expr]*ChanStruct),
 		WaitGroups:           make(map[ast.Expr]*WaitGroupStruct),
 		Mutexes:              []ast.Expr{},
