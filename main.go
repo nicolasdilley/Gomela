@@ -122,7 +122,11 @@ func main() {
 
 	case "sanity": // remove the .pml files that do nothing
 		if len(os.Args) > 2 {
-			num_unsain := sanity(os.Args[2])
+			del := false
+			if len(os.Args) > 3 {
+				del = true
+			}
+			num_unsain := sanity(os.Args[2], del)
 
 			fmt.Println("Removed a total of ", num_unsain, " files which did not contain any concurrent interactions")
 		} else {
@@ -162,11 +166,11 @@ func findNumCommParam(content string) (int, int) {
 	return mand_params, opt_params
 }
 
-func sanity(path string) int {
+func sanity(path string, del bool) int {
 	unsain_file := 0
 
 	if strings.Contains(path, ".pml") {
-		if !sanityCheckFile(path) {
+		if !sanityCheckFile(path, del) {
 			unsain_file++
 		}
 	} else {
@@ -179,10 +183,10 @@ func sanity(path string) int {
 			filepath.Walk(path,
 				func(fpath string, info os.FileInfo, err error) error {
 					if info.IsDir() && fpath != path {
-						unsain_file += sanity(fpath)
+						unsain_file += sanity(fpath, del)
 						return filepath.SkipDir
 					} else if strings.Contains(fpath, ".pml") {
-						if !sanityCheckFile(fpath) {
+						if !sanityCheckFile(fpath, del) {
 							unsain_file++
 						}
 					}
@@ -196,7 +200,7 @@ func sanity(path string) int {
 	return unsain_file
 }
 
-func sanityCheckFile(path string) bool {
+func sanityCheckFile(path string, del bool) bool {
 	data, e := ioutil.ReadFile(path)
 
 	if e != nil {
@@ -246,7 +250,9 @@ func sanityCheckFile(path string) bool {
 	}
 
 	if !used {
-		os.Remove(path)
+		if del {
+			os.Remove(path)
+		}
 		return false
 	}
 	return true
