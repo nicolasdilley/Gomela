@@ -429,10 +429,11 @@ func parseResults(result string, ver *VerificationRun) bool {
 		splitted := strings.Split(result, "\n")
 
 		if strings.Contains(splitted[0], "error") || strings.Contains(splitted[0], "Error") {
+			err := ""
 			if strings.Contains(splitted[0], "VECTORSZ too small") {
 				err = "VECTORSZ too small"
 			} else {
-				err := splitted[0]
+				err = splitted[0]
 			}
 			ver.Err = err
 			return false

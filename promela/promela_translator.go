@@ -99,6 +99,7 @@ func (m *Model) GoToPromela(SEP string) {
 			Call: &ast.CallExpr{Fun: m.Fun.Name, Args: make([]ast.Expr, m.Fun.Type.Params.NumFields())},
 		}, true)
 
+	fmt.Println(m.Defines)
 	m.Init = &promela_ast.InitDef{
 		Def:  m.Fileset.Position(m.Fun.Pos()),
 		Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},

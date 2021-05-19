@@ -120,6 +120,14 @@ func main() {
 	case "commit": // produce a list of commit from given list of projects
 		commit(ver)
 
+	case "sanity": // remove the .pml files that do nothing
+		if len(os.Args) > 2 {
+			num_unsain := sanity(os.Args[2])
+
+			fmt.Println("Removed a total of ", num_unsain, " files which did not contain any concurrent interactions")
+		} else {
+			panic("You need to provide a folder containing the .pml or a .pml file.")
+		}
 	default:
 		panic("You need to provide a projects list as a .csv file. ie 'gomela commit projects.csv'")
 	}
@@ -154,6 +162,95 @@ func findNumCommParam(content string) (int, int) {
 	return mand_params, opt_params
 }
 
+func sanity(path string) int {
+	unsain_file := 0
+
+	if strings.Contains(path, ".pml") {
+		if !sanityCheckFile(path) {
+			unsain_file++
+		}
+	} else {
+		f, err := os.Stat(path)
+
+		if err != nil {
+			panic("Could not read file/folder " + path)
+		}
+		if f.IsDir() {
+			filepath.Walk(path,
+				func(fpath string, info os.FileInfo, err error) error {
+					if info.IsDir() && fpath != path {
+						unsain_file += sanity(fpath)
+						return filepath.SkipDir
+					} else if strings.Contains(fpath, ".pml") {
+						if !sanityCheckFile(fpath) {
+							unsain_file++
+						}
+					}
+					return nil
+				})
+		} else {
+			panic("The file provided should be a .pml file or a directory")
+		}
+	}
+
+	return unsain_file
+}
+
+func sanityCheckFile(path string) bool {
+	data, e := ioutil.ReadFile(path)
+
+	if e != nil {
+		panic("Could not read file " + path)
+	}
+
+	model := strings.Split(string(data), "/*")[0]
+
+	used := false
+	for _, line := range strings.Split(model, "\n") {
+		if strings.Contains(line, ".update!") { // add
+			used = true
+		}
+
+		if strings.Contains(line, ".wait?") { // add
+			used = true
+		}
+
+		if strings.Contains(line, ".Lock!") { // add
+			used = true
+		}
+
+		if strings.Contains(line, ".RLock!") { // add
+			used = true
+		}
+		if strings.Contains(line, ".Unlock!") { // add
+			used = true
+		}
+		if strings.Contains(line, ".RUnlock!") { // add
+			used = true
+		}
+		if strings.Contains(line, ".deq?") { // add
+			used = true
+		}
+		if strings.Contains(line, ".rcving!") { // add
+			used = true
+		}
+		if strings.Contains(line, ".sending!") { // add
+			used = true
+		}
+		if strings.Contains(line, ".sync") { // add
+			used = true
+		}
+		if strings.Contains(line, ".enq!") { // add
+			used = true
+		}
+	}
+
+	if !used {
+		os.Remove(path)
+		return false
+	}
+	return true
+}
 func commit(ver *VerificationInfo) {
 
 	// parse multiple projects

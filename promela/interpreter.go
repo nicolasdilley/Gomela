@@ -58,9 +58,6 @@ func Print(m *Model) {
 	for _, c := range m.Defines {
 		stmt += c.Print(0) + "\n"
 	}
-
-	// Print global variables
-
 	// print the function inline
 	for _, c := range m.Inlines {
 		stmt += c.Print(0) + "\n"
@@ -168,7 +165,7 @@ func numCommParInModel(m *Model) (int, int) {
 				num_opt_param++
 			}
 
-		case *promela_ast.DefineStmt:
+		case *promela_ast.DeclStmt:
 			switch rhs := s.Rhs.(type) {
 			case *promela_ast.Ident:
 				if strings.Contains(rhs.Name, "opt") {
@@ -185,17 +182,16 @@ func numCommParInModel(m *Model) (int, int) {
 		promela_ast.Inspect(proc.Body, findParam)
 	}
 
-	for _, define := range m.Defines {
-		switch rhs := define.Rhs.(type) {
-		case *promela_ast.Ident:
-			if rhs.Name == "??" {
-				num_mand_param++
-			}
-			if rhs.Name == "-2" {
-				num_opt_param++
-			}
-		}
-	}
+	// for _, define := range m.Defines {
+	// 	switch rhs := define.Rhs.(type) {
+	// 	case *promela_ast.Ident:
+	// 		if strings.Contains(rhs.Name, "opt") {
+	// 			num_opt_param++
+	// 		} else if strings.Contains(rhs.Name, "mand") {
+	// 			num_mand_param++
+	// 		}
+	// 	}
+	// }
 
 	return num_mand_param, num_opt_param
 }

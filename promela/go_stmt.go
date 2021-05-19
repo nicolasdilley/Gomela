@@ -114,6 +114,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 			name = "Candidate Param"
 			if commPar.Mandatory {
 				def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+
 				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
 			} else {
 				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
@@ -220,6 +221,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 		m.WaitGroups = new_mod.WaitGroups
 		m.Mutexes = new_mod.Mutexes
 	}
+
 	return b, nil
 }
 

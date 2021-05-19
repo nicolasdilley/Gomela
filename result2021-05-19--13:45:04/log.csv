@@ -1,0 +1,4 @@
+Project, Model, Fun, Type, Mandatory, Info, Line Num, Filename, Link
+,main++main3,main,Candidate Param,true,k,0,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++main3,main,Comm Param,true,k,5,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,
+,main++main3,main,new channel,false,Name :ch,5,https://github.com//blob///Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/source/hello.go#L3,

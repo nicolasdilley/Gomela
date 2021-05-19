@@ -127,6 +127,14 @@ func used(commPar *CommPar, b *promela_ast.BlockStmt) bool {
 				}
 			}
 			return false
+		case *promela_ast.CommParamDeclStmt:
+			switch s := s.Rhs.(type) {
+			case *promela_ast.Ident:
+				if s.Name == commPar.Name.Name {
+					is_used = true
+				}
+			}
+			return false
 		case *promela_ast.Ident:
 			if s.Name == commPar.Name.Name {
 				is_used = true
