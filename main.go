@@ -29,9 +29,13 @@ type ProjectResult struct {
 }
 
 type VerificationInfo struct {
-	multi_list     *string
-	multi_projects *string
-	single_project *string
+	multi_list                          *string
+	multi_projects                      *string
+	single_project                      *string
+	num_concurrency_primitive_as_global int
+	unused_mutex                        int
+	unused_wg                           int
+	unused_chan                         int
 	// single_file    *string
 }
 
@@ -79,6 +83,7 @@ func main() {
 	switch os.Args[1] {
 	case "model": // the user wants to generate the model
 		model(ver)
+		fmt.Println("Num of global concurrency primitives ", ver.num_concurrency_primitive_as_global)
 	case "verify": // the user wants to verify a .pml file with specifics bounds
 
 		if len(os.Args) > 2 && strings.Contains(os.Args[2], ".pml") {
@@ -126,12 +131,16 @@ func main() {
 			if len(os.Args) > 3 {
 				del = true
 			}
-			num_unsain := sanity(os.Args[2], del)
+			num_unsain := sanity(ver, os.Args[2], del)
 
 			fmt.Println("Removed a total of ", num_unsain, " files which did not contain any concurrent interactions")
+			fmt.Println("Num of mutex : ", ver.unused_mutex)
+			fmt.Println("Num of wg : ", ver.unused_wg)
+			fmt.Println("Num of chan : ", ver.unused_chan)
 		} else {
 			panic("You need to provide a folder containing the .pml or a .pml file.")
 		}
+
 	default:
 		panic("You need to provide a projects list as a .csv file. ie 'gomela commit projects.csv'")
 	}
@@ -166,11 +175,11 @@ func findNumCommParam(content string) (int, int) {
 	return mand_params, opt_params
 }
 
-func sanity(path string, del bool) int {
+func sanity(ver *VerificationInfo, path string, del bool) int {
 	unsain_file := 0
 
 	if strings.Contains(path, ".pml") {
-		if !sanityCheckFile(path, del) {
+		if !sanityCheckFile(ver, path, del) {
 			unsain_file++
 		}
 	} else {
@@ -183,10 +192,10 @@ func sanity(path string, del bool) int {
 			filepath.Walk(path,
 				func(fpath string, info os.FileInfo, err error) error {
 					if info.IsDir() && fpath != path {
-						unsain_file += sanity(fpath, del)
+						unsain_file += sanity(ver, fpath, del)
 						return filepath.SkipDir
 					} else if strings.Contains(fpath, ".pml") {
-						if !sanityCheckFile(fpath, del) {
+						if !sanityCheckFile(ver, fpath, del) {
 							unsain_file++
 						}
 					}
@@ -200,7 +209,7 @@ func sanity(path string, del bool) int {
 	return unsain_file
 }
 
-func sanityCheckFile(path string, del bool) bool {
+func sanityCheckFile(ver *VerificationInfo, path string, del bool) bool {
 	data, e := ioutil.ReadFile(path)
 
 	if e != nil {
@@ -250,6 +259,21 @@ func sanityCheckFile(path string, del bool) bool {
 	}
 
 	if !used {
+
+		for _, line := range strings.Split(model, "\n") {
+			if strings.Contains(line, "run mutexMonitor") { // Mutex
+				fmt.Println(line)
+				ver.unused_mutex++
+			}
+			if strings.Contains(line, "run wgMonitor") { // wg
+				ver.unused_wg++
+			}
+			if strings.Contains(line, "run sync_monitor") { // Chan
+				ver.unused_chan++
+			}
+		}
+		// check whether it contains a channel, wg or mutex
+
 		if del {
 			os.Remove(path)
 		}

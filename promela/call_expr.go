@@ -58,10 +58,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			return stmts, err2
 		}
 		if hasChan && known {
-
 			return m.translateCommParams(new_mod, false, new_call_expr, func_name, decl, params, args, false)
 		} else {
-
 			switch name := new_call_expr.Fun.(type) {
 			case *ast.SelectorExpr:
 				switch ident := name.X.(type) {
