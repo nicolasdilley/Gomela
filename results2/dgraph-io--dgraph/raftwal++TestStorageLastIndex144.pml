@@ -38,7 +38,6 @@ proctype TestStorageLastIndex144(chan child) {
 	child_reset1342?0;
 	run LastIndex244(ds_lock,child_LastIndex2443);
 	child_LastIndex2443?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

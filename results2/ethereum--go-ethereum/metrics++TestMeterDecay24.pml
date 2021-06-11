@@ -35,7 +35,6 @@ proctype TestMeterDecay24(chan child) {
 	child_RateMean2351?0;
 	run RateMean235(m_lock,child_RateMean2352);
 	child_RateMean2352?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -55,7 +55,6 @@ proctype TestRaceChanAsyncCloseSend162(chan child) {
 		for10_end: skip
 	od;
 	for10_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

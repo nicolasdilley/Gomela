@@ -63,8 +63,6 @@ proctype TestPriorityLevelIsolation70(chan child) {
 	child_streamRequests3151?0;
 		defer1: skip;
 	stopCh.closing!true;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

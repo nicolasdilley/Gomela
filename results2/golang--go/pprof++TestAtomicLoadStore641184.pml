@@ -49,9 +49,6 @@ proctype TestAtomicLoadStore641184(chan child) {
 	:: done.sync?state -> 
 		done.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

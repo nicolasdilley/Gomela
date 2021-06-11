@@ -233,7 +233,6 @@ proctype convertGeoFile63(chan child) {
 		che.rcving!false
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -317,7 +316,6 @@ proctype writeToFile35(Chandef ch;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

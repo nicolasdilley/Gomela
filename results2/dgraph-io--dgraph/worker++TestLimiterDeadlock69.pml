@@ -34,7 +34,6 @@ proctype TestLimiterDeadlock69(chan child) {
 	};
 	for10_exit: skip;
 	wg.wait?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -51,9 +51,6 @@ proctype TestWriteTimeoutMustNotReturn190(chan child) {
 		break
 	od;
 	for20_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

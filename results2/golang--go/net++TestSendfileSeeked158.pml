@@ -63,8 +63,6 @@ proctype TestSendfileSeeked158(chan child) {
 		fi
 	od;
 	for10_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -141,8 +139,6 @@ proctype AnonymousAnonymousTestSendfileSeeked169178168(Chandef errc;chan child) 
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
-		defer1: skip;
 		defer1: skip;
 	errc.closing!true;
 	stop_process: skip;

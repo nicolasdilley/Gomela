@@ -35,7 +35,7 @@ proctype testPipeConnsCloseWhileReadWrite147(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymoustestPipeConnsCloseWhileReadWrite1661653 = [1] of {int};
+	chan child_AnonymoustestPipeConnsCloseWhileReadWrite1661523 = [1] of {int};
 	Chandef writeCh;
 	chan child_AnonymoustestPipeConnsCloseWhileReadWrite1531522 = [1] of {int};
 	Chandef readCh;
@@ -55,8 +55,8 @@ proctype testPipeConnsCloseWhileReadWrite147(chan child) {
 	run AnonymoustestPipeConnsCloseWhileReadWrite153152(readCh,pc_c1_readDeadlineChLock,pc_c2_readDeadlineChLock,pc_stopChLock,child_AnonymoustestPipeConnsCloseWhileReadWrite1531522);
 	run receiver(child_AnonymoustestPipeConnsCloseWhileReadWrite1531522);
 	run sync_monitor(writeCh);
-	run AnonymoustestPipeConnsCloseWhileReadWrite166165(writeCh,readCh,pc_c1_readDeadlineChLock,pc_c2_readDeadlineChLock,pc_stopChLock,child_AnonymoustestPipeConnsCloseWhileReadWrite1661653);
-	run receiver(child_AnonymoustestPipeConnsCloseWhileReadWrite1661653);
+	run AnonymoustestPipeConnsCloseWhileReadWrite166152(readCh,writeCh,pc_c1_readDeadlineChLock,pc_c2_readDeadlineChLock,pc_stopChLock,child_AnonymoustestPipeConnsCloseWhileReadWrite1661523);
+	run receiver(child_AnonymoustestPipeConnsCloseWhileReadWrite1661523);
 	do
 	:: readCh.deq?state,num_msgs -> 
 		break
@@ -113,7 +113,7 @@ proctype AnonymoustestPipeConnsCloseWhileReadWrite153152(Chandef readCh;Mutexdef
 	stop_process: skip;
 	child!0
 }
-proctype AnonymoustestPipeConnsCloseWhileReadWrite166165(Chandef writeCh;Chandef readCh;Mutexdef pc_c1_readDeadlineChLock;Mutexdef pc_c2_readDeadlineChLock;Mutexdef pc_stopChLock;chan child) {
+proctype AnonymoustestPipeConnsCloseWhileReadWrite166152(Chandef readCh;Chandef writeCh;Mutexdef pc_c1_readDeadlineChLock;Mutexdef pc_c2_readDeadlineChLock;Mutexdef pc_stopChLock;chan child) {
 	bool closed; 
 	int i;
 	bool state;

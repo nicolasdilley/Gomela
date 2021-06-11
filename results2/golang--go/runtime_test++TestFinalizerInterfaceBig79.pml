@@ -29,7 +29,7 @@ proctype TestFinalizerInterfaceBig79(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestFinalizerInterfaceBig85840 = [1] of {int};
+	chan child_AnonymousTestFinalizerInterfaceBig85830 = [1] of {int};
 	Chandef done;
 	Chandef ch;
 	run sync_monitor(ch);
@@ -42,8 +42,8 @@ proctype TestFinalizerInterfaceBig79(chan child) {
 	:: else -> 
 		run sync_monitor(done)
 	fi;
-	run AnonymousTestFinalizerInterfaceBig8584(done,ch,child_AnonymousTestFinalizerInterfaceBig85840);
-	run receiver(child_AnonymousTestFinalizerInterfaceBig85840);
+	run AnonymousTestFinalizerInterfaceBig8583(ch,done,child_AnonymousTestFinalizerInterfaceBig85830);
+	run receiver(child_AnonymousTestFinalizerInterfaceBig85830);
 	
 
 	if
@@ -64,7 +64,7 @@ proctype TestFinalizerInterfaceBig79(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestFinalizerInterfaceBig8584(Chandef done;Chandef ch;chan child) {
+proctype AnonymousTestFinalizerInterfaceBig8583(Chandef ch;Chandef done;chan child) {
 	bool closed; 
 	int i;
 	bool state;

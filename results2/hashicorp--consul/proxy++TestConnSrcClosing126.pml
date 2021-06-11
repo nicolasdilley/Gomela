@@ -49,7 +49,6 @@ proctype TestConnSrcClosing126(chan child) {
 	:: retCh.sync?state -> 
 		retCh.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

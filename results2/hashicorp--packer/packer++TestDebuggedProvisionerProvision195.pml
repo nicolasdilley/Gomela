@@ -174,7 +174,6 @@ proctype Provision34(Mutexdef ui_l;Mutexdef comm_StartCmd_m;chan child) {
 	run Provision34(ui_l,comm_StartCmd_m,child_Provision342);
 	child_Provision342?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

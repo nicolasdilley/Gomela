@@ -41,9 +41,6 @@ proctype TestTransportProxyHTTPSConnectLeak1474(chan child) {
 	:: listenerDone.sync?state -> 
 		listenerDone.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -74,7 +71,6 @@ proctype AnonymousTestTransportProxyHTTPSConnectLeak14841483(Chandef listenerDon
 	:: true;
 	fi;
 	goto defer1;
-		defer1: skip;
 		defer1: skip;
 	listenerDone.closing!true;
 	stop_process: skip;

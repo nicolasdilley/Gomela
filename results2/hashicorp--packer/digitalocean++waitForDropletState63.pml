@@ -29,7 +29,7 @@ proctype waitForDropletState63(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymouswaitForDropletState70690 = [1] of {int};
+	chan child_AnonymouswaitForDropletState70660 = [1] of {int};
 	Chandef result;
 	Chandef done;
 	run sync_monitor(done);
@@ -42,8 +42,8 @@ proctype waitForDropletState63(chan child) {
 	:: else -> 
 		run sync_monitor(result)
 	fi;
-	run AnonymouswaitForDropletState7069(result,done,child_AnonymouswaitForDropletState70690);
-	run receiver(child_AnonymouswaitForDropletState70690);
+	run AnonymouswaitForDropletState7066(done,result,child_AnonymouswaitForDropletState70660);
+	run receiver(child_AnonymouswaitForDropletState70660);
 	do
 	:: result.deq?state,num_msgs -> 
 		goto defer1
@@ -59,7 +59,7 @@ proctype waitForDropletState63(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymouswaitForDropletState7069(Chandef result;Chandef done;chan child) {
+proctype AnonymouswaitForDropletState7066(Chandef done;Chandef result;chan child) {
 	bool closed; 
 	int i;
 	bool state;

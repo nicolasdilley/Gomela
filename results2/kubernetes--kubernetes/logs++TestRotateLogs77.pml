@@ -30,7 +30,6 @@ proctype TestRotateLogs77(chan child) {
 	run mutexMonitor(c_mutex);
 	run rotateLogs210(c_mutex,child_rotateLogs2100);
 	child_rotateLogs2100?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -350,10 +349,6 @@ proctype compressLog367(Mutexdef c_mutex;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -44,7 +44,7 @@ proctype TestProgWideChdir1469(chan child) {
 	fi;
 		for(i : 0.. 10-1) {
 		for10: skip;
-		run AnonymousTestProgWideChdir14751475(c,cpwd,child_AnonymousTestProgWideChdir147514750);
+		run AnonymousTestProgWideChdir14751475(cpwd,c,child_AnonymousTestProgWideChdir147514750);
 		run receiver(child_AnonymousTestProgWideChdir147514750);
 		for10_end: skip
 	};
@@ -135,11 +135,10 @@ proctype TestProgWideChdir1469(chan child) {
 		od;
 		for20_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestProgWideChdir14751475(Chandef c;Chandef cpwd;chan child) {
+proctype AnonymousTestProgWideChdir14751475(Chandef cpwd;Chandef c;chan child) {
 	bool closed; 
 	int i;
 	bool state;

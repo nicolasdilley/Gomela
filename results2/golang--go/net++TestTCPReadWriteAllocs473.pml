@@ -62,9 +62,6 @@ proctype TestTCPReadWriteAllocs473(chan child) {
 	run receiver(child_AnonymousTestTCPReadWriteAllocs5224881);
 		defer1: skip;
 	ch.closing!true;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

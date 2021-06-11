@@ -50,7 +50,6 @@ proctype captureOutput122(chan child) {
 		out.rcving!false
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

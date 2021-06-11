@@ -30,7 +30,6 @@ proctype TestClean164(chan child) {
 	run mutexMonitor(c_mutex);
 	run Clean188(c_mutex,child_Clean1880);
 	child_Clean1880?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

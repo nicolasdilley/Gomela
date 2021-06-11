@@ -29,7 +29,7 @@ proctype TestDialCancel778(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestDialCancel7977930 = [1] of {int};
+	chan child_AnonymousTestDialCancel7977950 = [1] of {int};
 	Chandef connc;
 	Chandef errc;
 	Chandef cancel;
@@ -52,8 +52,8 @@ proctype TestDialCancel778(chan child) {
 	:: else -> 
 		run sync_monitor(connc)
 	fi;
-	run AnonymousTestDialCancel797793(cancel,errc,connc,child_AnonymousTestDialCancel7977930);
-	run receiver(child_AnonymousTestDialCancel7977930);
+	run AnonymousTestDialCancel797795(errc,connc,cancel,child_AnonymousTestDialCancel7977950);
+	run receiver(child_AnonymousTestDialCancel7977950);
 	do
 	:: true -> 
 		for10: skip;
@@ -82,11 +82,10 @@ proctype TestDialCancel778(chan child) {
 		for10_end: skip
 	od;
 	for10_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestDialCancel797793(Chandef cancel;Chandef errc;Chandef connc;chan child) {
+proctype AnonymousTestDialCancel797795(Chandef errc;Chandef connc;Chandef cancel;chan child) {
 	bool closed; 
 	int i;
 	bool state;

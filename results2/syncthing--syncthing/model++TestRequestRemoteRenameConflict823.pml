@@ -110,8 +110,6 @@ proctype TestRequestRemoteRenameConflict823(chan child) {
 		break
 	od;
 	for80_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

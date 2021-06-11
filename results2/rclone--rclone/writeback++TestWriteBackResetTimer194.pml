@@ -41,7 +41,6 @@ proctype TestWriteBackResetTimer194(chan child) {
 	child__resetTimer2183?0;
 	run assertTimerRunning182(wb_mu,child_assertTimerRunning1824);
 	child_assertTimerRunning1824?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

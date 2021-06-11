@@ -71,9 +71,6 @@ proctype TestMaintainUnreadRepliesInThread5691(chan child) {
 	run checkThreadListReplies5661(th_BasicPost_propsMu,th_ConfigStore_configLock,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_checkThreadListReplies56616);
 	child_checkThreadListReplies56616?0;
 		defer1: skip;
-		defer1: skip;
-		defer1: skip;
-		defer1: skip;
 	run TearDown292(th_BasicPost_propsMu,th_ConfigStore_configLock,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_TearDown2920);
 	child_TearDown2920?0;
 	stop_process: skip;

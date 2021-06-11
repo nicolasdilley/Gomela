@@ -30,7 +30,7 @@ proctype TestServerDuplicateBackgroundRead5769(chan child) {
 	bool state;
 	int num_msgs;
 	chan child_Close18370 = [1] of {int};
-	chan child_AnonymousTestServerDuplicateBackgroundRead579257841 = [1] of {int};
+	chan child_AnonymousTestServerDuplicateBackgroundRead579257891 = [1] of {int};
 	Wgdef wg;
 	Mutexdef hts_mu;
 	Wgdef hts_wg;
@@ -45,8 +45,8 @@ proctype TestServerDuplicateBackgroundRead5769(chan child) {
 		for(i : 0.. goroutines-1) {
 		for10: skip;
 		wg.update!1;
-		run AnonymousTestServerDuplicateBackgroundRead57925784(hts_wg,wg,hts_TLS_mutex,hts_Config_mu,hts_mu,child_AnonymousTestServerDuplicateBackgroundRead579257841);
-		run receiver(child_AnonymousTestServerDuplicateBackgroundRead579257841);
+		run AnonymousTestServerDuplicateBackgroundRead57925789(wg,hts_wg,hts_TLS_mutex,hts_Config_mu,hts_mu,child_AnonymousTestServerDuplicateBackgroundRead579257891);
+		run receiver(child_AnonymousTestServerDuplicateBackgroundRead579257891);
 		for10_end: skip
 	};
 	for10_exit: skip;
@@ -54,7 +54,6 @@ proctype TestServerDuplicateBackgroundRead5769(chan child) {
 		defer1: skip;
 	run Close1837(hts_wg,hts_Config_mu,hts_mu,hts_TLS_mutex,child_Close18370);
 	child_Close18370?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -67,12 +66,12 @@ proctype Close1837(Wgdef b_wg;Mutexdef b_Config_mu;Mutexdef b_mu;Mutexdef b_TLS_
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestServerDuplicateBackgroundRead57925784(Wgdef hts_wg;Wgdef wg;Mutexdef hts_TLS_mutex;Mutexdef hts_Config_mu;Mutexdef hts_mu;chan child) {
+proctype AnonymousTestServerDuplicateBackgroundRead57925789(Wgdef wg;Wgdef hts_wg;Mutexdef hts_TLS_mutex;Mutexdef hts_Config_mu;Mutexdef hts_mu;chan child) {
 	bool closed; 
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257841 = [1] of {int};
+	chan child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257891 = [1] of {int};
 	int requests = -2; // opt requests
 	
 
@@ -82,15 +81,14 @@ proctype AnonymousTestServerDuplicateBackgroundRead57925784(Wgdef hts_wg;Wgdef w
 	:: true;
 	fi;
 	wg.update!1;
-	run AnonymousAnonymousTestServerDuplicateBackgroundRead579258025784(hts_wg,wg,hts_TLS_mutex,hts_Config_mu,hts_mu,child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257841);
-	run receiver(child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257841);
-		defer1: skip;
+	run AnonymousAnonymousTestServerDuplicateBackgroundRead579258025789(wg,hts_wg,hts_TLS_mutex,hts_Config_mu,hts_mu,child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257891);
+	run receiver(child_AnonymousAnonymousTestServerDuplicateBackgroundRead5792580257891);
 		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousAnonymousTestServerDuplicateBackgroundRead579258025784(Wgdef hts_wg;Wgdef wg;Mutexdef hts_TLS_mutex;Mutexdef hts_Config_mu;Mutexdef hts_mu;chan child) {
+proctype AnonymousAnonymousTestServerDuplicateBackgroundRead579258025789(Wgdef wg;Wgdef hts_wg;Mutexdef hts_TLS_mutex;Mutexdef hts_Config_mu;Mutexdef hts_mu;chan child) {
 	bool closed; 
 	int i;
 	bool state;

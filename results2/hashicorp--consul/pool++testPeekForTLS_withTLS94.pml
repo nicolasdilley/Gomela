@@ -203,7 +203,6 @@ proctype AnonymoustestPeekForTLS_withTLS132132(Chandef clientErrCh;Chandef serve
 		defer1: skip;
 	run Close35(tlsConn_config_mutex,tlsConn_handshakeMutex,child_Close351);
 	child_Close351?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -66,9 +66,6 @@ proctype TestSendfilePipe220(chan child) {
 	run AnonymousTestSendfilePipe299242(copied,wg,child_AnonymousTestSendfilePipe2992423);
 	run receiver(child_AnonymousTestSendfilePipe2992423);
 	wg.wait?0;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -92,7 +89,6 @@ proctype AnonymousTestSendfilePipe246242(Chandef copied;Wgdef wg;chan child) {
 	:: true;
 	fi;
 	copied.closing!true;
-		defer1: skip;
 		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;
@@ -120,7 +116,6 @@ proctype AnonymousTestSendfilePipe276242(Chandef copied;Wgdef wg;chan child) {
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
 		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;

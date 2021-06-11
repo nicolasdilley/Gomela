@@ -29,7 +29,7 @@ proctype TestSelectDuplicateChannel682(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestSelectDuplicateChannel7016851 = [1] of {int};
+	chan child_AnonymousTestSelectDuplicateChannel7016871 = [1] of {int};
 	chan child_AnonymousTestSelectDuplicateChannel6906850 = [1] of {int};
 	Chandef e;
 	Chandef d;
@@ -39,8 +39,8 @@ proctype TestSelectDuplicateChannel682(chan child) {
 	run sync_monitor(e);
 	run AnonymousTestSelectDuplicateChannel690685(c,d,e,child_AnonymousTestSelectDuplicateChannel6906850);
 	run receiver(child_AnonymousTestSelectDuplicateChannel6906850);
-	run AnonymousTestSelectDuplicateChannel701685(c,d,e,child_AnonymousTestSelectDuplicateChannel7016851);
-	run receiver(child_AnonymousTestSelectDuplicateChannel7016851);
+	run AnonymousTestSelectDuplicateChannel701687(e,c,d,child_AnonymousTestSelectDuplicateChannel7016871);
+	run receiver(child_AnonymousTestSelectDuplicateChannel7016871);
 	
 
 	if
@@ -98,7 +98,7 @@ proctype AnonymousTestSelectDuplicateChannel690685(Chandef c;Chandef d;Chandef e
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestSelectDuplicateChannel701685(Chandef c;Chandef d;Chandef e;chan child) {
+proctype AnonymousTestSelectDuplicateChannel701687(Chandef e;Chandef c;Chandef d;chan child) {
 	bool closed; 
 	int i;
 	bool state;

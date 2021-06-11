@@ -37,9 +37,6 @@ proctype TestDebugger_LaunchWithTTY56(chan child) {
 	run mutexMonitor(cmd_Process_sigMu);
 	run ProcessPid365(d_dumpState_Mutex,d_recordMutex,d_runningMutex,d_targetMutex,child_ProcessPid3650);
 	child_ProcessPid3650?0;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

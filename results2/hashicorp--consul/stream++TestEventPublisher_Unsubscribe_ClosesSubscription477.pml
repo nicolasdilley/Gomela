@@ -31,7 +31,6 @@ proctype TestEventPublisher_Unsubscribe_ClosesSubscription477(chan child) {
 	run mutexMonitor(publisher_subscriptions_lock);
 	run Subscribe157(publisher_lock,publisher_subscriptions_lock,child_Subscribe1570);
 	child_Subscribe1570?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

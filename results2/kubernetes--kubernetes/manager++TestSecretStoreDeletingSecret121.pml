@@ -89,7 +89,6 @@ proctype Get155(Mutexdef s_lock;chan child) {
 	:: true;
 	fi;
 	goto defer1;
-		defer1: skip;
 	stop_process: skip;
 	child!0
 }

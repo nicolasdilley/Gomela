@@ -66,7 +66,6 @@ proctype Run63(chan child) {
 		fi
 	:: true;
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -85,7 +84,6 @@ proctype Run134(Chandef ch;chan child) {
 	fi;
 	run AnonymousRun144134(ch,child_AnonymousRun1441340);
 	run receiver(child_AnonymousRun1441340);
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -147,7 +145,6 @@ proctype process153(Chandef ch;chan child) {
 	run send541(ch,child_send5411);
 	child_send5411?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

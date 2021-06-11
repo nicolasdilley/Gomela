@@ -25,7 +25,6 @@ proctype TestNoRaceWaitGroupPanicRecover209(chan child) {
 	Wgdef wg;
 	run wgMonitor(wg);
 	wg.update!1;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

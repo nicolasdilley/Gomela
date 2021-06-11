@@ -4,8 +4,8 @@
 
 // git_link=https://github.com/minio/minio/blob/e948e7cdf65028f7a8545d1a05c2baea75198bd0/pkg/lsync/lrwmutex_test.go#L220
 #define numIterations220  -2 // opt numIterations220
-#define numReaders220  1 // mand numReaders220
-#define ub_for232_2  0
+#define numReaders220  3 // mand numReaders220
+#define ub_for232_2  1
 typedef Chandef {
 	chan sync = [0] of {bool};
 	chan enq = [0] of {int};

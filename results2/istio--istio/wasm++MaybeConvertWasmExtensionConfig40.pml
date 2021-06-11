@@ -37,7 +37,6 @@ proctype MaybeConvertWasmExtensionConfig40(chan child) {
 	for10_exit: skip;
 	wg.wait?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

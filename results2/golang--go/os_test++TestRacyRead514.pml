@@ -35,8 +35,6 @@ proctype TestRacyRead514(chan child) {
 	for10_exit: skip;
 		defer1: skip;
 	wg.wait?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

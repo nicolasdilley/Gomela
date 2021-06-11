@@ -29,15 +29,15 @@ proctype TestResponseImmediateHeaderFlushChunked2348(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestResponseImmediateHeaderFlushChunked237023680 = [1] of {int};
+	chan child_AnonymousTestResponseImmediateHeaderFlushChunked237023550 = [1] of {int};
 	Chandef waitForIt;
 	Chandef cb;
 	Chandef ch;
 	run sync_monitor(ch);
 	run sync_monitor(cb);
 	run sync_monitor(waitForIt);
-	run AnonymousTestResponseImmediateHeaderFlushChunked23702368(waitForIt,ch,cb,child_AnonymousTestResponseImmediateHeaderFlushChunked237023680);
-	run receiver(child_AnonymousTestResponseImmediateHeaderFlushChunked237023680);
+	run AnonymousTestResponseImmediateHeaderFlushChunked23702355(ch,cb,waitForIt,child_AnonymousTestResponseImmediateHeaderFlushChunked237023550);
+	run receiver(child_AnonymousTestResponseImmediateHeaderFlushChunked237023550);
 	
 
 	if
@@ -69,7 +69,7 @@ proctype TestResponseImmediateHeaderFlushChunked2348(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestResponseImmediateHeaderFlushChunked23702368(Chandef waitForIt;Chandef ch;Chandef cb;chan child) {
+proctype AnonymousTestResponseImmediateHeaderFlushChunked23702355(Chandef ch;Chandef cb;Chandef waitForIt;chan child) {
 	bool closed; 
 	int i;
 	bool state;

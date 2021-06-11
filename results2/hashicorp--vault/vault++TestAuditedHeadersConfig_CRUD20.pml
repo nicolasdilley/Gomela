@@ -85,7 +85,6 @@ proctype add37(Mutexdef a_view_readOnlyErrLock;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -211,7 +210,6 @@ proctype remove64(Mutexdef a_view_readOnlyErrLock;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

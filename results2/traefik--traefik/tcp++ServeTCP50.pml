@@ -71,8 +71,6 @@ proctype ServeTCP50(chan child) {
 	:: errChan.sync?state -> 
 		errChan.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

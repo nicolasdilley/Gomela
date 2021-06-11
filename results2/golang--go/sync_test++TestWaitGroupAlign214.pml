@@ -25,8 +25,10 @@ proctype TestWaitGroupAlign214(chan child) {
 	chan child_AnonymousTestWaitGroupAlign2212210 = [1] of {int};
 	Wgdef x_wg;
 	run wgMonitor(x_wg);
+	x_wg.update!1;
 	run AnonymousTestWaitGroupAlign221221(x_wg,child_AnonymousTestWaitGroupAlign2212210);
 	run receiver(child_AnonymousTestWaitGroupAlign2212210);
+	x_wg.wait?0;
 	stop_process: skip;
 	child!0
 }

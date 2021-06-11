@@ -41,8 +41,6 @@ proctype TestTLSClient950(chan child) {
 	:: errc.sync?state -> 
 		errc.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

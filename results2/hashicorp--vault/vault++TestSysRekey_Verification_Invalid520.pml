@@ -182,7 +182,6 @@ proctype BarrierRekeyInit171(Wgdef c_rollback_inflightAll;Mutexdef c_activityLog
 	goto defer1;
 		defer1: skip;
 	c_rekeyLock.Unlock!false;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

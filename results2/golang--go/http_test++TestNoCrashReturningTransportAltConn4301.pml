@@ -97,8 +97,6 @@ proctype TestNoCrashReturningTransportAltConn4301(chan child) {
 	wg.wait?0;
 		defer1: skip;
 	testDone.closing!true;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -30,7 +30,7 @@ proctype TestRaceChanSendSend240(chan child) {
 	bool state;
 	int num_msgs;
 	chan child_AnonymousTestRaceChanSendSend2552411 = [1] of {int};
-	chan child_AnonymousTestRaceChanSendSend2462410 = [1] of {int};
+	chan child_AnonymousTestRaceChanSendSend2462450 = [1] of {int};
 	Chandef c;
 	Chandef compl;
 	
@@ -51,8 +51,8 @@ proctype TestRaceChanSendSend240(chan child) {
 	:: else -> 
 		run sync_monitor(c)
 	fi;
-	run AnonymousTestRaceChanSendSend246241(compl,c,child_AnonymousTestRaceChanSendSend2462410);
-	run receiver(child_AnonymousTestRaceChanSendSend2462410);
+	run AnonymousTestRaceChanSendSend246245(c,compl,child_AnonymousTestRaceChanSendSend2462450);
+	run receiver(child_AnonymousTestRaceChanSendSend2462450);
 	run AnonymousTestRaceChanSendSend255241(compl,c,child_AnonymousTestRaceChanSendSend2552411);
 	run receiver(child_AnonymousTestRaceChanSendSend2552411);
 	
@@ -72,7 +72,7 @@ proctype TestRaceChanSendSend240(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceChanSendSend246241(Chandef compl;Chandef c;chan child) {
+proctype AnonymousTestRaceChanSendSend246245(Chandef c;Chandef compl;chan child) {
 	bool closed; 
 	int i;
 	bool state;

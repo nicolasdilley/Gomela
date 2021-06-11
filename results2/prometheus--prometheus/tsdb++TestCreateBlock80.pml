@@ -41,7 +41,6 @@ proctype TestCreateBlock80(chan child) {
 		child_Close3270?0
 	:: true;
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

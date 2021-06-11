@@ -65,7 +65,6 @@ proctype AnonymousTestUniformSampleConcurrentUpdateCount347346(Chandef quit;chan
 		for20_end: skip
 	od;
 	for20_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

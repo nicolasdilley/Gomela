@@ -60,8 +60,6 @@ proctype TestPipelineClientIssue832121(chan child) {
 		break
 	od;
 	for30_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

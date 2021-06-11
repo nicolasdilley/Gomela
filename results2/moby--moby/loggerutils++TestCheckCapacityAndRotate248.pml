@@ -45,7 +45,6 @@ proctype TestCheckCapacityAndRotate248(chan child) {
 		defer1: skip;
 	run Close338(l_filesRefCounter_mu,l_mu,l_notifyReaders_m,l_rotateMu,child_Close3380);
 	child_Close3380?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

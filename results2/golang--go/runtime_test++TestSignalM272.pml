@@ -49,8 +49,6 @@ proctype TestSignalM272(chan child) {
 		ready.rcving!false
 	fi;
 	wg.wait?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

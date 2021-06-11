@@ -32,7 +32,6 @@ proctype TestStorageFirstIndex172(chan child) {
 	child_reset1340?0;
 	run FirstIndex264(ds_lock,child_FirstIndex2641);
 	child_FirstIndex2641?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

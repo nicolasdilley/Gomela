@@ -41,7 +41,6 @@ proctype TestRaceChanSyncCloseSend145(chan child) {
 	:: c.sync!false -> 
 		c.sending!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

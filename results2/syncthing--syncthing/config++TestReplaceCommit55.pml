@@ -49,7 +49,6 @@ proctype TestReplaceCommit55(chan child) {
 	:: sub0_committed.sync?state -> 
 		sub0_committed.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -59,7 +58,6 @@ proctype Subscribe180(Chandef c_committed;chan child) {
 	bool state;
 	int num_msgs;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

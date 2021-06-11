@@ -30,7 +30,7 @@ proctype Test_NestedPendingOperations_Positive_WaitWithExpBackoff536(chan child)
 	bool state;
 	int num_msgs;
 	chan child_waitChannelWithTimeout8702 = [1] of {int};
-	chan child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505411 = [1] of {int};
+	chan child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505491 = [1] of {int};
 	Chandef waitDoneCh;
 	chan child_generateWaitFunc8340 = [1] of {int};
 	Chandef operation1DoneCh;
@@ -46,8 +46,8 @@ proctype Test_NestedPendingOperations_Positive_WaitWithExpBackoff536(chan child)
 	:: else -> 
 		run sync_monitor(waitDoneCh)
 	fi;
-	run AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff550541(operation1DoneCh,waitDoneCh,child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505411);
-	run receiver(child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505411);
+	run AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff550549(waitDoneCh,operation1DoneCh,child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505491);
+	run receiver(child_AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff5505491);
 	
 
 	if
@@ -69,7 +69,7 @@ proctype generateWaitFunc834(Chandef done;chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff550541(Chandef operation1DoneCh;Chandef waitDoneCh;chan child) {
+proctype AnonymousTest_NestedPendingOperations_Positive_WaitWithExpBackoff550549(Chandef waitDoneCh;Chandef operation1DoneCh;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -99,7 +99,6 @@ proctype waitChannelWithTimeout870(Chandef ch;chan child) {
 		goto stop_process
 	od;
 	for10_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

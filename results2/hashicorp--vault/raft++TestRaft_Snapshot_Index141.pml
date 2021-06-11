@@ -106,7 +106,6 @@ proctype TestRaft_Snapshot_Index141(chan child) {
 		od;
 		for20_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -121,8 +120,6 @@ proctype Put1178(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLock;Mu
 	child_applyLog12480?0;
 	b_l.RUnlock!false;
 	goto stop_process;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -193,7 +190,6 @@ proctype applyLog1248(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLo
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

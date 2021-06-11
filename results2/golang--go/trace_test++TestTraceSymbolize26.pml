@@ -39,15 +39,15 @@ proctype TestTraceSymbolize26(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestTraceSymbolize103557 = [1] of {int};
+	chan child_AnonymousTestTraceSymbolize103597 = [1] of {int};
 	Chandef pipeReadDone;
 	chan child_AnonymousTestTraceSymbolize88596 = [1] of {int};
 	chan child_AnonymousTestTraceSymbolize79515 = [1] of {int};
-	chan child_AnonymousTestTraceSymbolize75514 = [1] of {int};
+	chan child_AnonymousTestTraceSymbolize75604 = [1] of {int};
 	Wgdef wg;
 	chan child_AnonymousTestTraceSymbolize69513 = [1] of {int};
 	Mutexdef mu;
-	chan child_AnonymousTestTraceSymbolize61602 = [1] of {int};
+	chan child_AnonymousTestTraceSymbolize61592 = [1] of {int};
 	Chandef c2;
 	Chandef c1;
 	chan child_AnonymousTestTraceSymbolize56511 = [1] of {int};
@@ -65,23 +65,23 @@ proctype TestTraceSymbolize26(chan child) {
 	run receiver(child_AnonymousTestTraceSymbolize56511);
 	run sync_monitor(c1);
 	run sync_monitor(c2);
-	run AnonymousTestTraceSymbolize6160(c2,done1,done2,c1,child_AnonymousTestTraceSymbolize61602);
-	run receiver(child_AnonymousTestTraceSymbolize61602);
+	run AnonymousTestTraceSymbolize6159(c1,c2,done1,done2,child_AnonymousTestTraceSymbolize61592);
+	run receiver(child_AnonymousTestTraceSymbolize61592);
 	run mutexMonitor(mu);
 	mu.Lock!false;
 	run AnonymousTestTraceSymbolize6951(done1,done2,c1,c2,mu,child_AnonymousTestTraceSymbolize69513);
 	run receiver(child_AnonymousTestTraceSymbolize69513);
 	run wgMonitor(wg);
 	wg.update!1;
-	run AnonymousTestTraceSymbolize7551(done1,done2,c1,c2,wg,mu,child_AnonymousTestTraceSymbolize75514);
-	run receiver(child_AnonymousTestTraceSymbolize75514);
+	run AnonymousTestTraceSymbolize7560(c2,done1,done2,c1,wg,mu,child_AnonymousTestTraceSymbolize75604);
+	run receiver(child_AnonymousTestTraceSymbolize75604);
 	run AnonymousTestTraceSymbolize7951(done1,done2,c1,c2,wg,mu,child_AnonymousTestTraceSymbolize79515);
 	run receiver(child_AnonymousTestTraceSymbolize79515);
 	run AnonymousTestTraceSymbolize8859(c1,c2,done1,done2,wg,mu,child_AnonymousTestTraceSymbolize88596);
 	run receiver(child_AnonymousTestTraceSymbolize88596);
 	run sync_monitor(pipeReadDone);
-	run AnonymousTestTraceSymbolize10355(done2,c1,c2,pipeReadDone,done1,wg,mu,child_AnonymousTestTraceSymbolize103557);
-	run receiver(child_AnonymousTestTraceSymbolize103557);
+	run AnonymousTestTraceSymbolize10359(c1,c2,pipeReadDone,done1,done2,wg,mu,child_AnonymousTestTraceSymbolize103597);
+	run receiver(child_AnonymousTestTraceSymbolize103597);
 	
 
 	if
@@ -118,9 +118,6 @@ proctype TestTraceSymbolize26(chan child) {
 	:: pipeReadDone.sync?state -> 
 		pipeReadDone.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -154,7 +151,7 @@ proctype AnonymousTestTraceSymbolize5651(Chandef done1;Chandef done2;chan child)
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestTraceSymbolize6160(Chandef c2;Chandef done1;Chandef done2;Chandef c1;chan child) {
+proctype AnonymousTestTraceSymbolize6159(Chandef c1;Chandef c2;Chandef done1;Chandef done2;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -185,7 +182,7 @@ proctype AnonymousTestTraceSymbolize6951(Chandef done1;Chandef done2;Chandef c1;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestTraceSymbolize7551(Chandef done1;Chandef done2;Chandef c1;Chandef c2;Wgdef wg;Mutexdef mu;chan child) {
+proctype AnonymousTestTraceSymbolize7560(Chandef c2;Chandef done1;Chandef done2;Chandef c1;Wgdef wg;Mutexdef mu;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -217,7 +214,7 @@ proctype AnonymousTestTraceSymbolize8859(Chandef c1;Chandef c2;Chandef done1;Cha
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestTraceSymbolize10355(Chandef done2;Chandef c1;Chandef c2;Chandef pipeReadDone;Chandef done1;Wgdef wg;Mutexdef mu;chan child) {
+proctype AnonymousTestTraceSymbolize10359(Chandef c1;Chandef c2;Chandef pipeReadDone;Chandef done1;Chandef done2;Wgdef wg;Mutexdef mu;chan child) {
 	bool closed; 
 	int i;
 	bool state;

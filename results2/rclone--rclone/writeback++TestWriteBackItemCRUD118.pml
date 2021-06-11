@@ -137,7 +137,6 @@ proctype TestWriteBackItemCRUD118(chan child) {
 	child_checkInLookup10635?0;
 	run string27(wb_mu,child_string2736);
 	child_string2736?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

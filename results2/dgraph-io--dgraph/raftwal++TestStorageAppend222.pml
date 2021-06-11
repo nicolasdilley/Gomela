@@ -58,7 +58,6 @@ proctype TestStorageAppend222(chan child) {
 		od;
 		for11_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

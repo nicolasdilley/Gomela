@@ -73,10 +73,8 @@ proctype TestServerRequestContextCancel_ConnClose4822(chan child) {
 	od;
 	for20_exit: skip;
 		defer1: skip;
-		defer1: skip;
 	run Close1837(ts_wg,ts_Config_mu,ts_mu,ts_TLS_mutex,child_Close18370);
 	child_Close18370?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

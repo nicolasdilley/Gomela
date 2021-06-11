@@ -46,7 +46,6 @@ proctype TestResetExtendedResource996(chan child) {
 	child_ShouldResetExtendedResourceCapacity10861?0;
 	run ShouldResetExtendedResourceCapacity1086(testManager_server_serveWG,testManager_wg,testManager_mutex,testManager_server_mu,child_ShouldResetExtendedResourceCapacity10862);
 	child_ShouldResetExtendedResourceCapacity10862?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -115,9 +115,9 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 			if commPar.Mandatory {
 				def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
 
-				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
+				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: "var_" + commPar.Name.Name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
 			} else {
-				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
+				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: "var_" + commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 			}
 		} else {
 			proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
@@ -135,7 +135,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 				if call_expr.Args[commPar.Pos] != nil {
 					ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
 				} else {
-					ident = &promela_ast.Ident{Name: commPar.Name.Name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+					ident = &promela_ast.Ident{Name: "var_" + commPar.Name.Name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
 				}
 				if commPar.Mandatory {
 					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND + " // mand " + ident.Name}})
@@ -181,6 +181,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 			defers.List[i], defers.List[j] = defers.List[j], defers.List[i]
 		}
 		proc.Body.List = append(proc.Body.List, defers.List...)
+		fmt.Println("icii")
 		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 
 	}

@@ -35,7 +35,7 @@ proctype TestTransportTLSHandshakeTimeout3179(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestTransportTLSHandshakeTimeout320031861 = [1] of {int};
+	chan child_AnonymousTestTransportTLSHandshakeTimeout320031991 = [1] of {int};
 	Chandef getdonec;
 	chan child_AnonymousTestTransportTLSHandshakeTimeout318931860 = [1] of {int};
 	Chandef testdonec;
@@ -43,8 +43,8 @@ proctype TestTransportTLSHandshakeTimeout3179(chan child) {
 	run AnonymousTestTransportTLSHandshakeTimeout31893186(testdonec,child_AnonymousTestTransportTLSHandshakeTimeout318931860);
 	run receiver(child_AnonymousTestTransportTLSHandshakeTimeout318931860);
 	run sync_monitor(getdonec);
-	run AnonymousTestTransportTLSHandshakeTimeout32003186(testdonec,getdonec,child_AnonymousTestTransportTLSHandshakeTimeout320031861);
-	run receiver(child_AnonymousTestTransportTLSHandshakeTimeout320031861);
+	run AnonymousTestTransportTLSHandshakeTimeout32003199(getdonec,testdonec,child_AnonymousTestTransportTLSHandshakeTimeout320031991);
+	run receiver(child_AnonymousTestTransportTLSHandshakeTimeout320031991);
 	do
 	:: getdonec.deq?state,num_msgs -> 
 		break
@@ -57,8 +57,6 @@ proctype TestTransportTLSHandshakeTimeout3179(chan child) {
 	for10_exit: skip;
 		defer1: skip;
 	testdonec.closing!true;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -84,7 +82,7 @@ proctype AnonymousTestTransportTLSHandshakeTimeout31893186(Chandef testdonec;cha
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestTransportTLSHandshakeTimeout32003186(Chandef testdonec;Chandef getdonec;chan child) {
+proctype AnonymousTestTransportTLSHandshakeTimeout32003199(Chandef getdonec;Chandef testdonec;chan child) {
 	bool closed; 
 	int i;
 	bool state;

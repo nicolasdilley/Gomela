@@ -35,8 +35,6 @@ proctype TestDebugger_LaunchInvalidFormat35(chan child) {
 	run mutexMonitor(d_dumpState_Mutex);
 	run Launch239(d_dumpState_Mutex,d_recordMutex,d_runningMutex,d_targetMutex,child_Launch2390);
 	child_Launch2390?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

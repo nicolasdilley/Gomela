@@ -50,7 +50,6 @@ proctype TestRWLockedFile66(chan child) {
 	child_IsClosed426?0;
 	run Close58(rlk_mutex,child_Close587);
 	child_Close587?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

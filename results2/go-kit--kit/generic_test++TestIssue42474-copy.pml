@@ -3,7 +3,7 @@
 // num_opt_comm_params=1
 
 // git_link=https://github.com/go-kit/kit/blob/60e8424101af501c525efaf67c0a2edf08667f80/metrics/generic/generic_test.go#L74
-#define TestIssue424_concurrency  3
+#define TestIssue424_concurrency  0
 typedef Wgdef {
 	chan update = [0] of {int};
 	chan wait = [0] of {int};

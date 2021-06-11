@@ -82,7 +82,6 @@ proctype TestTruncateStorage351(chan child) {
 		od;
 		for40_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

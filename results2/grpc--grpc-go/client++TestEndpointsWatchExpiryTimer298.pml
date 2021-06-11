@@ -39,10 +39,8 @@ proctype TestEndpointsWatchExpiryTimer298(chan child) {
 	run WatchEndpoints287(client_cc_lceMu,client_cc_mu,client_lrsMu,client_mu,client_updateCh_mu,child_WatchEndpoints2871);
 	child_WatchEndpoints2871?0;
 		defer1: skip;
-		defer1: skip;
 	run Close621(client_cc_lceMu,client_cc_mu,client_lrsMu,client_mu,client_updateCh_mu,child_Close6210);
 	child_Close6210?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

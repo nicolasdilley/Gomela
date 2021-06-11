@@ -40,7 +40,6 @@ proctype TestConnLogger29(chan child) {
 	run AnonymousTestConnLogger8767(wg,child_AnonymousTestConnLogger87673);
 	run receiver(child_AnonymousTestConnLogger87673);
 	wg.wait?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

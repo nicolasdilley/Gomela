@@ -109,7 +109,6 @@ proctype TestPluginCatalog_List112(chan child) {
 	child_Set2582?0;
 	run List358(core_pluginCatalog_lock,child_List3583);
 	child_List3583?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -30,7 +30,7 @@ proctype Run16(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousRun49380 = [1] of {int};
+	chan child_AnonymousRun49370 = [1] of {int};
 	Chandef shutdownRetryDone;
 	Chandef done;
 	
@@ -42,8 +42,8 @@ proctype Run16(chan child) {
 	fi;
 	run sync_monitor(done);
 	run sync_monitor(shutdownRetryDone);
-	run AnonymousRun4938(shutdownRetryDone,done,child_AnonymousRun49380);
-	run receiver(child_AnonymousRun49380);
+	run AnonymousRun4937(done,shutdownRetryDone,child_AnonymousRun49370);
+	run receiver(child_AnonymousRun49370);
 	
 
 	if
@@ -71,7 +71,7 @@ proctype Run16(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousRun4938(Chandef shutdownRetryDone;Chandef done;chan child) {
+proctype AnonymousRun4937(Chandef done;Chandef shutdownRetryDone;chan child) {
 	bool closed; 
 	int i;
 	bool state;

@@ -78,7 +78,6 @@ proctype TCPPipe30(chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

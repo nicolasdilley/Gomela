@@ -3,7 +3,7 @@
 // num_opt_comm_params=1
 
 // git_link=https://github.com/golang/go/blob/138d2c9b88d9e3d5adcebf9cb7c356b43d6a9782/runtime/chanbarrier_test.go#L55
-#define testChanSendBarrier_outer  0
+#define testChanSendBarrier_outer  3
 typedef Wgdef {
 	chan update = [0] of {int};
 	chan wait = [0] of {int};

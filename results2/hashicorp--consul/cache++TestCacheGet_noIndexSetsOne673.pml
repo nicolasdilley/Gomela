@@ -31,7 +31,6 @@ proctype TestCacheGet_noIndexSetsOne673(chan child) {
 	run mutexMonitor(c_entriesLock);
 	run RegisterType269(c_entriesLock,c_typesLock,child_RegisterType2690);
 	child_RegisterType2690?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

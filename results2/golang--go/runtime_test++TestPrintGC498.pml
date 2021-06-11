@@ -35,7 +35,6 @@ proctype TestPrintGC498(chan child) {
 	run AnonymousTestPrintGC504503(done,child_AnonymousTestPrintGC5045030);
 	run receiver(child_AnonymousTestPrintGC5045030);
 	done.closing!true;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

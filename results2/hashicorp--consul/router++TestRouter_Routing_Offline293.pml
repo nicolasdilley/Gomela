@@ -31,7 +31,6 @@ proctype TestRouter_Routing_Offline293(chan child) {
 	run mutexMonitor(info_manager_listLock);
 	run RebalanceServers327(info_manager_listLock,child_RebalanceServers3270);
 	child_RebalanceServers3270?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

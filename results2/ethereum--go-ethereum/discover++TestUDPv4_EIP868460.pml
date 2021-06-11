@@ -200,7 +200,6 @@ proctype receive640(Mutexdef c_mu;chan child) {
 	fi;
 	goto defer1;
 		defer1: skip;
-		defer1: skip;
 	c_mu.Unlock!false;
 	stop_process: skip;
 	child!0

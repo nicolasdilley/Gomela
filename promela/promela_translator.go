@@ -709,6 +709,12 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 			stmts.List = append(stmts.List, d1.List...)
 			return stmts, err1
+		default:
+			call, err1 := m.TranslateCallExpr(expr)
+			if err1 != nil {
+				err = err1
+			}
+			addBlock(stmts, call)
 
 		}
 
@@ -962,7 +968,8 @@ func (m *Model) isWaitgroup(expr ast.Expr) bool {
 			return true
 		}
 
-		if IdenticalExpr(e, &ast.Ident{Name: translateIdent(expr).Name}) {
+		if IdenticalExpr(&ast.Ident{Name: translateIdent(e).Name}, &ast.Ident{Name: translateIdent(expr).Name}) {
+
 			return true
 		}
 	}

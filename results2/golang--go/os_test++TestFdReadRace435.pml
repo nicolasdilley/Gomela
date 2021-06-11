@@ -46,8 +46,6 @@ proctype TestFdReadRace435(chan child) {
 	run AnonymousTestFdReadRace459445(c,wg,child_AnonymousTestFdReadRace4594451);
 	run receiver(child_AnonymousTestFdReadRace4594451);
 	wg.wait?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -29,7 +29,7 @@ proctype TestRaceChanReadWriteAsync440(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestRaceChanReadWriteAsync4464410 = [1] of {int};
+	chan child_AnonymousTestRaceChanReadWriteAsync4464420 = [1] of {int};
 	Chandef c2;
 	Chandef c1;
 	Chandef done;
@@ -59,8 +59,8 @@ proctype TestRaceChanReadWriteAsync440(chan child) {
 	:: c2.sync!false -> 
 		c2.sending!false
 	fi;
-	run AnonymousTestRaceChanReadWriteAsync446441(done,c1,c2,child_AnonymousTestRaceChanReadWriteAsync4464410);
-	run receiver(child_AnonymousTestRaceChanReadWriteAsync4464410);
+	run AnonymousTestRaceChanReadWriteAsync446442(c1,c2,done,child_AnonymousTestRaceChanReadWriteAsync4464420);
+	run receiver(child_AnonymousTestRaceChanReadWriteAsync4464420);
 	
 
 	if
@@ -78,7 +78,7 @@ proctype TestRaceChanReadWriteAsync440(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceChanReadWriteAsync446441(Chandef done;Chandef c1;Chandef c2;chan child) {
+proctype AnonymousTestRaceChanReadWriteAsync446442(Chandef c1;Chandef c2;Chandef done;chan child) {
 	bool closed; 
 	int i;
 	bool state;

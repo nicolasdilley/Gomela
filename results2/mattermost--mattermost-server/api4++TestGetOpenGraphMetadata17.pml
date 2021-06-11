@@ -63,7 +63,6 @@ proctype TestGetOpenGraphMetadata17(chan child) {
 	run wgMonitor(ts_wg);
 	run mutexMonitor(ts_mu);
 		defer1: skip;
-		defer1: skip;
 	run TearDown292(th_BasicPost_propsMu,th_ConfigStore_configLock,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_TearDown2920);
 	child_TearDown2920?0;
 	stop_process: skip;

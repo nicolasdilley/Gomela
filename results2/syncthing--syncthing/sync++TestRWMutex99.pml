@@ -69,7 +69,6 @@ proctype TestRWMutex99(chan child) {
 	:: wait.sync?state -> 
 		wait.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -3,7 +3,7 @@
 // num_opt_comm_params=0
 
 // git_link=https://github.com/evanw/esbuild/blob/7d25497064e8a2a3f83c779dc29da2596bb60d0f/internal/renamer/renamer.go#L418
-#define nestedScopes418  3 // mand nestedScopes418
+#define nestedScopes418  0 // mand nestedScopes418
 #define not_found_424  -2 // opt not_found_424
 typedef Wgdef {
 	chan update = [0] of {int};

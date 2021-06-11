@@ -83,7 +83,6 @@ proctype TestRaft_Snapshot_Loading57(chan child) {
 	run receiver(child_AnonymousTestRaft_Snapshot_Loading75582);
 	run Snapshot742(raft_raft_lastContactLock,raft_raft_leaderLock,raft_raft_observersLock,raft_raft_shutdownLock,child_Snapshot7423);
 	child_Snapshot7423?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -98,8 +97,6 @@ proctype Put1178(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLock;Mu
 	child_applyLog12480?0;
 	b_l.RUnlock!false;
 	goto stop_process;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -170,7 +167,6 @@ proctype applyLog1248(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLo
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -202,7 +198,6 @@ proctype writeTo698(Mutexdef f_l;Mutexdef metaSink_p_wrMu;Mutexdef sink_p_wrMu;c
 	child_CloseWithError5744?0;
 		defer1: skip;
 	f_l.RUnlock!false;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

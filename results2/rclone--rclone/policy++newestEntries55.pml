@@ -44,7 +44,6 @@ proctype newestEntries55(int entries;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

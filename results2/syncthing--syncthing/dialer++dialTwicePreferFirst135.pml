@@ -64,7 +64,6 @@ proctype dialTwicePreferFirst135(chan child) {
 		secondDone.rcving!false
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

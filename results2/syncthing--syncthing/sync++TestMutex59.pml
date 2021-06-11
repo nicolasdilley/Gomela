@@ -34,7 +34,6 @@ proctype TestMutex59(chan child) {
 	child_wind3450?0;
 	run wind345(clock_mut,child_wind3451);
 	child_wind3451?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

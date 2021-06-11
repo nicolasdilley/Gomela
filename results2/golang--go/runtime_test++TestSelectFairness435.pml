@@ -33,7 +33,7 @@ proctype TestSelectFairness435(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestSelectFairness4524460 = [1] of {int};
+	chan child_AnonymousTestSelectFairness4524400 = [1] of {int};
 	Wgdef wg;
 	Chandef done;
 	Chandef out;
@@ -112,14 +112,14 @@ proctype TestSelectFairness435(chan child) {
 	run sync_monitor(done);
 	run wgMonitor(wg);
 	wg.update!1;
-	run AnonymousTestSelectFairness452446(c3,c4,out,done,c1,c2,wg,child_AnonymousTestSelectFairness4524460);
-	run receiver(child_AnonymousTestSelectFairness4524460);
+	run AnonymousTestSelectFairness452440(c1,c2,c3,c4,out,done,wg,child_AnonymousTestSelectFairness4524400);
+	run receiver(child_AnonymousTestSelectFairness4524400);
 	done.closing!true;
 	wg.wait?0;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestSelectFairness452446(Chandef c3;Chandef c4;Chandef out;Chandef done;Chandef c1;Chandef c2;Wgdef wg;chan child) {
+proctype AnonymousTestSelectFairness452440(Chandef c1;Chandef c2;Chandef c3;Chandef c4;Chandef out;Chandef done;Wgdef wg;chan child) {
 	bool closed; 
 	int i;
 	bool state;

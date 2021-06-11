@@ -3,7 +3,7 @@
 // num_opt_comm_params=1
 
 // git_link=https://github.com/dgraph-io/dgraph/blob/6b188f254202f9c38b16c4769b672dd0e9d596ac/query/query4_test.go#L308
-#define TestNoConflictQuery1_in  ??
+#define TestNoConflictQuery1_in2  1
 typedef Chandef {
 	chan sync = [0] of {bool};
 	chan enq = [0] of {int};
@@ -33,9 +33,9 @@ proctype TestNoConflictQuery1308(chan child) {
 	chan child_AnonymousTestNoConflictQuery13423420 = [1] of {int};
 	Chandef errChan;
 	int errs = -2; // opt errs
-	int in = TestNoConflictQuery1_in; // mand in
+	int in2 = TestNoConflictQuery1_in2; // mand in2
 	run sync_monitor(errChan);
-		for(i : 0.. in-1) {
+		for(i : 0..1) {
 		for20: skip;
 		run AnonymousTestNoConflictQuery1342342(errChan,child_AnonymousTestNoConflictQuery13423420);
 		run receiver(child_AnonymousTestNoConflictQuery13423420);
@@ -45,8 +45,8 @@ proctype TestNoConflictQuery1308(chan child) {
 	
 
 	if
-	:: 0 != -2 && in-1 != -3 -> 
-				for(i : 0.. in-1) {
+	:: 0 != -2 && in2-1 != -3 -> 
+				for(i : 0.. in2-1) {
 			for31: skip;
 			
 

@@ -2,7 +2,7 @@
 // num_mand_comm_params=1
 // num_opt_comm_params=1
 
-// git_link=https://github.com/schollz/croc/blob/7c28279a58c7a73c938ad8b7838bbf7910551e62/src/models/constants.go#L36
+// git_link=https://github.com/schollz/croc/blob/cd2802b8b524cea7ca357512632f0a1013f6f543/src/models/constants.go#L36
 #define lookupIPs_publicDns  ??
 typedef Chandef {
 	chan sync = [0] of {bool};

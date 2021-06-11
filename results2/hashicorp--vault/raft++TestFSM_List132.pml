@@ -71,7 +71,6 @@ proctype TestFSM_List132(chan child) {
 	fi;
 	run List484(fsm_db_batchMu,fsm_db_metalock,fsm_db_mmaplock,fsm_db_rwlock,fsm_db_statlock,fsm_l,child_List4844);
 	child_List4844?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -84,7 +83,6 @@ proctype Put471(Mutexdef f_db_batchMu;Mutexdef f_db_metalock;Mutexdef f_db_mmapl
 	goto defer1;
 		defer1: skip;
 	f_l.RUnlock!false;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -97,8 +95,6 @@ proctype List484(Mutexdef f_db_batchMu;Mutexdef f_db_metalock;Mutexdef f_db_mmap
 	goto defer1;
 		defer1: skip;
 	f_l.RUnlock!false;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

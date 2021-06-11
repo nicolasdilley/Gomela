@@ -65,7 +65,6 @@ proctype TestRaceIssue55671898(chan child) {
 	:: res.sync?state -> 
 		res.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -126,7 +125,6 @@ proctype AnonymousTestRaceIssue556719021900(Chandef in;Chandef res;chan child) {
 		od;
 		for10_exit: skip
 	fi;
-		defer1: skip;
 		defer1: skip;
 	in.closing!true;
 	

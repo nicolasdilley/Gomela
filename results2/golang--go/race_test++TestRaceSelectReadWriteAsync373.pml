@@ -29,7 +29,7 @@ proctype TestRaceSelectReadWriteAsync373(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestRaceSelectReadWriteAsync3803780 = [1] of {int};
+	chan child_AnonymousTestRaceSelectReadWriteAsync3803740 = [1] of {int};
 	Chandef c3;
 	Chandef c2;
 	Chandef c1;
@@ -61,8 +61,8 @@ proctype TestRaceSelectReadWriteAsync373(chan child) {
 	:: c2.sync!false -> 
 		c2.sending!false
 	fi;
-	run AnonymousTestRaceSelectReadWriteAsync380378(c3,done,c1,c2,child_AnonymousTestRaceSelectReadWriteAsync3803780);
-	run receiver(child_AnonymousTestRaceSelectReadWriteAsync3803780);
+	run AnonymousTestRaceSelectReadWriteAsync380374(done,c1,c2,c3,child_AnonymousTestRaceSelectReadWriteAsync3803740);
+	run receiver(child_AnonymousTestRaceSelectReadWriteAsync3803740);
 	do
 	:: c2.deq?state,num_msgs -> 
 		break
@@ -86,7 +86,7 @@ proctype TestRaceSelectReadWriteAsync373(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceSelectReadWriteAsync380378(Chandef c3;Chandef done;Chandef c1;Chandef c2;chan child) {
+proctype AnonymousTestRaceSelectReadWriteAsync380374(Chandef done;Chandef c1;Chandef c2;Chandef c3;chan child) {
 	bool closed; 
 	int i;
 	bool state;

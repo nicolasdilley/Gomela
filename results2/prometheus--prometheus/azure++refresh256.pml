@@ -109,7 +109,6 @@ proctype refresh256(chan child) {
 	od;
 	for30_exit: skip;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

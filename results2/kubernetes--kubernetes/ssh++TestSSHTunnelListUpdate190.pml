@@ -118,7 +118,6 @@ proctype AnonymousUpdate4310(Mutexdef l_tunnelsLock;chan child) {
 	chan child_createAndAddTunnel4610 = [1] of {int};
 	run createAndAddTunnel461(l_tunnelsLock,child_createAndAddTunnel4610);
 	child_createAndAddTunnel4610?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -153,7 +152,6 @@ proctype AnonymousUpdate4470(Mutexdef l_tunnelsLock;chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

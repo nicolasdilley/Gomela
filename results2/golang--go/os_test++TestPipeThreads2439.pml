@@ -64,7 +64,7 @@ proctype TestPipeThreads2439(chan child) {
 	fi;
 		for(i : 0.. threads-1) {
 		for20: skip;
-		run AnonymousTestPipeThreads24802480(creading,cdone,child_AnonymousTestPipeThreads248024800);
+		run AnonymousTestPipeThreads24802480(cdone,creading,child_AnonymousTestPipeThreads248024800);
 		run receiver(child_AnonymousTestPipeThreads248024800);
 		for20_end: skip
 	};
@@ -135,11 +135,10 @@ proctype TestPipeThreads2439(chan child) {
 		od;
 		for40_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestPipeThreads24802480(Chandef creading;Chandef cdone;chan child) {
+proctype AnonymousTestPipeThreads24802480(Chandef cdone;Chandef creading;chan child) {
 	bool closed; 
 	int i;
 	bool state;

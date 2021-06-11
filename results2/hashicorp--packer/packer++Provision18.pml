@@ -36,7 +36,6 @@ proctype Provision18(chan child) {
 	run receiver(child_AnonymousProvision27250);
 	errC.closing!true;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -40,7 +40,6 @@ proctype TestStorageTerm51(chan child) {
 			for10: skip;
 			run Term223(ds_lock,child_Term2231);
 			child_Term2231?0;
-						stop_process: skip;
 			for10_end: skip
 		};
 		for10_exit: skip
@@ -50,14 +49,12 @@ proctype TestStorageTerm51(chan child) {
 			for11: skip;
 			run Term223(ds_lock,child_Term2232);
 			child_Term2232?0;
-						stop_process: skip;
 			for11_end: skip
 		:: true -> 
 			break
 		od;
 		for11_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -59,7 +59,6 @@ proctype TestExecutionSchedulerRun96(chan child) {
 	:: err.sync?state -> 
 		err.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

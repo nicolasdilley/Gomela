@@ -64,7 +64,6 @@ proctype AnonymousTestNoRaceWaitGroupPanicRecover2236231(Chandef ch;Wgdef wg;cha
 	bool state;
 	int num_msgs;
 	wg.update!1;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

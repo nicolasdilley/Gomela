@@ -204,8 +204,7 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 		}
 		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: ub})
 
-	}
-	if name.Sel.Name == "Done" {
+	} else if name.Sel.Name == "Done" {
 		if m.For_counter.In_for {
 			m.PrintFeature(Feature{
 				Proj_name: m.Project_name,
@@ -220,8 +219,7 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 			})
 		}
 		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: &promela_ast.Ident{Name: "-1"}})
-	}
-	if name.Sel.Name == "Wait" {
+	} else if name.Sel.Name == "Wait" {
 		stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"}, Rhs: &promela_ast.Ident{Name: "0"}})
 	}
 

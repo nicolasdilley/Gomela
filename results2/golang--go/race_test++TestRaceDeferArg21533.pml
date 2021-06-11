@@ -42,7 +42,6 @@ proctype TestRaceDeferArg21533(chan child) {
 	fi;
 	run AnonymousTestRaceDeferArg215361534(c,child_AnonymousTestRaceDeferArg2153615340);
 	run receiver(child_AnonymousTestRaceDeferArg2153615340);
-		stop_process: skip;
 	
 
 	if

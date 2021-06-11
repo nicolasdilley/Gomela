@@ -45,7 +45,6 @@ proctype TestConcurrentWrite326(chan child) {
 	for10_exit: skip;
 	wg.wait?0;
 		defer1: skip;
-		defer1: skip;
 	srvWG.wait?0;
 	stop_process: skip;
 	child!0

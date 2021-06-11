@@ -29,7 +29,6 @@ proctype TestMigrateWAL_Empty463(chan child) {
 	run mutexMonitor(w_mtx);
 	run Close327(w_mtx,child_Close3270);
 	child_Close3270?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

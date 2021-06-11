@@ -97,7 +97,6 @@ proctype writeRecord998(Mutexdef c_config_mutex;Mutexdef c_handshakeMutex;chan c
 	run writeRecordLocked938(c_config_mutex,c_handshakeMutex,child_writeRecordLocked9380);
 	child_writeRecordLocked9380?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -188,7 +187,6 @@ proctype writeRecordLocked938(Mutexdef c_config_mutex;Mutexdef c_handshakeMutex;
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

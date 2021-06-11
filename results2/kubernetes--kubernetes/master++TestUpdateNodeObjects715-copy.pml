@@ -5,7 +5,7 @@
 // git_link=https://github.com/kubernetes/kubernetes/blob/0277cff2682d5a0d3c6fa2109f7f82e8db3f2ed8/test/integration/master/synthetic_master_test.go#L715
 #define TestUpdateNodeObjects_nodes  3
 #define TestUpdateNodeObjects_listers  0
-#define TestUpdateNodeObjects_watchers  3
+#define TestUpdateNodeObjects_watchers  1
 typedef Wgdef {
 	chan update = [0] of {int};
 	chan wait = [0] of {int};

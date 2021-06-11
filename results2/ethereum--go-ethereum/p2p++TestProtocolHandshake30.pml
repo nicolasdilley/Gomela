@@ -69,7 +69,6 @@ proctype AnonymousTestProtocolHandshake4940(Wgdef wg;chan child) {
 	:: true;
 	fi;
 		defer1: skip;
-		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;
 	child!0
@@ -107,7 +106,6 @@ proctype AnonymousTestProtocolHandshake7540(Wgdef wg;chan child) {
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
 		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;

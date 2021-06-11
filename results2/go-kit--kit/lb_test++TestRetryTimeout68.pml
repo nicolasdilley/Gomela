@@ -30,7 +30,7 @@ proctype TestRetryTimeout68(chan child) {
 	bool state;
 	int num_msgs;
 	chan child_AnonymousTestRetryTimeout84701 = [1] of {int};
-	chan child_AnonymousTestRetryTimeout78740 = [1] of {int};
+	chan child_AnonymousTestRetryTimeout78700 = [1] of {int};
 	Chandef errs;
 	Chandef step;
 	run sync_monitor(step);
@@ -43,8 +43,8 @@ proctype TestRetryTimeout68(chan child) {
 	:: else -> 
 		run sync_monitor(errs)
 	fi;
-	run AnonymousTestRetryTimeout7874(errs,step,child_AnonymousTestRetryTimeout78740);
-	run receiver(child_AnonymousTestRetryTimeout78740);
+	run AnonymousTestRetryTimeout7870(step,errs,child_AnonymousTestRetryTimeout78700);
+	run receiver(child_AnonymousTestRetryTimeout78700);
 	
 
 	if
@@ -64,7 +64,7 @@ proctype TestRetryTimeout68(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRetryTimeout7874(Chandef errs;Chandef step;chan child) {
+proctype AnonymousTestRetryTimeout7870(Chandef step;Chandef errs;chan child) {
 	bool closed; 
 	int i;
 	bool state;

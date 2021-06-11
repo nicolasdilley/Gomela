@@ -40,7 +40,7 @@ proctype TestRequestBodyCloseDoesntBlock3983(chan child) {
 	bool state;
 	int num_msgs;
 	chan child_Close18370 = [1] of {int};
-	chan child_AnonymousTestRequestBodyCloseDoesntBlock400339891 = [1] of {int};
+	chan child_AnonymousTestRequestBodyCloseDoesntBlock400340011 = [1] of {int};
 	Chandef closeConn;
 	Mutexdef server_mu;
 	Wgdef server_wg;
@@ -71,8 +71,8 @@ proctype TestRequestBodyCloseDoesntBlock3983(chan child) {
 	run wgMonitor(server_wg);
 	run mutexMonitor(server_mu);
 	run sync_monitor(closeConn);
-	run AnonymousTestRequestBodyCloseDoesntBlock40033989(readErrCh,errCh,closeConn,server_wg,server_TLS_mutex,server_Config_mu,server_mu,child_AnonymousTestRequestBodyCloseDoesntBlock400339891);
-	run receiver(child_AnonymousTestRequestBodyCloseDoesntBlock400339891);
+	run AnonymousTestRequestBodyCloseDoesntBlock40034001(closeConn,readErrCh,errCh,server_wg,server_TLS_mutex,server_Config_mu,server_mu,child_AnonymousTestRequestBodyCloseDoesntBlock400340011);
+	run receiver(child_AnonymousTestRequestBodyCloseDoesntBlock400340011);
 	do
 	:: readErrCh.deq?state,num_msgs -> 
 		break
@@ -93,7 +93,6 @@ proctype TestRequestBodyCloseDoesntBlock3983(chan child) {
 		defer1: skip;
 	run Close1837(server_wg,server_Config_mu,server_mu,server_TLS_mutex,child_Close18370);
 	child_Close18370?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -106,7 +105,7 @@ proctype Close1837(Wgdef b_wg;Mutexdef b_Config_mu;Mutexdef b_mu;Mutexdef b_TLS_
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRequestBodyCloseDoesntBlock40033989(Chandef readErrCh;Chandef errCh;Chandef closeConn;Wgdef server_wg;Mutexdef server_TLS_mutex;Mutexdef server_Config_mu;Mutexdef server_mu;chan child) {
+proctype AnonymousTestRequestBodyCloseDoesntBlock40034001(Chandef closeConn;Chandef readErrCh;Chandef errCh;Wgdef server_wg;Mutexdef server_TLS_mutex;Mutexdef server_Config_mu;Mutexdef server_mu;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -146,7 +145,6 @@ proctype AnonymousTestRequestBodyCloseDoesntBlock40033989(Chandef readErrCh;Chan
 	:: closeConn.sync?state -> 
 		closeConn.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

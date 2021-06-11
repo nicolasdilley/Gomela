@@ -58,7 +58,6 @@ proctype TestSubscribe25(chan child) {
 	run Subscribe55(ch2,doneCh,child_Subscribe551);
 	child_Subscribe551?0;
 		defer1: skip;
-		defer1: skip;
 	doneCh.closing!true;
 	stop_process: skip;
 	child!0
@@ -71,7 +70,6 @@ proctype Subscribe55(Chandef subCh;Chandef doneCh;chan child) {
 	chan child_AnonymousSubscribe63550 = [1] of {int};
 	run AnonymousSubscribe6355(subCh,doneCh,child_AnonymousSubscribe63550);
 	run receiver(child_AnonymousSubscribe63550);
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -88,7 +86,6 @@ proctype AnonymousSubscribe6355(Chandef subCh;Chandef doneCh;chan child) {
 	:: doneCh.sync?state -> 
 		doneCh.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

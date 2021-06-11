@@ -49,7 +49,6 @@ proctype TestClientTLSHandshakeTimeout2451(chan child) {
 	child_Get3101?0;
 		defer1: skip;
 	complete.closing!true;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

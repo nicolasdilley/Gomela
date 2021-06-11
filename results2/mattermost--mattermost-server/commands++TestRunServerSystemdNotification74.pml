@@ -49,10 +49,6 @@ proctype TestRunServerSystemdNotification74(chan child) {
 	:: socketReader.sync?state -> 
 		socketReader.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -111,7 +111,6 @@ proctype TestPluginCatalog_CRUD19(chan child) {
 	child_Delete3423?0;
 	run Get205(core_pluginCatalog_lock,child_Get2054);
 	child_Get2054?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

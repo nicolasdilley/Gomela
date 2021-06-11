@@ -32,8 +32,6 @@ proctype TestIssue44752690(chan child) {
 	child_addFile1090?0;
 	run sendIndexUpdate149(conn_mut,child_sendIndexUpdate1491);
 	child_sendIndexUpdate1491?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -137,7 +137,6 @@ proctype TestPSSGolden79(chan child) {
 		fi
 	od;
 	for20_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

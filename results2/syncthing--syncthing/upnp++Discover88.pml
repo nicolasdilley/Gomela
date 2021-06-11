@@ -238,8 +238,6 @@ proctype discover146(Chandef results;chan child) {
 	od;
 	for12_exit: skip;
 	loop: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -58,7 +58,6 @@ proctype testUsageWithDefer39(Mutexdef timer_lock;chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

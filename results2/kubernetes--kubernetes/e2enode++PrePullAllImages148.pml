@@ -108,7 +108,6 @@ proctype PrePullAllImages148(chan child) {
 	for20_exit: skip;
 	wg.wait?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -3,7 +3,7 @@
 // num_opt_comm_params=4
 
 // git_link=https://github.com/grpc/grpc-go/blob/ebd6aba6754d073a696e5727158cd0c917ce1019/internal/profiling/buffer/buffer_test.go#L40
-#define TestCircularBufferSerial_qs  0
+#define TestCircularBufferSerial_qs  3
 typedef Wgdef {
 	chan update = [0] of {int};
 	chan wait = [0] of {int};

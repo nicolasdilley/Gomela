@@ -45,9 +45,9 @@ proctype TestADSC_Run55(chan child) {
 		
 
 		if
-		:: tests_inAdsc_Updates.deq?state,num_msgs;
-		:: tests_inAdsc_Updates.sync?state -> 
-			tests_inAdsc_Updates.rcving!false
+		:: tests_inAdsc_XDSUpdates.deq?state,num_msgs;
+		:: tests_inAdsc_XDSUpdates.sync?state -> 
+			tests_inAdsc_XDSUpdates.rcving!false
 		fi;
 		
 

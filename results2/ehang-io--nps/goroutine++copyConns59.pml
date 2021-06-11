@@ -34,6 +34,7 @@ proctype copyConns59(chan child) {
 	run newConnGroup19(wg,child_newConnGroup191);
 	child_newConnGroup191?0;
 	wg.wait?0;
+	conns_wg.update!-1;
 	stop_process: skip;
 	child!0
 }

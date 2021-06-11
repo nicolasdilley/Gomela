@@ -92,7 +92,6 @@ proctype TestServerWithMisbehavedClient1135(chan child) {
 	od;
 	for30_exit: skip;
 		defer1: skip;
-		defer1: skip;
 	run stop407(server_mu,child_stop4070);
 	child_stop4070?0;
 	stop_process: skip;

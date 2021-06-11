@@ -442,7 +442,6 @@ proctype hashRoot556(Mutexdef t_db_lock;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

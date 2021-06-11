@@ -91,9 +91,6 @@ proctype TestServeTLS1472(chan child) {
 		defer1: skip;
 	run Close1837(c_config_mutex,c_handshakeMutex,child_Close18371);
 	child_Close18371?0;
-		stop_process: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

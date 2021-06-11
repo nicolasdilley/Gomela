@@ -31,7 +31,6 @@ proctype TestServiceDiscoveryServices144(chan child) {
 	sd_storeMutex.Unlock!false;
 	run Services494(sd_storeMutex,child_Services4940);
 	child_Services4940?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -74,7 +73,6 @@ proctype maybeRefreshIndexes639(Mutexdef s_storeMutex;chan child) {
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
 		defer1: skip;
 	s_storeMutex.Unlock!false;
 	stop_process: skip;

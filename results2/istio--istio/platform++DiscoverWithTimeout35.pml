@@ -95,7 +95,6 @@ proctype DiscoverWithTimeout35(chan child) {
 		goto stop_process
 	od;
 	for10_exit: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

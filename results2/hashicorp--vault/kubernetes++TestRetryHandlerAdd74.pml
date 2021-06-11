@@ -55,7 +55,6 @@ proctype TestRetryHandlerAdd74(chan child) {
 	child_Notify1077?0;
 	run Notify107(r_lock,child_Notify1078);
 	child_Notify1078?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

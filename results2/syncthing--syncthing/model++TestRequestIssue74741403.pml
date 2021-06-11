@@ -61,8 +61,6 @@ proctype TestRequestIssue74741403(chan child) {
 	od;
 	for20_exit: skip;
 		defer1: skip;
-		defer1: skip;
-		defer1: skip;
 	done.closing!true;
 	stop_process: skip;
 	child!0

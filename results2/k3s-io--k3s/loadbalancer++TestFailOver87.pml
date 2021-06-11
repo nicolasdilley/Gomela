@@ -32,7 +32,6 @@ proctype TestFailOver87(chan child) {
 	child_LoadBalancerServerURL1160?0;
 	run Update102(lb_mutex,child_Update1021);
 	child_Update1021?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

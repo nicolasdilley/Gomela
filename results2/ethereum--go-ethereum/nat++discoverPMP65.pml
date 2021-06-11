@@ -117,7 +117,6 @@ proctype discoverPMP65(chan child) {
 		for22_exit: skip
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -29,7 +29,7 @@ proctype TestRaceSelect5250(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestRaceSelect52552520 = [1] of {int};
+	chan child_AnonymousTestRaceSelect52552510 = [1] of {int};
 	Chandef c2;
 	Chandef c1;
 	Chandef done;
@@ -52,8 +52,8 @@ proctype TestRaceSelect5250(chan child) {
 		run sync_monitor(c1)
 	fi;
 	run sync_monitor(c2);
-	run AnonymousTestRaceSelect5255252(c1,c2,done,child_AnonymousTestRaceSelect52552520);
-	run receiver(child_AnonymousTestRaceSelect52552520);
+	run AnonymousTestRaceSelect5255251(done,c1,c2,child_AnonymousTestRaceSelect52552510);
+	run receiver(child_AnonymousTestRaceSelect52552510);
 	
 
 	if
@@ -64,7 +64,7 @@ proctype TestRaceSelect5250(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceSelect5255252(Chandef c1;Chandef c2;Chandef done;chan child) {
+proctype AnonymousTestRaceSelect5255251(Chandef done;Chandef c1;Chandef c2;chan child) {
 	bool closed; 
 	int i;
 	bool state;

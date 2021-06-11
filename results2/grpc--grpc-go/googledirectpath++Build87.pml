@@ -44,7 +44,7 @@ proctype Build87(chan child) {
 	run sync_monitor(ipv6CapableCh);
 	run AnonymousBuild101100(zoneCh,ipv6CapableCh,child_AnonymousBuild1011000);
 	run receiver(child_AnonymousBuild1011000);
-	run AnonymousBuild102100(ipv6CapableCh,zoneCh,child_AnonymousBuild1021001);
+	run AnonymousBuild102100(zoneCh,ipv6CapableCh,child_AnonymousBuild1021001);
 	run receiver(child_AnonymousBuild1021001);
 	
 
@@ -79,7 +79,7 @@ proctype AnonymousBuild101100(Chandef zoneCh;Chandef ipv6CapableCh;chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousBuild102100(Chandef ipv6CapableCh;Chandef zoneCh;chan child) {
+proctype AnonymousBuild102100(Chandef zoneCh;Chandef ipv6CapableCh;chan child) {
 	bool closed; 
 	int i;
 	bool state;

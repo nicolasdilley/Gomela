@@ -82,7 +82,6 @@ proctype TestMutexStress146(chan child) {
 		od;
 		for20_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

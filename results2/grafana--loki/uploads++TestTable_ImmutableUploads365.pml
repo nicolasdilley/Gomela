@@ -136,7 +136,6 @@ proctype TestTable_ImmutableUploads365(chan child) {
 		defer1: skip;
 	run Stop263(boltDBIndexClient_wait,boltDBIndexClient_dbsMtx,child_Stop2630);
 	child_Stop2630?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -319,7 +318,6 @@ proctype uploadDB368(Mutexdef lt_dbSnapshotsMtx;Mutexdef lt_dbsMtx;Mutexdef lt_d
 	run buildObjectKey456(lt_dbSnapshotsMtx,lt_dbsMtx,lt_dbUploadTimeMtx,child_buildObjectKey4563);
 	child_buildObjectKey4563?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

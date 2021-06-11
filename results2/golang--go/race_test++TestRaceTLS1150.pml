@@ -29,7 +29,7 @@ proctype TestRaceTLS1150(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestRaceTLS116011521 = [1] of {int};
+	chan child_AnonymousTestRaceTLS116011511 = [1] of {int};
 	chan child_AnonymousTestRaceTLS115311510 = [1] of {int};
 	Chandef done;
 	Chandef comm;
@@ -45,8 +45,8 @@ proctype TestRaceTLS1150(chan child) {
 	fi;
 	run AnonymousTestRaceTLS11531151(comm,done,child_AnonymousTestRaceTLS115311510);
 	run receiver(child_AnonymousTestRaceTLS115311510);
-	run AnonymousTestRaceTLS11601152(done,comm,child_AnonymousTestRaceTLS116011521);
-	run receiver(child_AnonymousTestRaceTLS116011521);
+	run AnonymousTestRaceTLS11601151(comm,done,child_AnonymousTestRaceTLS116011511);
+	run receiver(child_AnonymousTestRaceTLS116011511);
 	
 
 	if
@@ -86,7 +86,7 @@ proctype AnonymousTestRaceTLS11531151(Chandef comm;Chandef done;chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceTLS11601152(Chandef done;Chandef comm;chan child) {
+proctype AnonymousTestRaceTLS11601151(Chandef comm;Chandef done;chan child) {
 	bool closed; 
 	int i;
 	bool state;

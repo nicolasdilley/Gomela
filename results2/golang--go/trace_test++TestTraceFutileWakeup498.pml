@@ -85,7 +85,6 @@ proctype TestTraceFutileWakeup498(chan child) {
 	};
 	for10_exit: skip;
 	done.wait?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

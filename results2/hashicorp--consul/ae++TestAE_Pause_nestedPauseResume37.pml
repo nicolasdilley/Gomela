@@ -56,7 +56,6 @@ proctype TestAE_Pause_nestedPauseResume37(chan child) {
 	child_Paused3268?0;
 	run Resume334(l_pauseLock,child_Resume3349);
 	child_Resume3349?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

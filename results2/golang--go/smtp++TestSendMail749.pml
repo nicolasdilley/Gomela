@@ -41,7 +41,6 @@ proctype TestSendMail749(chan child) {
 	:: done.sync?state -> 
 		done.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -57,7 +56,6 @@ proctype AnonymousTestSendMail762762(Chandef done;chan child) {
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
 		defer1: skip;
 	done.closing!true;
 	stop_process: skip;

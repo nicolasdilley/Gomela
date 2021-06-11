@@ -3,7 +3,7 @@
 // num_opt_comm_params=0
 
 // git_link=https://github.com/goharbor/harbor/blob/f8171cdf6e914a08ace62508eabef81ceacfe5a2/src/server/v2.0/handler/project.go#L702
-#define not_found_{{common_RoleProjectAdmin&summary_ProjectAdminCount}{common_RoleMaintainer&summary_MaintainerCount}{common_RoleDeveloper&summary_DeveloperCount}{common_RoleGuest&summary_GuestCount}{common_RoleLimitedGuest&summary_LimitedGuestCount}}70520  ??
+#define not_found_{{common_RoleProjectAdmin&summary_ProjectAdminCount}{common_RoleMaintainer&summary_MaintainerCount}{common_RoleDeveloper&summary_DeveloperCount}{common_RoleGuest&summary_GuestCount}{common_RoleLimitedGuest&summary_LimitedGuestCount}}70520  11
 typedef Wgdef {
 	chan update = [0] of {int};
 	chan wait = [0] of {int};

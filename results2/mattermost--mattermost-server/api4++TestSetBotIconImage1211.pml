@@ -65,7 +65,6 @@ proctype TestSetBotIconImage1211(chan child) {
 	run cleanupTestFile1005(th_BasicPost_propsMu,th_ConfigStore_configLock,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_cleanupTestFile10055);
 	child_cleanupTestFile10055?0;
 		defer2: skip;
-		defer2: skip;
 	run RestoreDefaultRolePermissions1132(th_BasicPost_propsMu,th_ConfigStore_configLock,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,not_found_1216,child_RestoreDefaultRolePermissions11321);
 	child_RestoreDefaultRolePermissions11321?0;
 		defer1: skip;

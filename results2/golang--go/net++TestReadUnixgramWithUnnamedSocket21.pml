@@ -41,7 +41,6 @@ proctype TestReadUnixgramWithUnnamedSocket21(chan child) {
 	:: off.sync?state -> 
 		off.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -64,7 +63,6 @@ proctype AnonymousTestReadUnixgramWithUnnamedSocket4543(Chandef off;chan child) 
 		goto defer1
 	:: true;
 	fi;
-		defer1: skip;
 		defer1: skip;
 	
 

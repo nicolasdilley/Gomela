@@ -55,7 +55,6 @@ proctype TestMoveCommand35(chan child) {
 	run createTeam177(th_BasicPost_propsMu,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_createTeam1772);
 	child_createTeam1772?0;
 		defer1: skip;
-		defer1: skip;
 	run tearDown387(th_BasicPost_propsMu,th_Server_featureFlagSynchronizerMutex,th_Server_metricsLock,th_Server_PluginsLock,th_Server_pluginCommandsLock,th_Server_uploadLockMapMut,child_tearDown3870);
 	child_tearDown3870?0;
 	stop_process: skip;

@@ -48,7 +48,6 @@ proctype TestRemoveAllRace2405(chan child) {
 	for10_exit: skip;
 	hold.closing!true;
 	wg.wait?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -38,10 +38,8 @@ proctype TestLabelValuesWithMatchers217(chan child) {
 	run Index377(block_pendingReaders,block_mtx,child_Index3771);
 	child_Index3771?0;
 		defer1: skip;
-		defer1: skip;
 	run Close327(block_pendingReaders,block_mtx,child_Close3270);
 	child_Close3270?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

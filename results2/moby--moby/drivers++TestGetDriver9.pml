@@ -110,7 +110,6 @@ proctype lookup72(Mutexdef s_driverLock_mu;Mutexdef s_mu;chan child) {
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

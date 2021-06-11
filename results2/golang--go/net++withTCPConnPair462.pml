@@ -78,7 +78,6 @@ proctype withTCPConnPair462(chan child) {
 		od;
 		for10_exit: skip
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -108,7 +107,6 @@ proctype AnonymouswithTCPConnPair469468(Chandef errc;chan child) {
 	:: errc.sync!false -> 
 		errc.sending!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -138,7 +136,6 @@ proctype AnonymouswithTCPConnPair478468(Chandef errc;chan child) {
 	:: errc.sync!false -> 
 		errc.sending!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -425,11 +425,11 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.KeyValueExpr:
 		return &ast.Ident{Name: m.getIdent(expr.Key).Name, NamePos: expr.Pos()}
 	case *ast.CompositeLit:
-		name := "{"
+		name := "-"
 		for _, elt := range expr.Elts {
 			name += m.getIdent(elt).Name
 		}
-		name += "}"
+		name += ""
 		return &ast.Ident{Name: name, NamePos: expr.Pos()}
 	case *ast.TypeAssertExpr:
 		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}

@@ -77,7 +77,6 @@ proctype reconcileRequest271(Mutexdef c_injectedMu;chan child) {
 	run updateValidatingWebhookConfiguration350(c_injectedMu,child_updateValidatingWebhookConfiguration3502);
 	child_updateValidatingWebhookConfiguration3502?0;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

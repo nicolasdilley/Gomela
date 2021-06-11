@@ -92,7 +92,6 @@ proctype TestUpdateCapacityAllocatable295(chan child) {
 	child_GetCapacity52214?0;
 	run isDevicePluginResource1056(testManager_server_serveWG,testManager_wg,testManager_mutex,testManager_server_mu,child_isDevicePluginResource105615);
 	child_isDevicePluginResource105615?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -206,7 +205,6 @@ proctype preStartContainer171(Mutexdef e_clientConn_mu;Mutexdef e_mutex;chan chi
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

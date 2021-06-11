@@ -29,7 +29,7 @@ proctype TestNoRaceSelectMutex636(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestNoRaceSelectMutex6426370 = [1] of {int};
+	chan child_AnonymousTestNoRaceSelectMutex6426380 = [1] of {int};
 	Chandef aux;
 	Chandef mtx;
 	Chandef done;
@@ -44,8 +44,8 @@ proctype TestNoRaceSelectMutex636(chan child) {
 		run sync_monitor(mtx)
 	fi;
 	run sync_monitor(aux);
-	run AnonymousTestNoRaceSelectMutex642637(done,mtx,aux,child_AnonymousTestNoRaceSelectMutex6426370);
-	run receiver(child_AnonymousTestNoRaceSelectMutex6426370);
+	run AnonymousTestNoRaceSelectMutex642638(mtx,aux,done,child_AnonymousTestNoRaceSelectMutex6426380);
+	run receiver(child_AnonymousTestNoRaceSelectMutex6426380);
 	do
 	:: mtx.enq!0 -> 
 		break
@@ -82,7 +82,7 @@ proctype TestNoRaceSelectMutex636(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestNoRaceSelectMutex642637(Chandef done;Chandef mtx;Chandef aux;chan child) {
+proctype AnonymousTestNoRaceSelectMutex642638(Chandef mtx;Chandef aux;Chandef done;chan child) {
 	bool closed; 
 	int i;
 	bool state;

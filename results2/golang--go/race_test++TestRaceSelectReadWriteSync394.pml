@@ -29,9 +29,9 @@ proctype TestRaceSelectReadWriteSync394(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestRaceSelectReadWriteSync4073982 = [1] of {int};
-	chan child_AnonymousTestRaceSelectReadWriteSync4043951 = [1] of {int};
-	chan child_AnonymousTestRaceSelectReadWriteSync4013970 = [1] of {int};
+	chan child_AnonymousTestRaceSelectReadWriteSync4073952 = [1] of {int};
+	chan child_AnonymousTestRaceSelectReadWriteSync4043991 = [1] of {int};
+	chan child_AnonymousTestRaceSelectReadWriteSync4013980 = [1] of {int};
 	Chandef c3;
 	Chandef c2;
 	Chandef c1;
@@ -40,12 +40,12 @@ proctype TestRaceSelectReadWriteSync394(chan child) {
 	run sync_monitor(c1);
 	run sync_monitor(c2);
 	run sync_monitor(c3);
-	run AnonymousTestRaceSelectReadWriteSync401397(c1,c2,c3,done,child_AnonymousTestRaceSelectReadWriteSync4013970);
-	run receiver(child_AnonymousTestRaceSelectReadWriteSync4013970);
-	run AnonymousTestRaceSelectReadWriteSync404395(done,c1,c2,c3,child_AnonymousTestRaceSelectReadWriteSync4043951);
-	run receiver(child_AnonymousTestRaceSelectReadWriteSync4043951);
-	run AnonymousTestRaceSelectReadWriteSync407398(c2,c3,done,c1,child_AnonymousTestRaceSelectReadWriteSync4073982);
-	run receiver(child_AnonymousTestRaceSelectReadWriteSync4073982);
+	run AnonymousTestRaceSelectReadWriteSync401398(c2,c3,done,c1,child_AnonymousTestRaceSelectReadWriteSync4013980);
+	run receiver(child_AnonymousTestRaceSelectReadWriteSync4013980);
+	run AnonymousTestRaceSelectReadWriteSync404399(c3,done,c1,c2,child_AnonymousTestRaceSelectReadWriteSync4043991);
+	run receiver(child_AnonymousTestRaceSelectReadWriteSync4043991);
+	run AnonymousTestRaceSelectReadWriteSync407395(done,c1,c2,c3,child_AnonymousTestRaceSelectReadWriteSync4073952);
+	run receiver(child_AnonymousTestRaceSelectReadWriteSync4073952);
 	do
 	:: c2.deq?state,num_msgs -> 
 		break
@@ -69,7 +69,7 @@ proctype TestRaceSelectReadWriteSync394(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceSelectReadWriteSync401397(Chandef c1;Chandef c2;Chandef c3;Chandef done;chan child) {
+proctype AnonymousTestRaceSelectReadWriteSync401398(Chandef c2;Chandef c3;Chandef done;Chandef c1;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -84,7 +84,7 @@ proctype AnonymousTestRaceSelectReadWriteSync401397(Chandef c1;Chandef c2;Chande
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceSelectReadWriteSync404395(Chandef done;Chandef c1;Chandef c2;Chandef c3;chan child) {
+proctype AnonymousTestRaceSelectReadWriteSync404399(Chandef c3;Chandef done;Chandef c1;Chandef c2;chan child) {
 	bool closed; 
 	int i;
 	bool state;
@@ -99,7 +99,7 @@ proctype AnonymousTestRaceSelectReadWriteSync404395(Chandef done;Chandef c1;Chan
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestRaceSelectReadWriteSync407398(Chandef c2;Chandef c3;Chandef done;Chandef c1;chan child) {
+proctype AnonymousTestRaceSelectReadWriteSync407395(Chandef done;Chandef c1;Chandef c2;Chandef c3;chan child) {
 	bool closed; 
 	int i;
 	bool state;

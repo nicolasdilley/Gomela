@@ -63,8 +63,6 @@ proctype TestSendfileParts100(chan child) {
 		fi
 	od;
 	for20_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -160,8 +158,6 @@ proctype AnonymousAnonymousTestSendfileParts108117107(Chandef errc;chan child) {
 		od;
 		for10_exit: skip
 	fi;
-		defer1: skip;
-		defer1: skip;
 		defer1: skip;
 	errc.closing!true;
 	stop_process: skip;

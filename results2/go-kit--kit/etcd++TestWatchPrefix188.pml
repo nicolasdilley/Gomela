@@ -29,7 +29,7 @@ proctype TestWatchPrefix188(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTestWatchPrefix1951891 = [1] of {int};
+	chan child_AnonymousTestWatchPrefix1951941 = [1] of {int};
 	Chandef ch;
 	chan child_newFakeClient1440 = [1] of {int};
 	Chandef watchPrefixReturned;
@@ -49,8 +49,8 @@ proctype TestWatchPrefix188(chan child) {
 	run newFakeClient144(event,err,child_newFakeClient1440);
 	child_newFakeClient1440?0;
 	run sync_monitor(ch);
-	run AnonymousTestWatchPrefix195189(err,event,watchPrefixReturned,ch,child_AnonymousTestWatchPrefix1951891);
-	run receiver(child_AnonymousTestWatchPrefix1951891);
+	run AnonymousTestWatchPrefix195194(ch,err,event,watchPrefixReturned,child_AnonymousTestWatchPrefix1951941);
+	run receiver(child_AnonymousTestWatchPrefix1951941);
 	
 
 	if
@@ -101,7 +101,7 @@ proctype newFakeClient144(Chandef event;Chandef err;chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTestWatchPrefix195189(Chandef err;Chandef event;Chandef watchPrefixReturned;Chandef ch;chan child) {
+proctype AnonymousTestWatchPrefix195194(Chandef ch;Chandef err;Chandef event;Chandef watchPrefixReturned;chan child) {
 	bool closed; 
 	int i;
 	bool state;

@@ -29,7 +29,7 @@ proctype waitUntilImageAvailable312(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymouswaitUntilImageAvailable3173130 = [1] of {int};
+	chan child_AnonymouswaitUntilImageAvailable3173160 = [1] of {int};
 	Chandef result;
 	Chandef done;
 	run sync_monitor(done);
@@ -42,8 +42,8 @@ proctype waitUntilImageAvailable312(chan child) {
 	:: else -> 
 		run sync_monitor(result)
 	fi;
-	run AnonymouswaitUntilImageAvailable317313(done,result,child_AnonymouswaitUntilImageAvailable3173130);
-	run receiver(child_AnonymouswaitUntilImageAvailable3173130);
+	run AnonymouswaitUntilImageAvailable317316(result,done,child_AnonymouswaitUntilImageAvailable3173160);
+	run receiver(child_AnonymouswaitUntilImageAvailable3173160);
 	do
 	:: result.deq?state,num_msgs -> 
 		goto defer1
@@ -59,7 +59,7 @@ proctype waitUntilImageAvailable312(chan child) {
 	stop_process: skip;
 	child!0
 }
-proctype AnonymouswaitUntilImageAvailable317313(Chandef done;Chandef result;chan child) {
+proctype AnonymouswaitUntilImageAvailable317316(Chandef result;Chandef done;chan child) {
 	bool closed; 
 	int i;
 	bool state;

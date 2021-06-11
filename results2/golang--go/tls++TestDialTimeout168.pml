@@ -36,7 +36,6 @@ proctype TestDialTimeout168(chan child) {
 	run receiver(child_AnonymousTestDialTimeout1801770);
 		defer1: skip;
 	complete.closing!true;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

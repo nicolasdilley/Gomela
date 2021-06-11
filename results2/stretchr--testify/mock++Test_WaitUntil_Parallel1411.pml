@@ -29,7 +29,7 @@ proctype Test_WaitUntil_Parallel1411(chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	chan child_AnonymousTest_WaitUntil_Parallel142914162 = [1] of {int};
+	chan child_AnonymousTest_WaitUntil_Parallel142914172 = [1] of {int};
 	chan child_AnonymousTest_WaitUntil_Parallel142614161 = [1] of {int};
 	chan child_WaitUntil1500 = [1] of {int};
 	Chandef ch2;
@@ -40,8 +40,8 @@ proctype Test_WaitUntil_Parallel1411(chan child) {
 	child_WaitUntil1500?0;
 	run AnonymousTest_WaitUntil_Parallel14261416(ch1,ch2,child_AnonymousTest_WaitUntil_Parallel142614161);
 	run receiver(child_AnonymousTest_WaitUntil_Parallel142614161);
-	run AnonymousTest_WaitUntil_Parallel14291416(ch1,ch2,child_AnonymousTest_WaitUntil_Parallel142914162);
-	run receiver(child_AnonymousTest_WaitUntil_Parallel142914162);
+	run AnonymousTest_WaitUntil_Parallel14291417(ch2,ch1,child_AnonymousTest_WaitUntil_Parallel142914172);
+	run receiver(child_AnonymousTest_WaitUntil_Parallel142914172);
 	
 
 	if
@@ -58,7 +58,6 @@ proctype WaitUntil150(Chandef w;chan child) {
 	bool state;
 	int num_msgs;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -70,7 +69,7 @@ proctype AnonymousTest_WaitUntil_Parallel14261416(Chandef ch1;Chandef ch2;chan c
 	stop_process: skip;
 	child!0
 }
-proctype AnonymousTest_WaitUntil_Parallel14291416(Chandef ch1;Chandef ch2;chan child) {
+proctype AnonymousTest_WaitUntil_Parallel14291417(Chandef ch2;Chandef ch1;chan child) {
 	bool closed; 
 	int i;
 	bool state;

@@ -61,8 +61,6 @@ proctype TestExecWithCloseStdin19(chan child) {
 		break
 	od;
 	for10_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

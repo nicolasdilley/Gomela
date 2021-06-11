@@ -35,7 +35,6 @@ proctype TestPreemptSplitBig541(chan child) {
 	run big555(stop,child_big5550);
 	run receiver(child_big5550);
 	stop.closing!true;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

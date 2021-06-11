@@ -3,7 +3,7 @@
 // num_opt_comm_params=1
 
 // git_link=https://github.com/uber-go/zap/blob/7b21229fb3f063275f4f169f8a79ad30aa001c51/level_test.go#L60
-#define not_found_66  0 // mand not_found_66
+#define not_found_66  3 // mand not_found_66
 #define not_found_70  1 // mand not_found_70
 typedef Chandef {
 	chan sync = [0] of {bool};

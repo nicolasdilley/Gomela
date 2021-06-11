@@ -88,7 +88,6 @@ proctype AnonymousTestRaceChanWrongClose307305(Chandef c;Chandef done;chan child
 	:: done.sync!false -> 
 		done.sending!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

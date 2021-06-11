@@ -50,7 +50,6 @@ proctype TestRaft_Backend_LargeValue227(chan child) {
 	child_Put11780?0;
 	run Get1152(b_autopilot_execLock,b_autopilot_stateLock,b_followerStates_l,b_fsm_l,b_l,b_raft_lastContactLock,b_raft_leaderLock,b_raft_observersLock,b_raft_shutdownLock,b_streamLayer_closeLock,child_Get11521);
 	child_Get11521?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -65,8 +64,6 @@ proctype Put1178(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLock;Mu
 	child_applyLog12480?0;
 	b_l.RUnlock!false;
 	goto stop_process;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -137,7 +134,6 @@ proctype applyLog1248(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLo
 	:: true;
 	fi;
 	goto stop_process;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -157,8 +153,6 @@ proctype Get1152(Mutexdef b_autopilot_execLock;Mutexdef b_autopilot_stateLock;Mu
 	run Get436(b_fsm_l,child_Get4361);
 	child_Get4361?0;
 	goto stop_process;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -185,8 +179,6 @@ proctype Get436(Mutexdef f_l;chan child) {
 	goto defer1;
 		defer1: skip;
 	f_l.RUnlock!false;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

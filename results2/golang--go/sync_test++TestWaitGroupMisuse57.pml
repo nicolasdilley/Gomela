@@ -27,7 +27,6 @@ proctype TestWaitGroupMisuse57(chan child) {
 	wg.update!1;
 	wg.update!-1;
 	wg.update!-1;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

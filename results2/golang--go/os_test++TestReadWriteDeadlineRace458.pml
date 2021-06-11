@@ -35,8 +35,6 @@ proctype TestReadWriteDeadlineRace458(chan child) {
 	run AnonymousTestReadWriteDeadlineRace499473(wg,child_AnonymousTestReadWriteDeadlineRace4994732);
 	run receiver(child_AnonymousTestReadWriteDeadlineRace4994732);
 	wg.wait?0;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }
@@ -46,7 +44,6 @@ proctype AnonymousTestReadWriteDeadlineRace475473(Wgdef wg;chan child) {
 	bool state;
 	int num_msgs;
 	int N = -2; // opt N
-		defer1: skip;
 		defer1: skip;
 	wg.update!-1;
 	stop_process: skip;

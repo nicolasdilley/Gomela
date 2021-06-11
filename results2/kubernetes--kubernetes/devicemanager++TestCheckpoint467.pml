@@ -45,7 +45,6 @@ proctype TestCheckpoint467(chan child) {
 	child_writeCheckpoint5730?0;
 	run readCheckpoint593(testManager_server_serveWG,testManager_wg,testManager_mutex,testManager_server_mu,child_readCheckpoint5931);
 	child_readCheckpoint5931?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

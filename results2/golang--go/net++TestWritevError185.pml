@@ -50,8 +50,6 @@ proctype TestWritevError185(chan child) {
 	:: ch.sync?state -> 
 		ch.rcving!false
 	fi;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

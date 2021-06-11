@@ -31,8 +31,6 @@ proctype TestServerWithClientSendingWrongMethod1668(chan child) {
 	run AnonymousTestServerWithClientSendingWrongMethod16921669(server_mu,child_AnonymousTestServerWithClientSendingWrongMethod169216691);
 	run receiver(child_AnonymousTestServerWithClientSendingWrongMethod169216691);
 		defer1: skip;
-		defer1: skip;
-		defer1: skip;
 	run stop407(server_mu,child_stop4070);
 	child_stop4070?0;
 	stop_process: skip;

@@ -61,7 +61,6 @@ proctype TestStoreLoadSeqCst641258(chan child) {
 	:: c.sync?state -> 
 		c.rcving!false
 	fi;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

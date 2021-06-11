@@ -88,8 +88,6 @@ proctype TestParentDeletion542(chan child) {
 		break
 	od;
 	for50_exit: skip;
-		stop_process: skip;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

@@ -55,7 +55,6 @@ proctype TestDirSetModTime212(chan child) {
 	child_ModTime7423?0;
 	run SetModTime755(dir_modTimeMu,dir_mu,dir_vfs_usageMu,child_SetModTime7554);
 	child_SetModTime7554?0;
-		stop_process: skip;
 	stop_process: skip;
 	child!0
 }

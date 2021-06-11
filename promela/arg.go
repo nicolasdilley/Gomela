@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -44,8 +45,13 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 		}
 
 	case *ast.UnaryExpr:
-		unary, err1 := m.TranslateArg(expr.X)
 
+		unary, err1 := m.TranslateArg(expr.X)
+		switch expr.Op {
+		case token.SUB:
+		case token.ADD:
+
+		}
 		if err1 != nil {
 			err = err1
 		} else {
@@ -72,6 +78,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 			return arg, &ParseError{err: errors.New(UNPARSABLE_FUNCTION_NAME + m.Fileset.Position(expr.Pos()).String())}
 		}
 	case *ast.BasicLit:
+		fmt.Println("icii ! ", expr)
 		name := promela_ast.Ident{Name: expr.Value}
 		e1 = &name
 
