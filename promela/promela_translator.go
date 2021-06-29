@@ -517,6 +517,7 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 	if !m.For_counter.In_for {
 		// a new channel is found lets change its name, rename it in function and add to struct
 		prom_chan_name := translateIdent(go_chan_name)
+		prom_chan_name.Name += CHAN_NAME
 		channel := &ChanStruct{Name: &prom_chan_name, Chan: m.Fileset.Position(go_chan_name.Pos())}
 		chan_def := &promela_ast.DeclStmt{Name: &prom_chan_name, Types: promela_types.Chandef}
 		b.List = append(b.List, chan_def)
@@ -724,17 +725,17 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 		case token.ARROW:
 			if m.containsChan(expr.X) {
 
-				chan_name := TranslateIdent(expr.X, m.Fileset)
+				chan_name := m.getChanStruct(expr.X)
 				if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
-				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
-				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: &chan_name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(expr.Pos())}
+				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
+				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(expr.Pos())}
 
 				async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 				sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 					&promela_ast.SendStmt{
 						Chan: &promela_ast.SelectorExpr{
-							X:   &chan_name,
+							X:   chan_name.Name,
 							Sel: &promela_ast.Ident{Name: "rcving"},
 						},
 						Rhs: &promela_ast.Ident{Name: "false"},

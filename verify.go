@@ -149,27 +149,38 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	ver := &VerificationRun{Send_on_close_safety_error: false, Close_safety_error: false, Negative_counter_safety_error: false, Global_deadlock: true, Timeout: false}
 
 	var output bytes.Buffer
+	var err_output bytes.Buffer
 
 	// Copy file and verify the copied file
 
 	// Verify with SPIN
 	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m100000000", "-w26", path, "-f")
 	command.Stdout = &output
-
+	command.Stderr = &err_output
 	pre := time.Now()
-	command.Run()
+	err := command.Run()
 	after := time.Now()
 
 	ver.Spin_timing = after.Sub(pre).Milliseconds()
 	executable := parseResults(output.String(), ver)
 
-	if output.String() == "" || ver.Timeout {
+	if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
+		fmt.Println("Ici ", path, " : out ", output.String(), " err : ", err_output.String())
+		fmt.Println(command.Stderr)
+		fmt.Println(executable)
 		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
-	} else if !executable {
-		toPrint := model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + ",,\n"
+	} else if !executable || err_output.String() != "" || err != nil {
+		toPrint := model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
+
+		if err != nil {
+			toPrint += " : " + err.Error()
+		}
+
+		toPrint += ",,\n"
+
 		if f != nil {
 			if _, err := f.WriteString(toPrint); err != nil {
 				panic(err)
@@ -274,25 +285,32 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						Global_deadlock:               true,
 						Timeout:                       false}
 					var output bytes.Buffer
+					var err_output bytes.Buffer
 
 					// Verify with SPIN
 					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
+					command.Stderr = &err_output
 					pre := time.Now()
-					command.Run()
+					err := command.Run()
 					after := time.Now()
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
 
 					executable := parseResults(output.String(), &ver)
 					num_tests++
-					if output.String() == "" || ver.Timeout {
+					if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
 						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
-					} else if !executable {
-						toPrint := model_name + ",1,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,," + ver.Err + ",,\n"
+					} else if !executable || err_output.String() != "" || err != nil {
+						toPrint := model_name + ",1,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,," + ver.Err
 
+						if err != nil {
+							toPrint += "err :" + err.Error()
+						}
+
+						toPrint += ",,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}

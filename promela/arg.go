@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"strconv"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -43,6 +44,9 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 
 			e1 = &promela_ast.BinaryExpr{Lhs: lhs, Op: expr.Op.String(), Rhs: rhs}
 		}
+	case *ast.CompositeLit:
+		name := promela_ast.Ident{Name: strconv.Itoa(len(expr.Elts)), Ident: m.Fileset.Position(expr.Pos())}
+		e1 = &name
 
 	case *ast.UnaryExpr:
 

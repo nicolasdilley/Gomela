@@ -177,8 +177,12 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: name, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
 		}
 	} else {
+		var_name := i1.Print(0)
 
-		i1 = &promela_ast.Ident{Name: "var_" + i1.Print(0)}
+		if _, err := strconv.Atoi(var_name); err != nil {
+			var_name = "var_" + var_name
+		}
+		i1 = &promela_ast.Ident{Name: var_name}
 		ident = i1
 	}
 

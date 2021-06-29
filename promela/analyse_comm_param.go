@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"strconv"
+	"strings"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -389,7 +390,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.IndexExpr:
 		return &ast.Ident{Name: m.getIdent(expr.X).Name + "L" + m.getIdent(expr.Index).Name + "L"}
 	case *ast.BasicLit:
-		return &ast.Ident{Name: expr.Value}
+		return &ast.Ident{Name: strings.Replace(expr.Value, "\"", "_", -1)}
 	case *ast.ParenExpr:
 		return &ast.Ident{Name: m.getIdent(expr.X).Name, NamePos: expr.Pos()}
 	case *ast.SliceExpr:
@@ -425,7 +426,7 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 	case *ast.KeyValueExpr:
 		return &ast.Ident{Name: m.getIdent(expr.Key).Name, NamePos: expr.Pos()}
 	case *ast.CompositeLit:
-		name := "-"
+		name := "_"
 		for _, elt := range expr.Elts {
 			name += m.getIdent(elt).Name
 		}

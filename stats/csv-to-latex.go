@@ -644,6 +644,7 @@ func parseVerificationResults() {
 		for _, line := range verification {
 			splitted_line := strings.Split(line, ",")
 			// model := splitted_line[0]
+			fmt.Println(splitted_line)
 			opt := splitted_line[1] == "1"
 			// num_states := splitted_line[2]
 
