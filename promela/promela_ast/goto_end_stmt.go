@@ -15,8 +15,7 @@ func (i *GotoEndStmt) GoNode() token.Position {
 func (i *GotoEndStmt) Print(num_tabs int) string {
 	return "goto " + i.Name
 }
-
 func (s *GotoEndStmt) Clone() Stmt {
-	s1 := &GotoEndStmt{Goto: s.Goto}
+	s1 := &GotoEndStmt{Goto: s.Goto, Name: s.Name}
 	return s1
 }
