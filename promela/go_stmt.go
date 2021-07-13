@@ -1,6 +1,7 @@
 package promela
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"sort"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"go/ast"
+	"go/printer"
 	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -123,7 +125,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 
 				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
 			} else {
-				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name + commPar.Name.Name}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
+				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name + commPar.Name.Name}, Mandatory: false, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
 			}
 		} else {
 			proc.Params = append(proc.Params, &promela_ast.Param{Name: commPar.Name.Name, Types: promela_types.Int})
@@ -147,13 +149,21 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 					if _, err := strconv.Atoi(var_name); err != nil {
 						var_name = "var_" + var_name
 					}
-					ident = &promela_ast.Ident{Name: var_name + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+					ident = &promela_ast.Ident{Name: var_name}
 				}
+
+				rhs := ""
 				if commPar.Mandatory {
-					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND + " // mand " + ident.Name}})
+					rhs = DEFAULT_BOUND + " // mand "
 				} else {
-					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND + " // opt " + ident.Name}})
+					rhs = OPTIONAL_BOUND + " // opt "
 				}
+
+				var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
+				printer.Fprint(buff, m.Fileset, commPar.Expr)
+				rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+
+				m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
 				prom_call.Args = append(prom_call.Args, ident)
 			}
 

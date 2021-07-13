@@ -37,6 +37,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 
 	}()
 	goto_stmt := &promela_ast.GotoStmt{Label: &promela_ast.LabelStmt{Name: fmt.Sprintf("for%d%d_exit", m.For_counter.X, m.For_counter.Y)}}
+	goto_end_stmt := &promela_ast.GotoStmt{Label: &promela_ast.LabelStmt{Name: fmt.Sprintf("for%d%d_end", m.For_counter.X, m.For_counter.Y)}}
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
@@ -139,7 +140,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	}
 
 	if len(i.Guards) > 0 {
-		b.List = append(b.List, i, goto_stmt.Label)
+		b.List = append(b.List, i, goto_stmt.Label, goto_end_stmt.Label)
 	} else {
 		return nil, nil, &ParseError{err: errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())}
 

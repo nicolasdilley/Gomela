@@ -152,12 +152,15 @@ func Stats() {
 		packages_models_min, _ := stats.Min(models_per_packages)
 		fmt.Println("# of models per packages : ", packages_models_mean, packages_models_sd, packages_models_min, packages_models_quartiles.Q1, packages_models_quartiles.Q2, packages_models_quartiles.Q3, packages_models_max)
 
+		fmt.Println("--------------------------")
 		fmt.Println("Top 5 projects :")
 
 		for i := 0; i < int(math.Min(float64(NUM_TOP_PROJECTS), float64(len(project_map.Projects)))); i++ {
 			num_models := numOfModels(project_map.Projects[i])
 			fmt.Println(i+1, ": ", project_map.Projects[i].Name, "# of models = ", num_models, "# of packages = ", len(project_map.Projects[i].Packages), "# of models per packages = ", float64(num_models)/float64(len(project_map.Projects[i].Packages)))
 		}
+
+		fmt.Println("--------------------------")
 	} else {
 		fmt.Println("Please provide the .csv file (log.csv)")
 	}
@@ -281,22 +284,22 @@ func parseBound(features_map map[string][]string) map[string][]string {
 		delete(features_map, model)
 	}
 
-	fmt.Println("# of models returning a channel : ", channel_returned)
-	fmt.Println("# of models returning a Waitgroup : ", wg_returned)
-	fmt.Println("# of models receive on unknown chan : ", rcv_chan)
-	fmt.Println("# of models send on unknown chan : ", send_chan)
-	fmt.Println("# of models cannot find decl : ", find_decl)
-	fmt.Println("# of models function declared as var : ", func_as_var)
-	fmt.Println("# of models channel in for : ", chan_in_for)
-	fmt.Println("# of models range on unknown chan : ", range_on_chan)
-	fmt.Println("# of models cant find notify : ", notify)
-	fmt.Println("# of models select without branch : ", select_no_branch)
-	fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
-	fmt.Println("# of models chan declared in struct : ", chan_declared_in_struct)
-	fmt.Println("# of models wg declared in struct : ", wg_declared_in_struct)
+	fmt.Println("# of models returning a channel : ", channel_returned)
+	fmt.Println("# of models returning a Waitgroup : ", wg_returned)
+	fmt.Println("# of models receive on unknown chan : ", rcv_chan)
+	fmt.Println("# of models send on unknown chan : ", send_chan)
+	fmt.Println("# of models cannot find decl : ", find_decl)
+	fmt.Println("# of models function declared as var : ", func_as_var)
+	fmt.Println("# of models channel in for : ", chan_in_for)
+	fmt.Println("# of models range on unknown chan : ", range_on_chan)
+	fmt.Println("# of models cant find notify : ", notify)
+	fmt.Println("# of models select without branch : ", select_no_branch)
+	fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
+	fmt.Println("# of models chan declared in struct : ", chan_declared_in_struct)
+	fmt.Println("# of models wg declared in struct : ", wg_declared_in_struct)
 
-	fmt.Println("Num of unsupported features = ", feature_unsupported)
-	fmt.Println("Num of model errors = ", model_errors)
+	//fmt.Println("Num of unsupported features = ", feature_unsupported)
+	//fmt.Println("Num of model errors = ", model_errors)
 	fmt.Println("Num of unsupported model = ", model_unsupported, " out of ", num_models)
 	// f.WriteString("\\begin{table}\n")
 	// f.WriteString(" \\begin{tabular}{lccccccc}\n")
@@ -356,7 +359,7 @@ func parseFeature(features_map map[string][]string) {
 	for_upper_bound := 0
 	for_lower_bound := 0
 
-	num_models := len(features_map)
+	// num_models := len(features_map)
 
 	add_bounds := []float64{}
 	chan_bounds := []float64{}
@@ -535,44 +538,45 @@ func parseFeature(features_map map[string][]string) {
 		}
 	}
 
-	fmt.Println("NAME , MEAN, SD , Q1, MEDIAN , Q3, MAX")
-	add_sd, _ := stats.StandardDeviation(add_bounds)
-	add_mean, _ := stats.Mean(add_bounds)
-	add_quartiles, _ := stats.Quartile(add_bounds)
-	add_max, _ := stats.Max(add_bounds)
-	add_min, _ := stats.Min(add_bounds)
+	// fmt.Println("NAME , MEAN, SD , Q1, MEDIAN , Q3, MAX")
+	// add_sd, _ := stats.StandardDeviation(add_bounds)
+	// add_mean, _ := stats.Mean(add_bounds)
+	// add_quartiles, _ := stats.Quartile(add_bounds)
+	// add_max, _ := stats.Max(add_bounds)
+	// add_min, _ := stats.Min(add_bounds)
 
-	fmt.Println("Add(x)", add_mean, add_sd, add_min, add_quartiles.Q1, add_quartiles.Q2, add_quartiles.Q3, add_max)
+	// fmt.Println("Add(x)", add_mean, add_sd, add_min, add_quartiles.Q1, add_quartiles.Q2, add_quartiles.Q3, add_max)
 
-	chan_sd, _ := stats.StandardDeviation(chan_bounds)
-	chan_mean, _ := stats.Mean(chan_bounds)
-	chan_quartiles, _ := stats.Quartile(chan_bounds)
-	chan_max, _ := stats.Max(chan_bounds)
-	chan_min, _ := stats.Min(chan_bounds)
+	// chan_sd, _ := stats.StandardDeviation(chan_bounds)
+	// chan_mean, _ := stats.Mean(chan_bounds)
+	// chan_quartiles, _ := stats.Quartile(chan_bounds)
+	// chan_max, _ := stats.Max(chan_bounds)
+	// chan_min, _ := stats.Min(chan_bounds)
 
-	fmt.Println("Chan", chan_mean, chan_sd, chan_min, chan_quartiles.Q1, chan_quartiles.Q2, chan_quartiles.Q3, chan_max)
+	// fmt.Println("Chan", chan_mean, chan_sd, chan_min, chan_quartiles.Q1, chan_quartiles.Q2, chan_quartiles.Q3, chan_max)
 
-	for_sd, _ := stats.StandardDeviation(for_bounds)
-	for_mean, _ := stats.Mean(for_bounds)
-	for_quartiles, _ := stats.Quartile(for_bounds)
-	for_max, _ := stats.Max(for_bounds)
-	for_min, _ := stats.Min(for_bounds)
+	// for_sd, _ := stats.StandardDeviation(for_bounds)
+	// for_mean, _ := stats.Mean(for_bounds)
+	// for_quartiles, _ := stats.Quartile(for_bounds)
+	// for_max, _ := stats.Max(for_bounds)
+	// for_min, _ := stats.Min(for_bounds)
 
-	fmt.Println("For upper", for_mean, for_sd, for_min, for_quartiles.Q1, for_quartiles.Q2, for_quartiles.Q3, for_max)
+	// fmt.Println("For upper", for_mean, for_sd, for_min, for_quartiles.Q1, for_quartiles.Q2, for_quartiles.Q3, for_max)
 
-	comm_param_per_models_sd, _ := stats.StandardDeviation(comm_param_per_models)
-	comm_param_per_models_mean, _ := stats.Mean(comm_param_per_models)
-	comm_param_per_models_quartiles, _ := stats.Quartile(comm_param_per_models)
-	comm_param_per_models_max, _ := stats.Max(comm_param_per_models)
-	comm_param_per_models_min, _ := stats.Min(comm_param_per_models)
+	// comm_param_per_models_sd, _ := stats.StandardDeviation(comm_param_per_models)
+	// comm_param_per_models_mean, _ := stats.Mean(comm_param_per_models)
+	// comm_param_per_models_quartiles, _ := stats.Quartile(comm_param_per_models)
+	// comm_param_per_models_max, _ := stats.Max(comm_param_per_models)
+	// comm_param_per_models_min, _ := stats.Min(comm_param_per_models)
 
-	fmt.Println("Comm param per models ", comm_param_per_models_mean, comm_param_per_models_sd, comm_param_per_models_min, comm_param_per_models_quartiles.Q1, comm_param_per_models_quartiles.Q2, comm_param_per_models_quartiles.Q3, comm_param_per_models_max)
+	// fmt.Println("Comm param per models ", comm_param_per_models_mean, comm_param_per_models_sd, comm_param_per_models_min, comm_param_per_models_quartiles.Q1, comm_param_per_models_quartiles.Q2, comm_param_per_models_quartiles.Q3, comm_param_per_models_max)
 
-	fmt.Println("Num of chan bounds: ", chan_bound)
-	fmt.Println("Num of add bounds: ", add_bound)
-	fmt.Println("Num of for range bounds: ", for_bound)
-	fmt.Println("Num of for upper bounds: ", for_upper_bound)
-	fmt.Println("Num of for lower bounds: ", for_lower_bound)
+	// fmt.Println("Num of chan bounds: ", chan_bound)
+	// fmt.Println("Num of add bounds: ", add_bound)
+	// fmt.Println("Num of for range bounds: ", for_bound)
+	// fmt.Println("Num of for upper bounds: ", for_upper_bound)
+	// fmt.Println("Num of for lower bounds: ", for_lower_bound)
+
 	// add unsupported everywhere
 	// check occurences that are constaxnts
 	// check type int and Var (And add when litteral)
@@ -592,25 +596,25 @@ func parseFeature(features_map map[string][]string) {
 
 	fmt.Println("Num of chans : ", num_channels)
 	fmt.Println("Num of waitgroups : ", num_waitgroups)
-	fmt.Println("Num of models : ", num_models)
+	// fmt.Println("Num of models : ", num_models)
 	fmt.Println("Num of candidate parameters : mand : ", mand_candidate_parameters, " opt : ", opt_candidate_parameters, " Total : ", opt_candidate_parameters+mand_candidate_parameters)
 	fmt.Println("Num of actual parameters : mand : ", mand_actual_parameters, " opt : ", opt_actual_parameters, " Total : ", opt_actual_parameters+mand_actual_parameters)
-	fmt.Println("Occurences of comm parameters : mand : ", mand_comm_parameters, " opt : ", opt_comm_parameters, " Total : ", opt_comm_parameters+mand_comm_parameters)
-	fmt.Println("Integer : mand : ", mand_integer_parameters, " opt : ", opt_integer_parameters, " Total : ", opt_integer_parameters+mand_integer_parameters)
-	fmt.Println("Func : mand : ", mand_func_parameters, " opt : ", opt_func_parameters, " Total : ", opt_func_parameters+mand_func_parameters)
-	fmt.Println("which are len() : mand : ", mand_len_parameters, " opt : ", opt_len_parameters, " Total : ", opt_len_parameters+mand_len_parameters)
-	fmt.Println("Map : mand : ", mand_map_parameters, " opt : ", opt_map_parameters, " Total : ", opt_map_parameters+mand_map_parameters)
-	fmt.Println("List : mand : ", mand_list_parameters, " opt : ", opt_list_parameters, " Total : ", opt_list_parameters+mand_list_parameters)
-	fmt.Println("Item of a list : mand : ", mand_list_item_parameters, " opt : ", opt_list_item_parameters, " Total : ", opt_list_item_parameters+mand_list_item_parameters)
-	fmt.Println("Pointer : mand : ", mand_ptr_parameters, " opt : ", opt_ptr_parameters, " Total : ", opt_ptr_parameters+mand_ptr_parameters)
-	fmt.Println("Var : mand : ", mand_var_parameters, " opt : ", opt_var_parameters, " Total : ", opt_var_parameters+mand_var_parameters)
-	fmt.Println("Struct : mand : ", mand_struct_parameters, " opt : ", opt_struct_parameters, " Total : ", opt_struct_parameters+mand_struct_parameters)
-	fmt.Println("Num of Done() in for : ", num_done_in_for)
-	fmt.Println("Num of models : ", num_models)
-	fmt.Println("model with params : ", model_with_parameters)
-	fmt.Println(float64((mand_candidate_parameters+opt_candidate_parameters+mand_actual_parameters+opt_actual_parameters))/float64(model_with_parameters), " params out of ", model_with_parameters, " models with at least one comm param")
-	fmt.Println((float64(mand_candidate_parameters+mand_actual_parameters))/float64(model_with_parameters), " mand params out of ", model_with_parameters, " models with at least one comm param")
-	fmt.Println(float64((opt_candidate_parameters+opt_actual_parameters))/float64(model_with_parameters), " opt params out of ", model_with_parameters, " models with at least one comm param")
+	// fmt.Println("Occurences of comm parameters : mand : ", mand_comm_parameters, " opt : ", opt_comm_parameters, " Total : ", opt_comm_parameters+mand_comm_parameters)
+	// fmt.Println("Integer : mand : ", mand_integer_parameters, " opt : ", opt_integer_parameters, " Total : ", opt_integer_parameters+mand_integer_parameters)
+	// fmt.Println("Func : mand : ", mand_func_parameters, " opt : ", opt_func_parameters, " Total : ", opt_func_parameters+mand_func_parameters)
+	// fmt.Println("which are len() : mand : ", mand_len_parameters, " opt : ", opt_len_parameters, " Total : ", opt_len_parameters+mand_len_parameters)
+	// fmt.Println("Map : mand : ", mand_map_parameters, " opt : ", opt_map_parameters, " Total : ", opt_map_parameters+mand_map_parameters)
+	// fmt.Println("List : mand : ", mand_list_parameters, " opt : ", opt_list_parameters, " Total : ", opt_list_parameters+mand_list_parameters)
+	// fmt.Println("Item of a list : mand : ", mand_list_item_parameters, " opt : ", opt_list_item_parameters, " Total : ", opt_list_item_parameters+mand_list_item_parameters)
+	// fmt.Println("Pointer : mand : ", mand_ptr_parameters, " opt : ", opt_ptr_parameters, " Total : ", opt_ptr_parameters+mand_ptr_parameters)
+	// fmt.Println("Var : mand : ", mand_var_parameters, " opt : ", opt_var_parameters, " Total : ", opt_var_parameters+mand_var_parameters)
+	// fmt.Println("Struct : mand : ", mand_struct_parameters, " opt : ", opt_struct_parameters, " Total : ", opt_struct_parameters+mand_struct_parameters)
+	// fmt.Println("Num of Done() in for : ", num_done_in_for)
+	// fmt.Println("Num of models : ", num_models)
+	// fmt.Println("model with params : ", model_with_parameters)
+	// fmt.Println(float64((mand_candidate_parameters+opt_candidate_parameters+mand_actual_parameters+opt_actual_parameters))/float64(model_with_parameters), " params out of ", model_with_parameters, " models with at least one comm param")
+	// fmt.Println((float64(mand_candidate_parameters+mand_actual_parameters))/float64(model_with_parameters), " mand params out of ", model_with_parameters, " models with at least one comm param")
+	// fmt.Println(float64((opt_candidate_parameters+opt_actual_parameters))/float64(model_with_parameters), " opt params out of ", model_with_parameters, " models with at least one comm param")
 	fmt.Println("# params per model (that contains at least one parameter) : ", float64((mand_candidate_parameters+opt_candidate_parameters+mand_actual_parameters+opt_actual_parameters))/float64(model_with_parameters))
 }
 
@@ -721,7 +725,7 @@ func parseVerificationResults() {
 		times_per_projects_max, _ := stats.Max(times_per_projects)
 		times_per_projects_min, _ := stats.Min(times_per_projects)
 
-		fmt.Println("times_per_projects per project in ms", times_per_projects_mean, times_per_projects_sd, times_per_projects_min, times_per_projects_quartiles.Q1, times_per_projects_quartiles.Q2, times_per_projects_quartiles.Q3, times_per_projects_max)
+		fmt.Println("timesper project in ms", times_per_projects_mean, times_per_projects_sd, times_per_projects_min, times_per_projects_quartiles.Q1, times_per_projects_quartiles.Q2, times_per_projects_quartiles.Q3, times_per_projects_max)
 
 		scores := make(map[string]ModelScore)
 		num_models_with_score_that_are_not_one_not_zero := 0
@@ -833,10 +837,10 @@ func parseVerificationResults() {
 		}
 
 		fmt.Println("Real num of model with params : ", models_with_params)
-		fmt.Println("Average num of mand param : ", float64(float64(total_mand_params)/float64(models_with_params)))
-		fmt.Println(" num of mand param : ", total_mand_params)
-		fmt.Println("Average num of opt param : ", float64(float64(total_opt_params)/float64(models_with_params)))
-		fmt.Println(" num of opt param : ", total_opt_params)
+		// fmt.Println("Average num of mand param : ", float64(float64(total_mand_params)/float64(models_with_params)))
+		// fmt.Println(" num of mand param : ", total_mand_params)
+		// fmt.Println("Average num of opt param : ", float64(float64(total_opt_params)/float64(models_with_params)))
+		// fmt.Println(" num of opt param : ", total_opt_params)
 
 		times_per_model_sd, _ := stats.StandardDeviation(times_per_model)
 		times_per_model_mean, _ := stats.Mean(times_per_model)
@@ -902,7 +906,7 @@ func parseVerificationResults() {
 		send_scores_max, _ := stats.Max(send_scores)
 		send_scores_min, _ := stats.Min(send_scores)
 
-		fmt.Println("5 stats send_scores", send_scores_mean, send_scores_sd, send_scores_min, send_scores_quartiles.Q1, send_scores_quartiles.Q2, send_scores_quartiles.Q3, send_scores_max)
+		fmt.Println("5 stats Send on closed channel ", send_scores_mean, send_scores_sd, send_scores_min, send_scores_quartiles.Q1, send_scores_quartiles.Q2, send_scores_quartiles.Q3, send_scores_max)
 
 		close_scores_sd, _ := stats.StandardDeviation(close_scores)
 		close_scores_mean, _ := stats.Mean(close_scores)
@@ -910,7 +914,7 @@ func parseVerificationResults() {
 		close_scores_max, _ := stats.Max(close_scores)
 		close_scores_min, _ := stats.Min(close_scores)
 
-		fmt.Println("5 stats close_scores", close_scores_mean, close_scores_sd, close_scores_min, close_scores_quartiles.Q1, close_scores_quartiles.Q2, close_scores_quartiles.Q3, close_scores_max)
+		fmt.Println("5 stats Close on closed channel ", close_scores_mean, close_scores_sd, close_scores_min, close_scores_quartiles.Q1, close_scores_quartiles.Q2, close_scores_quartiles.Q3, close_scores_max)
 
 		wg_scores_sd, _ := stats.StandardDeviation(wg_scores)
 		wg_scores_mean, _ := stats.Mean(wg_scores)
@@ -918,7 +922,7 @@ func parseVerificationResults() {
 		wg_scores_max, _ := stats.Max(wg_scores)
 		wg_scores_min, _ := stats.Min(wg_scores)
 
-		fmt.Println("5 stats wg_scores", wg_scores_mean, wg_scores_sd, wg_scores_min, wg_scores_quartiles.Q1, wg_scores_quartiles.Q2, wg_scores_quartiles.Q3, wg_scores_max)
+		fmt.Println("5 stats waitgroup safety ", wg_scores_mean, wg_scores_sd, wg_scores_min, wg_scores_quartiles.Q1, wg_scores_quartiles.Q2, wg_scores_quartiles.Q3, wg_scores_max)
 
 		mutex_scores_sd, _ := stats.StandardDeviation(mutex_scores)
 		mutex_scores_mean, _ := stats.Mean(mutex_scores)
@@ -926,7 +930,7 @@ func parseVerificationResults() {
 		mutex_scores_max, _ := stats.Max(mutex_scores)
 		mutex_scores_min, _ := stats.Min(mutex_scores)
 
-		fmt.Println("5 stats mutex_scores", mutex_scores_mean, mutex_scores_sd, mutex_scores_min, mutex_scores_quartiles.Q1, mutex_scores_quartiles.Q2, mutex_scores_quartiles.Q3, mutex_scores_max)
+		fmt.Println("5 stats mutex safety ", mutex_scores_mean, mutex_scores_sd, mutex_scores_min, mutex_scores_quartiles.Q1, mutex_scores_quartiles.Q2, mutex_scores_quartiles.Q3, mutex_scores_max)
 
 		gd_scores_sd, _ := stats.StandardDeviation(gd_scores)
 		gd_scores_mean, _ := stats.Mean(gd_scores)
@@ -934,7 +938,7 @@ func parseVerificationResults() {
 		gd_scores_max, _ := stats.Max(gd_scores)
 		gd_scores_min, _ := stats.Min(gd_scores)
 
-		fmt.Println("5 stats gd_scores", gd_scores_mean, gd_scores_sd, gd_scores_min, gd_scores_quartiles.Q1, gd_scores_quartiles.Q2, gd_scores_quartiles.Q3, gd_scores_max)
+		fmt.Println("5 stats global deadlock ", gd_scores_mean, gd_scores_sd, gd_scores_min, gd_scores_quartiles.Q1, gd_scores_quartiles.Q2, gd_scores_quartiles.Q3, gd_scores_max)
 
 		normalised_send_scores_sd, _ := stats.StandardDeviation(normalised_send_scores)
 		normalised_send_scores_mean, _ := stats.Mean(normalised_send_scores)
@@ -942,7 +946,7 @@ func parseVerificationResults() {
 		normalised_send_scores_max, _ := stats.Max(normalised_send_scores)
 		normalised_send_scores_min, _ := stats.Min(normalised_send_scores)
 
-		fmt.Println("5 stats ", len(normalised_send_scores), " normalised_send_scores", normalised_send_scores_mean, normalised_send_scores_sd, normalised_send_scores_min, normalised_send_scores_quartiles.Q1, normalised_send_scores_quartiles.Q2, normalised_send_scores_quartiles.Q3, normalised_send_scores_max)
+		fmt.Println("5 stats ", len(normalised_send_scores), " strictly positive send on closed channel ", normalised_send_scores_mean, normalised_send_scores_sd, normalised_send_scores_min, normalised_send_scores_quartiles.Q1, normalised_send_scores_quartiles.Q2, normalised_send_scores_quartiles.Q3, normalised_send_scores_max)
 
 		normalised_close_scores_sd, _ := stats.StandardDeviation(normalised_close_scores)
 		normalised_close_scores_mean, _ := stats.Mean(normalised_close_scores)
@@ -950,7 +954,7 @@ func parseVerificationResults() {
 		normalised_close_scores_max, _ := stats.Max(normalised_close_scores)
 		normalised_close_scores_min, _ := stats.Min(normalised_close_scores)
 
-		fmt.Println("5 stats ", len(normalised_close_scores), " normalised_close_scores", normalised_close_scores_mean, normalised_close_scores_sd, normalised_close_scores_min, normalised_close_scores_quartiles.Q1, normalised_close_scores_quartiles.Q2, normalised_close_scores_quartiles.Q3, normalised_close_scores_max)
+		fmt.Println("5 stats ", len(normalised_close_scores), " strictly positive close on closed channel ", normalised_close_scores_mean, normalised_close_scores_sd, normalised_close_scores_min, normalised_close_scores_quartiles.Q1, normalised_close_scores_quartiles.Q2, normalised_close_scores_quartiles.Q3, normalised_close_scores_max)
 
 		normalised_wg_scores_sd, _ := stats.StandardDeviation(normalised_wg_scores)
 		normalised_wg_scores_mean, _ := stats.Mean(normalised_wg_scores)
@@ -958,7 +962,7 @@ func parseVerificationResults() {
 		normalised_wg_scores_max, _ := stats.Max(normalised_wg_scores)
 		normalised_wg_scores_min, _ := stats.Min(normalised_wg_scores)
 
-		fmt.Println("5 stats ", len(normalised_wg_scores), " normalised_wg_scores", normalised_wg_scores_mean, normalised_wg_scores_sd, normalised_wg_scores_min, normalised_wg_scores_quartiles.Q1, normalised_wg_scores_quartiles.Q2, normalised_wg_scores_quartiles.Q3, normalised_wg_scores_max)
+		fmt.Println("5 stats ", len(normalised_wg_scores), " strictly positive waitgroup safety ", normalised_wg_scores_mean, normalised_wg_scores_sd, normalised_wg_scores_min, normalised_wg_scores_quartiles.Q1, normalised_wg_scores_quartiles.Q2, normalised_wg_scores_quartiles.Q3, normalised_wg_scores_max)
 
 		normalised_mutex_scores_sd, _ := stats.StandardDeviation(normalised_mutex_scores)
 		normalised_mutex_scores_mean, _ := stats.Mean(normalised_mutex_scores)
@@ -966,7 +970,7 @@ func parseVerificationResults() {
 		normalised_mutex_scores_max, _ := stats.Max(normalised_mutex_scores)
 		normalised_mutex_scores_min, _ := stats.Min(normalised_mutex_scores)
 
-		fmt.Println("5 stats ", len(normalised_mutex_scores), " normalised_mutex_scores", normalised_mutex_scores_mean, normalised_mutex_scores_sd, normalised_mutex_scores_min, normalised_mutex_scores_quartiles.Q1, normalised_mutex_scores_quartiles.Q2, normalised_mutex_scores_quartiles.Q3, normalised_mutex_scores_max)
+		fmt.Println("5 stats ", len(normalised_mutex_scores), " strictly positive mutex safety ", normalised_mutex_scores_mean, normalised_mutex_scores_sd, normalised_mutex_scores_min, normalised_mutex_scores_quartiles.Q1, normalised_mutex_scores_quartiles.Q2, normalised_mutex_scores_quartiles.Q3, normalised_mutex_scores_max)
 
 		normalised_gd_scores_sd, _ := stats.StandardDeviation(normalised_gd_scores)
 		normalised_gd_scores_mean, _ := stats.Mean(normalised_gd_scores)
@@ -974,7 +978,7 @@ func parseVerificationResults() {
 		normalised_gd_scores_max, _ := stats.Max(normalised_gd_scores)
 		normalised_gd_scores_min, _ := stats.Min(normalised_gd_scores)
 
-		fmt.Println("5 stats ", len(normalised_gd_scores), " normalised_gd_scores", normalised_gd_scores_mean, normalised_gd_scores_sd, normalised_gd_scores_min, normalised_gd_scores_quartiles.Q1, normalised_gd_scores_quartiles.Q2, normalised_gd_scores_quartiles.Q3, normalised_gd_scores_max)
+		fmt.Println("5 stats ", len(normalised_gd_scores), " strictly positive global deadlock ", normalised_gd_scores_mean, normalised_gd_scores_sd, normalised_gd_scores_min, normalised_gd_scores_quartiles.Q1, normalised_gd_scores_quartiles.Q2, normalised_gd_scores_quartiles.Q3, normalised_gd_scores_max)
 
 		// check if there are some models contained in 30_random that are not in this actual score.
 
@@ -1008,8 +1012,7 @@ func parseVerificationResults() {
 
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
 		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))
-		fmt.Println("# of verification : ", num_tests)
-		fmt.Println("# of actual verification : ", num_actual_verifications)
+		fmt.Println("# of valuation : ", num_actual_verifications)
 		fmt.Println("# of timeout : ", num_timeout)
 		fmt.Println("# of unexecutable models : ", num_unexecutable_models)
 		fmt.Println("Longest valuated model is : ", valuated_longest_model, " with ", valuated_longest_time, "ms")
@@ -1020,7 +1023,7 @@ func parseVerificationResults() {
 		fmt.Println("# of close on close safety error : ", num_close)
 		fmt.Println("# of negative counter error : ", num_neg_counter)
 		fmt.Println("# of mutex error : ", num_mutex_counter)
-		fmt.Println("# of false alarms : ", false_alarms)
+		// fmt.Println("# of false alarms : ", false_alarms)
 		fmt.Println("# of average verification time : ", total_time/num_tests)
 		fmt.Println("Total verification time: ", total_time)
 

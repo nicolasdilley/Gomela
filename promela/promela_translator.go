@@ -1,9 +1,11 @@
 package promela
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/printer"
 	"go/token"
 	"go/types"
 	"strconv"
@@ -651,11 +653,12 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 			if name.Name == "close" && len(expr.Args) == 1 { // closing a chan
 				send := &promela_ast.SendStmt{Send: m.Fileset.Position(name.Pos())}
 
-				ch := TranslateIdent(expr.Args[0], m.Fileset)
-
 				if m.containsChan(expr.Args[0]) {
+
+					chan_name := m.getChanStruct(expr.Args[0])
+
 					send.Chan = &promela_ast.SelectorExpr{
-						X: &ch, Sel: &promela_ast.Ident{Name: "closing"},
+						X: chan_name.Name, Sel: &promela_ast.Ident{Name: "closing"},
 						Pos: m.Fileset.Position(expr.Args[0].Pos()),
 					}
 					send.Rhs = &promela_ast.Ident{Name: "true"}
@@ -1025,8 +1028,19 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 
 // Takes a commPar and genrate a define stmt out of the name of the commPar and the function under analysis
 func (m *Model) GenerateDefine(commPar *CommPar) string {
-	name := m.Fun.Name.Name + "_" + commPar.Name.Name
-	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: name}, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+	name := "var_" + commPar.Name.Name + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+	rhs := DEFAULT_BOUND
+
+	if commPar.Mandatory {
+		rhs += " // mand "
+	} else {
+		rhs += " // opt "
+	}
+	var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
+	printer.Fprint(buff, m.Fileset, commPar.Expr)
+	rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+
+	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: name}, Rhs: &promela_ast.Ident{Name: rhs}})
 
 	return name
 }

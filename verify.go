@@ -154,7 +154,8 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	// Copy file and verify the copied file
 
 	// Verify with SPIN
-	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m100000000", "-w26", path, "-f")
+	fmt.Println("verifying : ", path)
+	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=2056", "-m10000000", "-w26", path, "-f")
 	command.Stdout = &output
 	command.Stderr = &err_output
 	pre := time.Now()
@@ -173,6 +174,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			panic(err)
 		}
 	} else if !executable || err_output.String() != "" || err != nil {
+		fmt.Println(err_output.String())
 		toPrint := model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
 
 		if err != nil {
@@ -288,6 +290,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					var err_output bytes.Buffer
 
 					// Verify with SPIN
+					fmt.Println("verifying : ", path)
 					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
 					command.Stderr = &err_output
@@ -407,7 +410,7 @@ func verifyModelWithSpecificValues(model string, params []string) {
 	// verify it
 	verifyModel("./temp.pml", os.Args[2], "", nil, []string{}, 0, params)
 	// delete it
-	os.Remove("./temp.pml")
+	// os.Remove("./temp.pml")
 
 }
 

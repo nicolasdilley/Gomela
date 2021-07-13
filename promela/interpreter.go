@@ -156,31 +156,46 @@ func Print(m *Model) {
 func numCommParInModel(m *Model) (int, int) {
 	num_mand_param := 0
 	num_opt_param := 0
-	findParam := func(s promela_ast.Stmt) bool {
-		switch s := s.(type) {
-		case *promela_ast.CommParamDeclStmt:
-			if s.Mandatory {
-				num_mand_param++
-			} else {
-				num_opt_param++
-			}
+	// findParam := func(s promela_ast.Stmt) bool {
+	// 	num_mand_param := 0
+	// 	num_opt_param := 0
 
-		case *promela_ast.DeclStmt:
-			switch rhs := s.Rhs.(type) {
-			case *promela_ast.Ident:
-				if strings.Contains(rhs.Name, "opt") {
-					num_opt_param++
-				} else if strings.Contains(rhs.Name, "mand") {
-					num_mand_param++
-				}
+	// 	switch s := s.(type) {
+	// 	case *promela_ast.CommParamDeclStmt:
+	// 		if s.Mandatory {
+	// 			num_mand_param++
+	// 		} else {
+	// 			num_opt_param++
+	// 		}
+
+	// 	case *promela_ast.DeclStmt:
+	// 		switch rhs := s.Rhs.(type) {
+	// 		case *promela_ast.Ident:
+	// 			if strings.Contains(rhs.Name, "opt") {
+	// 				num_opt_param++
+	// 			} else if strings.Contains(rhs.Name, "mand") {
+	// 				num_mand_param++
+	// 			}
+	// 		}
+
+	// 	}
+	// 	return true
+	// }
+
+	for _, def := range m.Defines {
+		switch rhs := def.Rhs.(type) {
+		case *promela_ast.Ident:
+			if strings.Contains(rhs.Name, "opt") {
+				num_opt_param++
+			} else if strings.Contains(rhs.Name, "mand") {
+				num_mand_param++
 			}
 		}
-		return true
 	}
-	promela_ast.Inspect(m.Init.Body, findParam)
-	for _, proc := range m.Proctypes {
-		promela_ast.Inspect(proc.Body, findParam)
-	}
+	// promela_ast.Inspect(m.Init.Body, findParam)
+	// for _, proc := range m.Proctypes {
+	// 	promela_ast.Inspect(proc.Body, findParam)
+	// }
 
 	// for _, define := range m.Defines {
 	// 	switch rhs := define.Rhs.(type) {
