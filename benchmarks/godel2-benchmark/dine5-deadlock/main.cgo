@@ -1,0 +1,28 @@
+def main.main():
+    letsync t0 mutex;
+    letsync t1 mutex;
+    letsync t2 mutex;
+    letsync t3 mutex;
+    letsync t4 mutex;
+    letmem t5;
+    letmem t6;
+    letmem t7;
+    letmem t8;
+    letmem t9;
+    spawn main.phil(t0, t1, t5, t6);
+    spawn main.phil(t1, t2, t6, t7);
+    spawn main.phil(t2, t3, t7, t8);
+    spawn main.phil(t3, t4, t8, t9);
+    spawn main.phil(t4, t0, t9, t5);
+def main.phil(m1, m2, f1, f2):
+    call main.phil#1(m1, m2, f1, f2);
+def main.phil#1(m1, m2, f1, f2):
+    lock m1;
+    read f1;
+    write f1;
+    lock m2;
+    read f2;
+    write f2;
+    unlock m2;
+    unlock m1;
+    call main.phil#1(m1, m2, f1, f2);

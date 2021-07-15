@@ -1,4 +1,0 @@
-[(tau + tausync)*]
-(
-(<SEND_main_ReplicaSearch_1c>true => mu Z .(<Sync_main_ReplicaSearch_1c>true) || (<tau>Z || <tausync>Z))
-)
