@@ -102,7 +102,7 @@ This also means that there are no safety errors or global deadlocks in the Go
 source file ```source/hello.go```.
 
 If we tweak the code to introduce a global deadlock by removing one or both of
-the receives on line 10 and 14 and rerun the command ```./gomela ./source -v```.
+the receives on line 10 and 14 and rerun the command ```./gomela fs ./source```.
 The output of the command line should be :
 
 ```
