@@ -2,7 +2,6 @@ package promela
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/types"
 
@@ -108,7 +107,6 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		}
 		block_stmt := s1
 
-		fmt.Println(for_label)
 		if m.spawns(s.Body, false) {
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: &promela_ast.Ident{Name: ub.Name + "-1"}, Body: block_stmt})

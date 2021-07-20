@@ -43,7 +43,7 @@ var (
 	NUM_OF_MODELS            int = 0
 	NUM_OF_EXECUTABLE_MODELS int = 0
 	RESULTS_FOLDER               = "result"
-	PROJECTS_FOLDER              = "../projects"
+	PROJECTS_FOLDER              = "projects"
 	AUTHOR_PROJECT_SEP           = "--"
 	PACKAGE_MODEL_SEP            = "++"
 )
@@ -426,8 +426,22 @@ func verify(ver *VerificationInfo, toParse string) {
 		panic("The folder given cannot be parsed")
 	}
 	bounds_to_check := []interface{}{}
-	if len(os.Args) > 3 {
-		for _, b := range os.Args[3:] {
+
+	bounds_index := 3
+
+	for bounds_index < len(os.Args) {
+		_, err := strconv.Atoi(os.Args[bounds_index])
+
+		if err != nil {
+			bounds_index++
+		} else {
+			break
+		}
+	}
+
+	if len(os.Args) > bounds_index {
+
+		for _, b := range os.Args[bounds_index:] {
 			num, err := strconv.Atoi(b)
 
 			if err != nil {

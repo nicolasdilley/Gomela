@@ -25,19 +25,19 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 			case token.ARROW:
 				if m.containsChan(spec.X) {
 
-					chan_name := TranslateIdent(spec.X, m.Fileset)
+					chan_name := m.getChanStruct(spec.X)
 					if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
 
 					dequeue := &promela_ast.RcvStmt{
 						Chan: &promela_ast.SelectorExpr{
-							X:   &chan_name,
+							X:   chan_name.Name,
 							Sel: &promela_ast.Ident{Name: "deq"},
 						},
 						Rhs: &promela_ast.Ident{Name: "state,num_msgs"},
 						Rcv: m.Fileset.Position(spec.Pos())}
 					sync_rcv := &promela_ast.RcvStmt{
 						Chan: &promela_ast.SelectorExpr{
-							X:   &chan_name,
+							X:   chan_name.Name,
 							Sel: &promela_ast.Ident{Name: "sync"},
 						},
 						Rhs: &promela_ast.Ident{Name: "state"},
@@ -47,7 +47,7 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 					sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 						&promela_ast.SendStmt{
 							Chan: &promela_ast.SelectorExpr{
-								X:   &chan_name,
+								X:   chan_name.Name,
 								Sel: &promela_ast.Ident{Name: "rcving"},
 							},
 							Rhs: &promela_ast.Ident{Name: "false"},

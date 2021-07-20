@@ -82,7 +82,6 @@ func (m *Model) TranslateArg(expr ast.Expr) (e promela_ast.Expr, err *ParseError
 			return arg, &ParseError{err: errors.New(UNPARSABLE_FUNCTION_NAME + m.Fileset.Position(expr.Pos()).String())}
 		}
 	case *ast.BasicLit:
-		fmt.Println("icii ! ", expr)
 		name := promela_ast.Ident{Name: expr.Value}
 		e1 = &name
 

@@ -726,6 +726,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 		switch expr.Op {
 
 		case token.ARROW:
+
 			if m.containsChan(expr.X) {
 
 				chan_name := m.getChanStruct(expr.X)
