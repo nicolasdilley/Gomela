@@ -1,0 +1,152 @@
+// num_comm_params=0
+// num_mand_comm_params=0
+// num_opt_comm_params=0
+
+// git_link=https://github.com/valyala/fasthttp/blob/19fcd408632d6dae8425ae95c6c62a25c823ff81/server_test.go#L291
+typedef Mutexdef {
+	chan Lock = [0] of {bool};
+	chan Unlock = [0] of {bool};
+	chan RLock = [0] of {bool};
+	chan RUnlock = [0] of {bool};
+	int Counter = 0;}
+
+
+
+init { 
+	chan child_TestRequestCtxString2910 = [1] of {int};
+	run TestRequestCtxString291(child_TestRequestCtxString2910);
+	run receiver(child_TestRequestCtxString2910)
+stop_process:skip
+}
+
+proctype TestRequestCtxString291(chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	chan child_String7891 = [1] of {int};
+	chan child_String7890 = [1] of {int};
+	Mutexdef ctx_s_mu;
+	run mutexMonitor(ctx_s_mu);
+	run String789(ctx_s_mu,child_String7890);
+	child_String7890?0;
+	run String789(ctx_s_mu,child_String7891);
+	child_String7891?0;
+	stop_process: skip;
+	child!0
+}
+proctype String789(Mutexdef ctx_s_mu;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	chan child_RemoteAddr10942 = [1] of {int};
+	chan child_LocalAddr11191 = [1] of {int};
+	chan child_ID7940 = [1] of {int};
+	run ID794(ctx_s_mu,child_ID7940);
+	child_ID7940?0;
+	run LocalAddr1119(ctx_s_mu,child_LocalAddr11191);
+	child_LocalAddr11191?0;
+	run RemoteAddr1094(ctx_s_mu,child_RemoteAddr10942);
+	child_RemoteAddr10942?0;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+proctype ID794(Mutexdef ctx_s_mu;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+proctype LocalAddr1119(Mutexdef ctx_s_mu;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+proctype RemoteAddr1094(Mutexdef ctx_s_mu;chan child) {
+	bool closed; 
+	int i;
+	bool state;
+	int num_msgs;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	
+
+	if
+	:: true -> 
+		goto stop_process
+	:: true;
+	fi;
+	goto stop_process;
+	stop_process: skip;
+	child!0
+}
+
+ /* ================================================================================== */
+ /* ================================================================================== */
+ /* ================================================================================== */ 
+proctype mutexMonitor(Mutexdef m) {
+bool locked = false;
+do
+:: true ->
+	if
+	:: m.Counter > 0 ->
+		if 
+		:: m.RUnlock?false -> 
+			m.Counter = m.Counter - 1;
+		:: m.RLock?false -> 
+			m.Counter = m.Counter + 1;
+		fi;
+	:: locked ->
+		m.Unlock?false;
+		locked = false;
+	:: else ->	 end:	if
+		:: m.Unlock?false ->
+			assert(0==32);		:: m.Lock?false ->
+			locked =true;
+		:: m.RUnlock?false ->
+			assert(0==32);		:: m.RLock?false ->
+			m.Counter = m.Counter + 1;
+		fi;
+	fi;
+od
+}
+
+proctype receiver(chan c) {
+c?0
+}
+

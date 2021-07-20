@@ -43,7 +43,7 @@ var (
 	NUM_OF_MODELS            int = 0
 	NUM_OF_EXECUTABLE_MODELS int = 0
 	RESULTS_FOLDER               = "result"
-	PROJECTS_FOLDER              = "projects"
+	PROJECTS_FOLDER              = "../projects"
 	AUTHOR_PROJECT_SEP           = "--"
 	PACKAGE_MODEL_SEP            = "++"
 )

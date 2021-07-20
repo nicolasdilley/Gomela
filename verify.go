@@ -47,7 +47,6 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 		return
 	}
 
-	fmt.Println(models)
 	// verify each model
 	for _, model := range models {
 		if strings.HasSuffix(model.Name(), ".pml") { // make sure its a .pml file
@@ -155,7 +154,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 
 	// Verify with SPIN
 	fmt.Println("verifying : ", path)
-	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=2056", "-m10000000", "-w26", path, "-f")
+	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 	command.Stdout = &output
 	command.Stderr = &err_output
 	pre := time.Now()
@@ -203,7 +202,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
 		fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
-		fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+		fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 		if ver.Err != "" {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -333,7 +332,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
 						fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 						fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
-						fmt.Printf("Global deadlock : %s.\n", colorise(ver.Global_deadlock))
+						fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
 							fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -410,7 +409,7 @@ func verifyModelWithSpecificValues(model string, params []string) {
 	// verify it
 	verifyModel("./temp.pml", os.Args[2], "", nil, []string{}, 0, params)
 	// delete it
-	// os.Remove("./temp.pml")
+	os.Remove("./temp.pml")
 
 }
 
