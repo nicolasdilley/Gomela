@@ -1,9 +1,0 @@
--- ToDO 
-
-
-Send outline of thesis to Alex (Make sure contributions are better)
-
-- Simplify https://github.com/rclone/rclone/blob/6ef7178ee4465f2361b6e2cf483cef5bbfd9c95c/fs/march/march.go#L128
-to see if there is a bug or not (important)
-
-- Run analysis 
