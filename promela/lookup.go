@@ -121,7 +121,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
 func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*promela_ast.Ident, *ParseError) {
 
-	var ident promela_ast.Expr
+	var ident *promela_ast.Ident
 	var err *ParseError
 	var bound string = "for bound"
 	var mandatory string = "false"
@@ -151,20 +151,20 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 		mandatory = "true"
 		bound = "add bound"
 	}
-	i1, err1 := m.TranslateArg(expr)
+	ident, err = m.TranslateArg(expr)
 
-	if err1 != nil { // the arguments could not be parsed properly
-
-		name := &promela_ast.Ident{Name: "not_found_" + m.getIdent(expr).Name + strconv.Itoa(m.Fileset.Position(expr.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Pos()).Column)}
-
-		ident = name
+	// if _, err := strconv.Atoi(var_name); err != nil {
+	// 	var_name = VAR_PREFIX + var_name
+	// }
+	if err != nil {
+		ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(expr.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Pos()).Column)}
 
 		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
 			Fun:       m.Fun.Name.String(),
 			Name:      "Candidate Param",
-			Info:      name.Name,
+			Info:      ident.Name,
 			Mandatory: mandatory,
 			Line:      0,
 			Commit:    m.Commit,
@@ -172,43 +172,24 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 		})
 
 		if spawning_for_loop {
-			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: name, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
+			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: DEFAULT_BOUND}})
 		} else {
-			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: name, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
+			m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}})
 		}
-	} else {
-		var_name := i1.Print(0)
-
-		if _, err := strconv.Atoi(var_name); err != nil {
-			var_name = "var_" + var_name
-		}
-		i1 = &promela_ast.Ident{Name: var_name}
-		ident = i1
 	}
-
-	promela_ast.Inspect(i1, func(n promela_ast.Stmt) bool {
-		switch name := n.(type) {
-		case *promela_ast.Ident:
-			m.PrintFeature(Feature{
-				Proj_name: m.Project_name,
-				Model:     m.Name,
-				Fun:       m.Fun.Name.String(),
-				Name:      "Comm Param",
-				Mandatory: mandatory,
-				Info:      name.Name,
-				Line:      m.Fileset.Position(expr.Pos()).Line,
-				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(expr.Pos()).Filename,
-			})
-		}
-
-		return true
+	m.PrintFeature(Feature{
+		Proj_name: m.Project_name,
+		Model:     m.Name,
+		Fun:       m.Fun.Name.String(),
+		Name:      "Comm Param",
+		Mandatory: mandatory,
+		Info:      ident.Name,
+		Line:      m.Fileset.Position(expr.Pos()).Line,
+		Commit:    m.Commit,
+		Filename:  m.Fileset.Position(expr.Pos()).Filename,
 	})
 
 	m.PrintCommParFeature(expr, bound, mandatory)
 
-	if err != nil {
-		return &promela_ast.Ident{Name: "null"}, err
-	}
 	return &promela_ast.Ident{Name: ident.Print(0)}, nil
 }

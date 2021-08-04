@@ -1,8 +1,10 @@
 package promela
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
+	"strconv"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -24,20 +26,27 @@ func TranslateIdent(expr ast.Expr, fileSet *token.FileSet) (expr1 promela_ast.Id
 
 	case *ast.ParenExpr:
 		return TranslateIdent(expr.X, fileSet)
+	case *ast.CompositeLit:
+		expr1 = promela_ast.Ident{Name: "compos" + strconv.Itoa(len(expr.Elts)), Ident: fileSet.Position(expr.Pos())}
 
 	case *ast.CallExpr:
-		func_name := TranslateIdent(expr.Fun, fileSet).Name + "_"
-
-		for i, arg := range expr.Args {
-			func_name += TranslateIdent(arg, fileSet).Name
-
-			if i < len(expr.Args)-1 {
-				func_name += "_"
-			}
-		}
-
-		func_name += "_"
+		func_name := TranslateIdent(expr.Fun, fileSet).Name
 		expr1 = promela_ast.Ident{Name: func_name}
+	case *ast.IndexExpr:
+		expr1 = TranslateIdent(expr.X, fileSet)
+	case *ast.KeyValueExpr:
+		expr1 = TranslateIdent(expr.Key, fileSet)
+	case *ast.SliceExpr:
+		expr1 = TranslateIdent(expr.X, fileSet)
+	case *ast.TypeAssertExpr:
+		expr1 = promela_ast.Ident{Name: "0"}
+	case *ast.ArrayType, *ast.ChanType, *ast.MapType:
+		expr1 = promela_ast.Ident{Name: "0"}
+	case nil:
+		expr1 = promela_ast.Ident{Name: "0"}
+	default:
+		ast.Print(fileSet, expr)
+		panic("An expression can not be translated " + fmt.Sprint(expr) + " at pos: " + fileSet.Position(expr.Pos()).String())
 	}
 
 	return expr1

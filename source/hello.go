@@ -1,19 +1,32 @@
 package main
 
-import "fmt"
+import "github.com/nicolasdilley/gomela/source/read"
 
-func main() {
-	ch := make(chan string) // creates a channel
-
-	go print(ch, "hello") // spawns a goroutine that will send 'hello' on ch
-
-	fmt.Println(<-ch) // prints what is received from ch
-
-	go print(ch, "world ") // spawns a goroutine that will send 'world' on ch
-
-	fmt.Println(<-ch) // prints what is received from ch
+type Write struct {
+	X int
+}
+type SWrite struct {
+	X   int
+	Ch3 chan int
 }
 
-func print(ch chan string, toSend string) {
-	ch <- toSend // send the value of toSend on ch
+func main() {
+
+	s := SWrite{X: 0, Ch3: make(chan int)}
+	w := Write{X: 0}
+	r := read.Read{X: 0, Ch2: make(chan int)}
+	ch := make(chan int, 0)
+
+	r.Print(ch)
+	w.Print(ch)
+	s.Print()
+
+}
+
+func (w *Write) Print(ch chan int) {
+	ch <- w.X
+}
+
+func (s *SWrite) Print() {
+	<-s.Ch3
 }

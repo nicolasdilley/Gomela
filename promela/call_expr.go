@@ -43,8 +43,15 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	if err1 != nil {
 		return stmts, err1
 	} else if decl != nil {
+
+		for _, f := range m.RecFuncs {
+			if decl.Name.Name == f.Name && m.Package == f.Pkg {
+				return stmts, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+			}
+		}
 		func_name = decl.Name.Name + fmt.Sprint(m.Fileset.Position(decl.Pos()).Line)
 		new_mod := m.newModel(pack_name, decl)
+		new_mod.RecFuncs = append(new_mod.RecFuncs, RecFunc{Pkg: m.Package, Name: decl.Name.Name})
 
 		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 

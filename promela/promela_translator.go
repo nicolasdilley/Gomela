@@ -16,6 +16,8 @@ import (
 )
 
 var (
+	DEF_PREFIX            = "def_"
+	VAR_PREFIX            = "var_"
 	CHAN_NAME             = "_ch"
 	DEFAULT_BOUND         = "??"
 	OPTIONAL_BOUND        = "-2"
@@ -827,13 +829,13 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 			switch t.(type) {
 			case *types.Named:
 				if x.Pkg() != nil {
-					pack_name = x.Pkg().Name()
+					// pack_name = x.Pkg().Name()
 				}
 				is_method_call = true
 				method_type = x.Type()
 			case *types.Struct:
 				if x.Pkg() != nil {
-					pack_name = x.Pkg().Name()
+					// pack_name = x.Pkg().Name()
 				}
 				is_method_call = true
 				method_type = x.Type()
@@ -856,7 +858,7 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 									for _, f := range decl.Recv.List {
 										for _, n := range f.Names {
 
-											obj := m.AstMap[m.Package].TypesInfo.ObjectOf(n)
+											obj := m.AstMap[pack_name].TypesInfo.ObjectOf(n)
 
 											if obj != nil {
 												t := obj.Type()
@@ -881,25 +883,6 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 								}
 							} else {
 								return true, decl, pack_name
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Look in the m.Package
-	if m.AstMap[m.Package] != nil {
-		for _, file := range m.AstMap[m.Package].Syntax {
-			if file.Decls != nil {
-				for _, decl := range file.Decls {
-					switch decl := decl.(type) {
-					case *ast.FuncDecl:
-
-						if func_name == decl.Name.Name {
-							if decl.Type.Params.NumFields() == len(call_expr.Args) {
-								return true, decl, m.Package
 							}
 						}
 					}
@@ -1028,22 +1011,24 @@ func isRecursive(pack string, block *ast.BlockStmt, ast_map map[string]*packages
 }
 
 // Takes a commPar and genrate a define stmt out of the name of the commPar and the function under analysis
+// Returns the name of the defined variable
 func (m *Model) GenerateDefine(commPar *CommPar) string {
-	name := "var_" + commPar.Name.Name + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+	var_name := DEF_PREFIX + VAR_PREFIX + commPar.Name.Name + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
 	rhs := DEFAULT_BOUND
 
 	if commPar.Mandatory {
 		rhs += " // mand "
 	} else {
+		rhs = OPTIONAL_BOUND
 		rhs += " // opt "
 	}
 	var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
 	printer.Fprint(buff, m.Fileset, commPar.Expr)
 	rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
 
-	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: name}, Rhs: &promela_ast.Ident{Name: rhs}})
+	m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: var_name}, Rhs: &promela_ast.Ident{Name: rhs}})
 
-	return name
+	return var_name
 }
 
 func IsConst(expr ast.Expr, pack *packages.Package) (found bool, val int) {

@@ -67,7 +67,6 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 	}
 	spawns := m.spawns(s.Body, false)
 	if spawns || containsMSP(stmts) {
-
 		lb, ub, err1 := m.lookUpFor(s, spawns, m.AstMap[m.Package])
 
 		// Translated body of for loop

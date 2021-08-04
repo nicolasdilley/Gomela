@@ -153,7 +153,6 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	// Copy file and verify the copied file
 
 	// Verify with SPIN
-	fmt.Println("verifying : ", path)
 	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 	command.Stdout = &output
 	command.Stderr = &err_output
@@ -165,9 +164,6 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	executable := parseResults(output.String(), ver)
 
 	if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
-		fmt.Println("Ici ", path, " : out ", output.String(), " err : ", err_output.String())
-		fmt.Println(command.Stderr)
-		fmt.Println(executable)
 		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
@@ -233,7 +229,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 }
 
 func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int, bounds_to_check []interface{}) {
-	if (ver.Global_deadlock) && !ver.Timeout && ver.Err == "" {
+	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error) && !ver.Timeout && ver.Err == "" {
 		// add values to the candidates param
 
 		opt_bounds := generateOptBounds(num_optionnal, bounds_to_check)
@@ -289,7 +285,6 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					var err_output bytes.Buffer
 
 					// Verify with SPIN
-					fmt.Println("verifying : ", path)
 					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
 					command.Stderr = &err_output

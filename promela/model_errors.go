@@ -38,7 +38,8 @@ const (
 	UNKNOWN_MUTEX_OP                            = "An operation that could not be determined on a sync.Mutex at pos: "
 	METHOD_USED_WITH_DIFFERENT_NUMBER_OF_PARAMS = "A method is used with a different number of parameters"
 	ELLIPSIS                                    = "A call expression with ellipsis as args was found at pos : "
-	CHAN_ALIASING                               = "Chan aliasing found at post :"
-	MUTEX_ALIASING                              = "Mutex aliasing found at post :"
-	WG_ALIASING                                 = "Waitgroup aliasing found at post :"
+	CHAN_ALIASING                               = "Chan aliasing found at pos :"
+	MUTEX_ALIASING                              = "Mutex aliasing found at pos :"
+	WG_ALIASING                                 = "Waitgroup aliasing found at pos :"
+	RECURSIVE_FUNCTION                          = "There is a recursive function found at pos : "
 )

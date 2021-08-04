@@ -264,7 +264,7 @@ func parseBound(features_map map[string][]string) map[string][]string {
 				} else if strings.Contains(splitted_line[3], promela.WG_DECLARED_IN_STRUCT) {
 					wg_declared_in_struct++
 				} else {
-					fmt.Println(splitted_line[3])
+					// fmt.Println(splitted_line[3])
 				}
 
 				unsupported = true
@@ -563,13 +563,13 @@ func parseFeature(features_map map[string][]string) {
 
 	// fmt.Println("For upper", for_mean, for_sd, for_min, for_quartiles.Q1, for_quartiles.Q2, for_quartiles.Q3, for_max)
 
-	// comm_param_per_models_sd, _ := stats.StandardDeviation(comm_param_per_models)
-	// comm_param_per_models_mean, _ := stats.Mean(comm_param_per_models)
-	// comm_param_per_models_quartiles, _ := stats.Quartile(comm_param_per_models)
-	// comm_param_per_models_max, _ := stats.Max(comm_param_per_models)
-	// comm_param_per_models_min, _ := stats.Min(comm_param_per_models)
+	comm_param_per_models_sd, _ := stats.StandardDeviation(comm_param_per_models)
+	comm_param_per_models_mean, _ := stats.Mean(comm_param_per_models)
+	comm_param_per_models_quartiles, _ := stats.Quartile(comm_param_per_models)
+	comm_param_per_models_max, _ := stats.Max(comm_param_per_models)
+	comm_param_per_models_min, _ := stats.Min(comm_param_per_models)
 
-	// fmt.Println("Comm param per models ", comm_param_per_models_mean, comm_param_per_models_sd, comm_param_per_models_min, comm_param_per_models_quartiles.Q1, comm_param_per_models_quartiles.Q2, comm_param_per_models_quartiles.Q3, comm_param_per_models_max)
+	fmt.Println("Comm param per models ", comm_param_per_models_mean, comm_param_per_models_sd, comm_param_per_models_min, comm_param_per_models_quartiles.Q1, comm_param_per_models_quartiles.Q2, comm_param_per_models_quartiles.Q3, comm_param_per_models_max)
 
 	// fmt.Println("Num of chan bounds: ", chan_bound)
 	// fmt.Println("Num of add bounds: ", add_bound)
@@ -619,6 +619,8 @@ func parseFeature(features_map map[string][]string) {
 }
 
 func parseVerificationResults() {
+
+	fmt.Println("**** Result from verification.csv ****")
 	if len(os.Args) > 4 {
 		if !strings.HasSuffix(os.Args[4], ".csv") {
 			fmt.Println("please provide a .csv file for the list of verification.csv")
@@ -631,7 +633,6 @@ func parseVerificationResults() {
 		num_tests := len(verification)
 		num_timeout := 0
 		num_actual_verifications := 0
-		num_unexecutable_models := 0
 		num_gd := 0
 		num_send_on_close := 0
 		num_close := 0
@@ -640,22 +641,67 @@ func parseVerificationResults() {
 		false_alarms := 0
 		times := []float64{}
 		total_time := 0
-
+		num_states := []float64{}
+		num_unexecutable_models := 0
+		num_timed_model := 0
 		valuated_longest_time := 0.0
 		valuated_longest_model := ""
 		time_per_projects := make(map[string]float64)
 
+		prev_model_unexecutable := ""
+		prev_model_timedout := ""
+		models_timeout := []string{}
+		prev_model := ""
+		num_too_many_comm_param := 0
+
+		actual_num_models := 0
 		for _, line := range verification {
 			splitted_line := strings.Split(line, ",")
 			// model := splitted_line[0]
-			fmt.Println(splitted_line)
+			//	fmt.Println(splitted_line)
+
+			if strings.Contains(splitted_line[1], "too many comm params") {
+				num_too_many_comm_param++
+				actual_num_models++
+				continue
+			}
+
+			if !strings.Contains(splitted_line[1], "1") && !strings.Contains(splitted_line[1], "0") {
+				continue
+			}
 			opt := splitted_line[1] == "1"
-			// num_states := splitted_line[2]
+
+			if prev_model != splitted_line[0] {
+				actual_num_models++
+				prev_model = splitted_line[0]
+			}
 
 			if splitted_line[3] == "timeout" {
 				num_timeout++
+				if splitted_line[0] != prev_model_timedout {
+					num_timed_model++
+					prev_model_timedout = splitted_line[0]
+					continue
+				}
 			} else if splitted_line[3] == "" {
-				num_unexecutable_models++
+
+				if len(splitted_line) > 13 {
+					if strings.Contains(splitted_line[14], "exit status 124") || strings.Contains(splitted_line[14], "VECTORSZ too small") {
+						num_timeout++
+						if splitted_line[0] != prev_model_timedout {
+							num_timed_model++
+							prev_model_timedout = splitted_line[0]
+							models_timeout = append(models_timeout, splitted_line[0])
+							continue
+						}
+					} else {
+						if splitted_line[0] != prev_model_unexecutable {
+							num_unexecutable_models++
+							prev_model_unexecutable = splitted_line[0]
+							continue
+						}
+					}
+				}
 			} else {
 				time, err := strconv.Atoi(splitted_line[3])
 				if err == nil {
@@ -663,6 +709,10 @@ func parseVerificationResults() {
 					if time >= 30000 {
 						num_timeout++
 					} else {
+						states, _ := strconv.Atoi(splitted_line[2])
+
+						num_states = append(num_states, float64(states))
+
 						if splitted_line[4] == "true" {
 							num_send_on_close++
 						} else if splitted_line[5] == "true" {
@@ -695,8 +745,6 @@ func parseVerificationResults() {
 			}
 		}
 
-		fmt.Println("num of verified model ", len(verification_map))
-
 		times_per_projects := []float64{}
 
 		longest_projects := 0.0
@@ -710,6 +758,14 @@ func parseVerificationResults() {
 				longest_projects_name = proj
 			}
 		}
+
+		num_states_sd, _ := stats.StandardDeviation(num_states)
+		num_states_mean, _ := stats.Mean(num_states)
+		num_states_quartiles, _ := stats.Quartile(num_states)
+		num_states_max, _ := stats.Max(num_states)
+		num_states_min, _ := stats.Min(num_states)
+
+		fmt.Println("number of states per valuated model in ms", num_states_mean, num_states_sd, num_states_min, num_states_quartiles.Q1, num_states_quartiles.Q2, num_states_quartiles.Q3, num_states_max)
 
 		times_sd, _ := stats.StandardDeviation(times)
 		times_mean, _ := stats.Mean(times)
@@ -725,7 +781,7 @@ func parseVerificationResults() {
 		times_per_projects_max, _ := stats.Max(times_per_projects)
 		times_per_projects_min, _ := stats.Min(times_per_projects)
 
-		fmt.Println("timesper project in ms", times_per_projects_mean, times_per_projects_sd, times_per_projects_min, times_per_projects_quartiles.Q1, times_per_projects_quartiles.Q2, times_per_projects_quartiles.Q3, times_per_projects_max)
+		fmt.Println("times per project in ms", times_per_projects_mean, times_per_projects_sd, times_per_projects_min, times_per_projects_quartiles.Q1, times_per_projects_quartiles.Q2, times_per_projects_quartiles.Q3, times_per_projects_max)
 
 		scores := make(map[string]ModelScore)
 		num_models_with_score_that_are_not_one_not_zero := 0
@@ -737,7 +793,21 @@ func parseVerificationResults() {
 		total_opt_params := 0
 		total_mand_params := 0
 		models_with_params := 0
+		num_verified_models := 0
+
 		for model, verifications := range verification_map {
+			timed_out := false
+			for _, m := range models_timeout {
+				if model == m {
+					timed_out = true
+				}
+			}
+
+			if timed_out {
+				continue
+			}
+
+			num_verified_models++
 			gd_score := 0
 			send_score := 0
 			close_score := 0
@@ -764,7 +834,8 @@ func parseVerificationResults() {
 				commit = strings.Split(splitted_line[len(splitted_line)-2], "/")[6]
 
 				countIt := false
-				if !strings.Contains(v, "=-2") {
+
+				if !strings.Contains(v, "=-2") || !strings.Contains(v, " -2 ") {
 
 					if !opt {
 						if splitted_line[11] == "0" { // if no optionnal used and there are no optionnal parameter then count the score
@@ -1015,6 +1086,10 @@ func parseVerificationResults() {
 		fmt.Println("# of valuation : ", num_actual_verifications)
 		fmt.Println("# of timeout : ", num_timeout)
 		fmt.Println("# of unexecutable models : ", num_unexecutable_models)
+		fmt.Println("# of timed out models : ", num_timed_model)
+		fmt.Println("# of too many comm param models : ", num_too_many_comm_param)
+		fmt.Println("num of verified model ", num_verified_models)
+		fmt.Println("Actual num of models : ", actual_num_models)
 		fmt.Println("Longest valuated model is : ", valuated_longest_model, " with ", valuated_longest_time, "ms")
 		fmt.Println("Longest model is : ", longest_model, " with ", longest_time, "ms")
 		fmt.Println("Longest project is : ", longest_projects_name, " with ", longest_projects, "ms")
@@ -1099,7 +1174,7 @@ func unparsedProjects(models map[string]bool) {
 		}
 
 		ioutil.WriteFile("projects-left.txt", []byte(toPrint), 0644)
-		fmt.Println("Num of projects without models : ", len(unparsed_project))
+		//fmt.Println("Num of projects without models : ", len(unparsed_project))
 	}
 	could_not_parse := 0
 	for _, parsed := range models {

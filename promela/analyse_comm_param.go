@@ -91,11 +91,8 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					case *ast.ChanType:
 						// definitely a new chan
 						if len(stmt.Args) > 1 {
-							_, err1 := m.TranslateArg(stmt.Args[1])
-							if err1 == nil {
+							params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
 
-								params = m.Upgrade(fun, params, m.Vid(fun, stmt.Args[1], true, log), log) // m.Upgrade the parameters with the variables contained in the bound of the for loop.
-							}
 						}
 					}
 				}
