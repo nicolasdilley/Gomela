@@ -749,6 +749,8 @@ func parseVerificationResults() {
 
 		longest_projects := 0.0
 		longest_projects_name := ""
+		kubernetes_time := 0.0
+
 		for proj, time := range time_per_projects {
 			times_per_projects = append(times_per_projects, time)
 
@@ -757,7 +759,12 @@ func parseVerificationResults() {
 
 				longest_projects_name = proj
 			}
+
+			if strings.Contains(proj, "kubernetes--kubernetes") {
+				kubernetes_time = time
+			}
 		}
+		fmt.Println("Time to verify Kubernetes in ms : ", kubernetes_time)
 
 		num_states_sd, _ := stats.StandardDeviation(num_states)
 		num_states_mean, _ := stats.Mean(num_states)

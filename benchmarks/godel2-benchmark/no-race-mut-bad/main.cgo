@@ -1,0 +1,17 @@
+def main.main():
+    letsync m0 mutex;
+    letsync m1 mutex;
+    letmem z2;
+    letmem z3;
+    call main.Writer(m0, z2);
+    call main.Writer(m1, z3);
+    lock m0;
+    read z1;
+    unlock m0;
+    lock m1;
+    read z1;
+    unlock m1;
+def main.Writer(mut, x):
+    lock mut;
+    read x;
+    write x;

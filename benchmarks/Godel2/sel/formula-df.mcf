@@ -1,4 +1,0 @@
-[(Closing_main_maint1 + Sync_main_maint1 + Closing_main_maint3 + Sync_main_maint3 + Closing_main_selt3 + Sync_main_selt3 + tau + tausync)*]
-( <SEND_main_maint1 + SEND_main_maint3 + RECV_main_selt3 + RECV_main_maint1 + SEND_main_selt3 + RECV_main_maint3>true
-=>
-<Closing_main_maint1 + Sync_main_maint1 + Closing_main_maint3 + Sync_main_maint3 + Closing_main_selt3 + Sync_main_selt3 + tau + tausync>true)
