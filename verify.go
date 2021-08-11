@@ -169,7 +169,6 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			panic(err)
 		}
 	} else if !executable || err_output.String() != "" || err != nil {
-		fmt.Println(err_output.String())
 		toPrint := model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
 
 		if err != nil {
@@ -181,6 +180,13 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		if f != nil {
 			if _, err := f.WriteString(toPrint); err != nil {
 				panic(err)
+			}
+		}
+
+		if strings.Contains(ver.Err, "VECTORSZ") || strings.Contains(ver.Err, "too many ") {
+			if num_opt_params > 0 {
+				executable = true
+				ver.Global_deadlock = true
 			}
 		}
 		return ver, executable
@@ -229,7 +235,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 }
 
 func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int, bounds_to_check []interface{}) {
-	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error) && !ver.Timeout && ver.Err == "" {
+	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error) && !ver.Timeout {
 		// add values to the candidates param
 
 		opt_bounds := generateOptBounds(num_optionnal, bounds_to_check)

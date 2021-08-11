@@ -1060,33 +1060,33 @@ func parseVerificationResults() {
 
 		// check if there are some models contained in 30_random that are not in this actual score.
 
-		models := []string{}
-		content, _ := ioutil.ReadFile("/Users/redfloyd/Documents/PhD/gomela-paper/graphs/proj.csv")
+		// models := []string{}
+		// content, _ := ioutil.ReadFile("/Users/redfloyd/Documents/PhD/gomela-paper/graphs/proj.csv")
 
-		lines := strings.Split(string(content), "\n")
+		// lines := strings.Split(string(content), "\n")
 
-		for _, line := range lines {
-			splitted_line := strings.Split(line, ",")
-			if splitted_line[0] != "" {
-				models = append(models, strings.Split(splitted_line[0], ":")[1])
-			}
-		}
+		// for _, line := range lines {
+		// 	splitted_line := strings.Split(line, ",")
+		// 	if splitted_line[0] != "" {
+		// 		models = append(models, strings.Split(splitted_line[0], ":")[1])
+		// 	}
+		// }
 
-		for _, model := range models {
-			found := false
+		// for _, model := range models {
+		// 	found := false
 
-			for name, _ := range scores {
+		// 	for name, _ := range scores {
 
-				model_name := strings.Split(name, ":")[1]
-				if model_name == strings.ReplaceAll(model, "_", "++") {
-					found = true
-				}
-			}
+		// 		model_name := strings.Split(name, ":")[1]
+		// 		if model_name == strings.ReplaceAll(model, "_", "++") {
+		// 			found = true
+		// 		}
+		// 	}
 
-			if !found {
-				fmt.Println(model)
-			}
-		}
+		// 	if !found {
+		// 		fmt.Println(model)
+		// 	}
+		// }
 
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
 		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))

@@ -21,9 +21,7 @@ type Store struct {
 	raftLogQueue *baseQueue
 	replicas     map[int]*Replica
 
-	mu struct {
-		sync.RWMutex
-	}
+	mu sync.RWMutex
 }
 
 func (s *Store) ForceRaftLogScanAndProcess() {
@@ -58,13 +56,13 @@ type Replica struct {
 }
 
 type baseQueue struct {
-	sync.Mutex
+	mu   sync.Mutex
 	impl *raftLogQueue
 }
 
 func (bq *baseQueue) MaybeAdd(repl *Replica) {
-	bq.Lock()
-	defer bq.Unlock()
+	bq.mu.Lock()
+	defer bq.mu.Unlock()
 	bq.impl.shouldQueue(repl)
 }
 

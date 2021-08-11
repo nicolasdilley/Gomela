@@ -521,7 +521,7 @@ func parseFolder(path string, ver *VerificationInfo) {
 
 	} else {
 		for _, f := range files {
-			parseFolder(path+f.Name(), ver)
+			parseFolder(path+"/"+f.Name(), ver)
 		}
 	}
 }

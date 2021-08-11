@@ -9,38 +9,42 @@ import (
 )
 
 // Return if the expr given could be translated to a var or not and if it can its promela expr.
-func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, *ParseError) {
+// Also returns a list of the commpar found
+func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, *ParseError) {
 
+	exprs := []ast.Expr{}
 	if con, num := IsConst(expr, m.AstMap[m.Package]); con {
-		return &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}, nil
+		return &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
 	}
 
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		return &promela_ast.Ident{Name: VAR_PREFIX + expr.Name, Ident: m.Fileset.Position(expr.Pos())}, nil
+		exprs = append(exprs, expr)
+		return &promela_ast.Ident{Name: VAR_PREFIX + expr.Name, Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
 
 	case *ast.SelectorExpr:
 
-		x, err := m.TranslateArg(expr.X)
+		x, _, err := m.TranslateArg(expr.X)
 
 		if err != nil {
-			return nil, err
+			return nil, exprs, err
 		}
+		exprs = append(exprs, expr)
 		return &promela_ast.Ident{Name: x.Name + "_" + expr.Sel.Name,
-			Ident: m.Fileset.Position(expr.Pos())}, nil
+			Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
 
 	case *ast.BinaryExpr:
-		lhs, err := m.TranslateArg(expr.X)
+		lhs, new_exprs1, err := m.TranslateArg(expr.X)
 
-		rhs, err1 := m.TranslateArg(expr.Y)
+		rhs, new_exprs2, err1 := m.TranslateArg(expr.Y)
 
 		if err != nil {
-			return nil, err
+			return nil, exprs, err
 		}
 		if err1 != nil {
-			return nil, err1
+			return nil, exprs, err1
 		}
-		return &promela_ast.Ident{Name: lhs.Name + expr.Op.String() + rhs.Name}, nil
+		return &promela_ast.Ident{Name: lhs.Name + expr.Op.String() + rhs.Name}, append(new_exprs1, new_exprs2...), nil
 
 	case *ast.UnaryExpr:
 
@@ -55,13 +59,13 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, *ParseError) {
 		return m.TranslateArg(expr.Fun)
 
 	case *ast.BasicLit:
-		return &promela_ast.Ident{Name: expr.Value}, nil
+		return &promela_ast.Ident{Name: expr.Value}, exprs, nil
 	case *ast.StarExpr:
 		return m.TranslateArg(expr.X)
 	case *ast.ParenExpr:
 		return m.TranslateArg(expr.X)
 	default:
-		return nil, &ParseError{err: errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())}
+		return nil, exprs, &ParseError{err: errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())}
 
 	}
 

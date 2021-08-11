@@ -27,7 +27,7 @@ var (
 	UPPER_FOR_BOUND       = 3
 	RANGE_BOUND           = 4
 	AUTHOR_PROJECT_SEP    = "--"
-	MAX_STRUCTS_INTER_PRO = 2
+	MAX_STRUCTS_INTER_PRO = 4
 
 	Features = []Feature{}
 )

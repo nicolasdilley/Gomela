@@ -151,7 +151,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 		mandatory = "true"
 		bound = "add bound"
 	}
-	ident, err = m.TranslateArg(expr)
+	ident, _, err = m.TranslateArg(expr)
 
 	// if _, err := strconv.Atoi(var_name); err != nil {
 	// 	var_name = VAR_PREFIX + var_name
