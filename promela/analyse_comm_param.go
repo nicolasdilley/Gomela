@@ -26,7 +26,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 	params := []*CommPar{}
 	var err *ParseError
-	m.AddRecFunc(pack, fun.Name.Name)
+	m.AddRecFunc(pack, fun.Name.Name, fun)
 	if fun.Body == nil {
 		return params, err
 	}
@@ -169,7 +169,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
 						new_model.RecFuncs = m.RecFuncs
-						new_model.AddRecFunc(fun_pack, fun_name) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
+						new_model.AddRecFunc(fun_pack, fun_name, fun_decl) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 
 						params_1, err1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 

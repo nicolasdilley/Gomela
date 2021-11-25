@@ -89,7 +89,7 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 				model_name := strings.Replace(filepath.Base(dir_name), "&", "/", -1) + ":" + model.Name()
 				fmt.Println("there is ", optional_params, " optionnal params.")
 
-				if len(comm_params)+optional_params > 5 {
+				if len(comm_params)+optional_params > 6 {
 
 					toPrint := filepath.Base(dir_name) + ":" + model.Name() + ",too many comm params : mand : ," + strconv.Itoa(len(comm_params)) + ", opt :," + strconv.Itoa(optional_params) + "," + ",,,,,\n"
 					if _, err := f.WriteString(toPrint); err != nil {
@@ -169,8 +169,15 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			panic(err)
 		}
 	} else if !executable || err_output.String() != "" || err != nil {
-		toPrint := model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
 
+		toPrint := ""
+		if err != nil && strings.Contains(err.Error(), "124") {
+			toPrint = model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
+		} else if ver.Err != "" {
+			toPrint = model_name + ",0," + ver.Err + ",,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
+		} else {
+			toPrint = model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
+		}
 		if err != nil {
 			toPrint += " : " + err.Error()
 		}

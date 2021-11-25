@@ -74,6 +74,7 @@ type Model struct {
 type RecFunc struct {
 	Pkg  string
 	Name string
+	Decl *ast.FuncDecl
 }
 
 // represent a function and states if it spawns or not
@@ -796,6 +797,7 @@ func (m *Model) getChanStruct(expr ast.Expr) *ChanStruct {
 }
 
 func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) {
+
 	func_name := ""
 	pack_name := ""
 	is_method_call := false
@@ -857,7 +859,6 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 								if decl.Recv != nil {
 									for _, f := range decl.Recv.List {
 										for _, n := range f.Names {
-
 											obj := m.AstMap[pack_name].TypesInfo.ObjectOf(n)
 
 											if obj != nil {
@@ -869,6 +870,12 @@ func (m *Model) FindDecl(call_expr *ast.CallExpr) (bool, *ast.FuncDecl, string) 
 													case *types.Pointer:
 													default:
 														t = c.Elem()
+													}
+												default:
+													switch c := method_type.(type) {
+													case *types.Pointer:
+														method_type = c.Elem()
+													default:
 													}
 												}
 
@@ -1142,8 +1149,8 @@ func (m *Model) ContainsRecFunc(pkg string, name string) bool {
 	return false
 }
 
-func (m *Model) AddRecFunc(pkg string, name string) {
-	m.RecFuncs = append(m.RecFuncs, RecFunc{Pkg: pkg, Name: name})
+func (m *Model) AddRecFunc(pkg string, name string, decl *ast.FuncDecl) {
+	m.RecFuncs = append(m.RecFuncs, RecFunc{Pkg: pkg, Name: name, Decl: decl})
 }
 
 func (m *Model) inDefine(name string) bool {

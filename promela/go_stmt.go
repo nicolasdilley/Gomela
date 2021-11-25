@@ -48,7 +48,9 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 		// Check if we have not seen it already !
 		for _, f := range m.RecFuncs {
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
-				return b, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+				if decl.Pos() == f.Decl.Pos() {
+					return b, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+				}
 			}
 		}
 
@@ -58,7 +60,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 
 		new_mod := m.newModel(pack_name, decl)
 
-		new_mod.RecFuncs = append(new_mod.RecFuncs, RecFunc{Pkg: m.Package, Name: decl.Name.Name})
+		new_mod.RecFuncs = append(new_mod.RecFuncs, RecFunc{Pkg: m.Package, Name: decl.Name.Name, Decl: decl})
 
 		var err1 *ParseError
 		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
@@ -165,8 +167,17 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 								var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
 								printer.Fprint(buff, m.Fileset, commPar.Expr)
 								rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+								ident := &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Fileset).Name}
+								m.Defines = append(m.Defines, promela_ast.DefineStmt{
+									Name: &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
+									Rhs:  &promela_ast.Ident{Name: rhs}})
 
-								m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Fileset).Name}, Rhs: &promela_ast.Ident{Name: rhs}})
+								b.List = append(b.List, &promela_ast.DeclStmt{
+									Name:  ident,
+									Types: promela_types.Int,
+									Rhs:   &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
+								})
+
 							}
 						}
 

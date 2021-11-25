@@ -58,7 +58,6 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 						}
 
 						m.GoToPromela(AUTHOR_PROJECT_SEP)
-
 					}
 				}
 			}
@@ -91,7 +90,6 @@ func GenerateAst(dir string, package_names []string, dir_name string) (*token.Fi
 		if _, err1 := f.WriteString(toPrint); err1 != nil {
 			panic(err1)
 		}
-		fmt.Println("Error while loading the packages !")
 		return nil, map[string]*packages.Package{}
 	}
 

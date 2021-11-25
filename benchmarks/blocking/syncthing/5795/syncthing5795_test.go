@@ -9,10 +9,6 @@ type message interface{}
 
 type ClusterConfig struct{}
 
-type Model interface {
-	ClusterConfig(message, *rawConnection)
-}
-
 type TestModel struct {
 	ccFn func()
 }
@@ -31,7 +27,7 @@ type Connection interface {
 }
 
 type rawConnection struct {
-	receiver Model
+	receiver *TestModel
 
 	inbox                 chan message
 	dispatcherLoopStopped chan struct{}

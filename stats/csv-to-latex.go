@@ -142,7 +142,7 @@ func Stats() {
 		models_quartiles, _ := stats.Quartile(models_per_projects)
 		models_max, _ := stats.Max(models_per_projects)
 		models_min, _ := stats.Min(models_per_projects)
-		fmt.Println("num of models: ", overall_num_models)
+		fmt.Println("num of models generated : ", overall_num_models)
 		fmt.Println("# of models per project : ", models_mean, models_sd, models_min, models_quartiles.Q1, models_quartiles.Q2, models_quartiles.Q3, models_max)
 
 		packages_models_sd, _ := stats.StandardDeviation(models_per_packages)
@@ -196,7 +196,7 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	model_unsupported := 0
 	feature_unsupported := 0
 	model_errors := 0
-	num_models := len(features_map)
+	// num_models := len(features_map)
 
 	unsupported_models := []string{}
 
@@ -218,7 +218,7 @@ func parseBound(features_map map[string][]string) map[string][]string {
 	chan_declared_in_struct := 0
 	wg_declared_in_struct := 0
 
-	fmt.Println("num of models overral ", len(features_map))
+	// fmt.Println("num of models overral ", len(features_map))
 	for model, lines := range features_map {
 
 		unsupported := false
@@ -284,23 +284,23 @@ func parseBound(features_map map[string][]string) map[string][]string {
 		delete(features_map, model)
 	}
 
-	fmt.Println("# of models returning a channel : ", channel_returned)
-	fmt.Println("# of models returning a Waitgroup : ", wg_returned)
-	fmt.Println("# of models receive on unknown chan : ", rcv_chan)
-	fmt.Println("# of models send on unknown chan : ", send_chan)
-	fmt.Println("# of models cannot find decl : ", find_decl)
-	fmt.Println("# of models function declared as var : ", func_as_var)
-	fmt.Println("# of models channel in for : ", chan_in_for)
-	fmt.Println("# of models range on unknown chan : ", range_on_chan)
-	fmt.Println("# of models cant find notify : ", notify)
-	fmt.Println("# of models select without branch : ", select_no_branch)
-	fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
-	fmt.Println("# of models chan declared in struct : ", chan_declared_in_struct)
-	fmt.Println("# of models wg declared in struct : ", wg_declared_in_struct)
+	// fmt.Println("# of models returning a channel : ", channel_returned)
+	// fmt.Println("# of models returning a Waitgroup : ", wg_returned)
+	// fmt.Println("# of models receive on unknown chan : ", rcv_chan)
+	// fmt.Println("# of models send on unknown chan : ", send_chan)
+	// fmt.Println("# of models cannot find decl : ", find_decl)
+	// fmt.Println("# of models function declared as var : ", func_as_var)
+	// fmt.Println("# of models channel in for : ", chan_in_for)
+	// fmt.Println("# of models range on unknown chan : ", range_on_chan)
+	// fmt.Println("# of models cant find notify : ", notify)
+	// fmt.Println("# of models select without branch : ", select_no_branch)
+	// fmt.Println("# of models defer stmts inside if, select or switch : ", defer_in_blockstmt)
+	// fmt.Println("# of models chan declared in struct : ", chan_declared_in_struct)
+	// fmt.Println("# of models wg declared in struct : ", wg_declared_in_struct)
 
 	//fmt.Println("Num of unsupported features = ", feature_unsupported)
 	//fmt.Println("Num of model errors = ", model_errors)
-	fmt.Println("Num of unsupported model = ", model_unsupported, " out of ", num_models)
+	// fmt.Println("Num of unsupported model = ", model_unsupported, " out of ", num_models)
 	// f.WriteString("\\begin{table}\n")
 	// f.WriteString(" \\begin{tabular}{lccccccc}\n")
 	// f.WriteStlsring("\\toprule\n   Bound & mean & std & min & 25\\% & 50\\% & 75\\% & max \\\\ \n \\midrule \n")
@@ -538,30 +538,30 @@ func parseFeature(features_map map[string][]string) {
 		}
 	}
 
-	// fmt.Println("NAME , MEAN, SD , Q1, MEDIAN , Q3, MAX")
-	// add_sd, _ := stats.StandardDeviation(add_bounds)
-	// add_mean, _ := stats.Mean(add_bounds)
-	// add_quartiles, _ := stats.Quartile(add_bounds)
-	// add_max, _ := stats.Max(add_bounds)
-	// add_min, _ := stats.Min(add_bounds)
+	fmt.Println("NAME , MEAN, SD , Q1, MEDIAN , Q3, MAX")
+	add_sd, _ := stats.StandardDeviation(add_bounds)
+	add_mean, _ := stats.Mean(add_bounds)
+	add_quartiles, _ := stats.Quartile(add_bounds)
+	add_max, _ := stats.Max(add_bounds)
+	add_min, _ := stats.Min(add_bounds)
 
-	// fmt.Println("Add(x)", add_mean, add_sd, add_min, add_quartiles.Q1, add_quartiles.Q2, add_quartiles.Q3, add_max)
+	fmt.Println("Add(x)", add_mean, add_sd, add_min, add_quartiles.Q1, add_quartiles.Q2, add_quartiles.Q3, add_max)
 
-	// chan_sd, _ := stats.StandardDeviation(chan_bounds)
-	// chan_mean, _ := stats.Mean(chan_bounds)
-	// chan_quartiles, _ := stats.Quartile(chan_bounds)
-	// chan_max, _ := stats.Max(chan_bounds)
-	// chan_min, _ := stats.Min(chan_bounds)
+	chan_sd, _ := stats.StandardDeviation(chan_bounds)
+	chan_mean, _ := stats.Mean(chan_bounds)
+	chan_quartiles, _ := stats.Quartile(chan_bounds)
+	chan_max, _ := stats.Max(chan_bounds)
+	chan_min, _ := stats.Min(chan_bounds)
 
-	// fmt.Println("Chan", chan_mean, chan_sd, chan_min, chan_quartiles.Q1, chan_quartiles.Q2, chan_quartiles.Q3, chan_max)
+	fmt.Println("Chan", chan_mean, chan_sd, chan_min, chan_quartiles.Q1, chan_quartiles.Q2, chan_quartiles.Q3, chan_max)
 
-	// for_sd, _ := stats.StandardDeviation(for_bounds)
-	// for_mean, _ := stats.Mean(for_bounds)
-	// for_quartiles, _ := stats.Quartile(for_bounds)
-	// for_max, _ := stats.Max(for_bounds)
-	// for_min, _ := stats.Min(for_bounds)
+	for_sd, _ := stats.StandardDeviation(for_bounds)
+	for_mean, _ := stats.Mean(for_bounds)
+	for_quartiles, _ := stats.Quartile(for_bounds)
+	for_max, _ := stats.Max(for_bounds)
+	for_min, _ := stats.Min(for_bounds)
 
-	// fmt.Println("For upper", for_mean, for_sd, for_min, for_quartiles.Q1, for_quartiles.Q2, for_quartiles.Q3, for_max)
+	fmt.Println("For upper", for_mean, for_sd, for_min, for_quartiles.Q1, for_quartiles.Q2, for_quartiles.Q3, for_max)
 
 	comm_param_per_models_sd, _ := stats.StandardDeviation(comm_param_per_models)
 	comm_param_per_models_mean, _ := stats.Mean(comm_param_per_models)
@@ -594,8 +594,8 @@ func parseFeature(features_map map[string][]string) {
 	// Look at the one which are close to 0.5 first.
 	// look at the model that contain only error
 
-	fmt.Println("Num of chans : ", num_channels)
-	fmt.Println("Num of waitgroups : ", num_waitgroups)
+	// fmt.Println("Num of chans : ", num_channels)
+	// fmt.Println("Num of waitgroups : ", num_waitgroups)
 	// fmt.Println("Num of models : ", num_models)
 	fmt.Println("Num of candidate parameters : mand : ", mand_candidate_parameters, " opt : ", opt_candidate_parameters, " Total : ", opt_candidate_parameters+mand_candidate_parameters)
 	fmt.Println("Num of actual parameters : mand : ", mand_actual_parameters, " opt : ", opt_actual_parameters, " Total : ", opt_actual_parameters+mand_actual_parameters)
@@ -1096,7 +1096,7 @@ func parseVerificationResults() {
 		fmt.Println("# of timed out models : ", num_timed_model)
 		fmt.Println("# of too many comm param models : ", num_too_many_comm_param)
 		fmt.Println("num of verified model ", num_verified_models)
-		fmt.Println("Actual num of models : ", actual_num_models)
+		// fmt.Println("Actual num of models : ", actual_num_models)
 		fmt.Println("Longest valuated model is : ", valuated_longest_model, " with ", valuated_longest_time, "ms")
 		fmt.Println("Longest model is : ", longest_model, " with ", longest_time, "ms")
 		fmt.Println("Longest project is : ", longest_projects_name, " with ", longest_projects, "ms")

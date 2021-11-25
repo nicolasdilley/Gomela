@@ -262,7 +262,6 @@ func sanityCheckFile(ver *VerificationInfo, path string, del bool) bool {
 
 		for _, line := range strings.Split(model, "\n") {
 			if strings.Contains(line, "run mutexMonitor") { // Mutex
-				fmt.Println(line)
 				ver.unused_mutex++
 			}
 			if strings.Contains(line, "run wgMonitor") { // wg
