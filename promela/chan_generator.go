@@ -156,12 +156,12 @@ func GenerateStructMonitor() string {
 
 	return "proctype wgMonitor(Wgdef wg) {\n" +
 		"int i;\n" +
-		"do\n" +
+		"end: do\n" +
 		"	:: wg.update?i ->\n" +
 		"		wg.Counter = wg.Counter + i;\n" +
 		"		assert(wg.Counter >= 0)\n" +
 		"	:: wg.Counter == 0 ->\n" +
-		"end: if\n" +
+		"end1: if\n" +
 		"		:: wg.update?i ->\n" +
 		"			wg.Counter = wg.Counter + i;\n" +
 		"			assert(wg.Counter >= 0)\n" +
@@ -176,7 +176,7 @@ func GenerateMutexMonitor() string {
 
 	return "proctype mutexMonitor(Mutexdef m) {\n" +
 		"bool locked = false;\n" +
-		"do\n" +
+		"end: do\n" +
 		":: true ->\n" +
 		"	if\n" +
 		"	:: m.Counter > 0 ->\n" +

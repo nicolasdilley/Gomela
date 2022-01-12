@@ -4,6 +4,7 @@
 ./pan*
 ./*.trail
 ./result
+./results
 ./result*/*
 ./result*/*/*
 ./result/*
