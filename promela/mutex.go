@@ -40,6 +40,12 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 }
 
 func (m *Model) containsMutex(expr ast.Expr) bool {
+
+	switch ptr := expr.(type) {
+	case *ast.UnaryExpr:
+		expr = ptr.X
+	}
+
 	for _, e := range m.Mutexes {
 		if IdenticalExpr(&ast.Ident{Name: translateIdent(e).Name}, &ast.Ident{Name: translateIdent(expr).Name}) {
 			return true

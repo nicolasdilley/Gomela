@@ -1,12 +1,21 @@
-package worker
+// type = ALL
+// bounds = 10
+package main
 
-import (
-	"fmt"
-	"sync"
-)
+import "sync"
 
 func main() {
-	var wg *sync.WaitGroup
+	for i := 0; i < 1000; i++ {
+		var wg sync.WaitGroup
+		wg.Wait()
+	}
 
-	wg.Add(10)
+}
+
+func rec(mu *sync.Mutex, i int) {
+
+	if i > 0 {
+		mu.Unlock()
+		rec(mu, i-1)
+	}
 }

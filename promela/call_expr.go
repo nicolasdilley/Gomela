@@ -192,6 +192,7 @@ func getPackName(sel ast.Expr) *ast.Ident {
 func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if name.Sel.Name == "Add" {
+
 		ub, err1 := m.lookUp(call_expr.Args[0], ADD_BOUND, m.For_counter.In_for)
 
 		if err1 != nil {

@@ -190,7 +190,7 @@ func GenerateMutexMonitor() string {
 		"		m.Unlock?false;\n" +
 		"		locked = false;\n" +
 		"	:: else ->" +
-		"	 end:	if\n" +
+		"	 end1:	if\n" +
 		"		:: m.Unlock?false ->\n" +
 		"			assert(0==32);" +
 		"		:: m.Lock?false ->\n" +

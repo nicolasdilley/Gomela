@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/token"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
@@ -47,7 +48,15 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, *Pa
 		return &promela_ast.Ident{Name: lhs.Name + expr.Op.String() + rhs.Name}, append(new_exprs1, new_exprs2...), nil
 
 	case *ast.UnaryExpr:
+		switch expr.Op {
+		case token.SUB:
+			x, new_exprs1, err := m.TranslateArg(expr.X)
 
+			if err != nil {
+				return nil, new_exprs1, err
+			}
+			return &promela_ast.Ident{Name: "-" + x.Name}, new_exprs1, nil
+		}
 		return m.TranslateArg(expr.X)
 
 	case *ast.CallExpr:
