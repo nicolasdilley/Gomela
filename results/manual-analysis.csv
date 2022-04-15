@@ -1,0 +1,40 @@
+Name of Model,Type of Bug,time (ms),Github link
+Close on Close,,,
+go-sql-driver--mysql:mysql++TestReadPacketFail263.pml,Close on close,4801,git_link=https://github.com/go-sql-driver/mysql/blob//packets_test.go#L263
+golang--go:race_test++TestRaceChanCloseClose181.pml,Close on Close,3624,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L181
+golang--go:race_test++TestRaceIssue12664_235.pml,Data dependent (Close on Close),3107,git_link=https://github.com/golang/go/blob//runtime/race/testdata/issue12664_test.go#L35
+hyperledger--fabric:state++waitUntilTrueOrTimeout1747.pml,Close on close,3401,git_link=https://github.com/hyperledger/fabric/blob//gossip/state/state_test.go#L1747
+Send on Close,,,
+golang--go:race_test++TestRaceChanAsyncCloseSend162.pml,Send on Close,3139,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L162
+golang--go:race_test++TestRaceChanCloseSend608.pml,Send on Close,3355,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L608
+golang--go:race_test++TestRaceChanSendClose331.pml,Send on Close,4004,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L331
+golang--go:race_test++TestRaceChanSendSelectClose350.pml,Send on Close,4113,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L350
+golang--go:race_test++TestRaceChanSyncCloseSend145.pml,Send on Close,3383,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L145
+golang--go:race_test++TestRaceChanWrongClose301.pml,Send on Close,3602,git_link=https://github.com/golang/go/blob//runtime/race/testdata/chan_test.go#L301
+snail007--goproxy:utils++Keys243.pml,Send on Close,3487,git_link=https://github.com/snail007/goproxy/blob//utils/map.go#L243
+Waitgroup,,,
+influxdata--telegraf:net_response++TestTCPOK1108.pml,Negative Counter,2370,git_link=https://github.com/influxdata/telegraf/blob/5953db88df68d89235cebe121371160346f9559d/plugins/inputs/net_response/net_response_test.go#L113
+golang--go:sync_test++TestWaitGroupMisuse57.pml,Negative Counter,2320,https://github.com/golang/go/blob/master/src/sync/waitgroup_test.go#L49
+influxdata--telegraf:net_response++TestTCPOK2152.pml,Negative Counter,2378,git_link=https://github.com/influxdata/telegraf/blob/5953db88df68d89235cebe121371160346f9559d/plugins/inputs/net_response/net_response_test.go#L157
+influxdata--telegraf:net_response++TestUDPOK1232.pml,Negative Counter,2460,git_link=https://github.com/influxdata/telegraf/blob//plugins/inputs/net_response/net_response_test.go#L232
+influxdata--telegraf:snmp++TestGetSNMPConnectionTCP300.pml,Negative Counter,2391,git_link=https://github.com/influxdata/telegraf/blob/56398237c4a931dba438db553a1ee1487926c072/plugins/inputs/snmp/snmp_test.go#L300
+kubernetes--kubernetes:master++TestUpdateNodeObjects715.pml,Negative Counter,2334,git_link=https://github.com/kubernetes/kubernetes/blob/a52571144f5d9e151778bd92d772c321e5ff3839/test/integration/master/synthetic_master_test.go#L715
+kubernetes--kubernetes:vsphere++GenerateNodeMap62.pml,Negative Counter,2379,git_link=https://github.com/kubernetes/kubernetes/blob//test/e2e/storage/vsphere/nodemapper.go#L62
+snail007--goproxy:utils++Keys243.pml,False alarm (data dependent. len(m) == Shard_count),3985,git_link=https://github.com/snail007/goproxy/blob//utils/map.go#L243
+rclone--rclone:march++Run128.pml,Negative Counter (if 181 sync with 190 and 195 then 168 can fire),5041,
+Mutex,,,
+grpc--grpc-go:transport++TestServerWithMisbehavedClient1135.pml,Double Unlock,4082,git_link=https://github.com/grpc/grpc-go/blob//internal/transport/transport_test.go#L1135
+hashicorp--vault:vault++TestBarrier_LegacyRotate626.pml,High order function,6343,git_link=https://github.com/hashicorp/vault/blob//vault/barrier_aes_gcm_test.go#L626
+kubernetes--kubernetes:manager++TestCacheBasedSecretManager553.pml,Don’t know,3532,git_link=https://github.com/kubernetes/kubernetes/blob//pkg/kubelet/util/manager/cache_based_manager_test.go#L553
+valyala--fasthttp:fasthttp++TestPerIPConnCounter23.pml,False alarm due to not handling panic(),2824,git_link=https://github.com/valyala/fasthttp/blob//peripconn_test.go#L23
+Deadlock,,,
+chrislusf--seaweedfs:filer_pb++TraverseBfs11.pml,Data dependent,2836,git_link=https://github.com/chrislusf/seaweedfs/blob//weed/pb/filer_pb/filer_client_bfs.go#L11
+cloudreve--Cloudreve:upyun++List45.pml,Chan aliasing (struct),3360,git_link=https://github.com/cloudreve/Cloudreve/blob//pkg/filesystem/driver/upyun/handler.go#L45
+containers--podman:logs++getTailLog81.pml,Deadlock,3432,git_link=https://github.com/containers/podman/blob//libpod/logs/log.go#L81
+containers--podman:system++eventsCmd71.pml,Chan aliasing (struct),3530,git_link=https://github.com/containers/podman/blob//cmd/podman/system/events.go#L71
+dgraph-io--dgraph:conv++convertGeoFile63.pml,Goroutine Leak,4326,git_link=https://github.com/dgraph-io/dgraph/blob//dgraph/cmd/conv/conv.go#L63
+helm--helm:kube++perform343.pml,Goroutine Leak,4117,git_link=https://github.com/helm/helm/blob//pkg/kube/client.go#L343
+golang--go:tls++TestRenegotiationExtension182.pml,Deadlock,4546,git_link=https://github.com/golang/go/blob//crypto/tls/handshake_server_test.go#L182
+istio--istio:status++TestResourceLock_Lock32.pml,high order function,3305,git_link=https://github.com/istio/istio/blob//pilot/pkg/status/resourcelock_test.go#L32
+junegunn--fzf:util++TestEventBox15.pml,Goroutine Leak,3597,git_link=https://github.com/junegunn/fzf/blob//src/util/eventbox_test.go#L15
+micro--micro:memory++TestWatcher23.pml,Goroutine Leak,4416,git_link=https://github.com/micro/micro/blob//service/registry/memory/watcher_test.go#L23

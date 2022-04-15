@@ -832,6 +832,7 @@ func parseVerificationResults() {
 				total_opt_params += opt_params
 			}
 
+			num_models_to_count := 0
 			for _, v := range verifications {
 
 				splitted_line := strings.Split(v, ",")
@@ -842,12 +843,20 @@ func parseVerificationResults() {
 
 				countIt := false
 
-				if !strings.Contains(v, "=-2") || !strings.Contains(v, " -2 ") {
+				if !strings.Contains(v, "=-2") && !strings.Contains(v, " -2 ") && !strings.Contains(v, "= -2;") {
 
 					if !opt {
 						if splitted_line[11] == "0" { // if no optionnal used and there are no optionnal parameter then count the score
 
 							countIt = true
+						} else {
+							if splitted_line[4] == "false" &&
+								splitted_line[5] == "false" &&
+								splitted_line[6] == "false" &&
+								splitted_line[7] == "false" &&
+								splitted_line[8] == "false" {
+								num_models_to_count++
+							}
 						} // Otherwise we don't count it because it has optionnal parameter that were set to -2
 					} else { // if using optionnal and no -2 then all good
 						countIt = true
@@ -855,6 +864,7 @@ func parseVerificationResults() {
 				}
 
 				if countIt {
+					num_models_to_count++
 
 					if splitted_line[4] == "true" {
 						send_score++
@@ -881,35 +891,36 @@ func parseVerificationResults() {
 				}
 			}
 
+			fmt.Println(num_models_to_count)
 			times_per_model = append(times_per_model, total_time)
 			if total_time > longest_time {
 				longest_time = total_time
 				longest_model = model
 			}
 
-			if float64(send_score)/float64(len(verifications)) != 0.0 && float64(send_score)/float64(len(verifications)) != 1.0 {
+			if float64(send_score)/float64(num_models_to_count) != 0.0 && float64(send_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
-			if float64(close_score)/float64(len(verifications)) != 0.0 && float64(close_score)/float64(len(verifications)) != 1.0 {
+			if float64(close_score)/float64(num_models_to_count) != 0.0 && float64(close_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
-			if float64(neg_counter_score)/float64(len(verifications)) != 0.0 && float64(neg_counter_score)/float64(len(verifications)) != 1.0 {
+			if float64(neg_counter_score)/float64(num_models_to_count) != 0.0 && float64(neg_counter_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
-			if float64(mutex_score)/float64(len(verifications)) != 0.0 && float64(mutex_score)/float64(len(verifications)) != 1.0 {
+			if float64(mutex_score)/float64(num_models_to_count) != 0.0 && float64(mutex_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
-			} else if float64(gd_score)/float64(len(verifications)) != 0.0 && float64(gd_score)/float64(len(verifications)) != 1.0 {
+			} else if float64(gd_score)/float64(num_models_to_count) != 0.0 && float64(gd_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
 			}
 
 			score := ModelScore{
 				model:             model,
 				num_params:        strconv.Itoa(num_params),
-				GDScore:           float64(gd_score) / float64(len(verifications)),
-				SendOnCloseScore:  float64(send_score) / float64(len(verifications)),
-				CloseOnCloseScore: float64(close_score) / float64(len(verifications)),
-				NegCounterScore:   float64(neg_counter_score) / float64(len(verifications)),
-				MutexScore:        float64(mutex_score) / float64(len(verifications)),
+				GDScore:           float64(gd_score) / float64(num_models_to_count),
+				SendOnCloseScore:  float64(send_score) / float64(num_models_to_count),
+				CloseOnCloseScore: float64(close_score) / float64(num_models_to_count),
+				NegCounterScore:   float64(neg_counter_score) / float64(num_models_to_count),
+				MutexScore:        float64(mutex_score) / float64(num_models_to_count),
 				Commit:            commit}
 			scores[model] = score
 		}
@@ -936,12 +947,14 @@ func parseVerificationResults() {
 		defer file.Close()
 
 		send_scores := []float64{}
+		chan_safety_scores := []float64{}
 		close_scores := []float64{}
 		wg_scores := []float64{}
 		mutex_scores := []float64{}
 		gd_scores := []float64{}
 
 		normalised_send_scores := []float64{}
+		normalised_chan_safety_scores := []float64{}
 		normalised_close_scores := []float64{}
 		normalised_wg_scores := []float64{}
 		normalised_mutex_scores := []float64{}
@@ -953,6 +966,7 @@ func parseVerificationResults() {
 
 			//Append second line
 			send_scores = append(send_scores, scores.SendOnCloseScore)
+			chan_safety_scores = append(chan_safety_scores, scores.SendOnCloseScore+scores.CloseOnCloseScore)
 			close_scores = append(close_scores, scores.CloseOnCloseScore)
 			wg_scores = append(wg_scores, scores.NegCounterScore)
 			mutex_scores = append(mutex_scores, scores.MutexScore)
@@ -960,9 +974,11 @@ func parseVerificationResults() {
 
 			if scores.SendOnCloseScore > 0 {
 				normalised_send_scores = append(normalised_send_scores, scores.SendOnCloseScore)
+				normalised_chan_safety_scores = append(normalised_chan_safety_scores, scores.SendOnCloseScore)
 			}
 			if scores.CloseOnCloseScore > 0 {
 				normalised_close_scores = append(normalised_close_scores, scores.CloseOnCloseScore)
+				normalised_chan_safety_scores = append(normalised_chan_safety_scores, scores.CloseOnCloseScore)
 			}
 			if scores.NegCounterScore > 0 {
 				normalised_wg_scores = append(normalised_wg_scores, scores.NegCounterScore)
@@ -977,6 +993,14 @@ func parseVerificationResults() {
 				log.Fatal(err)
 			}
 		}
+
+		chan_safety_scores_sd, _ := stats.StandardDeviation(chan_safety_scores)
+		chan_safety_scores_mean, _ := stats.Mean(chan_safety_scores)
+		chan_safety_scores_quartiles, _ := stats.Quartile(chan_safety_scores)
+		chan_safety_scores_max, _ := stats.Max(chan_safety_scores)
+		chan_safety_scores_min, _ := stats.Min(chan_safety_scores)
+
+		fmt.Println("5 stats Chan safety ", chan_safety_scores_mean, chan_safety_scores_sd, chan_safety_scores_min, chan_safety_scores_quartiles.Q1, chan_safety_scores_quartiles.Q2, chan_safety_scores_quartiles.Q3, chan_safety_scores_max)
 
 		send_scores_sd, _ := stats.StandardDeviation(send_scores)
 		send_scores_mean, _ := stats.Mean(send_scores)
@@ -1026,6 +1050,14 @@ func parseVerificationResults() {
 
 		fmt.Println("5 stats ", len(normalised_send_scores), " strictly positive send on closed channel ", normalised_send_scores_mean, normalised_send_scores_sd, normalised_send_scores_min, normalised_send_scores_quartiles.Q1, normalised_send_scores_quartiles.Q2, normalised_send_scores_quartiles.Q3, normalised_send_scores_max)
 
+		normalised_chan_safety_scores_sd, _ := stats.StandardDeviation(normalised_chan_safety_scores)
+		normalised_chan_safety_scores_mean, _ := stats.Mean(normalised_chan_safety_scores)
+		normalised_chan_safety_scores_quartiles, _ := stats.Quartile(normalised_chan_safety_scores)
+		normalised_chan_safety_scores_max, _ := stats.Max(normalised_chan_safety_scores)
+		normalised_chan_safety_scores_min, _ := stats.Min(normalised_chan_safety_scores)
+
+		fmt.Println("5 stats ", len(normalised_chan_safety_scores), " strictly positive channel safety ", normalised_chan_safety_scores_mean, normalised_chan_safety_scores_sd, normalised_chan_safety_scores_min, normalised_chan_safety_scores_quartiles.Q1, normalised_chan_safety_scores_quartiles.Q2, normalised_chan_safety_scores_quartiles.Q3, normalised_chan_safety_scores_max)
+
 		normalised_close_scores_sd, _ := stats.StandardDeviation(normalised_close_scores)
 		normalised_close_scores_mean, _ := stats.Mean(normalised_close_scores)
 		normalised_close_scores_quartiles, _ := stats.Quartile(normalised_close_scores)
@@ -1057,36 +1089,6 @@ func parseVerificationResults() {
 		normalised_gd_scores_min, _ := stats.Min(normalised_gd_scores)
 
 		fmt.Println("5 stats ", len(normalised_gd_scores), " strictly positive global deadlock ", normalised_gd_scores_mean, normalised_gd_scores_sd, normalised_gd_scores_min, normalised_gd_scores_quartiles.Q1, normalised_gd_scores_quartiles.Q2, normalised_gd_scores_quartiles.Q3, normalised_gd_scores_max)
-
-		// check if there are some models contained in 30_random that are not in this actual score.
-
-		// models := []string{}
-		// content, _ := ioutil.ReadFile("/Users/redfloyd/Documents/PhD/gomela-paper/graphs/proj.csv")
-
-		// lines := strings.Split(string(content), "\n")
-
-		// for _, line := range lines {
-		// 	splitted_line := strings.Split(line, ",")
-		// 	if splitted_line[0] != "" {
-		// 		models = append(models, strings.Split(splitted_line[0], ":")[1])
-		// 	}
-		// }
-
-		// for _, model := range models {
-		// 	found := false
-
-		// 	for name, _ := range scores {
-
-		// 		model_name := strings.Split(name, ":")[1]
-		// 		if model_name == strings.ReplaceAll(model, "_", "++") {
-		// 			found = true
-		// 		}
-		// 	}
-
-		// 	if !found {
-		// 		fmt.Println(model)
-		// 	}
-		// }
 
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
 		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))

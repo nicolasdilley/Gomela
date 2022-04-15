@@ -2,7 +2,8 @@
 // num_mand_comm_params=3
 // num_opt_comm_params=0
 
-// git_link=https://github.com/kubernetes/kubernetes/blob//test/integration/master/synthetic_master_test.go#L715
+https://github.com/kubernetes/kubernetes/blob/ddbdd3eca1f9fa141380ad9729e025a63b71c7f6/test/integration/controlplane/synthetic_controlplane_test.go#L715
+
 #define def_var_nodes734  ?? // mand nodes line 734
 #define def_var_listers746  ?? // mand listers line 746
 #define def_var_watchers759  ?? // mand watchers line 759

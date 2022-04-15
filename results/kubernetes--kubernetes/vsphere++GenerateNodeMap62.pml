@@ -27,8 +27,6 @@ proctype GenerateNodeMap62(int var_vSphereInstances;chan child) {
 	chan child_AnonymousGenerateNodeMap110680 = [1] of {int};
 	Wgdef wg;
 	int var_nodeList_Items = def_var_nodeList_Items108; // mand var_nodeList_Items
-	int var_datacenters = -2; // opt var_datacenters
-	int var_dcName = -2; // opt var_dcName
 	run wgMonitor(wg);
 		for(i : 0.. var_nodeList_Items-1) {
 		for20: skip;
@@ -55,7 +53,6 @@ proctype AnonymousGenerateNodeMap11068(Wgdef wg;chan child) {
 	int i;
 	bool state;
 	int num_msgs;
-	int var_queueChannel = -2; // opt var_queueChannel
 	wg.update!-1;
 	stop_process: skip;
 	child!0

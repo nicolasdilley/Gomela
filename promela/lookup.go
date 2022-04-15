@@ -98,7 +98,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
 		})
 		lb = &promela_ast.Ident{Name: "0"} // returning the fresh vars
-		ub = ub_decl.Name
+		ub = &promela_ast.Ident{Name: ub_decl.Name.Name + "-1"}
 
 		if !(s.Init == nil && s.Cond == nil && s.Post == nil) {
 			m.PrintFeature(Feature{

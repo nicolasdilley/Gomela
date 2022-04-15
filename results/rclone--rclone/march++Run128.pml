@@ -3,9 +3,9 @@
 // num_opt_comm_params=0
 
 // git_link=https://github.com/rclone/rclone/blob//fs/march/march.go#L128
-#define def_var_checkers150  ?? // mand checkers line 150
-#define def_var_jobs174  ?? // mand jobs line 174
-#define ub_for155_4  ??
+#define def_var_checkers150  1 // mand checkers line 150
+#define def_var_jobs174  0 // mand jobs line 174
+#define ub_for155_4  0
 typedef Chandef {
 	chan sync = [0] of {bool};
 	chan enq = [0] of {int};
@@ -61,7 +61,7 @@ proctype Run128(chan child) {
 	:: else -> 
 		run sync_monitor(in_ch)
 	fi;
-		for(i : 0.. var_checkers-1) {
+		for(i : 0.. var_checkers) {
 		for10: skip;
 		wg.update!1;
 		run AnonymousRun153150(in_ch,wg,traversing,mu,child_AnonymousRun1531500);
@@ -101,65 +101,16 @@ proctype AnonymousRun153150(Chandef in_ch;Wgdef wg;Wgdef traversing;Mutexdef mu;
 	chan child_AnonymousAnonymousRun1531751500 = [1] of {int};
 	chan child_AnonymousAnonymousRun1531751501 = [1] of {int};
 	int var_jobs = def_var_jobs174; // mand var_jobs
-		for(i : 0.. ub_for155_4) {
+		for(i : 0.. ub_for155_4-1) {
 		for11: skip;
 		do
 		:: true -> 
 			goto defer1
 		:: in_ch.deq?state,num_msgs -> 
-			
-
-			if
-			:: true -> 
-				goto defer1
-			:: true;
-			fi;
-			
-
-			if
-			:: true -> 
-				mu.Lock!false;
-				mu.Unlock!false
-			:: true;
-			fi;
-			
-
-			if
-			:: true -> 
-				traversing.update!var_jobs;
-				run AnonymousAnonymousRun153175150(in_ch,wg,traversing,mu,var_jobs,child_AnonymousAnonymousRun1531751500);
-				run receiver(child_AnonymousAnonymousRun1531751500)
-			:: true;
-			fi;
-			traversing.update!-1;
+		
 			break
 		:: in_ch.sync?state -> 
-			in_ch.rcving!false;
-			
 
-			if
-			:: true -> 
-				goto defer1
-			:: true;
-			fi;
-			
-
-			if
-			:: true -> 
-				mu.Lock!false;
-				mu.Unlock!false
-			:: true;
-			fi;
-			
-
-			if
-			:: true -> 
-				traversing.update!var_jobs;
-				run AnonymousAnonymousRun153175150(in_ch,wg,traversing,mu,var_jobs,child_AnonymousAnonymousRun1531751501);
-				run receiver(child_AnonymousAnonymousRun1531751501)
-			:: true;
-			fi;
-			traversing.update!-1;
 			break
 		od;
 		for12_exit: skip;

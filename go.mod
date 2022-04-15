@@ -15,12 +15,12 @@ require (
 	github.com/client9/misspell v0.3.4 // indirect
 	github.com/fairlyblank/md2min v0.0.0-20171213131418-39cd6e9904ac
 	github.com/fatih/color v1.10.0
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/garyburd/redigo v1.6.2
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/inconshreveable/go-vhost v0.0.0-20160627193104-06d84117953b
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect
@@ -36,9 +36,11 @@ require (
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/nicksnyder/go-i18n v1.10.1 // indirect
 	github.com/nicolasdilley/gobench v0.0.0-20210408085502-219ef55dfdb1 // indirect
-	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
+	github.com/nsf/termbox-go v1.1.1
 	github.com/olekukonko/tablewriter v0.0.0-20170122224234-a0225b3f23b5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pkg/errors v0.9.1
+	github.com/rclone/rclone v1.57.0
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/revel/config v1.0.0
 	github.com/revel/log15 v2.11.20+incompatible
@@ -52,14 +54,14 @@ require (
 	github.com/shurcooL/octicon v0.0.0-20191102190552-cbb32d6a785c // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e // indirect
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/system-pclub/GCatch v0.0.0-20210322080539-01c0e0281d70 // indirect
 	github.com/system-pclub/GCatch/GFix/dispatcher/tools v0.0.0-20210312172934-90af8eb02c6b // indirect
 	github.com/twinj/uuid v1.0.0
 	github.com/xeonx/timeago v1.0.0-rc4
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/tools v0.1.1
+	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+	golang.org/x/tools v0.1.5
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20191105091915-95d230a53780 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
