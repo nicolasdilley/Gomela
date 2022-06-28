@@ -46,6 +46,7 @@ type ModelScore struct {
 	CloseOnCloseScore float64
 	NegCounterScore   float64
 	MutexScore        float64
+	PanicReachedScore float64
 	Commit            string
 }
 
@@ -638,6 +639,7 @@ func parseVerificationResults() {
 		num_close := 0
 		num_neg_counter := 0
 		num_mutex_counter := 0
+		num_panic_reached := 0
 		false_alarms := 0
 		times := []float64{}
 		total_time := 0
@@ -723,6 +725,8 @@ func parseVerificationResults() {
 							num_mutex_counter++
 						} else if splitted_line[8] == "true" {
 							num_gd++
+						} else if splitted_line[9] == "true" {
+							num_panic_reached++
 						} else if opt {
 							false_alarms++
 						}
@@ -820,6 +824,7 @@ func parseVerificationResults() {
 			close_score := 0
 			neg_counter_score := 0
 			mutex_score := 0
+			panic_reached_score := 0
 			commit := ""
 
 			total_time := 0.0
@@ -882,6 +887,9 @@ func parseVerificationResults() {
 					if splitted_line[8] == "true" {
 						gd_score++
 					}
+					if splitted_line[9] == "true" {
+						panic_reached_score++
+					}
 				}
 				//calculate time for the valuated model
 				time, err := strconv.Atoi(splitted_line[3])
@@ -911,6 +919,8 @@ func parseVerificationResults() {
 				num_models_with_score_that_are_not_one_not_zero++
 			} else if float64(gd_score)/float64(num_models_to_count) != 0.0 && float64(gd_score)/float64(num_models_to_count) != 1.0 {
 				num_models_with_score_that_are_not_one_not_zero++
+			} else if float64(panic_reached_score)/float64(num_models_to_count) != 0.0 && float64(panic_reached_score)/float64(num_models_to_count) != 1.0 {
+				num_models_with_score_that_are_not_one_not_zero++
 			}
 
 			score := ModelScore{
@@ -921,6 +931,7 @@ func parseVerificationResults() {
 				CloseOnCloseScore: float64(close_score) / float64(num_models_to_count),
 				NegCounterScore:   float64(neg_counter_score) / float64(num_models_to_count),
 				MutexScore:        float64(mutex_score) / float64(num_models_to_count),
+				PanicReachedScore: float64(panic_reached_score) / float64(num_models_to_count),
 				Commit:            commit}
 			scores[model] = score
 		}
@@ -952,6 +963,7 @@ func parseVerificationResults() {
 		wg_scores := []float64{}
 		mutex_scores := []float64{}
 		gd_scores := []float64{}
+		panic_reached_scores := []float64{}
 
 		normalised_send_scores := []float64{}
 		normalised_chan_safety_scores := []float64{}
@@ -959,10 +971,11 @@ func parseVerificationResults() {
 		normalised_wg_scores := []float64{}
 		normalised_mutex_scores := []float64{}
 		normalised_gd_scores := []float64{}
+		normalised_panic_reached_scores := []float64{}
 
 		for model, scores := range scores {
 
-			toPrint := fmt.Sprint(model, ",", scores.Commit, ",", scores.num_params, ",", scores.SendOnCloseScore, ",", scores.CloseOnCloseScore, ",", scores.NegCounterScore, ",", scores.MutexScore, ",", scores.GDScore)
+			toPrint := fmt.Sprint(model, ",", scores.Commit, ",", scores.num_params, ",", scores.SendOnCloseScore, ",", scores.CloseOnCloseScore, ",", scores.NegCounterScore, ",", scores.MutexScore, ",", scores.GDScore, ",", scores.PanicReachedScore)
 
 			//Append second line
 			send_scores = append(send_scores, scores.SendOnCloseScore)
@@ -971,6 +984,7 @@ func parseVerificationResults() {
 			wg_scores = append(wg_scores, scores.NegCounterScore)
 			mutex_scores = append(mutex_scores, scores.MutexScore)
 			gd_scores = append(gd_scores, scores.GDScore)
+			panic_reached_scores = append(panic_reached_scores, scores.PanicReachedScore)
 
 			if scores.SendOnCloseScore > 0 {
 				normalised_send_scores = append(normalised_send_scores, scores.SendOnCloseScore)
@@ -988,6 +1002,9 @@ func parseVerificationResults() {
 			}
 			if scores.GDScore > 0 {
 				normalised_gd_scores = append(normalised_gd_scores, scores.GDScore)
+			}
+			if scores.PanicReachedScore > 0 {
+				normalised_panic_reached_scores = append(normalised_panic_reached_scores, scores.PanicReachedScore)
 			}
 			if _, err := file.WriteString(toPrint + "\n"); err != nil {
 				log.Fatal(err)
@@ -1042,6 +1059,14 @@ func parseVerificationResults() {
 
 		fmt.Println("5 stats global deadlock ", gd_scores_mean, gd_scores_sd, gd_scores_min, gd_scores_quartiles.Q1, gd_scores_quartiles.Q2, gd_scores_quartiles.Q3, gd_scores_max)
 
+		panic_reached_scores_sd, _ := stats.StandardDeviation(panic_reached_scores)
+		panic_reached_scores_mean, _ := stats.Mean(panic_reached_scores)
+		panic_reached_scores_quartiles, _ := stats.Quartile(panic_reached_scores)
+		panic_reached_scores_max, _ := stats.Max(panic_reached_scores)
+		panic_reached_scores_min, _ := stats.Min(panic_reached_scores)
+
+		fmt.Println("5 stats panic reached ", panic_reached_scores_mean, panic_reached_scores_sd, panic_reached_scores_min, panic_reached_scores_quartiles.Q1, panic_reached_scores_quartiles.Q2, panic_reached_scores_quartiles.Q3, panic_reached_scores_max)
+
 		normalised_send_scores_sd, _ := stats.StandardDeviation(normalised_send_scores)
 		normalised_send_scores_mean, _ := stats.Mean(normalised_send_scores)
 		normalised_send_scores_quartiles, _ := stats.Quartile(normalised_send_scores)
@@ -1090,6 +1115,14 @@ func parseVerificationResults() {
 
 		fmt.Println("5 stats ", len(normalised_gd_scores), " strictly positive global deadlock ", normalised_gd_scores_mean, normalised_gd_scores_sd, normalised_gd_scores_min, normalised_gd_scores_quartiles.Q1, normalised_gd_scores_quartiles.Q2, normalised_gd_scores_quartiles.Q3, normalised_gd_scores_max)
 
+		normalised_panic_reached_scores_sd, _ := stats.StandardDeviation(normalised_panic_reached_scores)
+		normalised_panic_reached_scores_mean, _ := stats.Mean(normalised_panic_reached_scores)
+		normalised_panic_reached_scores_quartiles, _ := stats.Quartile(normalised_panic_reached_scores)
+		normalised_panic_reached_scores_max, _ := stats.Max(normalised_panic_reached_scores)
+		normalised_panic_reached_scores_min, _ := stats.Min(normalised_panic_reached_scores)
+
+		fmt.Println("5 stats ", len(normalised_panic_reached_scores), " strictly positive panic reached ", normalised_panic_reached_scores_mean, normalised_panic_reached_scores_sd, normalised_panic_reached_scores_min, normalised_panic_reached_scores_quartiles.Q1, normalised_panic_reached_scores_quartiles.Q2, normalised_panic_reached_scores_quartiles.Q3, normalised_panic_reached_scores_max)
+
 		fmt.Println("# of models with score > 0 and < 1 : ", num_models_with_score_that_are_not_one_not_zero)
 		fmt.Println("# of num of projects that contained a model : ", len(times_per_projects))
 		fmt.Println("# of valuation : ", num_actual_verifications)
@@ -1103,10 +1136,12 @@ func parseVerificationResults() {
 		fmt.Println("Longest model is : ", longest_model, " with ", longest_time, "ms")
 		fmt.Println("Longest project is : ", longest_projects_name, " with ", longest_projects, "ms")
 		fmt.Println("# of global deadlock : ", num_gd)
+		fmt.Println("# of panic reached : ", num_panic_reached)
 		fmt.Println("# of send on close safety error : ", num_send_on_close)
 		fmt.Println("# of close on close safety error : ", num_close)
 		fmt.Println("# of negative counter error : ", num_neg_counter)
 		fmt.Println("# of mutex error : ", num_mutex_counter)
+		fmt.Println("# of panic reached : ", num_panic_reached)
 		// fmt.Println("# of false alarms : ", false_alarms)
 		fmt.Println("# of average verification time : ", total_time/num_tests)
 		fmt.Println("Total verification time: ", total_time)

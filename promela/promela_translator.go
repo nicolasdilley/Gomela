@@ -670,6 +670,8 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 				} else {
 					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
 				}
+			} else if name.Name == "panic" && len(expr.Args) == 1 { // panic call
+				stmts.List = append(stmts.List, &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
 			} else {
 				call, err1 := m.TranslateCallExpr(expr)
 				if err1 != nil {

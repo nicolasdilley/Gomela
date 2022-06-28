@@ -23,6 +23,7 @@ type VerificationRun struct {
 	Negative_counter_safety_error bool   // is there any safety errors
 	Double_unlock                 bool   // is there a double lock ?
 	Global_deadlock               bool   // is there any global deadlock
+	Panic_reached                 bool   // is there any global deadlock
 	Num_states                    int    // the number of states in the model
 	Timeout                       bool   // Has the verification timedout
 	Err                           string // if there is another error
@@ -145,7 +146,13 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 
 func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, num_opt_params int, bound []string) (*VerificationRun, bool) {
 
-	ver := &VerificationRun{Send_on_close_safety_error: false, Close_safety_error: false, Negative_counter_safety_error: false, Global_deadlock: true, Timeout: false}
+	ver := &VerificationRun{
+		Send_on_close_safety_error:    false,
+		Close_safety_error:            false,
+		Negative_counter_safety_error: false,
+		Global_deadlock:               true,
+		Panic_reached:                 false,
+		Timeout:                       false}
 
 	var output bytes.Buffer
 	var err_output bytes.Buffer
@@ -212,6 +219,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 		fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
+		fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 		if ver.Err != "" {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -226,6 +234,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
 			fmt.Sprintf("%t", ver.Double_unlock) + "," +
 			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
+			fmt.Sprintf("%t", ver.Panic_reached) + "," +
 			ver.Err + "," +
 			fmt.Sprint(len(comm_params)) + "," +
 			fmt.Sprint(num_opt_params) + "," +
@@ -242,7 +251,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 }
 
 func verifyWithOptParams(ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int, bounds_to_check []interface{}) {
-	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error) && !ver.Timeout {
+	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error || ver.Panic_reached) && !ver.Timeout {
 		// add values to the candidates param
 
 		opt_bounds := generateOptBounds(num_optionnal, bounds_to_check)
@@ -293,6 +302,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						Close_safety_error:            false,
 						Negative_counter_safety_error: false,
 						Global_deadlock:               true,
+						Panic_reached:                 false,
 						Timeout:                       false}
 					var output bytes.Buffer
 					var err_output bytes.Buffer
@@ -341,6 +351,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
 						fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 						fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
+						fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
 							fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -355,6 +366,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 							fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
 							fmt.Sprintf("%t", ver.Double_unlock) + "," +
 							fmt.Sprintf("%t", ver.Global_deadlock) + "," +
+							fmt.Sprintf("%t", ver.Panic_reached) + "," +
 							ver.Err + "," +
 							fmt.Sprint(len(comm_params)) + "," +
 							fmt.Sprint(num_optionnal) + "," +
@@ -438,6 +450,9 @@ func parseResults(result string, ver *VerificationRun) bool {
 		if strings.Contains(result, "(2==0)") {
 			ver.Close_safety_error = true
 		}
+		if strings.Contains(result, "(20==0)") {
+			ver.Panic_reached = true
+		}
 		ver.Global_deadlock = false
 	} else {
 		if strings.Contains(result, "errors: 0") {
@@ -450,6 +465,7 @@ func parseResults(result string, ver *VerificationRun) bool {
 			ver.Close_safety_error = false
 			ver.Send_on_close_safety_error = false
 			ver.Double_unlock = false
+			ver.Panic_reached = false
 		}
 
 		// Calculates the number of states
