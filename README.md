@@ -42,7 +42,7 @@ You then need to compile it by running:
 Gomela is a full-scale verification tool that verifies message passing
 concurrency in Go programs. Gomela takes either the name of a Go's github
 project or a list of Go files as input and generates Promela models. These
-models are then fed to SPIN to verify that the models are free of global
+models are then fed to SPIN to verify that the models are free of model
 deadlocks. Gomela also offers the ability to the user to give bounds to the
 statically unknown communication-related parameters in the models to improve
 the accuracy of the verification. These parameters are the variables in the
@@ -92,16 +92,20 @@ The output of the command line should be:
 Result for main_main.pml
 Number of states :  29
 Time to verify model :  0  ms
-Channel safety error : false.
-Global deadlock : false.
+Send on close safety error : false.
+Close safety error : false.
+Negative counter safety error : false.
+Double unlock error : false.
+Model deadlock : false.
+Panic reached : false.
 -------------------------------
 ```
 
-This tells you that there is neither a safety or a global deadlock in the model.
-This also means that there are no safety errors or global deadlocks in the Go
+This tells you that there is neither a safety or a model deadlock in the model.
+This also means that there are no safety errors or model deadlocks in the Go
 source file ```source/hello.go```.
 
-If we tweak the code to introduce a global deadlock by removing one or both of
+If we tweak the code to introduce a model deadlock by removing one or both of
 the receives on line 10 and 14 and rerun the command ```./gomela fs ./source```.
 The output of the command line should be :
 
@@ -110,12 +114,16 @@ The output of the command line should be :
 Result for main_main.pml
 Number of states :  9
 Time to verify model :  0  ms
-Channel safety error : false.
-Global deadlock : true.
+Send on close safety error : false.
+Close safety error : false.
+Negative counter safety error : false.
+Double unlock error : false.
+Model deadlock : true.
+Panic reached : false.
 -------------------------------
 ```
 
-This tells you that a global deadlock was found in the model main_main.pml. This
+This tells you that a model deadlock was found in the model main_main.pml. This
 file is named from the concatenation of the name of the package and the name of
 the function being modelled. The extension of the file ```.pml``` is used to
 specify that it is a Promela file. In the code above, we have specified that the
@@ -160,12 +168,13 @@ Send on close safety error : false.
 Close safety error : false.
 Negative counter safety error : false.
 Double unlock error : false.
-Global deadlock : true.
+Model deadlock : true.
+Panic reached : false.
 -------------------------------
 
 ```
 
-which states that Gomela has found a global deadlock in the model.
+which states that Gomela has found a model deadlock in the model.
 
 To verify a github project: 
 
@@ -189,12 +198,13 @@ A line is composed of:
   - Column 6: If a close safety error was found
   - Column 7: If a negative counter error was found
   - Column 8: If a double lock safety error was found
-  - Column 9: If a global deadlock was found
-  - Column 10: If there was any error, it would appear here
-  - Column 11: The number of communication parameter in the model
-  - Column 12: The number of optional parameter in the model
-  - Column 13: The name of the communication parameter and their assigned values
-  - Column 14: The github link of the original program if it was on github
+  - Column 9: If a panic(...) can be reached
+  - Column 10: If a model deadlock was found
+  - Column 11: If there was any error, it would appear here
+  - Column 12: The number of communication parameter in the model
+  - Column 13: The number of optional parameter in the model
+  - Column 14: The name of the communication parameter and their assigned values
+  - Column 15: The github link of the original program if it was on github
 
 ## Step 2 Reproducing data from benchmark 
 
@@ -226,10 +236,11 @@ Gomela can also parse the results of the verification to extract:
 
 It can also calculate the 5 stats for the results of all verification or only
 for valuation that resulted in a strictly positive score:
-  - The 5 stats for the global deadlock found
+  - The 5 stats for the model deadlock found
   - The 5 stats for the channel safety errors found
   - The 5 stats for the waitgroup safety errors found
   - The 5 stats for the mutex safety errors found
+  - The 5 stats for the panic reached safety errors found
 
 To get these run: 
 ```./gomela full_stats result_current_date/log.csv commits.csv result_current_date/verification.csv```
@@ -241,7 +252,7 @@ To get these run:
 Go processes. This function contains a bug only when a specific criteria is met.
 When the number of ```pss``` in the code is bigger than
 ```concurrencyProcesses```, the send at line 42 will block when the capacity of
-the channel is reached causing a global deadlock.
+the channel is reached causing a model deadlock.
 
 To verify this function, we will place the code from line 29 - 74 in a folder
 called ```source``` and invoke ```./gomela ./source -v```. Gomela will automatically
@@ -256,12 +267,12 @@ line 31) in the source code cannot be determined at compile time. As a
 result, Gomela gives ```pss``` a default value of 5 to make the model
 executable. In this particular example, the default value turns out to be
 less than ```concurrencyProcesses``` and, therefore, SPIN reports that the
-model generated does not result in any global deadlocks. However, if we want
+model generated does not result in any model deadlocks. However, if we want
 to verify the model with a different value for ```pss```, we can specify to
 Gomela to give a different value to ```pss``` by passing a special flag. If
 we invoke Gomela, with this command ```./gomela verify
 result_current_date/source/main++findall5 11```. The value of pss will now be
-11 and Gomela will reports that there is a global deadlock in the model.
+11 and Gomela will reports that there is a model deadlock in the model.
 
 
 ## Detailed explanations of the model generated.
