@@ -536,7 +536,7 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 				Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
 				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 					&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: &prom_chan_name, Sel: &promela_ast.Ident{Name: "size"}}, Rhs: size},
-					&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "AsyncChan"}, Args: []promela_ast.Expr{&prom_chan_name}}},
+					&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "async_monitor"}, Args: []promela_ast.Expr{&prom_chan_name}}},
 				}}}
 			sync_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"},
 				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{sync_monitor}}}

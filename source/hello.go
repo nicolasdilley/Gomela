@@ -3,7 +3,7 @@ package main
 var x int = 3
 
 func main() {
-	ch := make(chan int)
+	ch := make(chan int, 10)
 
 	go send(ch)
 	go rcv(ch)
@@ -20,5 +20,5 @@ func rcv(ch chan int) {
 
 	<-ch
 
-	panic("Here")
+	//	panic("Here")
 }

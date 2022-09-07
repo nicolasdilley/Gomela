@@ -68,7 +68,7 @@ func generateSyncChanMonitor() string {
 }
 
 func GenerateAsyncMonitor() string {
-	return "proctype AsyncChan(Chandef ch) {\n" +
+	return "proctype async_monitor(Chandef ch) {\n" +
 		"do\n" +
 		":: true ->\n" +
 		"if\n" +
