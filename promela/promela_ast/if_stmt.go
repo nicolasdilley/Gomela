@@ -22,7 +22,7 @@ func (s *IfStmt) Print(num_tabs int) (stmt string) {
 	if s.Init != nil {
 		stmt += s.Init.Print(num_tabs) + "\n"
 	}
-	stmt += utils.GetTabs(num_tabs) + "if\n"
+	stmt += utils.GetTabs(num_tabs) + "if" + " /* " + s.If.String() + " */ \n"
 
 	for _, guard := range s.Guards {
 		stmt += guard.Print(num_tabs) + "\n"

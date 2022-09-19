@@ -2,6 +2,7 @@ package promela
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -36,9 +37,15 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 					Rhs:  &promela_ast.Ident{Name: "false"}}}},
 			Guard: m.Fileset.Position(s.Pos())}
 		async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guard: m.Fileset.Position(s.Pos())}
-		if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}}
+		if_stmt := &promela_ast.IfStmt{
+			If: m.Fileset.Position(s.Pos()),
+			Init: &promela_ast.BlockStmt{
+				List: []promela_ast.Stmt{},
+			},
+			Guards: []*promela_ast.GuardStmt{async_guard, sync_guard},
+		}
 		expr, err1 := m.TranslateExpr(s.Value)
-
+		fmt.Println("ici :", m.Fileset.Position(s.Pos()))
 		if err1 != nil {
 			err = err1
 		}
