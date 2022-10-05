@@ -85,14 +85,14 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 									Chan: &promela_ast.SelectorExpr{
 										X:   chan_name.Name,
 										Sel: &promela_ast.Ident{Name: "sync"}},
-									Rhs:  &promela_ast.Ident{Name: "false,0"},
-									Send: m.Fileset.Position(new_call_expr.Pos())}
+									Rhs: &promela_ast.Ident{Name: "false,0"},
+								}
 								async_send := &promela_ast.SendStmt{
 									Chan: &promela_ast.SelectorExpr{
 										X:   chan_name.Name,
 										Sel: &promela_ast.Ident{Name: "enq"}},
-									Rhs:  &promela_ast.Ident{Name: "0"},
-									Send: m.Fileset.Position(new_call_expr.Pos())}
+									Rhs: &promela_ast.Ident{Name: "0"},
+								}
 
 								sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
 
@@ -112,7 +112,10 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 								// true guard
 								true_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
-								select_stmt := &promela_ast.SelectStmt{Guards: []*promela_ast.GuardStmt{async_guard, sync_guard, true_guard}, Select: m.Fileset.Position(name.Pos())}
+								select_stmt := &promela_ast.SelectStmt{
+									Model:  "Notify",
+									Guards: []*promela_ast.GuardStmt{async_guard, sync_guard, true_guard},
+									Select: m.Fileset.Position(name.Pos())}
 
 								stmts.List = append(stmts.List, select_stmt)
 							} else {
@@ -212,7 +215,11 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Filename:  m.Fileset.Position(name.Pos()).Filename,
 			})
 		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: ub})
+		stmts.List = append(stmts.List, &promela_ast.SendStmt{
+			Send:  m.Fileset.Position(name.Pos()),
+			Model: "Add(" + ub.Name + ")",
+			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
+			Rhs:   ub})
 
 	} else if name.Sel.Name == "Done" {
 		if m.For_counter.In_for {
@@ -228,9 +235,17 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Filename:  m.Fileset.Position(name.Pos()).Filename,
 			})
 		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"}, Rhs: &promela_ast.Ident{Name: "-1"}})
+		stmts.List = append(stmts.List, &promela_ast.SendStmt{
+			Send:  m.Fileset.Position(name.Pos()),
+			Model: "Done",
+			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
+			Rhs:   &promela_ast.Ident{Name: "-1"}})
 	} else if name.Sel.Name == "Wait" {
-		stmts.List = append(stmts.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"}, Rhs: &promela_ast.Ident{Name: "0"}})
+		stmts.List = append(stmts.List, &promela_ast.RcvStmt{
+			Rcv:   m.Fileset.Position(name.Pos()),
+			Model: "Wait",
+			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"},
+			Rhs:   &promela_ast.Ident{Name: "0"}})
 	}
 
 	return stmts, err

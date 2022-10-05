@@ -2,7 +2,6 @@ package promela
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
@@ -18,14 +17,16 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "sync"}},
-			Rhs:  &promela_ast.Ident{Name: "false"},
-			Send: m.Fileset.Position(s.Pos())}
+			Rhs: &promela_ast.Ident{Name: "false"},
+			//Send: m.Fileset.Position(s.Pos())
+		}
 		async_send := &promela_ast.SendStmt{
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "enq"}},
-			Rhs:  &promela_ast.Ident{Name: "0"},
-			Send: m.Fileset.Position(s.Pos())}
+			Rhs: &promela_ast.Ident{Name: "0"},
+			//Send: m.Fileset.Position(s.Pos())
+		}
 
 		sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
 
@@ -38,14 +39,14 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 			Guard: m.Fileset.Position(s.Pos())}
 		async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guard: m.Fileset.Position(s.Pos())}
 		if_stmt := &promela_ast.IfStmt{
-			If: m.Fileset.Position(s.Pos()),
+			If:    m.Fileset.Position(s.Pos()),
+			Model: "Send",
 			Init: &promela_ast.BlockStmt{
 				List: []promela_ast.Stmt{},
 			},
 			Guards: []*promela_ast.GuardStmt{async_guard, sync_guard},
 		}
 		expr, err1 := m.TranslateExpr(s.Value)
-		fmt.Println("ici :", m.Fileset.Position(s.Pos()))
 		if err1 != nil {
 			err = err1
 		}

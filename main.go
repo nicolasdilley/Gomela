@@ -36,16 +36,18 @@ type VerificationInfo struct {
 	unused_mutex                        int
 	unused_wg                           int
 	unused_chan                         int
+	go_names                            []string
+	gopath                              *string
 	// single_file    *string
 }
 
 var (
 	NUM_OF_MODELS            int = 0
 	NUM_OF_EXECUTABLE_MODELS int = 0
-	RESULTS_FOLDER               = "result"
-	PROJECTS_FOLDER              = "../projects"
-	AUTHOR_PROJECT_SEP           = "--"
-	PACKAGE_MODEL_SEP            = "++"
+	RESULTS_FOLDER           string
+	PROJECTS_FOLDER          = "../projects"
+	AUTHOR_PROJECT_SEP       = "--"
+	PACKAGE_MODEL_SEP        = "++"
 )
 
 func main() {
@@ -62,10 +64,10 @@ func main() {
 		}
 	}
 
-	f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/package_errors.csv",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	os.Stderr = f
-	defer f.Close()
+	// f, _ := os.OpenFile("./"+RESULTS_FOLDER+"/package_errors.csv",
+	// 	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// os.Stderr = f
+	// defer f.Close()
 
 	ver := &VerificationInfo{}
 
@@ -75,10 +77,26 @@ func main() {
 	ver.multi_projects = flag.String("mp", "", "Recursively loop through the folder given and parse all folder that contains a go file.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 
+	ver.gopath = flag.String("gopath", "", "a gopath to perform package loading from")
+	flag.StringVar(&RESULTS_FOLDER, "result_folder", "result", "folder to store the result in")
+
+	var fold = RESULTS_FOLDER
+	if fold[0] != '/' {
+		fold = "./" + fold
+	}
+
+	f, _ := os.OpenFile(fold+"/package_errors.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	os.Stderr = f
+	defer f.Close()
+
 	flag.Parse()
 	if *projects != "" {
 		PROJECTS_FOLDER = *projects
 	}
+
+	// parse the potential config file
+	parseConfigFile()
 
 	switch os.Args[1] {
 	case "model": // the user wants to generate the model
@@ -142,7 +160,8 @@ func main() {
 		}
 
 	default:
-		panic("You need to provide a projects list as a .csv file. ie 'gomela commit projects.csv'")
+		fmt.Println("Unrecognized mode, got", flag.Args())
+		panic("You need to provide a mode.")
 	}
 
 }
@@ -324,8 +343,11 @@ func commit(ver *VerificationInfo) {
 
 // genreate a model based on input and return the flags left
 func model(ver *VerificationInfo) []string {
-	t := time.Now().Local().Format("2006-01-02--15:04:05")
-	RESULTS_FOLDER += t
+	if RESULTS_FOLDER == "result" {
+		t := time.Now().Local().Format("2006-01-02--15:04:05")
+		RESULTS_FOLDER += t
+	}
+
 	os.Mkdir(RESULTS_FOLDER, os.ModePerm)
 	promela.CreateCSV(RESULTS_FOLDER)
 	switch os.Args[2] {
@@ -417,6 +439,10 @@ func model(ver *VerificationInfo) []string {
 func verify(ver *VerificationInfo, toParse string) {
 	// toPrint := "Model, Opt, #states, Time (ms), Channel Safety Error, Global Deadlock, Error, Comm param info, Link,\n"
 
+	if toParse[0] != '/' {
+		toParse = "./" + toParse
+	}
+
 	toPrint := ""
 
 	// check if toParse is a folder or a .pml file
@@ -456,7 +482,7 @@ func verify(ver *VerificationInfo, toParse string) {
 	if f.IsDir() {
 		RESULTS_FOLDER = toParse
 		// Print CSV
-		f, err := os.OpenFile("./"+toParse+"/verification.csv",
+		f, err := os.OpenFile(toParse+"/verification.csv",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 		if err != nil {
@@ -615,7 +641,14 @@ func inferProject(path string, dir_name string, commit string, packages []string
 
 	// Partition program
 	dir_name = strings.Replace(dir_name, "/", AUTHOR_PROJECT_SEP, -1)
-	f, ast_map := GenerateAst(path, packages, dir_name)
+
+	var gopath string
+
+	if ver.gopath != nil {
+		gopath = "GOPATH=" + *ver.gopath
+	}
+
+	f, ast_map := GenerateAst(path, packages, dir_name, gopath)
 
 	if f != nil {
 		projects_folder, _ := filepath.Abs(PROJECTS_FOLDER)

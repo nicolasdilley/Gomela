@@ -23,6 +23,8 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 
 			b.List = append(b.List,
 				&promela_ast.SendStmt{
+					Send:  m.Fileset.Position(name.Pos()),
+					Model: chan_to_use,
 					Chan: &promela_ast.SelectorExpr{
 						X: &promela_ast.Ident{
 							Name: translateIdent(name.X).Name},

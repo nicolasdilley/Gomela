@@ -12,7 +12,7 @@ import (
 func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos())}
+	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos()), Model: "Select"}
 
 	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
 	had_go := m.For_counter.With_go

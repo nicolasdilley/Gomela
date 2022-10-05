@@ -71,11 +71,17 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 					Rhs: &promela_ast.Ident{Name: "false"},
 				}}},
 		}
-		rcv := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		rcv := &promela_ast.IfStmt{
+			If:     m.Fileset.Position(s.Pos()),
+			Model:  "Range",
+			Guards: []*promela_ast.GuardStmt{async_guard, sync_guard},
+			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state && num_msgs <= 0"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 		if_not_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: s1}
-		i := &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard}, Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		i := &promela_ast.IfStmt{
+			Guards: []*promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard},
+			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if len(d1.List) > 0 {
 			return b, d1, &ParseError{err: errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())}

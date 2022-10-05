@@ -739,6 +739,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 					Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
 					Guards: []*promela_ast.GuardStmt{},
 					If:     m.Fileset.Position(expr.Pos()),
+					Model:  "Rcv",
 				}
 
 				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}

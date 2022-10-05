@@ -137,7 +137,13 @@ func Print(m *Model) {
 		stmt += GenerateReceiverProcess()
 	}
 
-	folder := "./" + m.Result_fodler + "/" + strings.Replace(m.Project_name, "/", "-", -1)
+	folder := m.Result_fodler
+	if m.Result_fodler[0] != '/' {
+		folder = "./" + m.Result_fodler
+	}
+
+	folder = folder + "/" + strings.Replace(m.Project_name, "/", "-", -1)
+
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		os.Mkdir(folder, os.ModePerm)
 	}
