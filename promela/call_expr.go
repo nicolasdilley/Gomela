@@ -21,6 +21,28 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param
 	var pack_name string = m.Package
 
+	// first check if the call is not the launch of a goroutine
+
+	if m.IsGoroutine(call_expr) {
+		var err *ParseError
+		var b *promela_ast.BlockStmt
+
+		switch f := call_expr.Args[0].(type) {
+		case *ast.FuncLit:
+			b, err = m.TranslateGoStmt(&ast.GoStmt{Call: &ast.CallExpr{Fun: f, Args: []ast.Expr{}}}, false)
+		case *ast.CallExpr:
+			b, err = m.TranslateGoStmt(&ast.GoStmt{Call: f}, false)
+		}
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		addBlock(stmts, b)
+		return stmts, nil
+	}
+
+	// It is not a goroutine call
+
 	switch name := call_expr.Fun.(type) {
 	case *ast.Ident:
 		func_name = filepath.Base(pack_name) + name.Name
@@ -249,4 +271,20 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 	}
 
 	return stmts, err
+}
+
+func (m *Model) IsGoroutine(expr *ast.CallExpr) bool {
+
+	switch expr := expr.Fun.(type) {
+	case *ast.Ident:
+		for _, g := range m.Go_names {
+			if expr.Name == g {
+				return true
+			}
+		}
+	default:
+		return false
+	}
+
+	return false
 }

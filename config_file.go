@@ -1,36 +1,38 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 )
 
-var CONFIG_FILE = "./config.json" // the location of the config file
+var CONFIG_FILE = "./config.yaml" // the location of the config file
 
 type Config struct {
-	Goroutines         []string `json:"goroutines"`
-	comm_params_values []int    `json:"comm_param_values"`
+	Go              []string `yaml:"go"`
+	Comm_par_values []int    `yaml:"comm_par_values"`
 }
 
-func parseConfigFile() {
-	// Open our jsonFile
+func parseConfigFile() Config {
+	// Open our yamlFile
 
-	jsonFile, err := os.Open(CONFIG_FILE)
+	yamlFile, err := os.Open(CONFIG_FILE)
 	// if we os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// defer the closing of our jsonFile so that we can parse it later on
-	defer jsonFile.Close()
+	// defer the closing of our yamlFile so that we can parse it later on
+	defer yamlFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := ioutil.ReadAll(yamlFile)
 
 	var config Config
 
-	json.Unmarshal(byteValue, &config)
+	yaml.Unmarshal(byteValue, &config)
 
-	fmt.Println(config.Goroutines)
+	fmt.Println(config)
+
+	return config
 }

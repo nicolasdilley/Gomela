@@ -68,6 +68,8 @@ type Model struct {
 	GenerateFeatures     bool // should the model print features ?
 	Current_return_label string
 	defer_counter        int
+
+	Go_names []string // function that can be used to behave as spawning goroutines
 }
 
 // Used to represent a function for recursive calls
@@ -1183,6 +1185,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		Project_name:         m.Project_name,
 		Package:              pack,
 		Name:                 m.Name,
+		Go_names:             m.Go_names,
 		Commit:               m.Commit,
 		RecFuncs:             []RecFunc{},
 		SpawningFuncs:        m.SpawningFuncs,

@@ -1,4 +1,2 @@
-{
-	"go": ["Go"],
-	"comm_par_values": [0,1,2,3]
-}
+go: ["Go"]
+comm_par_values: [0,1,2,3]

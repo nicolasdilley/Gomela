@@ -36,8 +36,9 @@ type VerificationInfo struct {
 	unused_mutex                        int
 	unused_wg                           int
 	unused_chan                         int
-	go_names                            []string
+	Go_names                            []string
 	gopath                              *string
+	Comm_par_values                     []int
 	// single_file    *string
 }
 
@@ -80,7 +81,9 @@ func main() {
 	ver.gopath = flag.String("gopath", "", "a gopath to perform package loading from")
 	flag.StringVar(&RESULTS_FOLDER, "result_folder", "result", "folder to store the result in")
 
+	flag.Parse()
 	var fold = RESULTS_FOLDER
+	fmt.Println(fold)
 	if fold[0] != '/' {
 		fold = "./" + fold
 	}
@@ -90,14 +93,15 @@ func main() {
 	os.Stderr = f
 	defer f.Close()
 
-	flag.Parse()
 	if *projects != "" {
 		PROJECTS_FOLDER = *projects
 	}
 
 	// parse the potential config file
-	parseConfigFile()
+	c := parseConfigFile()
 
+	ver.Go_names = c.Go
+	ver.Comm_par_values = c.Comm_par_values
 	switch os.Args[1] {
 	case "model": // the user wants to generate the model
 		model(ver)

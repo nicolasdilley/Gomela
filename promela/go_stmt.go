@@ -402,6 +402,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 
 	switch name := call_expr.Fun.(type) {
 	case *ast.FuncLit: // in the case we have an anonymous func call
+
 		fun_decl := &ast.FuncDecl{
 			Body: &ast.BlockStmt{List: []ast.Stmt{}},
 			Type: &ast.FuncType{
