@@ -28,7 +28,7 @@ func (s *IfStmt) Print(num_tabs int) (stmt string) {
 	comment := ""
 
 	if s.If.String() != "-" {
-		comment = " /* " + s.Model + " " + s.If.String() + " */"
+		comment = " /* " + s.Model + "\t" + s.If.String() + " */"
 	}
 
 	stmt += utils.GetTabs(num_tabs) + "if" + comment + "\n"

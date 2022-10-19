@@ -38,7 +38,7 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 	if len(bounds_to_check) == 0 {
 		bounds_to_check = []interface{}{0, 1, 3}
 	}
-	// Print CSV
+	// create CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
@@ -144,7 +144,7 @@ func VerifyModels(models []os.FileInfo, dir_name string, bounds_to_check []inter
 
 }
 
-func verifyModel(path string, model_name string, git_link string, f *os.File, comm_params []string, num_opt_params int, bound []string) (*VerificationRun, bool) {
+func verifyModel(path string, model_name string, git_link string, f *os.File, mand_comm_params []string, num_opt_params int, bound []string) (*VerificationRun, bool) {
 
 	ver := &VerificationRun{
 		Send_on_close_safety_error:    false,
@@ -163,15 +163,17 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 	command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 	command.Stdout = &output
 	command.Stderr = &err_output
+	command.Dir = filepath.Dir(path)
+
 	pre := time.Now()
 	err := command.Run()
 	after := time.Now()
 
 	ver.Spin_timing = after.Sub(pre).Milliseconds()
-	executable := parseResults(output.String(), ver)
+	executable, containsBug := parseResults(output.String(), ver)
 
 	if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
-		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
+		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(mand_comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
 		}
@@ -179,11 +181,11 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 
 		toPrint := ""
 		if err != nil && strings.Contains(err.Error(), "124") {
-			toPrint = model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
+			toPrint = model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(mand_comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
 		} else if ver.Err != "" {
-			toPrint = model_name + ",0," + ver.Err + ",,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
+			toPrint = model_name + ",0," + ver.Err + ",,,,,,,," + strconv.Itoa(len(mand_comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
 		} else {
-			toPrint = model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
+			toPrint = model_name + ",0,the model is not executable,,,,,,,," + strconv.Itoa(len(mand_comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,," + ver.Err + " : " + err_output.String()
 		}
 		if err != nil {
 			toPrint += " : " + err.Error()
@@ -208,7 +210,7 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		comm_par_info := ""
 		fmt.Println("-------------------------------")
 		fmt.Println("Result for " + model_name)
-		for i, param := range comm_params {
+		for i, param := range mand_comm_params {
 			comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
 			fmt.Println(param, " = ", bound[i])
 		}
@@ -220,6 +222,14 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 		fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 		fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
+		if containsBug {
+
+			fmt.Println("Blocked operations : ")
+			for i, op := range LinkBackToSource(path, output.String()) {
+				fmt.Println(i+1, ": \t", op)
+			}
+		}
+
 		if ver.Err != "" {
 			red := color.New(color.FgRed).SprintFunc()
 			fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -234,9 +244,18 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, co
 			fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
 			fmt.Sprintf("%t", ver.Double_unlock) + "," +
 			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
-			fmt.Sprintf("%t", ver.Panic_reached) + "," +
-			ver.Err + "," +
-			fmt.Sprint(len(comm_params)) + "," +
+			fmt.Sprintf("%t", ver.Panic_reached) + ","
+
+		if containsBug {
+
+			toPrint += fmt.Sprintln("Blocked operations : ")
+			for i, op := range LinkBackToSource(path, output.String()) {
+				toPrint += fmt.Sprintln(i+1, ": \t", op)
+			}
+		}
+
+		toPrint += ver.Err + "," +
+			fmt.Sprint(len(mand_comm_params)) + "," +
 			fmt.Sprint(num_opt_params) + "," +
 			comm_par_info + "," +
 			git_link + ",\n"
@@ -311,12 +330,14 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
 					command.Stderr = &err_output
+					command.Dir = filepath.Dir(path)
+
 					pre := time.Now()
 					err := command.Run()
 					after := time.Now()
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
-
-					executable := parseResults(output.String(), &ver)
+					spin_output := output.String()
+					executable, containsBug := parseResults(spin_output, &ver)
 					num_tests++
 					if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
 						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,,\n"
@@ -352,6 +373,14 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 						fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 						fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
+
+						if containsBug {
+
+							fmt.Println("Blocked operations : ")
+							for i, op := range LinkBackToSource(path, spin_output) {
+								fmt.Println(i+1, ": \t", op)
+							}
+						}
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
 							fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -394,6 +423,72 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 	}
 }
 
+// Find the error in the .pml file and link it back to go file
+func LinkBackToSource(path string, spin_output string) []string {
+	var output_buff bytes.Buffer
+
+	// create the command to get trace from .pml
+	command := exec.Command("spin", "-v", "-t", path)
+	command.Stdout = &output_buff
+	command.Dir = filepath.Dir(path)
+
+	command.Run()
+	output := output_buff.String()
+
+	//fmt.Println("output : ", output)
+	processes := strings.Split(output, "#processes:")
+	lines := strings.Split(processes[1], "\n")
+
+	blocked_operations := []string{}
+
+	for _, line := range lines[1:] {
+		// if not contains end state,
+		if !strings.Contains(line, "valid end state") {
+			if strings.Contains(line, "proc ") && len(strings.Split(line, " ")) == 8 {
+				if isRealProc(line) {
+					// look at lines in .pml, check if comments if yes extract .go file path and print it
+					filepath := strings.Split(line, " ")[5]
+					blocked_operations = append(blocked_operations, getGoPosFromModel(filepath))
+				}
+			}
+		}
+
+	}
+	return blocked_operations
+}
+
+func getGoPosFromModel(filepath string) string {
+	// open file
+	filename := strings.Split(filepath, ":")[0]
+	line_num, err := strconv.Atoi(strings.Split(filepath, ":")[1])
+
+	if err != nil {
+		panic(err)
+	}
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	content := strings.Split(string(data), "\n")
+
+	comment := strings.Split(content[line_num-1], "/*")[1]
+
+	operation_info := strings.Split(comment, "*/")[0]
+
+	return operation_info
+
+}
+
+func isRealProc(line string) bool {
+	proc_name := strings.Split(line, " ")[4]
+	return !strings.Contains(proc_name, "receiver") && !strings.Contains(proc_name, "init") && !isMonitor(proc_name)
+}
+
+func isMonitor(line string) bool {
+	return strings.Contains(line, "async_monitor") || strings.Contains(line, "sync_monitor") || strings.Contains(line, "wg_monitor") || strings.Contains(line, "mutex_monitor")
+}
+
 func verifyModelWithSpecificValues(model string, params []string) {
 	lines := strings.Split(model, "\n")
 	replaced := 0
@@ -433,8 +528,10 @@ func verifyModelWithSpecificValues(model string, params []string) {
 
 }
 
-func parseResults(result string, ver *VerificationRun) bool {
+func parseResults(result string, ver *VerificationRun) (executable bool, containsBug bool) {
 
+	containsBug = false
+	executable = true
 	if strings.Contains(result, "assertion violated") {
 
 		if strings.Contains(result, "wg.Counter>=0") {
@@ -454,9 +551,13 @@ func parseResults(result string, ver *VerificationRun) bool {
 			ver.Panic_reached = true
 		}
 		ver.Global_deadlock = false
+		containsBug = true
 	} else {
 		if strings.Contains(result, "errors: 0") {
 			ver.Global_deadlock = false
+			containsBug = false
+		} else {
+			containsBug = true
 		}
 		if strings.Contains(result, "too many processes") {
 			ver.Err = "too many processes"
@@ -480,7 +581,9 @@ func parseResults(result string, ver *VerificationRun) bool {
 				err = splitted[0]
 			}
 			ver.Err = err
-			return false
+			executable = false
+
+			return executable, containsBug
 		}
 
 		if strings.Contains(splitted[len(splitted)-1], "Depth=") {
@@ -503,7 +606,7 @@ func parseResults(result string, ver *VerificationRun) bool {
 		}
 	}
 
-	return true
+	return executable, containsBug
 }
 
 func generateOptBounds(num_optionnals int, bounds_to_check []interface{}) [][]interface{} {

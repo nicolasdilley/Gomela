@@ -22,7 +22,7 @@ func (s *SelectStmt) Print(num_tabs int) (stmt string) {
 	comment := ""
 
 	if s.Select.String() != "-" {
-		comment = " /* " + s.Model + " " + s.Select.String() + " */"
+		comment = " /* " + s.Model + "\t" + s.Select.String() + " */"
 	}
 	stmt = "do" + comment + "\n"
 	for _, guard := range s.Guards {

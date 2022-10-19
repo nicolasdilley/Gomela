@@ -32,7 +32,5 @@ func parseConfigFile() Config {
 
 	yaml.Unmarshal(byteValue, &config)
 
-	fmt.Println(config)
-
 	return config
 }

@@ -21,7 +21,7 @@ func (s *SendStmt) Print(num_tabs int) string {
 	comment := ""
 
 	if s.Send.String() != "-" {
-		comment = " /* " + s.Model + " " + s.Send.String() + " */"
+		comment = " /* " + s.Model + "\t" + s.Send.String() + " */"
 	}
 	return s.Chan.Print(num_tabs) + "!" + s.Rhs.Print(num_tabs) + comment
 }

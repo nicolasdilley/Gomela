@@ -137,7 +137,7 @@ func GenerateAsyncMonitor() string {
 
 // Return the Promela AST of a wg monitor proctype
 
-// proctype wgmonitor(Wgdef s) {
+// proctype wg_monitor(Wgdef s) {
 //   int num
 //   do
 //   :: s.update?num ->
@@ -154,7 +154,7 @@ func GenerateAsyncMonitor() string {
 // }
 func GenerateStructMonitor() string {
 
-	return "proctype wgMonitor(Wgdef wg) {\n" +
+	return "proctype wg_monitor(Wgdef wg) {\n" +
 		"int i;\n" +
 		"end: do\n" +
 		"	:: wg.update?i ->\n" +
@@ -174,7 +174,7 @@ func GenerateStructMonitor() string {
 
 func GenerateMutexMonitor() string {
 
-	return "proctype mutexMonitor(Mutexdef m) {\n" +
+	return "proctype mutex_monitor(Mutexdef m) {\n" +
 		"bool locked = false;\n" +
 		"end: do\n" +
 		":: true ->\n" +

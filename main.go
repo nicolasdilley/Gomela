@@ -284,10 +284,10 @@ func sanityCheckFile(ver *VerificationInfo, path string, del bool) bool {
 	if !used {
 
 		for _, line := range strings.Split(model, "\n") {
-			if strings.Contains(line, "run mutexMonitor") { // Mutex
+			if strings.Contains(line, "run mutex_monitor") { // Mutex
 				ver.unused_mutex++
 			}
-			if strings.Contains(line, "run wgMonitor") { // wg
+			if strings.Contains(line, "run wg_monitor") { // wg
 				ver.unused_wg++
 			}
 			if strings.Contains(line, "run sync_monitor") { // Chan
@@ -348,7 +348,7 @@ func commit(ver *VerificationInfo) {
 // genreate a model based on input and return the flags left
 func model(ver *VerificationInfo) []string {
 	if RESULTS_FOLDER == "result" {
-		t := time.Now().Local().Format("2006-01-02--15:04:05")
+		t := time.Now().Local().Format("2006-01-02--15d04m05y")
 		RESULTS_FOLDER += t
 	}
 

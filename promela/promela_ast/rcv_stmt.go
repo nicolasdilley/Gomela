@@ -18,7 +18,7 @@ func (s *RcvStmt) Print(num_tabs int) string {
 	comment := ""
 
 	if s.Rcv.String() != "-" {
-		comment = " /* " + s.Model + " " + s.Rcv.String() + " */"
+		comment = " /* " + s.Model + "\t" + s.Rcv.String() + " */"
 	}
 	return s.Chan.Print(num_tabs) + "?" + s.Rhs.Print(num_tabs) + comment
 }

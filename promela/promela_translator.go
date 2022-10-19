@@ -457,7 +457,7 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 
 			b.List = append(b.List,
 				&promela_ast.DeclStmt{Name: &prom_wg_name, Types: promela_types.Wgdef},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wg_monitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 		}
 	} else {
 		m.PrintFeature(Feature{
@@ -499,7 +499,7 @@ func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela
 
 			b.List = append(b.List,
 				&promela_ast.DeclStmt{Name: &name, Types: promela_types.Mutexdef},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "mutexMonitor"}, Args: []promela_ast.Expr{&name}}})
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "mutex_monitor"}, Args: []promela_ast.Expr{&name}}})
 		}
 	} else {
 		m.PrintFeature(Feature{
