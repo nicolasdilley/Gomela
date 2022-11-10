@@ -58,6 +58,9 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				switch com := comm.Comm.(type) {
 				case *ast.SendStmt: // send
 					if m.containsChan(com.Chan) {
+
+						assert := &promela_ast.AssertStmt{Model: "Send", Pos: m.Fileset.Position(s.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
+								
 						chan_name := m.getChanStruct(com.Chan)
 
 						async_send := &promela_ast.SendStmt{
@@ -74,10 +77,20 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 							},
 							Rhs: &promela_ast.Ident{Name: "false"}}
 						m.checkForBreak(body, goto_stmt)
+
+						new_body := &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert}}
+
+						for _, s := range body.List {
+							new_body.List = append(new_body.List, s)
+						}
+
+
 						async_guard := &promela_ast.GuardStmt{
 							Cond:  async_send,
 							Guard: m.Fileset.Position(comm.Pos()),
-							Body:  body}
+							Body: new_body}
+
+
 						sending_chan := &promela_ast.SelectorExpr{
 							X:   chan_name.Name,
 							Sel: &promela_ast.Ident{Name: "sending"}}
@@ -86,9 +99,10 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						sync_guard := &promela_ast.GuardStmt{
 							Cond: sync_send,
 							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-								&promela_ast.SendStmt{
+								&promela_ast.RcvStmt{
 									Chan: sending_chan,
-									Rhs:  &promela_ast.Ident{Name: "false"}}}},
+									Rhs:  &promela_ast.Ident{Name: "ok"}},
+									assert }},
 							Guard: m.Fileset.Position(s.Pos())}
 
 						sync_guard.Body.List = append(sync_guard.Body.List, body2.List...)

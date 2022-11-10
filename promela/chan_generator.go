@@ -45,20 +45,18 @@ func generateSyncChanMonitor() string {
 		"if\n" +
 		":: ch.closed ->\n" +
 		"end: if\n" +
-		"  :: ch.enq?0-> // cannot send on closed channel\n" +
-		"    assert(1 == 0)\n" +
-		"  :: ch.closing?true -> // cannot close twice a channel\n" +
-		"    assert(2 == 0)\n" +
-		"  :: ch.sending?false -> // sending state of channel (closed)\n" +
-		"    assert(1 == 0)\n" +
+		"  :: ch.enq!false-> // cannot send on closed channel\n" +
+		"  :: ch.closing!true -> // cannot close twice a channel\n" +
+		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
+		// "    assert(1 == 0)\n" +
 		"  :: ch.rcving?false;\n" +
 		"  :: ch.sync!true; // can always receive on a closed chan\n" +
 		"  fi;\n" +
 		":: else -> \n" +
 		"end1: if\n" +
 		"    :: ch.rcving?false ->\n " +
-		"      ch.sending?false;\n" +
-		"    :: ch.closing?true ->\n" +
+		"      ch.sending!false;\n" +
+		"    :: ch.closing!true ->\n" +
 		"      ch.closed = true\n" +
 		"    fi;\n" +
 		"fi;\n" +
@@ -76,25 +74,25 @@ func GenerateAsyncMonitor() string {
 		"end: if\n" +
 		"  :: ch.num_msgs > 0 -> // cannot send on closed channel\n" +
 		"    end4: if\n" +
-		"    :: ch.enq?0-> // cannot send on closed channel\n" +
-		"      assert(1 == 0)\n" +
-		"    :: ch.closing?true -> // cannot close twice a channel\n" +
-		"      assert(2 == 0)\n" +
+		"    :: ch.enq!false-> // cannot send on closed channel\n" +
+		//"      assert(1 == 0)\n" +
+		"    :: ch.closing!false -> // cannot close twice a channel\n" +
+		//"      assert(2 == 0)\n" +
 		"    :: ch.rcving?false;\n" +
-		"    :: ch.sending?false -> // sending state of channel (closed)\n" +
-		"      assert(1 == 0)\n" +
+		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
+		//"      assert(1 == 0)\n" +
 		"    :: ch.deq!true,ch.num_msgs -> \n" +
 		"  		 ch.num_msgs = ch.num_msgs - 1\n" +
 		"    fi;\n" +
 		"  :: else ->" +
 		"    end5: if\n" +
-		"    :: ch.enq?0-> // cannot send on closed channel\n" +
-		"      assert(1 == 0)\n" +
-		"    :: ch.closing?true -> // cannot close twice a channel\n" +
-		"      assert(2 == 0)\n" +
+		"    :: ch.enq!false-> // cannot send on closed channel\n" +
+		//"      assert(1 == 0)\n" +
+		"    :: ch.closing!true -> // cannot close twice a channel\n" +
+		//"      assert(2 == 0)\n" +
 		"    :: ch.rcving?false;\n" +
-		"    :: ch.sending?false -> // sending state of channel (closed)\n" +
-		"      assert(1 == 0)\n" +
+		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
+		//"      assert(1 == 0)\n" +
 		"    :: ch.sync!true; \n" +
 		"    fi;\n" +
 		"  fi;\n" +
@@ -159,12 +157,12 @@ func GenerateStructMonitor() string {
 		"end: do\n" +
 		"	:: wg.update?i ->\n" +
 		"		wg.Counter = wg.Counter + i;\n" +
-		"		assert(wg.Counter >= 0)\n" +
+		"		wg.update_ack!(wg.Counter >= 0)\n" +
 		"	:: wg.Counter == 0 ->\n" +
 		"end1: if\n" +
 		"		:: wg.update?i ->\n" +
 		"			wg.Counter = wg.Counter + i;\n" +
-		"			assert(wg.Counter >= 0)\n" +
+		"			wg.update_ack!(wg.Counter >= 0)\n" +
 		"		:: wg.wait!0;\n" +
 		"	fi\n" +
 		"od\n" +
@@ -181,23 +179,21 @@ func GenerateMutexMonitor() string {
 		"	if\n" +
 		"	:: m.Counter > 0 ->\n" +
 		"		if \n" +
-		"		:: m.RUnlock?false -> \n" +
+		"		:: m.RUnlock!true -> \n" +
 		"			m.Counter = m.Counter - 1;\n" +
-		"		:: m.RLock?false -> \n" +
+		"		:: m.RLock!true -> \n" +
 		"			m.Counter = m.Counter + 1;\n" +
 		"		fi;\n" +
 		"	:: locked ->\n" +
-		"		m.Unlock?false;\n" +
+		"		m.Unlock!true;\n" +
 		"		locked = false;\n" +
 		"	:: else ->" +
 		"	 end1:	if\n" +
-		"		:: m.Unlock?false ->\n" +
-		"			assert(0==32);" +
-		"		:: m.Lock?false ->\n" +
+		"		:: m.Unlock!false ->\n" +
+		"		:: m.Lock!true ->\n" +
 		"			locked =true;\n" +
-		"		:: m.RUnlock?false ->\n" +
-		"			assert(0==32);" +
-		"		:: m.RLock?false ->\n" +
+		"		:: m.RUnlock!false ->\n" +
+		"		:: m.RLock!true ->\n" +
 		"			m.Counter = m.Counter + 1;\n" +
 		"		fi;\n" +
 		"	fi;\n" +

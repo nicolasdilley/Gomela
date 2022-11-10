@@ -42,6 +42,7 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 	p.Body.List = append([]Stmt{decl, state, num_msgs}, p.Body.List...)
 	stmt += ") {\n"
 	stmt += "\tbool closed; \n"
+	stmt += "\tbool ok; \n"
 	stmt += p.Body.Print(num_tabs + 1)
 	stmt += "\n}\n"
 

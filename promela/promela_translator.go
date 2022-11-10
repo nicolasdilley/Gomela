@@ -656,25 +656,28 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 		switch name := expr.Fun.(type) {
 		case *ast.Ident:
 			if name.Name == "close" && len(expr.Args) == 1 { // closing a chan
-				send := &promela_ast.SendStmt{Send: m.Fileset.Position(name.Pos())}
+				rcv := &promela_ast.RcvStmt{Model: "Close", Rcv: m.Fileset.Position(name.Pos())}
 
 				if m.containsChan(expr.Args[0]) {
 
 					chan_name := m.getChanStruct(expr.Args[0])
 
-					send.Chan = &promela_ast.SelectorExpr{
+					rcv.Chan = &promela_ast.SelectorExpr{
 						X: chan_name.Name, Sel: &promela_ast.Ident{Name: "closing"},
 						Pos: m.Fileset.Position(expr.Args[0].Pos()),
 					}
-					send.Rhs = &promela_ast.Ident{Name: "true"}
+					rcv.Rhs = &promela_ast.Ident{Name: "closed"}
 					m.Chan_closing = true
-					stmts.List = append(stmts.List, send)
+
+					assert := &promela_ast.AssertStmt{Model: "Close",Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
+					stmts.List = append(stmts.List, rcv,assert)
 				} else {
 					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
 				}
 			} else if name.Name == "panic" && len(expr.Args) == 1 { // panic call
 				stmts.List = append(stmts.List, &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
 			} else {
+
 				call, err1 := m.TranslateCallExpr(expr)
 				if err1 != nil {
 					err = err1

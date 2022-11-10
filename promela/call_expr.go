@@ -56,6 +56,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			return m.parseWgFunc(call_expr, name)
 		}
 
+		// Add here ifNotify() -> parseNotifyFunc()
+
 	case *ast.FuncLit:
 		panic("Promela_translator.go : Should not have a funclit here")
 	}
@@ -80,6 +82,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 
 		if err1 != nil {
+
 			return stmts, err1
 		}
 		params, args, hasChan, known, err2 := m.translateParams(new_mod, decl, new_call_expr, false)
@@ -88,6 +91,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 		if err2 != nil {
 			return stmts, err2
 		}
+
 		if hasChan && known {
 			return m.translateCommParams(new_mod, false, new_call_expr, func_name, decl, params, args, false)
 		} else {
@@ -96,8 +100,8 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 				switch ident := name.X.(type) {
 				case *ast.Ident:
 					if ident.Name == "signal" {
-						if name.Sel.Name == "Notify" {
 
+						if name.Sel.Name == "Notify" {
 							// Send guard
 							if m.containsChan(new_call_expr.Args[0]) {
 
@@ -107,29 +111,33 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 									Chan: &promela_ast.SelectorExpr{
 										X:   chan_name.Name,
 										Sel: &promela_ast.Ident{Name: "sync"}},
-									Rhs: &promela_ast.Ident{Name: "false,0"},
+									Rhs: &promela_ast.Ident{Name: "false"},
 								}
-								async_send := &promela_ast.SendStmt{
+								assert := &promela_ast.AssertStmt{Model: "Notify", Pos: m.Fileset.Position(new_call_expr.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
+								
+								async_send := &promela_ast.RcvStmt{
 									Chan: &promela_ast.SelectorExpr{
 										X:   chan_name.Name,
 										Sel: &promela_ast.Ident{Name: "enq"}},
-									Rhs: &promela_ast.Ident{Name: "0"},
+									Rhs: &promela_ast.Ident{Name: "ok"},
 								}
 
 								sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
-
+					
 								sync_guard := &promela_ast.GuardStmt{
 									Cond: sync_send,
 									Body: &promela_ast.BlockStmt{
 										List: []promela_ast.Stmt{
-											&promela_ast.SendStmt{
+											&promela_ast.RcvStmt{
 												Chan: sending_chan,
-												Rhs:  &promela_ast.Ident{Name: "false"}},
+												Rhs:  &promela_ast.Ident{Name: "ok"}},
 											&promela_ast.Ident{Name: "break"},
+											assert,
 										},
 									},
 									Guard: m.Fileset.Position(new_call_expr.Pos())}
-								async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(new_call_expr.Pos())}
+								async_guard := &promela_ast.GuardStmt{
+									Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert,&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(new_call_expr.Pos())}
 
 								// true guard
 								true_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
@@ -213,64 +221,6 @@ func getPackName(sel ast.Expr) *ast.Ident {
 	}
 
 	return name
-}
-func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
-	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	if name.Sel.Name == "Add" {
-
-		ub, err1 := m.lookUp(call_expr.Args[0], ADD_BOUND, m.For_counter.In_for)
-
-		if err1 != nil {
-			err = err1
-		}
-
-		if m.For_counter.In_for {
-			m.PrintFeature(Feature{
-				Proj_name: m.Project_name,
-				Model:     m.Name,
-				Fun:       m.Fun.Name.String(),
-				Name:      "Add in for",
-				Mandatory: "true",
-				Line:      m.Fileset.Position(name.Pos()).Line,
-				Info:      "",
-				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(name.Pos()).Filename,
-			})
-		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{
-			Send:  m.Fileset.Position(name.Pos()),
-			Model: "Add(" + ub.Name + ")",
-			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
-			Rhs:   ub})
-
-	} else if name.Sel.Name == "Done" {
-		if m.For_counter.In_for {
-			m.PrintFeature(Feature{
-				Proj_name: m.Project_name,
-				Model:     m.Name,
-				Fun:       m.Fun.Name.String(),
-				Name:      "Done in for",
-				Mandatory: "false",
-				Line:      m.Fileset.Position(name.Pos()).Line,
-				Info:      "",
-				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(name.Pos()).Filename,
-			})
-		}
-		stmts.List = append(stmts.List, &promela_ast.SendStmt{
-			Send:  m.Fileset.Position(name.Pos()),
-			Model: "Done",
-			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
-			Rhs:   &promela_ast.Ident{Name: "-1"}})
-	} else if name.Sel.Name == "Wait" {
-		stmts.List = append(stmts.List, &promela_ast.RcvStmt{
-			Rcv:   m.Fileset.Position(name.Pos()),
-			Model: "Wait",
-			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"},
-			Rhs:   &promela_ast.Ident{Name: "0"}})
-	}
-
-	return stmts, err
 }
 
 func (m *Model) IsGoroutine(expr *ast.CallExpr) bool {
