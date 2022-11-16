@@ -218,6 +218,15 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 									}
 								}
 							}
+
+							if sel.Sel.Name == "Mutex" {
+								switch sel := sel.X.(type) {
+								case *ast.Ident:
+									if sel.Name == "sync" {
+										contains_chan = true
+									}
+								}
+							}
 						}
 					}
 				}
@@ -228,7 +237,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
 						new_model.RecFuncs = m.RecFuncs
-						// new_model.AddRecFunc(pack, fun) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 						params_1, err1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 						if err1 != nil {
