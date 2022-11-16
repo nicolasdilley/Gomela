@@ -23,7 +23,8 @@ type VerificationRun struct {
 	Negative_counter_safety_error bool   // is there any safety errors
 	Double_unlock                 bool   // is there a double lock ?
 	Global_deadlock               bool   // is there any global deadlock
-	Panic_reached                 bool   // is there any global deadlock
+	Safety_error                  bool   // Is there a safety errors in the model?
+	Panic_reached                 bool   // has a panic() been reached
 	Num_states                    int    // the number of states in the model
 	Timeout                       bool   // Has the verification timedout
 	Err                           string // if there is another error
@@ -171,8 +172,9 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, ma
 
 	ver.Spin_timing = after.Sub(pre).Milliseconds()
 	executable, containsBug := parseResults(output.String(), ver)
+	spin_output := output.String()
 
-	if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
+	if (spin_output == "" && err_output.String() == "" && err == nil) || ver.Timeout {
 		toPrint := model_name + ",0,timeout,timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(mand_comm_params)) + "," + strconv.Itoa(num_opt_params) + ",,,\n"
 		if _, err := f.WriteString(toPrint); err != nil {
 			panic(err)
@@ -214,6 +216,13 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, ma
 			comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
 			fmt.Println(param, " = ", bound[i])
 		}
+
+		sources := []string{}
+
+		if containsBug {
+			sources = LinkBackToSource(ver, path, spin_output)
+		}
+
 		fmt.Println("Number of states : ", ver.Num_states)
 		fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
 		fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
@@ -222,11 +231,17 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, ma
 		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
 		fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 		fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
-		if containsBug {
 
-			fmt.Println("Blocked operations : ")
-			for i, op := range LinkBackToSource(path, output.String()) {
-				fmt.Println(i+1, ": \t", op)
+		if ver.Global_deadlock {
+			fmt.Println("Blocked operations:")
+
+			for _, source := range sources {
+				fmt.Println(source)
+			}
+		} else if ver.Safety_error {
+			fmt.Println("Safety errors:")
+			for _, source := range sources {
+				fmt.Println(source)
 			}
 		}
 
@@ -245,14 +260,6 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, ma
 			fmt.Sprintf("%t", ver.Double_unlock) + "," +
 			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
 			fmt.Sprintf("%t", ver.Panic_reached) + ","
-
-		if containsBug {
-
-			toPrint += fmt.Sprintln("Blocked operations : ")
-			for i, op := range LinkBackToSource(path, output.String()) {
-				toPrint += fmt.Sprintln(i+1, ": \t", op)
-			}
-		}
 
 		toPrint += ver.Err + "," +
 			fmt.Sprint(len(mand_comm_params)) + "," +
@@ -316,7 +323,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					os.Remove(path)
 					ioutil.WriteFile(path, []byte(toPrint), 0644) // rewrite new model with updated bounds
 
-					ver := VerificationRun{
+					ver := &VerificationRun{
 						Send_on_close_safety_error:    false,
 						Close_safety_error:            false,
 						Negative_counter_safety_error: false,
@@ -337,7 +344,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 					after := time.Now()
 					ver.Spin_timing = after.Sub(pre).Milliseconds()
 					spin_output := output.String()
-					executable, containsBug := parseResults(spin_output, &ver)
+					executable, containsBug := parseResults(spin_output, ver)
 					num_tests++
 					if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
 						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,,\n"
@@ -356,6 +363,13 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 							panic(err)
 						}
 					} else {
+
+						sources := []string{}
+
+						if containsBug {
+							sources = LinkBackToSource(ver, path, spin_output)
+						}
+
 						comm_par_info := ""
 						fmt.Println("-------------------------------")
 						fmt.Println("Result for " + model_name + " with optional params")
@@ -374,13 +388,19 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
 						fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 
-						if containsBug {
+						if ver.Global_deadlock {
+							fmt.Println("Blocked operations:")
 
-							fmt.Println("Blocked operations : ")
-							for i, op := range LinkBackToSource(path, spin_output) {
-								fmt.Println(i+1, ": \t", op)
+							for _, source := range sources {
+								fmt.Println(source)
+							}
+						} else if ver.Safety_error {
+							fmt.Println("Safety errors:")
+							for _, source := range sources {
+								fmt.Println(source)
 							}
 						}
+
 						if ver.Err != "" {
 							red := color.New(color.FgRed).SprintFunc()
 							fmt.Printf("Error : %s.\n", red(ver.Err))
@@ -407,7 +427,7 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						}
 
 						// add if there is no bug to false alarm bounds
-						if !ver.Global_deadlock {
+						if !ver.Global_deadlock && !ver.Safety_error {
 							false_alarm_bounds = append(false_alarm_bounds, opt_bound)
 						}
 					}
@@ -424,7 +444,8 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 }
 
 // Find the error in the .pml file and link it back to go file
-func LinkBackToSource(path string, spin_output string) []string {
+func LinkBackToSource(ver *VerificationRun, path string, spin_output string) []string {
+
 	var output_buff bytes.Buffer
 
 	// create the command to get trace from .pml
@@ -435,6 +456,26 @@ func LinkBackToSource(path string, spin_output string) []string {
 	command.Run()
 	output := output_buff.String()
 
+	bugs_pos := []string{}
+
+	if ver.Global_deadlock {
+		// finding global deadlocks (via processes not reaching end states)
+
+		for i, op := range findBlockedProc(path, output) {
+			bugs_pos = append(bugs_pos, fmt.Sprint(i+1, ": \t", op))
+		}
+	} else if ver.Safety_error {
+		// Finding safety errors (via violations of assertions)
+		bugs_pos = append(bugs_pos, fmt.Sprintln("1 : \t", findSafetyError(ver, path, output)))
+
+	} else {
+		panic("verify.go -> containsBugs but neither a GD nor a SE")
+	}
+
+	return bugs_pos
+}
+
+func findBlockedProc(path string, output string) []string {
 	//fmt.Println("output : ", output)
 	processes := strings.Split(output, "#processes:")
 	lines := strings.Split(processes[1], "\n")
@@ -455,6 +496,35 @@ func LinkBackToSource(path string, spin_output string) []string {
 
 	}
 	return blocked_operations
+}
+func findSafetyError(ver *VerificationRun, path string, output string) string {
+	//fmt.Println("output : ", output)
+	splitted := strings.Split(output, "text of failed assertion") // Find the assertion violated
+
+	lines := strings.Split(splitted[1], "\n")
+
+	assertion_line := lines[1]
+	// look at lines in .pml, check if comments if yes extract .go file path and print it
+	filepath := strings.Split(assertion_line, " ")[5]
+
+	pos := getGoPosFromModel(filepath)
+
+	if strings.Contains(pos, "Send") {
+		ver.Send_on_close_safety_error = true
+	}
+
+	if strings.Contains(pos, "Unlock") {
+		ver.Double_unlock = true
+	}
+
+	if strings.Contains(pos, "Close") {
+		ver.Close_safety_error = true
+	}
+	if strings.Contains(pos, "Add") {
+		ver.Negative_counter_safety_error = true
+	}
+
+	return pos
 }
 
 func getGoPosFromModel(filepath string) string {
@@ -534,22 +604,25 @@ func parseResults(result string, ver *VerificationRun) (executable bool, contain
 	executable = true
 	if strings.Contains(result, "assertion violated") {
 
-		if strings.Contains(result, "wg.Counter>=0") {
-			ver.Negative_counter_safety_error = true
-		}
+		// if strings.Contains(result, "wg.Counter>=0") {
+		// ver.Negative_counter_safety_error = true
+		// }
 
-		if strings.Contains(result, "(1==0)") {
-			ver.Send_on_close_safety_error = true
-		}
-		if strings.Contains(result, "(0==32)") {
-			ver.Double_unlock = true
-		}
-		if strings.Contains(result, "(2==0)") {
-			ver.Close_safety_error = true
-		}
+		// if strings.Contains(result, "(1==0)") {
+		// ver.Send_on_close_safety_error = true
+		// }
+		// if strings.Contains(result, "(0==32)") {
+		// ver.Double_unlock = true
+		// }
+		// if strings.Contains(result, "(2==0)") {
+		// ver.Close_safety_error = true
+		// }
 		if strings.Contains(result, "(20==0)") {
 			ver.Panic_reached = true
+		} else {
+			ver.Safety_error = true
 		}
+
 		ver.Global_deadlock = false
 		containsBug = true
 	} else {
@@ -567,6 +640,7 @@ func parseResults(result string, ver *VerificationRun) (executable bool, contain
 			ver.Send_on_close_safety_error = false
 			ver.Double_unlock = false
 			ver.Panic_reached = false
+			containsBug = false
 		}
 
 		// Calculates the number of states
@@ -582,6 +656,7 @@ func parseResults(result string, ver *VerificationRun) (executable bool, contain
 			}
 			ver.Err = err
 			executable = false
+			containsBug = false
 
 			return executable, containsBug
 		}
@@ -589,6 +664,7 @@ func parseResults(result string, ver *VerificationRun) (executable bool, contain
 		if strings.Contains(splitted[len(splitted)-1], "Depth=") {
 			// Its a timeout
 			ver.Timeout = true
+
 		}
 		for _, line := range splitted {
 			if strings.Contains(line, "states, stored") {

@@ -47,7 +47,7 @@ func generateSyncChanMonitor() string {
 		"end: if\n" +
 		"  :: ch.enq!false-> // cannot send on closed channel\n" +
 		"  :: ch.closing!true -> // cannot close twice a channel\n" +
-		"  :: ch.sending!true -> // sending state of channel (closed)\n" +
+		"  :: ch.sending!false -> // sending state of channel (closed)\n" +
 		// "    assert(1 == 0)\n" +
 		"  :: ch.rcving?false;\n" +
 		"  :: ch.sync!true; // can always receive on a closed chan\n" +
@@ -55,8 +55,8 @@ func generateSyncChanMonitor() string {
 		":: else -> \n" +
 		"end1: if\n" +
 		"    :: ch.rcving?false ->\n " +
-		"      ch.sending!false;\n" +
-		"    :: ch.closing!true ->\n" +
+		"      ch.sending!true;\n" +
+		"    :: ch.closing!false ->\n" +
 		"      ch.closed = true\n" +
 		"    fi;\n" +
 		"fi;\n" +
@@ -76,7 +76,7 @@ func GenerateAsyncMonitor() string {
 		"    end4: if\n" +
 		"    :: ch.enq!false-> // cannot send on closed channel\n" +
 		//"      assert(1 == 0)\n" +
-		"    :: ch.closing!false -> // cannot close twice a channel\n" +
+		"    :: ch.closing!true -> // cannot close twice a channel\n" +
 		//"      assert(2 == 0)\n" +
 		"    :: ch.rcving?false;\n" +
 		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
@@ -102,7 +102,7 @@ func GenerateAsyncMonitor() string {
 		"		end1: if\n" +
 		"		  :: ch.deq!false,ch.num_msgs ->\n" +
 		"		    ch.num_msgs = ch.num_msgs - 1\n" +
-		"		  :: ch.closing?true -> // closing the channel\n" +
+		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		    ch.closed = true\n" +
 		"		   :: ch.rcving?false ->\n " +
 		"		    ch.sending?false;\n" +
@@ -111,7 +111,7 @@ func GenerateAsyncMonitor() string {
 		"end2:		if\n" +
 		"		:: ch.enq?0 -> // a message has been received\n" +
 		"			ch.num_msgs = ch.num_msgs + 1\n" +
-		"		:: ch.closing?true -> // closing the channel\n" +
+		"		:: ch.closing!false -> // closing the channel\n" +
 		"			ch.closed = true\n" +
 		"		:: ch.rcving?false ->\n " +
 		"		    ch.sending?false;\n" +
@@ -122,7 +122,7 @@ func GenerateAsyncMonitor() string {
 		"		     ch.num_msgs = ch.num_msgs + 1\n" +
 		"		  :: ch.deq!false,ch.num_msgs\n" +
 		"		     ch.num_msgs = ch.num_msgs - 1\n" +
-		"		  :: ch.closing?true -> // closing the channel\n" +
+		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		     ch.closed = true\n" +
 		"		  :: ch.rcving?false ->\n " +
 		"		    ch.sending?false;\n" +

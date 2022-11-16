@@ -17,7 +17,7 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "sync"}},
-			Rhs: &promela_ast.Ident{Name: "false"},
+			Rhs: &promela_ast.Ident{Name: "true"},
 			//Send: m.Fileset.Position(s.Pos())
 		}
 		async_send := &promela_ast.RcvStmt{
@@ -38,7 +38,7 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 				&promela_ast.RcvStmt{
 					Chan: sending_chan,
 					Rhs:  &promela_ast.Ident{Name: "ok"}},
-					assert}},
+				assert}},
 			Guard: m.Fileset.Position(s.Pos())}
 		async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert}}, Guard: m.Fileset.Position(s.Pos())}
 		if_stmt := &promela_ast.IfStmt{
