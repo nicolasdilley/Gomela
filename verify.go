@@ -233,13 +233,17 @@ func verifyModel(path string, model_name string, git_link string, f *os.File, ma
 		fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 
 		if ver.Global_deadlock {
-			fmt.Println("Blocked operations:")
-
+			fmt.Println("Blocked operations :")
 			for _, source := range sources {
 				fmt.Println(source)
 			}
 		} else if ver.Safety_error {
 			fmt.Println("Safety errors:")
+			for _, source := range sources {
+				fmt.Println(source)
+			}
+		} else if ver.Panic_reached {
+			fmt.Println("Panic reached:")
 			for _, source := range sources {
 				fmt.Println(source)
 			}
@@ -389,13 +393,18 @@ func verifyWithOptParams(ver *VerificationRun, path string, model_name string, l
 						fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 
 						if ver.Global_deadlock {
-							fmt.Println("Blocked operations:")
+							fmt.Println("Blocked operations :")
 
 							for _, source := range sources {
 								fmt.Println(source)
 							}
 						} else if ver.Safety_error {
 							fmt.Println("Safety errors:")
+							for _, source := range sources {
+								fmt.Println(source)
+							}
+						} else if ver.Panic_reached {
+							fmt.Println("Panic reached: ")
 							for _, source := range sources {
 								fmt.Println(source)
 							}
@@ -468,15 +477,14 @@ func LinkBackToSource(ver *VerificationRun, path string, spin_output string) []s
 		// Finding safety errors (via violations of assertions)
 		bugs_pos = append(bugs_pos, fmt.Sprintln("1 : \t", findSafetyError(ver, path, output)))
 
-	} else {
-		panic("verify.go -> containsBugs but neither a GD nor a SE")
+	} else if ver.Panic_reached {
+		bugs_pos = append(bugs_pos, fmt.Sprintln("1 : \t", findSafetyError(ver, path, output)))
 	}
 
 	return bugs_pos
 }
 
 func findBlockedProc(path string, output string) []string {
-	//fmt.Println("output : ", output)
 	processes := strings.Split(output, "#processes:")
 	lines := strings.Split(processes[1], "\n")
 
@@ -485,10 +493,10 @@ func findBlockedProc(path string, output string) []string {
 	for _, line := range lines[1:] {
 		// if not contains end state,
 		if !strings.Contains(line, "valid end state") {
-			if strings.Contains(line, "proc ") && len(strings.Split(line, " ")) == 8 {
-				if isRealProc(line) {
+			if strings.Contains(line, "proc") && len(strings.Split(line, " ")) >= 8 {
+				if isRealProc(line, len(strings.Split(line, " "))) {
 					// look at lines in .pml, check if comments if yes extract .go file path and print it
-					filepath := strings.Split(line, " ")[5]
+					filepath := strings.Split(line, " ")[len(strings.Split(line, " "))-3]
 					blocked_operations = append(blocked_operations, getGoPosFromModel(filepath))
 				}
 			}
@@ -505,7 +513,7 @@ func findSafetyError(ver *VerificationRun, path string, output string) string {
 
 	assertion_line := lines[1]
 	// look at lines in .pml, check if comments if yes extract .go file path and print it
-	filepath := strings.Split(assertion_line, " ")[5]
+	filepath := strings.Split(assertion_line, " ")[len(strings.Split(assertion_line, " "))-3]
 
 	pos := getGoPosFromModel(filepath)
 
@@ -522,6 +530,10 @@ func findSafetyError(ver *VerificationRun, path string, output string) string {
 	}
 	if strings.Contains(pos, "Add") {
 		ver.Negative_counter_safety_error = true
+	}
+
+	if strings.Contains(pos, "Panic") {
+		ver.Panic_reached = true
 	}
 
 	return pos
@@ -550,8 +562,8 @@ func getGoPosFromModel(filepath string) string {
 
 }
 
-func isRealProc(line string) bool {
-	proc_name := strings.Split(line, " ")[4]
+func isRealProc(line string, length int) bool {
+	proc_name := strings.Split(line, " ")[length-4]
 	return !strings.Contains(proc_name, "receiver") && !strings.Contains(proc_name, "init") && !isMonitor(proc_name)
 }
 

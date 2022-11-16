@@ -5,9 +5,10 @@ import (
 )
 
 type CallExpr struct {
-	Fun  *Ident
-	Call token.Position
-	Args []Expr
+	Fun   *Ident
+	Call  token.Position
+	Args  []Expr
+	Model string
 }
 
 func (c *CallExpr) GoNode() token.Position {
@@ -23,7 +24,11 @@ func (c *CallExpr) Print(num_tabs int) (stmt string) {
 		}
 	}
 	stmt += ")"
-	return stmt
+	comment := ""
+	if c.Model != "" {
+		comment = " /* " + c.Model + "\t" + c.Call.String() + " */"
+	}
+	return stmt + comment
 }
 
 func (s *CallExpr) Clone() Stmt {

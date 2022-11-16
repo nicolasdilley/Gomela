@@ -669,13 +669,13 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 					rcv.Rhs = &promela_ast.Ident{Name: "closed"}
 					m.Chan_closing = true
 
-					assert := &promela_ast.AssertStmt{Model: "Close",Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
-					stmts.List = append(stmts.List, rcv,assert)
+					assert := &promela_ast.AssertStmt{Model: "Close", Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
+					stmts.List = append(stmts.List, rcv, assert)
 				} else {
 					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
 				}
 			} else if name.Name == "panic" && len(expr.Args) == 1 { // panic call
-				stmts.List = append(stmts.List, &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
+				stmts.List = append(stmts.List, &promela_ast.CallExpr{Call: m.Fileset.Position(expr.Pos()), Model: "Panic", Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
 			} else {
 
 				call, err1 := m.TranslateCallExpr(expr)

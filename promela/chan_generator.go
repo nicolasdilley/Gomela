@@ -105,27 +105,27 @@ func GenerateAsyncMonitor() string {
 		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		    ch.closed = true\n" +
 		"		   :: ch.rcving?false ->\n " +
-		"		    ch.sending?false;\n" +
+		"		    ch.sending!true;\n" +
 		"		fi;\n" +
 		"	:: ch.num_msgs == 0 -> \n" +
 		"end2:		if\n" +
-		"		:: ch.enq?0 -> // a message has been received\n" +
+		"		:: ch.enq!true -> // a message has been received\n" +
 		"			ch.num_msgs = ch.num_msgs + 1\n" +
 		"		:: ch.closing!false -> // closing the channel\n" +
 		"			ch.closed = true\n" +
 		"		:: ch.rcving?false ->\n " +
-		"		    ch.sending?false;\n" +
+		"		    ch.sending!true;\n" +
 		"		fi;\n" +
 		"		:: else -> \n" +
 		"		end3: if\n" +
-		"		  :: ch.enq?0->\n" +
+		"		  :: ch.enq!true->\n" +
 		"		     ch.num_msgs = ch.num_msgs + 1\n" +
 		"		  :: ch.deq!false,ch.num_msgs\n" +
 		"		     ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		     ch.closed = true\n" +
 		"		  :: ch.rcving?false ->\n " +
-		"		    ch.sending?false;\n" +
+		"		    ch.sending!true;\n" +
 		"		fi;\n" +
 		"	fi;\n" +
 		"fi;\n" +
