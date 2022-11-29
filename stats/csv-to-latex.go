@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -52,15 +53,15 @@ type ModelScore struct {
 
 func Stats() {
 
-	if len(os.Args) > 2 {
+	if len(flag.Args()) > 1 {
 
 		// pass bound.csv as first arg and features.csv as second arg
 
-		if !strings.HasSuffix(os.Args[2], ".csv") {
+		if !strings.HasSuffix(flag.Args()[1], ".csv") {
 			fmt.Println("please provide a .csv file")
 			return
 		}
-		data, _ := ioutil.ReadFile(os.Args[2])
+		data, _ := ioutil.ReadFile(flag.Args()[1])
 		features := strings.Split(string(data[:len(data)-1]), "\n")
 
 		features_map := make(map[string][]string)
@@ -622,12 +623,12 @@ func parseFeature(features_map map[string][]string) {
 func parseVerificationResults() {
 
 	fmt.Println("**** Result from verification.csv ****")
-	if len(os.Args) > 4 {
-		if !strings.HasSuffix(os.Args[4], ".csv") {
+	if len(flag.Args()) > 3 {
+		if !strings.HasSuffix(flag.Args()[3], ".csv") {
 			fmt.Println("please provide a .csv file for the list of verification.csv")
 			return
 		}
-		data, _ := ioutil.ReadFile(os.Args[4])
+		data, _ := ioutil.ReadFile(flag.Args()[3])
 		verification := strings.Split(string(data[:len(data)-1]), "\n")
 		verification_map := make(map[string][]string)
 
@@ -1198,13 +1199,13 @@ func (p *ProjectList) addPackage(project_name, package_name string, model_name s
 
 func unparsedProjects(models map[string]bool) {
 
-	if len(os.Args) > 3 {
+	if len(flag.Args()) > 2 {
 		// The projects.txt list has been given
-		if !strings.HasSuffix(os.Args[3], ".csv") {
+		if !strings.HasSuffix(flag.Args()[2], ".csv") {
 			fmt.Println("please provide a .csv file for the list of projects")
 			return
 		}
-		data, _ := ioutil.ReadFile(os.Args[3])
+		data, _ := ioutil.ReadFile(flag.Args()[2])
 		projects := strings.Split(string(data[:len(data)-1]), "\n")
 		unparsed_project := []string{}
 

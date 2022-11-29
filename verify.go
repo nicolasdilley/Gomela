@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -649,7 +650,7 @@ func verifyModelWithSpecificValues(model string, params []string) {
 	// generate new model
 	ioutil.WriteFile("./temp.pml", []byte(toPrint), 0664)
 	// verify it
-	verifyModel("./temp.pml", os.Args[2], "", nil, []string{}, 0, params)
+	verifyModel("./temp.pml", flag.Args()[1], "", nil, []string{}, 0, params)
 	// delete it
 	os.Remove("./temp.pml")
 
