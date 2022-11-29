@@ -28,7 +28,6 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 
 	stmts1, err2 := m.TranslateExpr(s.Cond)
 	// add the condition if it contains comm param
-
 	cond, contains_comm_param := m.translateIfCond(s.Cond)
 
 	// if contains_comm_param add the cond to the modelled if statement
@@ -165,10 +164,17 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 	return
 }
 
+// traverse the ast and see that all are known (if leaf then either comm par or literal)
+
+// then traverse again and translate
+
 func (m *Model) translateIfCond(expr ast.Expr) (promela_ast.Expr, bool) {
 	prom_expr := &promela_ast.BinaryExpr{}
 
+	// ast.Inspect() etc
 	switch expr := expr.(type) {
+	case *ast.Ident, *ast.SelectorExpr:
+
 	case *ast.BinaryExpr:
 		lhs, ident := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: m.getIdent(expr.X).Name}})
 		lit, err := strconv.Atoi(m.getIdent(expr.X).Name)

@@ -22,6 +22,8 @@ type CommPar struct {
 }
 
 // Return the parameters that are mandatory and optional
+// Mutates len(a) => a
+
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, *ParseError) {
 
 	params := []*CommPar{}
