@@ -39,7 +39,8 @@ type VerificationInfo struct {
 	Go_names                            []string
 	gopath                              *string
 	Comm_par_values                     []int
-	print_trace                         *bool
+	print_trace                         bool
+	spin_output                         *string
 	// single_file    *string
 }
 
@@ -70,21 +71,23 @@ func main() {
 	// os.Stderr = f
 	// defer f.Close()
 
-	ver := &VerificationInfo{}
+	ver := &VerificationInfo{
+		print_trace: false,
+	}
 
 	projects := flag.String("p", "", "a folder that contains all the projects.")
 
 	ver.multi_list = flag.String("l", "", "a .csv is also given as args and contains a list of github.com projects with their commits to parse.")
 	ver.multi_projects = flag.String("mp", "", "Recursively loop through the folder given and parse all folder that contains a go file.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
-	print_trace := flag.Bool("pt", false, "Specifies that the trace returned by spin needs to be printed.")
+	ver.spin_output = flag.String("pt", "", "Specifies the file where the trace returned by spin is to be printed.")
 
 	ver.gopath = flag.String("gopath", "", "a gopath to perform package loading from")
 	flag.StringVar(&RESULTS_FOLDER, "result_folder", "result", "folder to store the result in")
 	flag.Parse()
 
-	if *print_trace {
-		fmt.Println("Print trace !")
+	if *ver.spin_output != "" {
+		ver.print_trace = true
 	}
 	var fold = RESULTS_FOLDER
 	fmt.Println(fold)
@@ -128,7 +131,7 @@ func main() {
 			if len(flag.Args())-2-mand_params-opt_params != 0 {
 				panic("Please provide a value for each comm parameter in the order they appear in the program, num params = " + fmt.Sprint(mand_params+opt_params) + ", num args given " + fmt.Sprint(flag.Args()))
 			} else {
-				verifyModelWithSpecificValues(string(content), flag.Args()[2:])
+				verifyModelWithSpecificValues(ver, string(content), flag.Args()[2:])
 			}
 		} else {
 			panic("Please provide a .pml file : ie. gomela verify hello.pml")
@@ -514,14 +517,14 @@ func verify(ver *VerificationInfo, toParse string) {
 				if err != nil {
 					fmt.Println("Could not read folder :", p)
 				}
-				VerifyModels(models, p.Name(), bounds_to_check)
+				VerifyModels(ver, models, p.Name(), bounds_to_check)
 			}
 		}
 	} else { // a single .pml has been given as arg
 
 		path, _ := filepath.Abs("./")
 		RESULTS_FOLDER = path
-		VerifyModels([]os.FileInfo{f}, "", bounds_to_check)
+		VerifyModels(ver, []os.FileInfo{f}, "", bounds_to_check)
 	}
 
 }
