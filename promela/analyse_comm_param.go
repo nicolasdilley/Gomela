@@ -19,6 +19,7 @@ type CommPar struct {
 	Expr      ast.Expr
 	Pos       int // the position of the param in the fun decl (i.e, b is 0 and a is 1 in f(b,a))
 	Candidate bool
+	Alias     bool
 }
 
 // Return the parameters that are mandatory and optional
@@ -35,7 +36,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
-
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
@@ -158,7 +158,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					found, fun_decl, pack := m.FindDecl(stmt)
 					if found {
 
-						// check if contqins ellipsis arg
+						// check if contains ellipsis arg
 
 						for _, param := range fun_decl.Type.Params.List {
 							switch param.Type.(type) {

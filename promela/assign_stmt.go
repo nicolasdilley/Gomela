@@ -15,7 +15,7 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 	if err != nil {
 		return b, err
 	}
-	for _, spec := range s.Rhs {
+	for i, spec := range s.Rhs {
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
 			return b, &ParseError{err: errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())}
@@ -91,6 +91,18 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 
 			if len(expr.List) > 0 {
 				addBlock(b, expr)
+			} else {
+
+				// flag the lhs as an alias so that its not turned into an unknown comm param
+
+				// Checks if all is known on the right side
+				// check if the left-hand side is a comm param
+				if m.IsExprKnown(spec) && m.IsExprKnown(s.Lhs[i]) {
+					// If it is then translate the assignment as is
+					addBlock(b, &promela_ast.BlockStmt{List: []promela_ast.Stmt{m.TranslateKnownExpr(spec)}})
+
+					m.FlagCommParamAsAlias(s.Lhs[i])
+				}
 			}
 		}
 	}

@@ -173,37 +173,38 @@ func (m *Model) translateIfCond(expr ast.Expr) (promela_ast.Expr, bool) {
 
 	// ast.Inspect() etc
 	switch expr := expr.(type) {
-	case *ast.Ident, *ast.SelectorExpr:
-
 	case *ast.BinaryExpr:
-		lhs, ident := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: m.getIdent(expr.X).Name}})
-		lit, err := strconv.Atoi(m.getIdent(expr.X).Name)
 
-		var x string = ""
+		if m.IsExprKnown(expr) {
+			lhs, ident := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: m.getIdent(expr.X).Name}})
+			lit, err := strconv.Atoi(m.getIdent(expr.X).Name)
 
-		if lhs {
-			x = VAR_PREFIX + ident.Name.Name
-		}
+			var x string = ""
 
-		if err == nil {
-			lhs = true
-			x = strconv.Itoa(lit)
-		}
+			if lhs {
+				x = VAR_PREFIX + ident.Name.Name
+			}
 
-		rhs, ident2 := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: m.getIdent(expr.Y).Name}})
+			if err == nil {
+				lhs = true
+				x = strconv.Itoa(lit)
+			}
 
-		lit, err = strconv.Atoi(m.getIdent(expr.Y).Name)
+			rhs, ident2 := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: m.getIdent(expr.Y).Name}})
 
-		var y string = ""
-		if rhs {
-			y = VAR_PREFIX + ident2.Name.Name
-		}
-		if err == nil {
-			rhs = true
-			y = strconv.Itoa(lit)
-		}
-		if lhs && rhs {
-			return &promela_ast.BinaryExpr{Lhs: &promela_ast.Ident{Name: x}, Rhs: &promela_ast.Ident{Name: y}, Op: expr.Op.String()}, true
+			lit, err = strconv.Atoi(m.getIdent(expr.Y).Name)
+
+			var y string = ""
+			if rhs {
+				y = VAR_PREFIX + ident2.Name.Name
+			}
+			if err == nil {
+				rhs = true
+				y = strconv.Itoa(lit)
+			}
+			if lhs && rhs {
+				return &promela_ast.BinaryExpr{Lhs: &promela_ast.Ident{Name: x}, Rhs: &promela_ast.Ident{Name: y}, Op: expr.Op.String()}, true
+			}
 		}
 	}
 	return prom_expr, false
