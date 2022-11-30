@@ -118,128 +118,6 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 		Decl:   decl,
 	}
 
-	// Parses the args
-	for _, commPar := range new_mod.CommPars {
-		name := "Actual Param"
-		if commPar.Candidate {
-			name = "Candidate Param"
-
-			var_name := commPar.Name.Name
-
-			if _, err := strconv.Atoi(var_name); err != nil {
-				var_name = VAR_PREFIX + var_name
-			}
-			if commPar.Mandatory {
-				def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
-
-				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
-			} else {
-				proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name}, Mandatory: false, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
-			}
-		} else {
-			proc.Params = append(proc.Params, &promela_ast.Param{Name: VAR_PREFIX + commPar.Name.Name, Types: promela_types.Int})
-
-			arg := TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset)
-
-			if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: arg.Name}}); found {
-				prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: VAR_PREFIX + arg.Name, Ident: m.Fileset.Position(call_expr.Pos())})
-			} else {
-
-				var ident *promela_ast.Ident
-				if call_expr.Args[commPar.Pos] != nil {
-					arg, exprs, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
-
-					if err1 == nil {
-
-						for _, expr := range exprs {
-
-							// This is for accounting cases where an actual commParam args is a + b where a is known and b isnt. therefore we need to create a new def for b
-							if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}}); !found {
-								// need to create a not found for it
-
-								rhs := ""
-								if commPar.Mandatory {
-									rhs = DEFAULT_BOUND + " // mand "
-								} else {
-									rhs = OPTIONAL_BOUND + " // opt "
-								}
-
-								var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-								printer.Fprint(buff, m.Fileset, commPar.Expr)
-								rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
-								ident := &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Fileset).Name}
-								m.Defines = append(m.Defines, promela_ast.DefineStmt{
-									Name: &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
-									Rhs:  &promela_ast.Ident{Name: rhs}})
-
-								b.List = append(b.List, &promela_ast.DeclStmt{
-									Name:  ident,
-									Types: promela_types.Int,
-									Rhs:   &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
-								})
-
-							}
-						}
-
-						ident = arg
-						prom_call.Args = append(prom_call.Args, ident)
-					} else {
-						ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
-
-						rhs := ""
-						if commPar.Mandatory {
-							rhs = DEFAULT_BOUND + " // mand "
-						} else {
-							rhs = OPTIONAL_BOUND + " // opt "
-						}
-
-						var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-						printer.Fprint(buff, m.Fileset, commPar.Expr)
-						rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
-
-						m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
-						prom_call.Args = append(prom_call.Args, ident)
-					}
-				} else {
-
-					var_name := commPar.Name.Name
-
-					if _, err := strconv.Atoi(var_name); err != nil {
-						var_name = DEF_PREFIX + VAR_PREFIX + var_name
-					}
-					ident = &promela_ast.Ident{Name: var_name}
-
-					rhs := ""
-					if commPar.Mandatory {
-						rhs = DEFAULT_BOUND + " // mand "
-					} else {
-						rhs = OPTIONAL_BOUND + " // opt "
-					}
-
-					var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-					printer.Fprint(buff, m.Fileset, commPar.Expr)
-					rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
-
-					m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
-					prom_call.Args = append(prom_call.Args, ident)
-				}
-			}
-
-		}
-
-		m.PrintFeature(Feature{
-			Proj_name: m.Project_name,
-			Model:     m.Name,
-			Fun:       new_mod.Fun.Name.String(),
-			Name:      name,
-			Mandatory: fmt.Sprint(commPar.Mandatory),
-			Info:      commPar.Name.Name,
-			Line:      0,
-			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
-		})
-	}
-
 	exist, err1 := m.CallExists(decl)
 
 	if err1 != nil {
@@ -264,6 +142,132 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 
 		proc.Body.List = append(proc.Body.List, &promela_ast.LabelStmt{Name: "stop_process"})
 
+	}
+
+	// Parses the args
+	for _, commPar := range new_mod.CommPars {
+
+		if !commPar.Alias {
+			fmt.Println(commPar.Name.Name)
+			name := "Actual Param"
+			if commPar.Candidate {
+				name = "Candidate Param"
+
+				var_name := commPar.Name.Name
+
+				if _, err := strconv.Atoi(var_name); err != nil {
+					var_name = VAR_PREFIX + var_name
+				}
+				if commPar.Mandatory {
+					def := m.GenerateDefine(commPar) // generate the define statement out of the commpar
+
+					proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name}, Mandatory: true, Rhs: &promela_ast.Ident{Name: def}, Types: promela_types.Int}}, proc.Body.List...)
+				} else {
+					proc.Body.List = append([]promela_ast.Stmt{&promela_ast.CommParamDeclStmt{Name: &promela_ast.Ident{Name: var_name}, Mandatory: false, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Types: promela_types.Int}}, proc.Body.List...)
+				}
+			} else {
+				proc.Params = append(proc.Params, &promela_ast.Param{Name: VAR_PREFIX + commPar.Name.Name, Types: promela_types.Int})
+
+				arg := TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset)
+
+				if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: arg.Name}}); found {
+					prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: VAR_PREFIX + arg.Name, Ident: m.Fileset.Position(call_expr.Pos())})
+				} else {
+
+					var ident *promela_ast.Ident
+					if call_expr.Args[commPar.Pos] != nil {
+						arg, exprs, err1 := m.TranslateArg(call_expr.Args[commPar.Pos])
+
+						if err1 == nil {
+
+							for _, expr := range exprs {
+
+								// This is for accounting cases where an actual commParam args is a + b where a is known and b isnt. therefore we need to create a new def for b
+								if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}}); !found {
+									// need to create a not found for it
+
+									rhs := ""
+									if commPar.Mandatory {
+										rhs = DEFAULT_BOUND + " // mand "
+									} else {
+										rhs = OPTIONAL_BOUND + " // opt "
+									}
+
+									var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
+									printer.Fprint(buff, m.Fileset, commPar.Expr)
+									rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+									ident := &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Fileset).Name}
+									m.Defines = append(m.Defines, promela_ast.DefineStmt{
+										Name: &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
+										Rhs:  &promela_ast.Ident{Name: rhs}})
+
+									b.List = append(b.List, &promela_ast.DeclStmt{
+										Name:  ident,
+										Types: promela_types.Int,
+										Rhs:   &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
+									})
+
+								}
+							}
+
+							ident = arg
+							prom_call.Args = append(prom_call.Args, ident)
+						} else {
+							ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+
+							rhs := ""
+							if commPar.Mandatory {
+								rhs = DEFAULT_BOUND + " // mand "
+							} else {
+								rhs = OPTIONAL_BOUND + " // opt "
+							}
+
+							var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
+							printer.Fprint(buff, m.Fileset, commPar.Expr)
+							rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+
+							m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
+							prom_call.Args = append(prom_call.Args, ident)
+						}
+					} else {
+
+						var_name := commPar.Name.Name
+
+						if _, err := strconv.Atoi(var_name); err != nil {
+							var_name = DEF_PREFIX + VAR_PREFIX + var_name
+						}
+						ident = &promela_ast.Ident{Name: var_name}
+
+						rhs := ""
+						if commPar.Mandatory {
+							rhs = DEFAULT_BOUND + " // mand "
+						} else {
+							rhs = OPTIONAL_BOUND + " // opt "
+						}
+
+						var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
+						printer.Fprint(buff, m.Fileset, commPar.Expr)
+						rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+
+						m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
+						prom_call.Args = append(prom_call.Args, ident)
+					}
+				}
+
+			}
+
+			m.PrintFeature(Feature{
+				Proj_name: m.Project_name,
+				Model:     m.Name,
+				Fun:       new_mod.Fun.Name.String(),
+				Name:      name,
+				Mandatory: fmt.Sprint(commPar.Mandatory),
+				Info:      commPar.Name.Name,
+				Line:      0,
+				Commit:    m.Commit,
+				Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+			})
+		}
 	}
 	prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
 

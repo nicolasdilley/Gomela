@@ -311,7 +311,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 
 			if name.Name == arg.Name.Name {
 
-				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name}
+				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name, Alias: false}
 			}
 			pos++
 		}
@@ -337,9 +337,9 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 	}
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 	case *ast.SelectorExpr:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 
 		ast.Inspect(expr, func(node ast.Node) bool {
 			switch node := node.(type) {
@@ -366,7 +366,7 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			}
 		}
 		name := &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 	case *ast.BinaryExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log), log)

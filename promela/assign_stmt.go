@@ -2,10 +2,9 @@ package promela
 
 import (
 	"errors"
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"go/ast"
 	"go/token"
-
-	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
 func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, err *ParseError) {
@@ -99,9 +98,13 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 				// check if the left-hand side is a comm param
 				if m.IsExprKnown(spec) && m.IsExprKnown(s.Lhs[i]) {
 					// If it is then translate the assignment as is
-					addBlock(b, &promela_ast.BlockStmt{List: []promela_ast.Stmt{m.TranslateKnownExpr(spec)}})
 
-					m.FlagCommParamAsAlias(s.Lhs[i])
+					lhs, _ := m.TranslateKnownExpr(s.Lhs[i])
+					rhs, comm_pars := m.TranslateKnownExpr(spec)
+					addBlock(b, &promela_ast.BlockStmt{List: []promela_ast.Stmt{
+						&promela_ast.AssignStmt{Lhs: lhs, Rhs: rhs}}})
+
+					m.FlagCommParamAsAlias(s.Lhs[i], comm_pars)
 				}
 			}
 		}
