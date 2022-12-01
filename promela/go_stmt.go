@@ -148,7 +148,6 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 	for _, commPar := range new_mod.CommPars {
 
 		if !commPar.Alias {
-			fmt.Println(commPar.Name.Name)
 			name := "Actual Param"
 			if commPar.Candidate {
 				name = "Candidate Param"

@@ -90,7 +90,6 @@ func main() {
 		ver.print_trace = true
 	}
 	var fold = RESULTS_FOLDER
-	fmt.Println(fold)
 	if fold[0] != '/' {
 		fold = "./" + fold
 	}

@@ -1,7 +1,6 @@
 package promela
 
 import (
-	"fmt"
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"go/ast"
 )
@@ -103,7 +102,6 @@ func (m *Model) FlagCommParamAsAlias(expr ast.Expr, originals []*CommPar) {
 		ident.Alias = true
 
 		for _, commPar := range originals {
-			fmt.Println(commPar.Mandatory)
 			if ident.Mandatory {
 				commPar.Mandatory = true
 			}
