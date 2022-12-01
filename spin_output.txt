@@ -1,0 +1,199 @@
+Spin output : pan:1: invalid end state (at depth 13)
+pan: wrote main++main5-copy.pml.trail
+
+(Spin Version 6.5.2 -- 6 December 2019)
+Warning: Search not completed
+	+ Partial Order Reduction
+
+Full statespace search for:
+	never claim         	- (none specified)
+	assertion violations	+
+	cycle checks       	- (disabled by -DSAFETY)
+	invalid end states	+
+
+State-vector 188 byte, depth reached 15, errors: 1
+       15 states, stored
+        0 states, matched
+       15 transitions (= stored+matched)
+        0 atomic steps
+hash conflicts:         0 (resolved)
+
+Stats on memory usage (in Megabytes):
+    0.003	equivalent memory usage for states (stored*(State-vector + overhead))
+    1.276	actual memory usage for states
+  512.000	memory used for hash table (-w26)
+  534.058	memory used for DFS stack (-m10000000)
+ 1046.918	total actual memory usage
+
+
+
+pan: elapsed time 0 seconds
+Spin output : pan:1: assertion violated (20==0) (at depth 8)
+pan: wrote main++main5-copy.pml.trail
+
+(Spin Version 6.5.2 -- 6 December 2019)
+Warning: Search not completed
+	+ Partial Order Reduction
+
+Full statespace search for:
+	never claim         	- (none specified)
+	assertion violations	+
+	cycle checks       	- (disabled by -DSAFETY)
+	invalid end states	+
+
+State-vector 180 byte, depth reached 8, errors: 1
+        9 states, stored
+        0 states, matched
+        9 transitions (= stored+matched)
+        0 atomic steps
+hash conflicts:         0 (resolved)
+
+Stats on memory usage (in Megabytes):
+    0.002	equivalent memory usage for states (stored*(State-vector + overhead))
+    1.276	actual memory usage for states
+  512.000	memory used for hash table (-w26)
+  534.058	memory used for DFS stack (-m10000000)
+ 1046.918	total actual memory usage
+
+
+
+pan: elapsed time 0 seconds
+Spin output : pan:1: assertion violated (20==0) (at depth 8)
+pan: wrote main++main5-copy.pml.trail
+
+(Spin Version 6.5.2 -- 6 December 2019)
+Warning: Search not completed
+	+ Partial Order Reduction
+
+Full statespace search for:
+	never claim         	- (none specified)
+	assertion violations	+
+	cycle checks       	- (disabled by -DSAFETY)
+	invalid end states	+
+
+State-vector 180 byte, depth reached 8, errors: 1
+        9 states, stored
+        0 states, matched
+        9 transitions (= stored+matched)
+        0 atomic steps
+hash conflicts:         0 (resolved)
+
+Stats on memory usage (in Megabytes):
+    0.002	equivalent memory usage for states (stored*(State-vector + overhead))
+    1.276	actual memory usage for states
+  512.000	memory used for hash table (-w26)
+  534.058	memory used for DFS stack (-m10000000)
+ 1046.918	total actual memory usage
+
+
+
+pan: elapsed time 0 seconds
+Spin output : spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   i' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   state' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   num_msgs' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'int   i' variable is never used (other than in print stmnts)
+using statement merging
+Starting main5 with pid 1
+  1:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:23 (state 1)	[(run main5(child_main50))]
+  2:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:43 (state 4)	[else]
+Starting sync_monitor with pid 2
+  3:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:44 (state 5)	[(run sync_monitor(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed))]
+  4:	proc  2 (sync_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:139 (state 1)	[(1)]
+  5:	proc  2 (sync_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:149 (state 10)	[else]
+Starting Anonymousmain119 with pid 3
+  6:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:46 (state 8)	[(run Anonymousmain119(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed,child_Anonymousmain1190))]
+Starting receiver with pid 4
+  7:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:47 (state 9)	[(run receiver(child_Anonymousmain1190))]
+  8:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:53 (state 12)	[else]
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:55 (state 15)	[(1)]
+Starting receiver with pid 5
+ 10:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:24 (state 2)	[(run receiver(child_main50))]
+ 11:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:25 (state 3)	[(1)]
+ 12:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:56 (state 16)	[child!0]
+ 13:	proc  5 (receiver:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:162 (state 1)	[c?0]
+spin: trail ends after 14 steps
+#processes: 5
+ 14:	proc  4 (receiver:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:162 (state 1)
+ 14:	proc  3 (Anonymousmain119:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:66 (state 4)
+ 14:	proc  2 (sync_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:150 (state 15) <valid end state>
+ 14:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:57 (state 17) <valid end state>
+ 14:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:26 (state 4) <valid end state>
+6 processes created
+
+
+Spin output : spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   i' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   state' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   num_msgs' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'int   i' variable is never used (other than in print stmnts)
+using statement merging
+Starting main5 with pid 1
+  1:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:23 (state 1)	[(run main5(child_main50))]
+  2:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:40 (state 1)	[((var_a>0))]	<merge 0 now @2>
+  2:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:41 (state 2)	[ch_ch.size = var_a]
+Starting async_monitor with pid 2
+  3:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:42 (state 3)	[(run async_monitor(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed))]
+  4:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:80 (state 1)	[(1)]
+  5:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:101 (state 22)	[else]
+  6:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:112 (state 32)	[((ch.num_msgs==0))]
+Starting Anonymousmain119 with pid 3
+  7:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:46 (state 8)	[(run Anonymousmain119(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed,child_Anonymousmain1190))]
+Starting receiver with pid 4
+  8:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:47 (state 9)	[(run receiver(child_Anonymousmain1190))]
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:51 (state 10)	[((var_a>0))]	<merge 0 now @11>
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:52, Error: assertion violated
+spin: text of failed assertion: assert((20==0))
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:52 (state 11)	[assert((20==0))]
+spin: trail ends after 9 steps
+#processes: 5
+  9:	proc  4 (receiver:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:162 (state 1)
+  9:	proc  3 (Anonymousmain119:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:66 (state 4)
+  9:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:113 (state 39) <valid end state>
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:55 (state 15)
+  9:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:24 (state 2)
+5 processes created
+
+
+Spin output : spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   i' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'bit   state' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype main5, 'int   num_msgs' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   closed' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'bit   ok' variable is never used (other than in print stmnts)
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:0, warning, proctype Anonymousmain119, 'int   i' variable is never used (other than in print stmnts)
+using statement merging
+Starting main5 with pid 1
+  1:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:23 (state 1)	[(run main5(child_main50))]
+  2:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:40 (state 1)	[((var_a>0))]	<merge 0 now @2>
+  2:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:41 (state 2)	[ch_ch.size = var_a]
+Starting async_monitor with pid 2
+  3:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:42 (state 3)	[(run async_monitor(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed))]
+  4:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:80 (state 1)	[(1)]
+  5:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:101 (state 22)	[else]
+  6:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:112 (state 32)	[((ch.num_msgs==0))]
+Starting Anonymousmain119 with pid 3
+  7:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:46 (state 8)	[(run Anonymousmain119(ch_ch.sync,ch_ch.enq,ch_ch.deq,ch_ch.sending,ch_ch.rcving,ch_ch.closing,ch_ch.size,ch_ch.num_msgs,ch_ch.closed,child_Anonymousmain1190))]
+Starting receiver with pid 4
+  8:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:47 (state 9)	[(run receiver(child_Anonymousmain1190))]
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:51 (state 10)	[((var_a>0))]	<merge 0 now @11>
+spin: /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:52, Error: assertion violated
+spin: text of failed assertion: assert((20==0))
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:52 (state 11)	[assert((20==0))]
+spin: trail ends after 9 steps
+#processes: 5
+  9:	proc  4 (receiver:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:162 (state 1)
+  9:	proc  3 (Anonymousmain119:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:66 (state 4)
+  9:	proc  2 (async_monitor:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:113 (state 39) <valid end state>
+  9:	proc  1 (main5:1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:55 (state 15)
+  9:	proc  0 (:init::1) /Users/nicolasdilley/go/src/github.com/nicolasdilley/gomela/result2022-11-29--11d44m53y/source/main++main5-copy.pml:24 (state 2)
+5 processes created
+
+

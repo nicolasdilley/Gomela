@@ -9,6 +9,7 @@ import (
 // an if statement is represented as a do statement with true branches that breaks at the end
 type IfStmt struct {
 	If     token.Position
+	Model  string
 	Init   *BlockStmt // the condition of an if is usually put outside the if stmt
 	Guards []*GuardStmt
 }
@@ -19,10 +20,18 @@ func (s *IfStmt) GoNode() token.Position {
 
 func (s *IfStmt) Print(num_tabs int) (stmt string) {
 	stmt += "\n"
+
 	if s.Init != nil {
 		stmt += s.Init.Print(num_tabs) + "\n"
 	}
-	stmt += utils.GetTabs(num_tabs) + "if\n"
+
+	comment := ""
+
+	if s.If.String() != "-" {
+		comment = " /* " + s.Model + "\t" + s.If.String() + " */"
+	}
+
+	stmt += utils.GetTabs(num_tabs) + "if" + comment + "\n"
 
 	for _, guard := range s.Guards {
 		stmt += guard.Print(num_tabs) + "\n"

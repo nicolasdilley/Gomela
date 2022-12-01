@@ -68,6 +68,8 @@ type Model struct {
 	GenerateFeatures     bool // should the model print features ?
 	Current_return_label string
 	defer_counter        int
+
+	Go_names []string // function that can be used to behave as spawning goroutines
 }
 
 // Used to represent a function for recursive calls
@@ -455,7 +457,7 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 
 			b.List = append(b.List,
 				&promela_ast.DeclStmt{Name: &prom_wg_name, Types: promela_types.Wgdef},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wgMonitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "wg_monitor"}, Args: []promela_ast.Expr{&prom_wg_name}}})
 		}
 	} else {
 		m.PrintFeature(Feature{
@@ -497,7 +499,7 @@ func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela
 
 			b.List = append(b.List,
 				&promela_ast.DeclStmt{Name: &name, Types: promela_types.Mutexdef},
-				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "mutexMonitor"}, Args: []promela_ast.Expr{&name}}})
+				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "mutex_monitor"}, Args: []promela_ast.Expr{&name}}})
 		}
 	} else {
 		m.PrintFeature(Feature{
@@ -654,25 +656,28 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 		switch name := expr.Fun.(type) {
 		case *ast.Ident:
 			if name.Name == "close" && len(expr.Args) == 1 { // closing a chan
-				send := &promela_ast.SendStmt{Send: m.Fileset.Position(name.Pos())}
+				rcv := &promela_ast.RcvStmt{Model: "Close", Rcv: m.Fileset.Position(name.Pos())}
 
 				if m.containsChan(expr.Args[0]) {
 
 					chan_name := m.getChanStruct(expr.Args[0])
 
-					send.Chan = &promela_ast.SelectorExpr{
+					rcv.Chan = &promela_ast.SelectorExpr{
 						X: chan_name.Name, Sel: &promela_ast.Ident{Name: "closing"},
 						Pos: m.Fileset.Position(expr.Args[0].Pos()),
 					}
-					send.Rhs = &promela_ast.Ident{Name: "true"}
+					rcv.Rhs = &promela_ast.Ident{Name: "closed"}
 					m.Chan_closing = true
-					stmts.List = append(stmts.List, send)
+
+					assert := &promela_ast.AssertStmt{Model: "Close", Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
+					stmts.List = append(stmts.List, rcv, assert)
 				} else {
 					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
 				}
 			} else if name.Name == "panic" && len(expr.Args) == 1 { // panic call
-				stmts.List = append(stmts.List, &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
+				stmts.List = append(stmts.List, &promela_ast.CallExpr{Call: m.Fileset.Position(expr.Pos()), Model: "Panic", Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
 			} else {
+
 				call, err1 := m.TranslateCallExpr(expr)
 				if err1 != nil {
 					err = err1
@@ -735,7 +740,12 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 			if m.containsChan(expr.X) {
 
 				chan_name := m.getChanStruct(expr.X)
-				if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
+				if_stmt := &promela_ast.IfStmt{
+					Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
+					Guards: []*promela_ast.GuardStmt{},
+					If:     m.Fileset.Position(expr.Pos()),
+					Model:  "Rcv",
+				}
 
 				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
 				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(expr.Pos())}
@@ -1178,6 +1188,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		Project_name:         m.Project_name,
 		Package:              pack,
 		Name:                 m.Name,
+		Go_names:             m.Go_names,
 		Commit:               m.Commit,
 		RecFuncs:             []RecFunc{},
 		SpawningFuncs:        m.SpawningFuncs,

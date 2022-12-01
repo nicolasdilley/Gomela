@@ -97,7 +97,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 				b.List = append(b.List, d, for_label)
 			} else {
 				// print the for loop  with the if
-				if_stmt := promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+				if_stmt := promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 				lb_not_given := promela_ast.BinaryExpr{Lhs: lb, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Op: "!="}
 				ub_not_given := promela_ast.BinaryExpr{Lhs: ub, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}, Op: "!="}

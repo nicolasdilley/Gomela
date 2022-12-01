@@ -191,7 +191,7 @@ func TestMain(t *testing.T) {
 
 	fmt.Println("Verifying all models")
 	for p, models := range projects_to_verify {
-		VerifyModels(models, p)
+		VerifyModels(models, p, make([]interface{}, 0))
 	}
 
 	fmt.Println("Testing that all models are reported as deadlocks")

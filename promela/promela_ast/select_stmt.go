@@ -8,6 +8,7 @@ import (
 
 type SelectStmt struct {
 	Select      token.Position
+	Model       string
 	Guards      []*GuardStmt
 	Has_default bool
 }
@@ -18,7 +19,12 @@ func (s *SelectStmt) GoNode() token.Position {
 
 func (s *SelectStmt) Print(num_tabs int) (stmt string) {
 
-	stmt = "do\n"
+	comment := ""
+
+	if s.Select.String() != "-" {
+		comment = " /* " + s.Model + "\t" + s.Select.String() + " */"
+	}
+	stmt = "do" + comment + "\n"
 	for _, guard := range s.Guards {
 		stmt += guard.Print(num_tabs) + "\n"
 	}

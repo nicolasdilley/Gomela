@@ -67,6 +67,7 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/stack.v0 v0.0.0-20141108040640-9b43fcefddd0
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
+	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible // indirect
 	honnef.co/go/tools v0.1.3 // indirect
 	labix.org/v2/mgo v0.0.0-20140701140051-000000000287

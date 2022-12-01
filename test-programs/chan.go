@@ -1,7 +1,5 @@
 package main
 
-var x int = 3
-
 func main() {
 	ch := make(chan int, 10)
 
@@ -18,7 +16,7 @@ func send(ch chan int) {
 
 func rcv(ch chan int) {
 
-	<-ch
-
-	//	panic("Here")
+	for range ch {
+		ch <- 0
+	}
 }

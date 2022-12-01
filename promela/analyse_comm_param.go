@@ -19,9 +19,12 @@ type CommPar struct {
 	Expr      ast.Expr
 	Pos       int // the position of the param in the fun decl (i.e, b is 0 and a is 1 in f(b,a))
 	Candidate bool
+	Alias     bool
 }
 
 // Return the parameters that are mandatory and optional
+// Mutates len(a) => a
+
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, *ParseError) {
 
 	params := []*CommPar{}
@@ -33,7 +36,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
-
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
@@ -156,7 +158,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 					found, fun_decl, pack := m.FindDecl(stmt)
 					if found {
 
-						// check if contqins ellipsis arg
+						// check if contains ellipsis arg
 
 						for _, param := range fun_decl.Type.Params.List {
 							switch param.Type.(type) {
@@ -218,6 +220,15 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 									}
 								}
 							}
+
+							if sel.Sel.Name == "Mutex" {
+								switch sel := sel.X.(type) {
+								case *ast.Ident:
+									if sel.Name == "sync" {
+										contains_chan = true
+									}
+								}
+							}
 						}
 					}
 				}
@@ -228,7 +239,6 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						// look inter procedurally
 						new_model := m.newModel(pack, fun_decl)
 						new_model.RecFuncs = m.RecFuncs
-						// new_model.AddRecFunc(pack, fun) // MAYBE THIS IS AN ERROR SO UNCOMMENT IF BUG
 						params_1, err1 := new_model.AnalyseCommParam(pack, fun_decl, ast_map, log)
 
 						if err1 != nil {
@@ -301,7 +311,7 @@ func containsArgs(fields []*ast.Field, arg *CommPar) (bool, *CommPar) {
 
 			if name.Name == arg.Name.Name {
 
-				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name}
+				return true, &CommPar{Name: name, Pos: pos, Mandatory: arg.Mandatory, Expr: name, Alias: false}
 			}
 			pos++
 		}
@@ -327,9 +337,9 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 	}
 	switch expr := expr.(type) {
 	case *ast.Ident:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: expr, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 	case *ast.SelectorExpr:
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: m.getIdent(expr), Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 
 		ast.Inspect(expr, func(node ast.Node) bool {
 			switch node := node.(type) {
@@ -356,7 +366,7 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			}
 		}
 		name := &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: expr}}, log)
+		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 	case *ast.BinaryExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log), log)

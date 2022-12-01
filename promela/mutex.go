@@ -22,12 +22,19 @@ func (m *Model) TranslateMutexOp(call_expr *ast.CallExpr) (b *promela_ast.BlockS
 		if m.containsMutex(name.X) {
 
 			b.List = append(b.List,
-				&promela_ast.SendStmt{
+				&promela_ast.RcvStmt{
+					Rcv:  m.Fileset.Position(name.Pos()),
+					Model: chan_to_use + "()",
 					Chan: &promela_ast.SelectorExpr{
 						X: &promela_ast.Ident{
 							Name: translateIdent(name.X).Name},
 						Sel: &promela_ast.Ident{Name: chan_to_use}},
-					Rhs: &promela_ast.Ident{Name: "false"},
+					Rhs: &promela_ast.Ident{Name: "ok"},
+				},
+				&promela_ast.AssertStmt{
+					Pos: m.Fileset.Position(name.Pos()),
+					Model: chan_to_use + "()",
+					Expr: &promela_ast.Ident{Name: "ok"},
 				})
 		} else {
 			return nil, &ParseError{err: errors.New(UNKNOWN_MUTEX + m.Fileset.Position(call_expr.Pos()).String())}

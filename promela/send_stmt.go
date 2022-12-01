@@ -17,28 +17,39 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "sync"}},
-			Rhs:  &promela_ast.Ident{Name: "false"},
-			Send: m.Fileset.Position(s.Pos())}
-		async_send := &promela_ast.SendStmt{
+			Rhs: &promela_ast.Ident{Name: "true"},
+			//Send: m.Fileset.Position(s.Pos())
+		}
+		async_send := &promela_ast.RcvStmt{
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "enq"}},
-			Rhs:  &promela_ast.Ident{Name: "0"},
-			Send: m.Fileset.Position(s.Pos())}
+			Rhs: &promela_ast.Ident{Name: "ok"},
+			//Send: m.Fileset.Position(s.Pos())
+		}
+
+		assert := &promela_ast.AssertStmt{Model: "Send", Pos: m.Fileset.Position(s.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
 
 		sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
 
 		sync_guard := &promela_ast.GuardStmt{
 			Cond: sync_send,
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-				&promela_ast.SendStmt{
+				&promela_ast.RcvStmt{
 					Chan: sending_chan,
-					Rhs:  &promela_ast.Ident{Name: "false"}}}},
+					Rhs:  &promela_ast.Ident{Name: "ok"}},
+				assert}},
 			Guard: m.Fileset.Position(s.Pos())}
-		async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guard: m.Fileset.Position(s.Pos())}
-		if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{async_guard, sync_guard}}
+		async_guard := &promela_ast.GuardStmt{Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert}}, Guard: m.Fileset.Position(s.Pos())}
+		if_stmt := &promela_ast.IfStmt{
+			If:    m.Fileset.Position(s.Pos()),
+			Model: "Send",
+			Init: &promela_ast.BlockStmt{
+				List: []promela_ast.Stmt{},
+			},
+			Guards: []*promela_ast.GuardStmt{async_guard, sync_guard},
+		}
 		expr, err1 := m.TranslateExpr(s.Value)
-
 		if err1 != nil {
 			err = err1
 		}

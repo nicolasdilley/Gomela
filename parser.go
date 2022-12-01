@@ -33,10 +33,12 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 					if !takeChanAsParam(decl, ast_map[pack_name]) {
 						// fmt.Println("Parsing ", decl.Name.Name)
 						// fmt.Println("Parsing ", decl.Name)
+
 						var m promela.Model = promela.Model{
 							Result_fodler:        result_folder,
 							Project_name:         proj_name,
 							Package:              pack_name,
+							Go_names:             ver.Go_names,
 							Name:                 pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
 							AstMap:               ast_map,
 							Fileset:              fileSet,
@@ -67,15 +69,24 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 }
 
 // Generate the GO ast for each packages in packages_names
-func GenerateAst(dir string, package_names []string, dir_name string) (*token.FileSet, map[string]*packages.Package) {
+func GenerateAst(dir string, package_names []string, dir_name string, gopath string) (*token.FileSet, map[string]*packages.Package) {
 	var ast_map map[string]*packages.Package = make(map[string]*packages.Package)
 	var cfg *packages.Config = &packages.Config{Mode: packages.LoadAllSyntax, Fset: &token.FileSet{}, Dir: dir, Tests: true}
+
+	if gopath != "" {
+		cfg.Env = append(os.Environ(), gopath, "GO111MODULE=off")
+	}
 
 	package_names = append([]string{"."}, package_names...)
 	lpkgs, err := packages.Load(cfg, package_names...)
 
 	if a := recover(); a != nil || err != nil || cfg.Fset == nil {
-		f, err := os.OpenFile("./"+RESULTS_FOLDER+"/log.csv",
+		fold := RESULTS_FOLDER
+		if fold[0] != '/' {
+			fold = "./" + fold
+		}
+
+		f, _ := os.OpenFile(fold+"/log.csv",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 		toPrint := dir_name + ",Could not parse project"
