@@ -51,6 +51,7 @@ var (
 	PROJECTS_FOLDER          = "../projects"
 	AUTHOR_PROJECT_SEP       = "--"
 	PACKAGE_MODEL_SEP        = "++"
+	TIMEOUT                  string
 )
 
 func main() {
@@ -81,7 +82,7 @@ func main() {
 	ver.multi_projects = flag.String("mp", "", "Recursively loop through the folder given and parse all folder that contains a go file.")
 	ver.single_project = flag.String("s", "", "a single project is given to parse. Format \"creator/project_name\"")
 	ver.spin_output = flag.String("pt", "", "Specifies the file where the trace returned by spin is to be printed.")
-
+	flag.StringVar(&TIMEOUT, "timeout", "30", "time limit for SPIN verification")
 	ver.gopath = flag.String("gopath", "", "a gopath to perform package loading from")
 	flag.StringVar(&RESULTS_FOLDER, "result_folder", "result", "folder to store the result in")
 	flag.Parse()

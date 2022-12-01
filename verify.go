@@ -347,7 +347,7 @@ func verifyWithOptParams(ver_info *VerificationInfo, ver *VerificationRun, path 
 					var err_output bytes.Buffer
 
 					// Verify with SPIN
-					command := exec.Command("timeout", "30", "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
+					command := exec.Command("timeout", TIMEOUT, "spin", "-run", "-DVECTORSZ=4508", "-m10000000", "-w26", path, "-f")
 					command.Stdout = &output
 					command.Stderr = &err_output
 					command.Dir = filepath.Dir(path)
