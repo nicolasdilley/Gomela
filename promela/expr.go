@@ -27,7 +27,7 @@ func (m *Model) IsExprKnown(expr ast.Expr) bool {
 
 			switch ident := e.Fun.(type) {
 			case *ast.Ident:
-				if ident.Name == "len" || ident.Name == "int" {
+				if ident.Name == "len" || ident.Name == "int" || ident.Name == "uint" {
 					if len(e.Args) > 0 {
 						isKnown = m.IsExprKnown(e.Args[0])
 						return false // don't look further into the the arguments

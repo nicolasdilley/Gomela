@@ -363,6 +363,9 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 			} else if ident.Name == "int" {
 				params = m.Upgrade(fun, params, m.Vid(fun, expr.Args[0], mandatory, log), log)
 				return params
+			} else if ident.Name == "uint" {
+				params = m.Upgrade(fun, params, m.Vid(fun, expr.Args[0], mandatory, log), log)
+				return params
 			}
 		}
 		name := &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}
