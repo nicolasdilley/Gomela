@@ -69,7 +69,7 @@ func (m *Model) TranslateKnownExpr(expr ast.Expr) (promela_ast.Expr, []*CommPar)
 	case *ast.CallExpr:
 		switch ident := expr.Fun.(type) {
 		case *ast.Ident:
-			if ident.Name == "len" || ident.Name == "int" {
+			if ident.Name == "len" || ident.Name == "int" || ident.Name == "uint" {
 				if len(expr.Args) > 0 {
 					var params []*CommPar
 					prom_expr, params = m.TranslateKnownExpr(expr.Args[0])
@@ -113,7 +113,7 @@ func (m *Model) FlagCommParamAsAlias(expr ast.Expr, originals []*CommPar) {
 	case *ast.CallExpr:
 		switch ident := expr.Fun.(type) {
 		case *ast.Ident:
-			if ident.Name == "len" || ident.Name == "int" {
+			if ident.Name == "len" || ident.Name == "int" || ident.Name == "uint" {
 				if len(expr.Args) > 0 {
 					m.FlagCommParamAsAlias(expr.Args[0], originals)
 				}
