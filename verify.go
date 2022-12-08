@@ -210,78 +210,82 @@ func verifyModel(ver_info *VerificationInfo, path string, model_name string, git
 		}
 		return ver, executable
 	} else {
-		comm_par_info := ""
-		fmt.Println("-------------------------------")
-		fmt.Println("Result for " + model_name)
-		for i, param := range mand_comm_params {
-			comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
-			fmt.Println(param, " = ", bound[i])
-		}
-		blocked_operations := []string{}
-		safety_errors := []string{}
 
-		if containsBug {
-			blocked_operations, safety_errors = LinkBackToSource(ver_info, ver, path, spin_output)
-		}
+		if !(num_opt_params > 0 && (ver.Global_deadlock || ver.Send_on_close_safety_error || ver.Negative_counter_safety_error || ver.Double_unlock || ver.Panic_reached || ver.Close_safety_error)) {
 
-		fmt.Println("Number of states : ", ver.Num_states)
-		fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
-		fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
-		fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
-		fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
-		fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
-		fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
-		fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
-
-		if ver.Global_deadlock {
-			fmt.Println("Blocked operations :")
-
-			for _, source := range blocked_operations {
-				fmt.Println(source)
+			comm_par_info := ""
+			fmt.Println("-------------------------------")
+			fmt.Println("Result for " + model_name)
+			for i, param := range mand_comm_params {
+				comm_par_info += fmt.Sprint(param, " = ", bound[i], ",")
+				fmt.Println(param, " = ", bound[i])
 			}
-		} else if ver.Safety_error {
+			blocked_operations := []string{}
+			safety_errors := []string{}
 
-			fmt.Println("Safety errors :")
-			for _, source := range safety_errors {
-				fmt.Println(source)
+			if containsBug {
+				blocked_operations, safety_errors = LinkBackToSource(ver_info, ver, path, spin_output)
 			}
 
-			fmt.Println("Blocked operations :")
+			fmt.Println("Number of states : ", ver.Num_states)
+			fmt.Println("Time to verify model : ", ver.Spin_timing, " ms")
+			fmt.Printf("Send on close safety error : %s.\n", colorise(ver.Send_on_close_safety_error))
+			fmt.Printf("Close safety error : %s.\n", colorise(ver.Close_safety_error))
+			fmt.Printf("Negative counter safety error : %s.\n", colorise(ver.Negative_counter_safety_error))
+			fmt.Printf("Double unlock error : %s.\n", colorise(ver.Double_unlock))
+			fmt.Printf("Model deadlock : %s.\n", colorise(ver.Global_deadlock))
+			fmt.Printf("Panic reached : %s.\n", colorise(ver.Panic_reached))
 
-			for _, source := range blocked_operations {
-				fmt.Println(source)
+			if ver.Global_deadlock {
+				fmt.Println("Blocked operations :")
+
+				for _, source := range blocked_operations {
+					fmt.Println(source)
+				}
+			} else if ver.Safety_error {
+
+				fmt.Println("Safety errors :")
+				for _, source := range safety_errors {
+					fmt.Println(source)
+				}
+
+				fmt.Println("Blocked operations :")
+
+				for _, source := range blocked_operations {
+					fmt.Println(source)
+				}
+			} else if ver.Panic_reached {
+				fmt.Println("Panic reached :")
+				for _, source := range safety_errors {
+					fmt.Println(source)
+				}
 			}
-		} else if ver.Panic_reached {
-			fmt.Println("Panic reached :")
-			for _, source := range safety_errors {
-				fmt.Println(source)
+
+			if ver.Err != "" {
+				red := color.New(color.FgRed).SprintFunc()
+				fmt.Printf("Error : %s.\n", red(ver.Err))
 			}
-		}
+			fmt.Println("-------------------------------")
 
-		if ver.Err != "" {
-			red := color.New(color.FgRed).SprintFunc()
-			fmt.Printf("Error : %s.\n", red(ver.Err))
-		}
-		fmt.Println("-------------------------------")
+			toPrint := model_name + ",0," +
+				fmt.Sprintf("%d", ver.Num_states) + "," +
+				fmt.Sprintf("%d", ver.Spin_timing) + "," +
+				fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
+				fmt.Sprintf("%t", ver.Close_safety_error) + "," +
+				fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
+				fmt.Sprintf("%t", ver.Double_unlock) + "," +
+				fmt.Sprintf("%t", ver.Global_deadlock) + "," +
+				fmt.Sprintf("%t", ver.Panic_reached) + ","
 
-		toPrint := model_name + ",0," +
-			fmt.Sprintf("%d", ver.Num_states) + "," +
-			fmt.Sprintf("%d", ver.Spin_timing) + "," +
-			fmt.Sprintf("%t", ver.Send_on_close_safety_error) + "," +
-			fmt.Sprintf("%t", ver.Close_safety_error) + "," +
-			fmt.Sprintf("%t", ver.Negative_counter_safety_error) + "," +
-			fmt.Sprintf("%t", ver.Double_unlock) + "," +
-			fmt.Sprintf("%t", ver.Global_deadlock) + "," +
-			fmt.Sprintf("%t", ver.Panic_reached) + ","
-
-		toPrint += ver.Err + "," +
-			fmt.Sprint(len(mand_comm_params)) + "," +
-			fmt.Sprint(num_opt_params) + "," +
-			comm_par_info + "," +
-			git_link + ",\n"
-		if f != nil {
-			if _, err := f.WriteString(toPrint); err != nil {
-				panic(err)
+			toPrint += ver.Err + "," +
+				fmt.Sprint(len(mand_comm_params)) + "," +
+				fmt.Sprint(num_opt_params) + "," +
+				comm_par_info + "," +
+				git_link + ",\n"
+			if f != nil {
+				if _, err := f.WriteString(toPrint); err != nil {
+					panic(err)
+				}
 			}
 		}
 	}
@@ -289,11 +293,11 @@ func verifyModel(ver_info *VerificationInfo, path string, model_name string, git
 	return ver, executable
 }
 
-func verifyWithOptParams(ver_info *VerificationInfo, ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optionnal int, bounds_to_check []interface{}) {
+func verifyWithOptParams(ver_info *VerificationInfo, ver *VerificationRun, path string, model_name string, lines []string, git_link string, f *os.File, comm_params []string, bound []string, num_optional int, bounds_to_check []interface{}) {
 	if (ver.Global_deadlock || ver.Close_safety_error || ver.Double_unlock || ver.Negative_counter_safety_error || ver.Send_on_close_safety_error || ver.Panic_reached) && !ver.Timeout {
-		// add values to the candidates param
+		// add values to the optional param
 
-		opt_bounds := generateOptBounds(num_optionnal, bounds_to_check)
+		opt_bounds := generateOptBounds(num_optional, bounds_to_check)
 
 		num_tests := 0
 		false_alarm_bounds := [][]interface{}{}
@@ -360,12 +364,12 @@ func verifyWithOptParams(ver_info *VerificationInfo, ver *VerificationRun, path 
 					executable, containsBug := parseResults(spin_output, ver)
 					num_tests++
 					if (output.String() == "" && err_output.String() == "" && err == nil) || ver.Timeout {
-						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,,\n"
+						toPrint := model_name + ",0,timeout with opt param : " + fixed_bound + ",timeout,timeout,timeout,timeout,timeout,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optional) + ",,,\n"
 						if _, err := f.WriteString(toPrint); err != nil {
 							panic(err)
 						}
 					} else if !executable || err_output.String() != "" || err != nil {
-						toPrint := model_name + ",1,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optionnal) + ",,," + ver.Err
+						toPrint := model_name + ",1,the model is not executable,,,,,,,," + strconv.Itoa(len(comm_params)) + "," + strconv.Itoa(num_optional) + ",,," + ver.Err
 
 						if err != nil {
 							toPrint += "err :" + err.Error()
@@ -444,7 +448,7 @@ func verifyWithOptParams(ver_info *VerificationInfo, ver *VerificationRun, path 
 							fmt.Sprintf("%t", ver.Panic_reached) + "," +
 							ver.Err + "," +
 							fmt.Sprint(len(comm_params)) + "," +
-							fmt.Sprint(num_optionnal) + "," +
+							fmt.Sprint(num_optional) + "," +
 							comm_par_info + "," +
 							git_link + ",\n"
 
@@ -747,11 +751,11 @@ func parseResults(result string, ver *VerificationRun) (executable bool, contain
 	return executable, containsBug
 }
 
-func generateOptBounds(num_optionnals int, bounds_to_check []interface{}) [][]interface{} {
+func generateOptBounds(num_optionals int, bounds_to_check []interface{}) [][]interface{} {
 
 	bounds_to_check = append([]interface{}{-2}, bounds_to_check...)
 	bounds := [][]interface{}{}
-	for i := 0; i < num_optionnals; i++ {
+	for i := 0; i < num_optionals; i++ {
 		bounds = append(bounds, bounds_to_check)
 	}
 	d := cartesian.Iter(bounds...)
