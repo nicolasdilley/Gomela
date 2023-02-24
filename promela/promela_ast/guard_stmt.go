@@ -24,7 +24,7 @@ func (s *GuardStmt) Print(num_tabs int) (stmt string) {
 		stmt += " -> \n"
 		stmt += s.Body.Print(num_tabs + 1)
 	} else {
-		stmt += ";"
+		stmt += "->"
 	}
 	return
 }

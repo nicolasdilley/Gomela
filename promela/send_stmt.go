@@ -17,7 +17,7 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 			Chan: &promela_ast.SelectorExpr{
 				X:   chan_name.Name,
 				Sel: &promela_ast.Ident{Name: "sync"}},
-			Rhs: &promela_ast.Ident{Name: "true"},
+			Rhs: &promela_ast.Ident{Name: "false"}, // the channel is not closed
 			//Send: m.Fileset.Position(s.Pos())
 		}
 		async_send := &promela_ast.RcvStmt{

@@ -41,7 +41,7 @@ package promela
 func generateSyncChanMonitor() string {
 	return "proctype sync_monitor(Chandef ch) {\n" +
 		"do\n" +
-		":: true\n" +
+		":: true->\n" +
 		"if\n" +
 		":: ch.closed ->\n" +
 		"end: if\n" +
@@ -49,19 +49,19 @@ func generateSyncChanMonitor() string {
 		"  :: ch.closing!true -> // cannot close twice a channel\n" +
 		"  :: ch.sending!false -> // sending state of channel (closed)\n" +
 		// "    assert(1 == 0)\n" +
-		"  :: ch.rcving?false;\n" +
-		"  :: ch.sync!true; // can always receive on a closed chan\n" +
-		"  fi;\n" +
+		"  :: ch.rcving?false->\n" +
+		"  :: ch.sync!true-> // can always receive on a closed chan\n" +
+		"  fi->\n" +
 		":: else -> \n" +
 		"end1: if\n" +
 		"    :: ch.rcving?false ->\n " +
-		"      ch.sending!true;\n" +
+		"      ch.sending!true->\n" +
 		"    :: ch.closing!false ->\n" +
 		"      ch.closed = true\n" +
-		"    fi;\n" +
-		"fi;\n" +
-		"od\n" +
-		"stop_process:\n" +
+		"    fi->\n" +
+		"fi->\n" +
+		"od->\n" +
+		"stop_process: skip\n" +
 		"}\n\n"
 }
 
@@ -78,24 +78,24 @@ func GenerateAsyncMonitor() string {
 		//"      assert(1 == 0)\n" +
 		"    :: ch.closing!true -> // cannot close twice a channel\n" +
 		//"      assert(2 == 0)\n" +
-		"    :: ch.rcving?false;\n" +
+		"    :: ch.rcving?false->\n" +
 		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
 		//"      assert(1 == 0)\n" +
 		"    :: ch.deq!true,ch.num_msgs -> \n" +
 		"  		 ch.num_msgs = ch.num_msgs - 1\n" +
-		"    fi;\n" +
+		"    fi->\n" +
 		"  :: else ->" +
 		"    end5: if\n" +
 		"    :: ch.enq!false-> // cannot send on closed channel\n" +
 		//"      assert(1 == 0)\n" +
 		"    :: ch.closing!true -> // cannot close twice a channel\n" +
 		//"      assert(2 == 0)\n" +
-		"    :: ch.rcving?false;\n" +
+		"    :: ch.rcving?false->\n" +
 		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
 		//"      assert(1 == 0)\n" +
-		"    :: ch.sync!true; \n" +
-		"    fi;\n" +
-		"  fi;\n" +
+		"    :: ch.sync!true-> \n" +
+		"    fi->\n" +
+		"  fi->\n" +
 		":: else ->\n" +
 		"	if\n" +
 		"	:: ch.num_msgs == ch.size ->\n" +
@@ -105,8 +105,8 @@ func GenerateAsyncMonitor() string {
 		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		    ch.closed = true\n" +
 		"		   :: ch.rcving?false ->\n " +
-		"		    ch.sending!true;\n" +
-		"		fi;\n" +
+		"		    ch.sending!true->\n" +
+		"		fi->\n" +
 		"	:: ch.num_msgs == 0 -> \n" +
 		"end2:		if\n" +
 		"		:: ch.enq!true -> // a message has been received\n" +
@@ -114,56 +114,56 @@ func GenerateAsyncMonitor() string {
 		"		:: ch.closing!false -> // closing the channel\n" +
 		"			ch.closed = true\n" +
 		"		:: ch.rcving?false ->\n " +
-		"		    ch.sending!true;\n" +
-		"		fi;\n" +
+		"		    ch.sending!true->\n" +
+		"		fi->\n" +
 		"		:: else -> \n" +
 		"		end3: if\n" +
 		"		  :: ch.enq!true->\n" +
 		"		     ch.num_msgs = ch.num_msgs + 1\n" +
-		"		  :: ch.deq!false,ch.num_msgs\n" +
+		"		  :: ch.deq!false,ch.num_msgs->\n" +
 		"		     ch.num_msgs = ch.num_msgs - 1\n" +
 		"		  :: ch.closing!false -> // closing the channel\n" +
 		"		     ch.closed = true\n" +
 		"		  :: ch.rcving?false ->\n " +
-		"		    ch.sending!true;\n" +
-		"		fi;\n" +
-		"	fi;\n" +
-		"fi;\n" +
-		"od;\n" +
+		"		    ch.sending!true->\n" +
+		"		fi->\n" +
+		"	fi->\n" +
+		"fi->\n" +
+		"od->\n" +
 		"}\n\n"
 }
 
 // Return the Promela AST of a wg monitor proctype
 
-// proctype wg_monitor(Wgdef s) {
-//   int num
-//   do
-//   :: s.update?num ->
-//     s.Counter = s.Counter + num
-//     assert(s.Counter >= 0)
-//   :: s.Counter == 0 ->
-//     if
-//     :: s.update?num ->
-//     s.Counter = s.Counter + num
-//     assert(s.Counter >= 0)
-//     :: s.Wait?0;
-//     fi
-//   od
-// }
+//	proctype wg_monitor(Wgdef s) {
+//	  int num
+//	  do
+//	  :: s.update?num ->
+//	    s.Counter = s.Counter + num
+//	    assert(s.Counter >= 0)
+//	  :: s.Counter == 0 ->
+//	    if
+//	    :: s.update?num ->
+//	    s.Counter = s.Counter + num
+//	    assert(s.Counter >= 0)
+//	    :: s.Wait?0;
+//	    fi
+//	  od
+//	}
 func GenerateStructMonitor() string {
 
 	return "proctype wg_monitor(Wgdef wg) {\n" +
-		"int i;\n" +
+		"int i->\n" +
 		"end: do\n" +
 		"	:: wg.update?i ->\n" +
-		"		wg.Counter = wg.Counter + i;\n" +
+		"		wg.Counter = wg.Counter + i->\n" +
 		"		wg.update_ack!(wg.Counter >= 0)\n" +
 		"	:: wg.Counter == 0 ->\n" +
 		"end1: if\n" +
 		"		:: wg.update?i ->\n" +
-		"			wg.Counter = wg.Counter + i;\n" +
+		"			wg.Counter = wg.Counter + i->\n" +
 		"			wg.update_ack!(wg.Counter >= 0)\n" +
-		"		:: wg.wait!0;\n" +
+		"		:: wg.wait!0->\n" +
 		"	fi\n" +
 		"od\n" +
 		"}\n\n"
@@ -173,30 +173,30 @@ func GenerateStructMonitor() string {
 func GenerateMutexMonitor() string {
 
 	return "proctype mutex_monitor(Mutexdef m) {\n" +
-		"bool locked = false;\n" +
+		"bool locked = false->\n" +
 		"end: do\n" +
 		":: true ->\n" +
 		"	if\n" +
 		"	:: m.Counter > 0 ->\n" +
 		"		if \n" +
 		"		:: m.RUnlock!true -> \n" +
-		"			m.Counter = m.Counter - 1;\n" +
+		"			m.Counter = m.Counter - 1->\n" +
 		"		:: m.RLock!true -> \n" +
-		"			m.Counter = m.Counter + 1;\n" +
-		"		fi;\n" +
+		"			m.Counter = m.Counter + 1->\n" +
+		"		fi->\n" +
 		"	:: locked ->\n" +
-		"		m.Unlock!true;\n" +
-		"		locked = false;\n" +
+		"		m.Unlock!true->\n" +
+		"		locked = false->\n" +
 		"	:: else ->" +
 		"	 end1:	if\n" +
 		"		:: m.Unlock!false ->\n" +
 		"		:: m.Lock!true ->\n" +
-		"			locked =true;\n" +
+		"			locked =true->\n" +
 		"		:: m.RUnlock!false ->\n" +
 		"		:: m.RLock!true ->\n" +
-		"			m.Counter = m.Counter + 1;\n" +
-		"		fi;\n" +
-		"	fi;\n" +
+		"			m.Counter = m.Counter + 1->\n" +
+		"		fi->\n" +
+		"	fi->\n" +
 		"od\n" +
 		"}\n\n"
 }
