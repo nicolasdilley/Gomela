@@ -34,12 +34,16 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 		return params, err
 	}
 
+	mandatory := m.All_mandatory
+
 	ast.Inspect(fun.Body, func(stmt ast.Node) bool {
 		switch stmt := stmt.(type) {
 		case *ast.ForStmt:
 			// check if the body of the for loop contains a spawn (inter-procedurally)
 
-			mandatory := m.spawns(stmt.Body, log)
+			if !mandatory {
+				mandatory = m.spawns(stmt.Body, log)
+			}
 			switch cond := stmt.Cond.(type) { // i:= n;i > n;i--
 			case *ast.BinaryExpr:
 				if cond.Op == token.GEQ || cond.Op == token.GTR {
@@ -76,7 +80,10 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 				}
 			}
 		case *ast.RangeStmt:
-			mandatory := m.spawns(stmt.Body, log)
+
+			if !mandatory {
+				mandatory = m.spawns(stmt.Body, log)
+			}
 
 			switch m.AstMap[m.Package].TypesInfo.TypeOf(stmt.X).(type) {
 			case *types.Chan:

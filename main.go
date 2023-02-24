@@ -41,6 +41,7 @@ type VerificationInfo struct {
 	Comm_par_values                     []int
 	print_trace                         bool
 	spin_output                         *string
+	all_mandatory                       *bool
 	// single_file    *string
 }
 
@@ -85,6 +86,8 @@ func main() {
 	flag.StringVar(&TIMEOUT, "timeout", "30", "time limit for SPIN verification")
 	ver.gopath = flag.String("gopath", "", "a gopath to perform package loading from")
 	flag.StringVar(&RESULTS_FOLDER, "result_folder", "result", "folder to store the result in")
+	ver.all_mandatory = flag.Bool("am", false, "turns all optionnal parameters into mandatory parameters.")
+
 	flag.Parse()
 
 	if *ver.spin_output != "" {

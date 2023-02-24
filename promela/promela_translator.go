@@ -69,7 +69,8 @@ type Model struct {
 	Current_return_label string
 	defer_counter        int
 
-	Go_names []string // function that can be used to behave as spawning goroutines
+	Go_names      []string // function that can be used to behave as spawning goroutines
+	All_mandatory bool     // turns all optionnal params into mandatory if true
 }
 
 // Used to represent a function for recursive calls
@@ -1218,6 +1219,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		ClosedVars:           make(map[*ChanStruct][]ast.Expr),
 		GenerateFeatures:     m.GenerateFeatures,
 		Current_return_label: "stop_process",
+		All_mandatory:        m.All_mandatory,
 	}
 }
 

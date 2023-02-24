@@ -40,6 +40,7 @@ func VerifyModels(ver_info *VerificationInfo, models []os.FileInfo, dir_name str
 	if len(bounds_to_check) == 0 {
 		bounds_to_check = []interface{}{0, 1, 3}
 	}
+
 	// create CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
