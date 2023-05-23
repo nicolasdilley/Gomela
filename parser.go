@@ -30,7 +30,9 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 			for _, decl := range file.Decls {
 				switch decl := decl.(type) {
 				case *ast.FuncDecl:
-					if !takeChanAsParam(decl, ast_map[pack_name]) {
+
+					// plug front end tools
+					if !takesCommParAsParam(decl, ast_map[pack_name]) {
 						// fmt.Println("Parsing ", decl.Name.Name)
 						// fmt.Println("Parsing ", decl.Name)
 
@@ -112,7 +114,7 @@ func GenerateAst(dir string, package_names []string, dir_name string, gopath str
 	return cfg.Fset, ast_map
 }
 
-func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
+func takesCommParAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 
 	// check if the args are not structures that contains channels, wg or mutex
 
@@ -134,7 +136,7 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 			switch t := t.(type) {
 			case *types.Named:
 				if t.String() != "testing.T" {
-					if structContainsChan(t, []*types.Named{t}) {
+					if structContainsCommPar(t, []*types.Named{t}) {
 						return true
 					}
 				}
@@ -159,7 +161,7 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 				if t != nil {
 					switch t := t.(type) {
 					case *types.Named:
-						return structContainsChan(t, []*types.Named{t})
+						return structContainsCommPar(t, []*types.Named{t})
 
 					}
 				} else {
@@ -176,7 +178,7 @@ func takeChanAsParam(decl *ast.FuncDecl, pack *packages.Package) bool {
 	return false
 }
 
-func structContainsChan(t types.Type, seen []*types.Named) bool {
+func structContainsCommPar(t types.Type, seen []*types.Named) bool {
 	t = promela.GetElemIfPointer(t)
 	if t.String() == "sync.WaitGroup" || t.String() == "sync.Mutex" || t.String() == "sync.RWMutex" {
 		return true
@@ -190,7 +192,7 @@ func structContainsChan(t types.Type, seen []*types.Named) bool {
 
 			switch field := field_type.(type) {
 			case *types.Struct:
-				if structContainsChan(field, seen) {
+				if structContainsCommPar(field, seen) {
 					return true
 				}
 			case *types.Named:
@@ -202,7 +204,7 @@ func structContainsChan(t types.Type, seen []*types.Named) bool {
 					}
 				}
 				if !contains {
-					if structContainsChan(field, append(seen, field)) {
+					if structContainsCommPar(field, append(seen, field)) {
 						return true
 					}
 				}

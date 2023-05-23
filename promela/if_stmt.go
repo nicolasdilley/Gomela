@@ -56,7 +56,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 		contains := false
 		if len(body.List) != 0 {
 			contains = true
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: g, Body: body})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: g, Body: body})
 		}
 
 		if s.Else != nil {
@@ -85,15 +85,15 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 				contains = true
 
 				if contains_comm_param {
-					i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts})
+					i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts})
 				} else {
-					i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
+					i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
 				}
 			}
 		} else if contains && !contains_comm_param {
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{}})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{}})
 		} else if contains_comm_param {
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{}})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{}})
 		}
 
 		if contains {
@@ -134,8 +134,8 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 		if len(d1.List) > 0 {
 			return isClosed, b1, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
 		}
-		then_guard := &promela_ast.GuardStmt{Cond: cond, Body: b1}
-		else_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		then_guard := &promela_ast.SingleGuardStmt{Cond: cond, Body: b1}
+		else_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if s.Else != nil {
 			stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -160,10 +160,10 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 				stmts = s1
 			}
 			if len(stmts.List) != 0 {
-				else_guard = &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts}
+				else_guard = &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts}
 			}
 		}
-		b.List = append(b.List, &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{then_guard, else_guard}})
+		b.List = append(b.List, &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{then_guard, else_guard}})
 	}
 	return
 }

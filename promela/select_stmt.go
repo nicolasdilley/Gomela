@@ -36,8 +36,10 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 		m.For_counter.With_go = had_go
 
 	}()
+
 	goto_stmt := &promela_ast.GotoStmt{Label: &promela_ast.LabelStmt{Name: fmt.Sprintf("for%d%d_exit", m.For_counter.X, m.For_counter.Y)}}
 	goto_end_stmt := &promela_ast.GotoStmt{Label: &promela_ast.LabelStmt{Name: fmt.Sprintf("for%d%d_end", m.For_counter.X, m.For_counter.Y)}}
+
 	for _, comm := range s.Body.List {
 		switch comm := comm.(type) {
 		case *ast.CommClause: // can only be a commClause
@@ -55,59 +57,25 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 				m.GenerateFeatures = false
 				body2, _, _ := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
 				m.GenerateFeatures = true
+
+				m.checkForBreak(body, goto_stmt)
+
+				m.checkForBreak(body2, goto_stmt)
+
 				switch com := comm.Comm.(type) {
 				case *ast.SendStmt: // send
 					if m.containsChan(com.Chan) {
 
-						assert := &promela_ast.AssertStmt{Model: "Send", Pos: m.Fileset.Position(s.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
-								
 						chan_name := m.getChanStruct(com.Chan)
 
-						async_send := &promela_ast.SendStmt{
-							Chan: &promela_ast.SelectorExpr{
-								X:   chan_name.Name,
-								Sel: &promela_ast.Ident{Name: "enq"},
-							},
-							Rhs: &promela_ast.Ident{Name: "0"}}
-
-						sync_send := &promela_ast.SendStmt{
-							Chan: &promela_ast.SelectorExpr{
-								X:   chan_name.Name,
-								Sel: &promela_ast.Ident{Name: "sync"},
-							},
-							Rhs: &promela_ast.Ident{Name: "false"}}
-						m.checkForBreak(body, goto_stmt)
-
-						new_body := &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert}}
-
-						for _, s := range body.List {
-							new_body.List = append(new_body.List, s)
+						gen_send := &GenSendStmt{
+							Send:       m.Fileset.Position(s.Pos()),
+							Chan:       chan_name.Name,
+							M:          m,
+							Sync_body:  body,
+							Async_body: body2,
 						}
-
-
-						async_guard := &promela_ast.GuardStmt{
-							Cond:  async_send,
-							Guard: m.Fileset.Position(comm.Pos()),
-							Body: new_body}
-
-
-						sending_chan := &promela_ast.SelectorExpr{
-							X:   chan_name.Name,
-							Sel: &promela_ast.Ident{Name: "sending"}}
-
-						m.checkForBreak(body2, goto_stmt)
-						sync_guard := &promela_ast.GuardStmt{
-							Cond: sync_send,
-							Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-								&promela_ast.RcvStmt{
-									Chan: sending_chan,
-									Rhs:  &promela_ast.Ident{Name: "ok"}},
-									assert }},
-							Guard: m.Fileset.Position(s.Pos())}
-
-						sync_guard.Body.List = append(sync_guard.Body.List, body2.List...)
-
-						i.Guards = append(i.Guards, async_guard, sync_guard)
+						i.Guards = append(i.Guards, gen_send)
 					} else {
 
 						err = &ParseError{err: errors.New(UNKNOWN_SEND + m.Fileset.Position(com.Chan.Pos()).String())}
@@ -116,28 +84,28 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 
 				case *ast.AssignStmt: //receive
 					for _, rh := range com.Rhs {
-						var guards []*promela_ast.GuardStmt
+						var guard promela_ast.GuardStmt
 						switch com := rh.(type) {
 						case *ast.UnaryExpr:
 							if com.Op == token.ARROW {
-								guards, err = m.translateRcvStmt(com.X, body, body2, goto_stmt)
-								i.Guards = append(i.Guards, guards...)
+								guard, err = m.translateRcvStmt(com.X, body, body2)
+								i.Guards = append(i.Guards, guard)
 							}
 						case *ast.Ident:
-							guards, err = m.translateRcvStmt(com, body, body2, goto_stmt)
-							i.Guards = append(i.Guards, guards...)
+							guard, err = m.translateRcvStmt(com, body, body2)
+							i.Guards = append(i.Guards, guard)
 						case *ast.SelectorExpr:
-							guards, err = m.translateRcvStmt(com, body, body2, goto_stmt)
-							i.Guards = append(i.Guards, guards...)
+							guard, err = m.translateRcvStmt(com, body, body2)
+							i.Guards = append(i.Guards, guard)
 						}
 					}
 				case *ast.ExprStmt:
 					switch com := com.X.(type) {
 					case *ast.UnaryExpr:
 						if com.Op == token.ARROW {
-							var guards []*promela_ast.GuardStmt
-							guards, err = m.translateRcvStmt(com.X, body, body2, goto_stmt)
-							i.Guards = append(i.Guards, guards...)
+							var guard promela_ast.GuardStmt
+							guard, err = m.translateRcvStmt(com.X, body, body2)
+							i.Guards = append(i.Guards, guard)
 						}
 					}
 				}
@@ -148,7 +116,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 			} else { // it is default
 				i.Has_default = true
 				m.checkForBreak(body, goto_stmt)
-				i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: body})
+				i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: body})
 			}
 		}
 	}
