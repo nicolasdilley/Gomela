@@ -216,6 +216,9 @@ func (m *Model) translateIfCond(expr ast.Expr) (promela_ast.Expr, bool) {
 }
 
 func containsRecover(s ast.Stmt) bool {
+	if s == nil {
+		return false
+	}
 	contains := false
 	ast.Inspect(s, func(n ast.Node) bool {
 		switch s := n.(type) {
