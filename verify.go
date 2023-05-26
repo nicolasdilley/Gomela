@@ -659,7 +659,7 @@ func verifyModelWithSpecificValues(ver_info *VerificationInfo, model string, par
 	// generate new model
 	ioutil.WriteFile("./temp.pml", []byte(toPrint), 0664)
 	// verify it
-	verifyModel(ver_info, "./temp.pml", flag.Args()[1], "", nil, []string{}, 0, params)
+	verifyModel(ver_info, "./temp.pml", flag.Arg(1), "", nil, []string{}, 0, params)
 	// delete it
 	os.Remove("./temp.pml")
 
