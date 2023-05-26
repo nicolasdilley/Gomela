@@ -774,7 +774,7 @@ func generateOptBounds(num_optionals int, bounds_to_check []interface{}) [][]int
 // print the spin output to a file
 func outputSpinTrace(ver_info *VerificationInfo, spin_output string) {
 	if ver_info.print_trace {
-		f, err := os.OpenFile(*ver_info.spin_output,
+		f, err := os.OpenFile(ver_info.spin_output,
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			panic(err)
