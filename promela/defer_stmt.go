@@ -7,7 +7,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateDeferStmt(s *ast.DeferStmt) (*promela_ast.BlockStmt, *ParseError) {
+func (m *Model) translateDeferStmt(s *ast.DeferStmt) (*promela_ast.BlockStmt, error) {
 	s1, err := m.TranslateExpr(s.Call)
 	if err != nil {
 		return s1, err

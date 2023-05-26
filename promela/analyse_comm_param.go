@@ -25,10 +25,10 @@ type CommPar struct {
 // Return the parameters that are mandatory and optional
 // Mutates len(a) => a
 
-func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, *ParseError) {
+func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, error) {
 
 	params := []*CommPar{}
-	var err *ParseError
+	var err error
 	m.AddRecFunc(pack, fun.Name.Name, fun)
 	if fun.Body == nil {
 		return params, err
@@ -170,7 +170,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						for _, param := range fun_decl.Type.Params.List {
 							switch param.Type.(type) {
 							case *ast.Ellipsis:
-								err = &ParseError{err: errors.New(ELLIPSIS + m.Fileset.Position(fun_decl.Pos()).String())}
+								err = errors.New(ELLIPSIS + m.Fileset.Position(fun_decl.Pos()).String())
 								return false
 							}
 						}

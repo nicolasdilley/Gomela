@@ -6,7 +6,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateLabeledStmt(s *ast.LabeledStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateLabeledStmt(s *ast.LabeledStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	label := &promela_ast.LabelStmt{Label: m.Fileset.Position(s.Pos()), Name: s.Label.Name}

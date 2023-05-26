@@ -7,7 +7,7 @@ import (
 )
 
 // take a go block stmt and returns its promela counterpart
-func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.BlockStmt, defer_stmts *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.BlockStmt, defer_stmts *promela_ast.BlockStmt, err error) {
 
 	block_stmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defer_stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -28,7 +28,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 				default:
 					var s1 *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 					var defers *promela_ast.BlockStmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-					var err1 *ParseError
+					var err1 error
 					switch stmt := stmt.(type) {
 					case *ast.AssignStmt:
 						s1, err1 = m.translateAssignStmt(stmt)

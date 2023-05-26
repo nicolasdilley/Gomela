@@ -9,7 +9,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos()), Model: "Select"}
@@ -46,7 +46,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
 
 			if len(d1.List) > 0 {
-				return b, d1, &ParseError{err: errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())}
+				return b, d1, errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())
 			}
 			if err1 != nil {
 				return b, defers, err1
@@ -78,7 +78,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						i.Guards = append(i.Guards, gen_send)
 					} else {
 
-						err = &ParseError{err: errors.New(UNKNOWN_SEND + m.Fileset.Position(com.Chan.Pos()).String())}
+						err = errors.New(UNKNOWN_SEND + m.Fileset.Position(com.Chan.Pos()).String())
 						return b, defers, err
 					}
 
@@ -124,7 +124,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	if len(i.Guards) > 0 {
 		b.List = append(b.List, i, goto_stmt.Label, goto_end_stmt.Label)
 	} else {
-		return nil, nil, &ParseError{err: errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())}
+		return nil, nil, errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())
 
 	}
 

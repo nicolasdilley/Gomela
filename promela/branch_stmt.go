@@ -8,7 +8,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateBranchStmt(s *ast.BranchStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateBranchStmt(s *ast.BranchStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	br := &promela_ast.GotoStmt{
