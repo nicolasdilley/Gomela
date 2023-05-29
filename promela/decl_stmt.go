@@ -6,7 +6,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateDeclStmt(stmt *ast.DeclStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateDeclStmt(stmt *ast.DeclStmt) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	switch decl := stmt.Decl.(type) {

@@ -8,7 +8,7 @@ import (
 	"go/ast"
 )
 
-func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	var guard promela_ast.GuardStmt
@@ -40,7 +40,7 @@ func (m *Model) translateSendStmt(s *ast.SendStmt) (b *promela_ast.BlockStmt, er
 
 }
 
-func (m *Model) generateGenSendStmt(e ast.Expr, body *promela_ast.BlockStmt, body2 *promela_ast.BlockStmt) (g promela_ast.GuardStmt, err *ParseError) {
+func (m *Model) generateGenSendStmt(e ast.Expr, body *promela_ast.BlockStmt, body2 *promela_ast.BlockStmt) (g promela_ast.GuardStmt, err error) {
 
 	if m.containsChan(e) {
 
@@ -56,7 +56,7 @@ func (m *Model) generateGenSendStmt(e ast.Expr, body *promela_ast.BlockStmt, bod
 		}
 
 	} else {
-		err = &ParseError{err: errors.New(UNKNOWN_SEND + m.Fileset.Position(e.Pos()).String())}
+		err = errors.New(UNKNOWN_SEND + m.Fileset.Position(e.Pos()).String())
 	}
 
 	return g, err

@@ -14,7 +14,7 @@ import (
 // 3. Translate the body of the function to Promela.
 // 4. Translate arguments that are communication parameters
 
-func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.BlockStmt, err error) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	// if obj != nil {
@@ -24,7 +24,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	// first check if the call is not the launch of a goroutine
 
 	if m.IsGoroutine(call_expr) {
-		var err *ParseError
+		var err error
 		var b *promela_ast.BlockStmt
 
 		switch f := call_expr.Args[0].(type) {
@@ -71,7 +71,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
 				// check if positions match
 				if decl.Pos() == f.Decl.Pos() {
-					return stmts, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+					return stmts, errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())
 				}
 			}
 		}
@@ -147,7 +147,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	return stmts, err
 }
 
-func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, *ParseError) {
+func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, error) {
 
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, arg := range call_expr.Args {

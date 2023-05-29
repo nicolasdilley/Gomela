@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
-func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (stmts *promela_ast.BlockStmt, err error) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if name.Sel.Name == "Add" {
 
@@ -34,12 +34,12 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 			Rhs:   ub},
 
 			&promela_ast.RcvStmt{ // wait to receive the ack from the monitor
-				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"}, 
+				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"},
 				Rhs: &promela_ast.Ident{Name: "ok"}},
 
 				// Check that the monitor says its ok
 			&promela_ast.AssertStmt{
-				Pos: m.Fileset.Position(call_expr.Pos()), 
+				Pos: m.Fileset.Position(call_expr.Pos()),
 				Model: "Add(" + ub.Name + ")",
 				Expr: &promela_ast.Ident{Name: "ok"}},
 		)
@@ -65,15 +65,15 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 			Rhs:   &promela_ast.Ident{Name: "-1"}},
 
 			&promela_ast.RcvStmt{ // wait to receive the ack from the monitor
-				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"}, 
+				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"},
 				Rhs: &promela_ast.Ident{Name: "ok"}},
 
 				// Check that the monitor says its ok
 			&promela_ast.AssertStmt{
-				Pos: m.Fileset.Position(call_expr.Pos()), 
+				Pos: m.Fileset.Position(call_expr.Pos()),
 				Model: "Done()",
 				Expr: &promela_ast.Ident{Name: "ok"}},
-		
+
 		)
 	} else if name.Sel.Name == "Wait" {
 		stmts.List = append(stmts.List, &promela_ast.RcvStmt{

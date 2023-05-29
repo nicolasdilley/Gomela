@@ -16,7 +16,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_types"
 )
 
-func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	var func_name string // The corresponding promela function name consisting of package + fun + num of param + len(proctypes)
@@ -33,7 +33,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 		new_call_expr = s.Call
 	} else {
 		var pack string
-		var err1 *ParseError
+		var err1 error
 
 		decl, new_call_expr, pack, err1 = m.findFunDecl(call_expr)
 
@@ -49,7 +49,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 		for _, f := range m.RecFuncs {
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
 				if decl.Pos() == f.Decl.Pos() {
-					return b, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+					return b, errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())
 				}
 			}
 		}
@@ -62,7 +62,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 
 		new_mod.RecFuncs = append(new_mod.RecFuncs, RecFunc{Pkg: m.Package, Name: decl.Name.Name, Decl: decl})
 
-		var err1 *ParseError
+		var err1 error
 		new_mod.CommPars, err1 = new_mod.AnalyseCommParam(pack_name, decl, m.AstMap, false) // recover the commPar
 		//. Create a define for each mandatory param
 
@@ -103,7 +103,7 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 }
 
 // s can be either the go stmt or the call expr
-func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.CallExpr, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, *ParseError) {
+func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.CallExpr, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, error) {
 
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(call_expr.Pos())}
@@ -309,7 +309,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 	return b, nil
 }
 
-func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *ast.CallExpr, isMain bool) ([]*promela_ast.Param, []promela_ast.Expr, bool, bool, *ParseError) {
+func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *ast.CallExpr, isMain bool) ([]*promela_ast.Param, []promela_ast.Expr, bool, bool, error) {
 	hasChan := isMain
 	known := true
 	params := []*promela_ast.Param{}
@@ -400,7 +400,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 // 	return p, e
 // }
 
-func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallExpr, string, *ParseError) {
+func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallExpr, string, error) {
 	pack_name := m.Package
 
 	switch name := call_expr.Fun.(type) {
@@ -491,7 +491,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 			for _, field := range decl.Type.Params.List {
 				switch field.Type.(type) {
 				case *ast.Ellipsis:
-					return nil, nil, pack_name, &ParseError{err: errors.New(ELLIPSIS + m.Fileset.Position(call_expr.Pos()).String())}
+					return nil, nil, pack_name, errors.New(ELLIPSIS + m.Fileset.Position(call_expr.Pos()).String())
 				}
 			}
 			new_decl, new_call_expr := m.updateDeclWithRcvAndStructs(*decl, call_expr)
@@ -509,14 +509,14 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 					}
 				}
 				if m.isChan(expr) || m.isWaitgroup(expr) || m.isMutex(expr) {
-					return nil, nil, pack_name, &ParseError{err: errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
+					return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))
 				}
 			}
 
 			// also check if the function is not a method on a struct that contains
 			// a mutex, a chan or a wg !
 			if m.isStructWithChans(call_expr.Fun) {
-				return nil, nil, pack_name, &ParseError{err: errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))}
+				return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))
 			}
 
 		}

@@ -93,10 +93,6 @@ type Bound struct {
 	Val  int
 }
 
-type ParseError struct {
-	err error
-}
-
 // Take a go function and translate it to a Promela module
 func (m *Model) GoToPromela(SEP string) {
 
@@ -114,7 +110,7 @@ func (m *Model) GoToPromela(SEP string) {
 	}
 
 	if err != nil {
-		fmt.Println(err.err)
+		fmt.Println(err)
 	}
 
 	// generate the model only if it contains a chan or a wg
@@ -132,13 +128,13 @@ func (m *Model) GoToPromela(SEP string) {
 			PrintFeatures(m.Features, m)
 		} else {
 			fmt.Println("Could not parse model ", m.Name, " :")
-			fmt.Println(err.err)
+			fmt.Println(err)
 
 			logFeature(Feature{
 				Proj_name: m.Project_name,
 				Model:     m.Name,
 				Fun:       m.Fun.Name.String(),
-				Name:      "MODEL ERROR = " + fmt.Sprint(err.err),
+				Name:      "MODEL ERROR = " + fmt.Sprint(err),
 				Mandatory: "false",
 				Line:      0,
 				Commit:    m.Commit,
@@ -148,7 +144,7 @@ func (m *Model) GoToPromela(SEP string) {
 	}
 
 }
-func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateNewVar(s ast.Stmt, lhs []ast.Expr, rhs []ast.Expr) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	new_var := false
@@ -202,7 +198,7 @@ func GetElemIfPointer(t types.Type) types.Type {
 	}
 }
 
-func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*types.Named, inter_pro int, new_var bool) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*types.Named, inter_pro int, new_var bool) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	// Tests if one of the field of the assign structs is a WG
 	// We have the definition of a struct
@@ -210,13 +206,13 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 	if inter_pro <= MAX_STRUCTS_INTER_PRO {
 		if t.String() == "sync.WaitGroup" {
 			if !new_var {
-				return b, &ParseError{err: errors.New(WG_ALIASING + m.Fileset.Position(lhs.Pos()).String())}
+				return b, errors.New(WG_ALIASING + m.Fileset.Position(lhs.Pos()).String())
 			}
 			return m.translateWg(s, lhs)
 
 		} else if t.String() == "sync.Mutex" || t.String() == "sync.RWMutex" {
 			if !new_var {
-				return b, &ParseError{err: errors.New(MUTEX_ALIASING + m.Fileset.Position(lhs.Pos()).String())}
+				return b, errors.New(MUTEX_ALIASING + m.Fileset.Position(lhs.Pos()).String())
 			}
 			return m.translateMutex(s, lhs)
 		}
@@ -235,39 +231,39 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 					elem := GetElemIfPointer(field.Elem())
 					switch elem := elem.(type) {
 					case *types.Chan:
-						return b, &ParseError{err: errors.New(CHAN_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+						return b, errors.New(CHAN_IN_LIST + m.Fileset.Position(s.Pos()).String())
 					default:
 						if elem.String() == "sync.WaitGroup" {
-							return b, &ParseError{err: errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())
 						}
 						if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
-							return b, &ParseError{err: errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())
 						}
 					}
 				case *types.Slice:
 					elem := GetElemIfPointer(field.Elem())
 					switch elem := elem.(type) {
 					case *types.Chan:
-						return b, &ParseError{err: errors.New(CHAN_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+						return b, errors.New(CHAN_IN_LIST + m.Fileset.Position(s.Pos()).String())
 					default:
 						if elem.String() == "sync.WaitGroup" {
-							return b, &ParseError{err: errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(WG_IN_LIST + m.Fileset.Position(s.Pos()).String())
 						}
 						if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
-							return b, &ParseError{err: errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(MUTEX_IN_LIST + m.Fileset.Position(s.Pos()).String())
 						}
 					}
 				case *types.Map:
 					elem := GetElemIfPointer(field.Elem())
 					switch elem := elem.(type) {
 					case *types.Chan:
-						return b, &ParseError{err: errors.New(CHAN_IN_MAP + m.Fileset.Position(s.Pos()).String())}
+						return b, errors.New(CHAN_IN_MAP + m.Fileset.Position(s.Pos()).String())
 					default:
 						if elem.String() == "sync.WaitGroup" {
-							return b, &ParseError{err: errors.New(WG_IN_MAP + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(WG_IN_MAP + m.Fileset.Position(s.Pos()).String())
 						}
 						if elem.String() == "sync.Mutex" || elem.String() == "sync.RWMutex" {
-							return b, &ParseError{err: errors.New(MUTEX_IN_MAP + m.Fileset.Position(s.Pos()).String())}
+							return b, errors.New(MUTEX_IN_MAP + m.Fileset.Position(s.Pos()).String())
 						}
 					}
 
@@ -330,7 +326,7 @@ func (m *Model) translateStruct(s ast.Stmt, lhs ast.Expr, t types.Type, seen []*
 	return b, nil
 }
 
-func (m *Model) translateNamed(s ast.Stmt, name ast.Expr, t *types.Named, seen []*types.Named, inter_pro int, new_var bool) (*promela_ast.BlockStmt, *ParseError) {
+func (m *Model) translateNamed(s ast.Stmt, name ast.Expr, t *types.Named, seen []*types.Named, inter_pro int, new_var bool) (*promela_ast.BlockStmt, error) {
 	contains := false
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, s := range seen {
@@ -358,7 +354,7 @@ func (m *Model) translateNamed(s ast.Stmt, name ast.Expr, t *types.Named, seen [
 }
 
 // Takes the declaration of a composite list {field: expr, ...} and checks for wg and mutex
-func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr, new_var bool) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr, new_var bool) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	// Tests if one of the field of the assign structs is a WG
 
@@ -370,7 +366,7 @@ func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr, new_var bool) (b *prome
 				switch c.Args[0].(type) {
 				case *ast.ChanType:
 					if !new_var {
-						return b, &ParseError{err: errors.New(CHAN_ALIASING + m.Fileset.Position(lhs.Pos()).String())}
+						return b, errors.New(CHAN_ALIASING + m.Fileset.Position(lhs.Pos()).String())
 					}
 					b1, err1 := m.translateChan(lhs, c.Args)
 
@@ -431,7 +427,7 @@ func (m *Model) lookForChans(lhs ast.Expr, rhs ast.Expr, new_var bool) (b *prome
 	return b, err
 }
 
-func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if !m.For_counter.In_for {
 
@@ -472,13 +468,13 @@ func (m *Model) translateWg(s ast.Stmt, name ast.Expr) (b *promela_ast.BlockStmt
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(s.Pos()).Filename,
 		})
-		err = &ParseError{err: errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(s.Pos()).String())}
+		err = errors.New(WAITGROUP_IN_FOR + m.Fileset.Position(s.Pos()).String())
 	}
 
 	return b, err
 }
 
-func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	if !m.For_counter.In_for {
@@ -514,13 +510,13 @@ func (m *Model) translateMutex(s ast.Stmt, prom_mutex_name ast.Expr) (b *promela
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(s.Pos()).Filename,
 		})
-		err = &ParseError{err: errors.New(MUTEX_IN_FOR + m.Fileset.Position(s.Pos()).String())}
+		err = errors.New(MUTEX_IN_FOR + m.Fileset.Position(s.Pos()).String())
 	}
 
 	return b, err
 }
 
-func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	if !m.For_counter.In_for {
@@ -573,7 +569,7 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 			Commit:    m.Commit,
 			Filename:  m.Fileset.Position(go_chan_name.Pos()).Filename,
 		})
-		err = &ParseError{err: errors.New(CHAN_IN_FOR + m.Fileset.Position(go_chan_name.Pos()).String())}
+		err = errors.New(CHAN_IN_FOR + m.Fileset.Position(go_chan_name.Pos()).String())
 	}
 	return b, err
 }
@@ -634,7 +630,7 @@ func containsBreak(b *promela_ast.BlockStmt) bool {
 	return contains
 }
 
-func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err error) {
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	switch expr := expr.(type) {
@@ -671,7 +667,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 					assert := &promela_ast.AssertStmt{Model: "Close", Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
 					stmts.List = append(stmts.List, rcv, assert)
 				} else {
-					return stmts, &ParseError{err: errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())}
+					return stmts, errors.New(UNKNOWN_CHAN_CLOSE + m.Fileset.Position(expr.Pos()).String())
 				}
 			} else if name.Name == "panic" && len(expr.Args) == 1 { // panic call
 				stmts.List = append(stmts.List, &promela_ast.CallExpr{Call: m.Fileset.Position(expr.Pos()), Model: "Panic", Fun: &promela_ast.Ident{Name: "assert"}, Args: []promela_ast.Expr{&promela_ast.Ident{Name: "20==0"}}})
@@ -964,7 +960,7 @@ func (m *Model) isWaitgroup(expr ast.Expr) bool {
 	return false
 }
 
-func (m *Model) CallExists(decl *ast.FuncDecl) (bool, *ParseError) {
+func (m *Model) CallExists(decl *ast.FuncDecl) (bool, error) {
 	for _, proc := range m.Proctypes {
 		if proc.Decl.Name.Name == decl.Name.Name {
 			if decl.Recv != nil {
