@@ -59,7 +59,7 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 							Projects_folder:      projects_folder,
 							GenerateFeatures:     true,
 							Current_return_label: "stop_process",
-							All_mandatory:        *ver.all_mandatory,
+							All_mandatory:        ver.all_mandatory,
 						}
 
 						m.GoToPromela(AUTHOR_PROJECT_SEP)

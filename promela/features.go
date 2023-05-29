@@ -20,11 +20,6 @@ type Feature struct {
 }
 
 func CreateCSV(result_folder string) {
-
-	if result_folder[0] != '/' {
-		result_folder = "./" + result_folder
-	}
-
 	log_file, _ := os.OpenFile(result_folder+"/log.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(log_file)
