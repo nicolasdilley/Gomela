@@ -73,7 +73,7 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 			decls = append(decls, stmt)
 		case *IfStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 		case *ForStmt:
 
@@ -81,17 +81,17 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 
 		case *DoStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 
 		case *SelectStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 
 		case *CondStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 		case *BlockStmt:
 			decls = append(decls, DeclInBlock(stmt)...)

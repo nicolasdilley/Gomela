@@ -38,7 +38,7 @@ func (m *Model) translateTypeSwitchStmt(s *ast.TypeSwitchStmt) (b *promela_ast.B
 				if err1 != nil {
 					return b, defers, err1
 				}
-				guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}
+				guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body}
 				i.Guards = append(i.Guards, guard)
 			}
 		default:

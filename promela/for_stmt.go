@@ -87,7 +87,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 			d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
 			d.Guards = append(
 				d.Guards,
-				&promela_ast.GuardStmt{
+				&promela_ast.SingleGuardStmt{
 					Cond: &promela_ast.Ident{Name: "true"},
 					Body: stmts},
 			)
@@ -109,7 +109,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 					ub_not_given = promela_ast.BinaryExpr{Lhs: ub, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
 				}
 
-				then := &promela_ast.GuardStmt{
+				then := &promela_ast.SingleGuardStmt{
 					Cond: &promela_ast.BinaryExpr{Lhs: &lb_not_given,
 						Rhs: &ub_not_given, Op: "&&"},
 					Body: &promela_ast.BlockStmt{
@@ -125,14 +125,14 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 				// the else part
 
 				// adding the option to break of the for loop
-				d.Guards = append(d.Guards, &promela_ast.GuardStmt{
+				d.Guards = append(d.Guards, &promela_ast.SingleGuardStmt{
 					Cond: &promela_ast.Ident{Name: "true"},
 					Body: &promela_ast.BlockStmt{
 						List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}})
 
-				els := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d, for_label}}}
+				els := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d, for_label}}}
 
-				if_stmt.Guards = []*promela_ast.GuardStmt{then, els}
+				if_stmt.Guards = []promela_ast.GuardStmt{then, els}
 
 				b.List = append(b.List, &if_stmt)
 			}

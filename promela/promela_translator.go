@@ -52,6 +52,7 @@ type Model struct {
 	ContainsChan         bool
 	ContainsMutexes      bool
 	ContainsReceiver     bool
+	ContainsClose        bool                         // Does the partition contain a close statement ?
 	Init                 *promela_ast.InitDef         // The proctype consisting of the "main" function of the source program
 	Global_vars          []promela_ast.Stmt           // the global variable used in the ltl properties
 	Defines              []promela_ast.DefineStmt     // the channel bounds
@@ -527,28 +528,25 @@ func (m *Model) translateChan(go_chan_name ast.Expr, args []ast.Expr) (b *promel
 		prom_chan_name := translateIdent(go_chan_name)
 		prom_chan_name.Name += CHAN_NAME
 		channel := &ChanStruct{Name: &prom_chan_name, Chan: m.Fileset.Position(go_chan_name.Pos())}
-		chan_def := &promela_ast.DeclStmt{Name: &prom_chan_name, Types: promela_types.Chandef}
-		b.List = append(b.List, chan_def)
-		if_stmt := &promela_ast.IfStmt{Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, Guards: []*promela_ast.GuardStmt{}}
-		sync_monitor := &promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "sync_monitor"}, Args: []promela_ast.Expr{&prom_chan_name}}}
+
+		var size *promela_ast.Ident
+
 		if len(args) > 1 { // check if the channel is buffered or not
 			channel.Buffered = true
-			var size *promela_ast.Ident
 			size, err = m.lookUp(args[1], CHAN_BOUND, false)
-			async_guard := &promela_ast.GuardStmt{
-				Cond: &promela_ast.Ident{Name: size.Name + " > 0"},
-				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-					&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: &prom_chan_name, Sel: &promela_ast.Ident{Name: "size"}}, Rhs: size},
-					&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "async_monitor"}, Args: []promela_ast.Expr{&prom_chan_name}}},
-				}}}
-			sync_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"},
-				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{sync_monitor}}}
 
-			if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
-			b.List = append(b.List, if_stmt)
 		} else {
-			b.List = append(b.List, sync_monitor)
+			size = &promela_ast.Ident{Name: "0"}
 		}
+
+		chan_def := &ChanDefDeclStmt{
+			Decl: m.Fileset.Position(go_chan_name.Pos()),
+			Name: &prom_chan_name,
+			Size: size,
+			M:    m,
+		}
+
+		b.List = append(b.List, chan_def)
 
 		m.Chans[go_chan_name] = channel
 		m.ContainsChan = true
@@ -660,7 +658,7 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 				rcv := &promela_ast.RcvStmt{Model: "Close", Rcv: m.Fileset.Position(name.Pos())}
 
 				if m.containsChan(expr.Args[0]) {
-
+					m.ContainsClose = true
 					chan_name := m.getChanStruct(expr.Args[0])
 
 					rcv.Chan = &promela_ast.SelectorExpr{
@@ -738,38 +736,20 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err *Par
 
 		case token.ARROW:
 
-			if m.containsChan(expr.X) {
+			var guard promela_ast.GuardStmt
 
-				chan_name := m.getChanStruct(expr.X)
-				if_stmt := &promela_ast.IfStmt{
-					Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
-					Guards: []*promela_ast.GuardStmt{},
-					If:     m.Fileset.Position(expr.Pos()),
-					Model:  "Rcv",
-				}
-
-				async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}, Rcv: m.Fileset.Position(expr.Pos())}
-				sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}, Rcv: m.Fileset.Position(expr.Pos())}
-
-				async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
-				sync_guard := &promela_ast.GuardStmt{Cond: sync_rcv, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
-					&promela_ast.SendStmt{
-						Chan: &promela_ast.SelectorExpr{
-							X:   chan_name.Name,
-							Sel: &promela_ast.Ident{Name: "rcving"},
-						},
-						Rhs: &promela_ast.Ident{Name: "false"},
-					}}}}
-
-				if_stmt.Guards = append(if_stmt.Guards, async_guard, sync_guard)
-
-				stmts.List = append(stmts.List, if_stmt)
-			} else {
-
-				if !m.IsTimeAfter(expr.X) {
-					err = &ParseError{err: errors.New(UNKNOWN_RCV + m.Fileset.Position(expr.Pos()).String())}
-				}
+			guard, err = m.translateRcvStmt(expr.X, &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}, &promela_ast.BlockStmt{List: []promela_ast.Stmt{}})
+			if_stmt := &promela_ast.IfStmt{
+				Init: &promela_ast.BlockStmt{
+					List: []promela_ast.Stmt{},
+				},
+				Guards: []promela_ast.GuardStmt{},
 			}
+
+			if_stmt.Guards = append(if_stmt.Guards, guard)
+
+			stmts.List = append(stmts.List, if_stmt)
+
 		default:
 			return m.TranslateExpr(expr.X)
 		}

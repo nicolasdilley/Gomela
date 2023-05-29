@@ -10,7 +10,7 @@ import (
 // If non of the guards are executable, the doStmt blocks until one is ready. (Like a for{select}) in go
 type DoStmt struct {
 	Do     token.Position
-	Guards []*GuardStmt
+	Guards []GuardStmt
 }
 
 func (s *DoStmt) GoNode() token.Position {
@@ -27,10 +27,10 @@ func (s *DoStmt) Print(num_tabs int) (stmt string) {
 }
 
 func (s *DoStmt) Clone() Stmt {
-	s1 := &DoStmt{Do: s.Do, Guards: []*GuardStmt{}}
+	s1 := &DoStmt{Do: s.Do, Guards: []GuardStmt{}}
 
 	for _, g := range s.Guards {
-		s1.Guards = append(s1.Guards, g.Clone().(*GuardStmt))
+		s1.Guards = append(s1.Guards, g.Clone().(GuardStmt))
 	}
 	return s1
 }

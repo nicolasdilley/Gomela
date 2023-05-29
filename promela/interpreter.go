@@ -83,9 +83,9 @@ func Print(m *Model) {
 	wg_struct := promela_ast.WgStructDef{Name: &promela_ast.Ident{Name: "Wgdef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
 	add := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "update"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
 	add_ack := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "update_ack"}, Types: []promela_types.Types{promela_types.Bool}, Size: &promela_ast.Ident{Name: "0"}}
-	
+
 	wait := &promela_ast.Chandef{Name: &promela_ast.Ident{Name: "wait"}, Types: []promela_types.Types{promela_types.Int}, Size: &promela_ast.Ident{Name: "0"}}
-	wg_struct.Defs = append(wg_struct.Defs, add,add_ack, wait)
+	wg_struct.Defs = append(wg_struct.Defs, add, add_ack, wait)
 
 	// print Wgdef
 	mutex_struct := promela_ast.MutexStructDef{Name: &promela_ast.Ident{Name: "Mutexdef"}, Defs: []*promela_ast.Chandef{}} // creating the struct that will represent the go channel
@@ -124,8 +124,12 @@ func Print(m *Model) {
 	stmt += "\n /* ================================================================================== */"
 	stmt += "\n /* ================================================================================== */"
 	stmt += "\n /* ================================================================================== */ \n"
+
 	if m.ContainsChan {
-		stmt += GenerateAsyncMonitor() + generateSyncChanMonitor()
+		// If there is a close statement, we need the monitors
+		if m.ContainsClose {
+			stmt += GenerateAsyncMonitor() + generateSyncChanMonitor()
+		}
 	}
 
 	if m.ContainsWg {

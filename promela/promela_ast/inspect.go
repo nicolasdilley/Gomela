@@ -40,7 +40,7 @@ func Inspect(s Stmt, f func(Stmt) bool) {
 		if f(s) {
 			Inspect(s.X, f)
 		}
-	case *GuardStmt:
+	case *SingleGuardStmt:
 		Inspect(s.Cond, f)
 		Inspect(s.Body, f)
 	case *CallExpr:

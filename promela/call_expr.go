@@ -103,54 +103,27 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 						if name.Sel.Name == "Notify" {
 							// Send guard
-							if m.containsChan(new_call_expr.Args[0]) {
+							var guard promela_ast.GuardStmt
 
-								chan_name := m.getChanStruct(new_call_expr.Args[0])
+							guard, err = m.generateGenSendStmt(new_call_expr.Args[0],
+								&promela_ast.BlockStmt{
+									List: []promela_ast.Stmt{
+										&promela_ast.Ident{Name: "break"},
+									}},
+								&promela_ast.BlockStmt{
+									List: []promela_ast.Stmt{
+										&promela_ast.Ident{Name: "break"},
+									}})
 
-								sync_send := &promela_ast.SendStmt{
-									Chan: &promela_ast.SelectorExpr{
-										X:   chan_name.Name,
-										Sel: &promela_ast.Ident{Name: "sync"}},
-									Rhs: &promela_ast.Ident{Name: "false"},
-								}
-								assert := &promela_ast.AssertStmt{Model: "Notify", Pos: m.Fileset.Position(new_call_expr.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
-								
-								async_send := &promela_ast.RcvStmt{
-									Chan: &promela_ast.SelectorExpr{
-										X:   chan_name.Name,
-										Sel: &promela_ast.Ident{Name: "enq"}},
-									Rhs: &promela_ast.Ident{Name: "ok"},
-								}
+							// true guard
+							true_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
-								sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
-					
-								sync_guard := &promela_ast.GuardStmt{
-									Cond: sync_send,
-									Body: &promela_ast.BlockStmt{
-										List: []promela_ast.Stmt{
-											&promela_ast.RcvStmt{
-												Chan: sending_chan,
-												Rhs:  &promela_ast.Ident{Name: "ok"}},
-											&promela_ast.Ident{Name: "break"},
-											assert,
-										},
-									},
-									Guard: m.Fileset.Position(new_call_expr.Pos())}
-								async_guard := &promela_ast.GuardStmt{
-									Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert,&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(new_call_expr.Pos())}
+							select_stmt := &promela_ast.SelectStmt{
+								Model:  "Notify",
+								Guards: []promela_ast.GuardStmt{guard, true_guard},
+								Select: m.Fileset.Position(name.Pos())}
 
-								// true guard
-								true_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
-
-								select_stmt := &promela_ast.SelectStmt{
-									Model:  "Notify",
-									Guards: []*promela_ast.GuardStmt{async_guard, sync_guard, true_guard},
-									Select: m.Fileset.Position(name.Pos())}
-
-								stmts.List = append(stmts.List, select_stmt)
-							} else {
-								return stmts, &ParseError{err: errors.New(UNKNOWN_NOTIFY + m.Fileset.Position(new_call_expr.Pos()).String())}
-							}
+							stmts.List = append(stmts.List, select_stmt)
 						}
 					}
 				}
