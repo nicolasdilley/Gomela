@@ -11,7 +11,7 @@ import (
 
 // Return if the expr given could be translated to a var or not and if it can its promela expr.
 // Also returns a list of the commpar found
-func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, *ParseError) {
+func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, error) {
 
 	exprs := []ast.Expr{}
 	if con, num := IsConst(expr, m.AstMap[m.Package]); con {
@@ -74,7 +74,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, *Pa
 	case *ast.ParenExpr:
 		return m.TranslateArg(expr.X)
 	default:
-		return nil, exprs, &ParseError{err: errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())}
+		return nil, exprs, errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())
 
 	}
 

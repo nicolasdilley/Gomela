@@ -40,6 +40,7 @@ func VerifyModels(ver_info *VerificationInfo, models []os.FileInfo, dir_name str
 	if len(bounds_to_check) == 0 {
 		bounds_to_check = []interface{}{0, 1, 3}
 	}
+
 	// create CSV
 	f, err := os.OpenFile("./"+RESULTS_FOLDER+"/verification.csv",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -658,7 +659,7 @@ func verifyModelWithSpecificValues(ver_info *VerificationInfo, model string, par
 	// generate new model
 	ioutil.WriteFile("./temp.pml", []byte(toPrint), 0664)
 	// verify it
-	verifyModel(ver_info, "./temp.pml", flag.Args()[1], "", nil, []string{}, 0, params)
+	verifyModel(ver_info, "./temp.pml", flag.Arg(1), "", nil, []string{}, 0, params)
 	// delete it
 	os.Remove("./temp.pml")
 
@@ -773,7 +774,7 @@ func generateOptBounds(num_optionals int, bounds_to_check []interface{}) [][]int
 // print the spin output to a file
 func outputSpinTrace(ver_info *VerificationInfo, spin_output string) {
 	if ver_info.print_trace {
-		f, err := os.OpenFile(*ver_info.spin_output,
+		f, err := os.OpenFile(ver_info.spin_output,
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			panic(err)

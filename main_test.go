@@ -61,7 +61,7 @@ func TestMain(t *testing.T) {
 	}
 
 	// remove all results2021* results
-	fmt.Println("Removing result2021 folders")
+	fmt.Println("Removing result20* folders")
 	filepath.Walk(".", func(path string, file os.FileInfo, err error) error {
 		if file.IsDir() {
 			if strings.Contains(file.Name(), "result20") {

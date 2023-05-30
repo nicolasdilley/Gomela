@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -50,13 +50,13 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			return b, defer_stmts, err1
 		}
 		if len(defer_stmts2.List) > 0 {
-			return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+			return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 		}
 
 		contains := false
 		if len(body.List) != 0 {
 			contains = true
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: g, Body: body})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: g, Body: body})
 		}
 
 		if s.Else != nil {
@@ -65,7 +65,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			case *ast.BlockStmt:
 				s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
 				if len(defer_stmts3.List) > 0 {
-					return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					err = err1
@@ -74,7 +74,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			default:
 				s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
 				if len(defers.List) > 0 {
-					return b, defer_stmts, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					err = err1
@@ -85,15 +85,15 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 				contains = true
 
 				if contains_comm_param {
-					i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts})
+					i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts})
 				} else {
-					i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
+					i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: stmts})
 				}
 			}
 		} else if contains && !contains_comm_param {
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{}})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{}})
 		} else if contains_comm_param {
-			i.Guards = append(i.Guards, &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{}})
+			i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{}})
 		}
 
 		if contains {
@@ -103,7 +103,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 	return b, defers, err
 }
 
-func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockStmt, e *ParseError) {
+func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockStmt, e error) {
 	isClosed = false
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	var cond promela_ast.Expr
@@ -132,10 +132,10 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			return isClosed, b1, err1
 		}
 		if len(d1.List) > 0 {
-			return isClosed, b1, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+			return isClosed, b1, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 		}
-		then_guard := &promela_ast.GuardStmt{Cond: cond, Body: b1}
-		else_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		then_guard := &promela_ast.SingleGuardStmt{Cond: cond, Body: b1}
+		else_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if s.Else != nil {
 			stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -143,7 +143,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			case *ast.BlockStmt:
 				s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
 				if len(defer_stmts3.List) > 0 {
-					return isClosed, b, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+					return isClosed, b, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					return isClosed, b, err1
@@ -152,7 +152,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			default:
 				s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
 				if len(defers.List) > 0 {
-					return isClosed, b, &ParseError{err: errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())}
+					return isClosed, b, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					return isClosed, b, err1
@@ -160,10 +160,10 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 				stmts = s1
 			}
 			if len(stmts.List) != 0 {
-				else_guard = &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts}
+				else_guard = &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: stmts}
 			}
 		}
-		b.List = append(b.List, &promela_ast.IfStmt{Guards: []*promela_ast.GuardStmt{then_guard, else_guard}})
+		b.List = append(b.List, &promela_ast.IfStmt{Guards: []promela_ast.GuardStmt{then_guard, else_guard}})
 	}
 	return
 }
@@ -216,6 +216,9 @@ func (m *Model) translateIfCond(expr ast.Expr) (promela_ast.Expr, bool) {
 }
 
 func containsRecover(s ast.Stmt) bool {
+	if s == nil {
+		return false
+	}
 	contains := false
 	ast.Inspect(s, func(n ast.Node) bool {
 		switch s := n.(type) {

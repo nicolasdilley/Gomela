@@ -10,7 +10,7 @@ import (
 // Primarly used for the async and sync proctypes
 type CondStmt struct {
 	Cond   token.Position
-	Guards []*GuardStmt
+	Guards []GuardStmt
 }
 
 func (c *CondStmt) GoNode() token.Position {
@@ -27,10 +27,10 @@ func (c *CondStmt) Print(num_tabs int) (stmt string) {
 	return
 }
 func (s *CondStmt) Clone() Stmt {
-	s1 := &CondStmt{Cond: s.Cond, Guards: []*GuardStmt{}}
+	s1 := &CondStmt{Cond: s.Cond, Guards: []GuardStmt{}}
 
 	for _, g := range s.Guards {
-		s1.Guards = append(s1.Guards, g.Clone().(*GuardStmt))
+		s1.Guards = append(s1.Guards, g.Clone().(GuardStmt))
 	}
 	return s1
 }

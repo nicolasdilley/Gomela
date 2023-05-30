@@ -41,8 +41,8 @@ func (p *Proctype) Print(num_tabs int) (stmt string) {
 	num_msgs := &DeclStmt{Name: &Ident{Name: "num_msgs"}, Types: promela_types.Int}
 	p.Body.List = append([]Stmt{decl, state, num_msgs}, p.Body.List...)
 	stmt += ") {\n"
-	stmt += "\tbool closed; \n"
-	stmt += "\tbool ok; \n"
+	stmt += "\tbool closed-> \n"
+	stmt += "\tbool ok-> \n"
 	stmt += p.Body.Print(num_tabs + 1)
 	stmt += "\n}\n"
 
@@ -73,7 +73,7 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 			decls = append(decls, stmt)
 		case *IfStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 		case *ForStmt:
 
@@ -81,17 +81,17 @@ func DeclInBlock(block *BlockStmt) []Stmt {
 
 		case *DoStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 
 		case *SelectStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 
 		case *CondStmt:
 			for _, guard := range stmt.Guards {
-				decls = append(decls, DeclInBlock(guard.Body)...)
+				decls = append(decls, DeclInBlock(guard.GetBody())...)
 			}
 		case *BlockStmt:
 			decls = append(decls, DeclInBlock(stmt)...)

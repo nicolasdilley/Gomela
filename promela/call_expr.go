@@ -14,7 +14,7 @@ import (
 // 3. Translate the body of the function to Promela.
 // 4. Translate arguments that are communication parameters
 
-func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.BlockStmt, err error) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 
 	// if obj != nil {
@@ -24,7 +24,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	// first check if the call is not the launch of a goroutine
 
 	if m.IsGoroutine(call_expr) {
-		var err *ParseError
+		var err error
 		var b *promela_ast.BlockStmt
 
 		switch f := call_expr.Args[0].(type) {
@@ -71,7 +71,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
 				// check if positions match
 				if decl.Pos() == f.Decl.Pos() {
-					return stmts, &ParseError{err: errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())}
+					return stmts, errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())
 				}
 			}
 		}
@@ -103,54 +103,27 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 
 						if name.Sel.Name == "Notify" {
 							// Send guard
-							if m.containsChan(new_call_expr.Args[0]) {
+							var guard promela_ast.GuardStmt
 
-								chan_name := m.getChanStruct(new_call_expr.Args[0])
+							guard, err = m.generateGenSendStmt(new_call_expr.Args[0],
+								&promela_ast.BlockStmt{
+									List: []promela_ast.Stmt{
+										&promela_ast.Ident{Name: "break"},
+									}},
+								&promela_ast.BlockStmt{
+									List: []promela_ast.Stmt{
+										&promela_ast.Ident{Name: "break"},
+									}})
 
-								sync_send := &promela_ast.SendStmt{
-									Chan: &promela_ast.SelectorExpr{
-										X:   chan_name.Name,
-										Sel: &promela_ast.Ident{Name: "sync"}},
-									Rhs: &promela_ast.Ident{Name: "false"},
-								}
-								assert := &promela_ast.AssertStmt{Model: "Notify", Pos: m.Fileset.Position(new_call_expr.Pos()), Expr: &promela_ast.Ident{Name: "ok"}}
-								
-								async_send := &promela_ast.RcvStmt{
-									Chan: &promela_ast.SelectorExpr{
-										X:   chan_name.Name,
-										Sel: &promela_ast.Ident{Name: "enq"}},
-									Rhs: &promela_ast.Ident{Name: "ok"},
-								}
+							// true guard
+							true_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 
-								sending_chan := &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sending"}}
-					
-								sync_guard := &promela_ast.GuardStmt{
-									Cond: sync_send,
-									Body: &promela_ast.BlockStmt{
-										List: []promela_ast.Stmt{
-											&promela_ast.RcvStmt{
-												Chan: sending_chan,
-												Rhs:  &promela_ast.Ident{Name: "ok"}},
-											&promela_ast.Ident{Name: "break"},
-											assert,
-										},
-									},
-									Guard: m.Fileset.Position(new_call_expr.Pos())}
-								async_guard := &promela_ast.GuardStmt{
-									Cond: async_send, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{assert,&promela_ast.Ident{Name: "break"}}}, Guard: m.Fileset.Position(new_call_expr.Pos())}
+							select_stmt := &promela_ast.SelectStmt{
+								Model:  "Notify",
+								Guards: []promela_ast.GuardStmt{guard, true_guard},
+								Select: m.Fileset.Position(name.Pos())}
 
-								// true guard
-								true_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
-
-								select_stmt := &promela_ast.SelectStmt{
-									Model:  "Notify",
-									Guards: []*promela_ast.GuardStmt{async_guard, sync_guard, true_guard},
-									Select: m.Fileset.Position(name.Pos())}
-
-								stmts.List = append(stmts.List, select_stmt)
-							} else {
-								return stmts, &ParseError{err: errors.New(UNKNOWN_NOTIFY + m.Fileset.Position(new_call_expr.Pos()).String())}
-							}
+							stmts.List = append(stmts.List, select_stmt)
 						}
 					}
 				}
@@ -174,7 +147,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 	return stmts, err
 }
 
-func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, *ParseError) {
+func (m *Model) ParseFuncArgs(call_expr *ast.CallExpr) (*promela_ast.BlockStmt, error) {
 
 	stmts := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	for _, arg := range call_expr.Args {

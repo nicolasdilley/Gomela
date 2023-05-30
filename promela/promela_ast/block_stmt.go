@@ -27,7 +27,7 @@ func (b *BlockStmt) Print(num_tabs int) (stmt string) {
 			case *CommParamDeclStmt:
 				stmt += "\n"
 			default:
-				stmt += ";\n"
+				stmt += "->\n"
 			}
 		}
 

@@ -11,7 +11,7 @@ import (
 )
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (lb *promela_ast.Ident, ub *promela_ast.Ident, err *ParseError) {
+func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (lb *promela_ast.Ident, ub *promela_ast.Ident, err error) {
 
 	well_formed := false
 	lb = &promela_ast.Ident{}
@@ -119,10 +119,10 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 }
 
 // take a for or range loop and return if its const, the bound of the for loop and the name in Go of the bound
-func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*promela_ast.Ident, *ParseError) {
+func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*promela_ast.Ident, error) {
 
 	var ident *promela_ast.Ident
-	var err *ParseError
+	var err error
 	var bound string = "for bound"
 	var mandatory string = "false"
 	switch bound_type {

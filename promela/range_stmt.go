@@ -8,7 +8,7 @@ import (
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
-func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err *ParseError) {
+func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
@@ -41,6 +41,8 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 	if m.containsChan(s.X) {
 
+		m.ContainsClose = true
+
 		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
 			Model:     m.Name,
@@ -52,15 +54,15 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			Filename:  m.Fileset.Position(s.X.Pos()).Filename,
 		})
 		chan_name := m.getChanStruct(s.X)
-		do_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
+		do_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
 
 		async_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "deq"}}, Rhs: &promela_ast.Ident{Name: "state,num_msgs"}}
 
 		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}}
 
-		async_guard := &promela_ast.GuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		async_guard := &promela_ast.SingleGuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
-		sync_guard := &promela_ast.GuardStmt{
+		sync_guard := &promela_ast.SingleGuardStmt{
 			Cond: sync_rcv,
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 				&promela_ast.SendStmt{
@@ -74,17 +76,17 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		rcv := &promela_ast.IfStmt{
 			If:     m.Fileset.Position(s.Pos()),
 			Model:  "Range",
-			Guards: []*promela_ast.GuardStmt{async_guard, sync_guard},
+			Guards: []promela_ast.GuardStmt{async_guard, sync_guard},
 			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
-		if_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "state && num_msgs <= 0"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
-		if_not_closed_guard := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: s1}
+		if_closed_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "state && num_msgs <= 0"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+		if_not_closed_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: s1}
 		i := &promela_ast.IfStmt{
-			Guards: []*promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard},
+			Guards: []promela_ast.GuardStmt{if_closed_guard, if_not_closed_guard},
 			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if len(d1.List) > 0 {
-			return b, d1, &ParseError{err: errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())}
+			return b, d1, errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())
 		}
 		if err1 != nil {
 			err = err1
@@ -95,7 +97,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		b.List = append(b.List, d, for_label)
 
 	} else if isChan {
-		return b, b, &ParseError{err: errors.New(UNKNOWN_RANGE + m.Fileset.Position(s.Pos()).String())}
+		return b, b, errors.New(UNKNOWN_RANGE + m.Fileset.Position(s.Pos()).String())
 	} else {
 
 		// change into (for i:=0; i < len(x);i++)
@@ -109,7 +111,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			err = err1
 		}
 		if len(d1.List) > 0 {
-			return b, d1, &ParseError{err: errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())}
+			return b, d1, errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())
 		}
 		block_stmt := s1
 
@@ -125,22 +127,22 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 			ub_not_given := promela_ast.BinaryExpr{Lhs: ub, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
 
-			then := &promela_ast.GuardStmt{
+			then := &promela_ast.SingleGuardStmt{
 				Cond: &ub_not_given,
 				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: ub, Body: block_stmt}, for_label}},
 			}
 
 			// else part
 
-			break_branch := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
+			break_branch := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.Ident{Name: "break"}}}}
 			d.Guards = append(d.Guards,
-				&promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body2},
+				&promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Body: body2},
 				break_branch,
 			)
 
-			els := &promela_ast.GuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d, for_label2}}}
+			els := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{d, for_label2}}}
 
-			if_stmt.Guards = []*promela_ast.GuardStmt{then, els}
+			if_stmt.Guards = []promela_ast.GuardStmt{then, els}
 			b.List = append(b.List, if_stmt)
 
 		}
