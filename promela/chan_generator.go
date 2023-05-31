@@ -39,98 +39,82 @@ package promela
 // }
 
 func generateSyncChanMonitor() string {
-	return "proctype sync_monitor(Chandef ch) {\n" +
-		"do\n" +
-		":: true->\n" +
-		"if\n" +
-		":: ch.closed ->\n" +
-		"end: if\n" +
-		"  :: ch.enq!false-> // cannot send on closed channel\n" +
-		"  :: ch.closing!true -> // cannot close twice a channel\n" +
-		"  :: ch.sending!false -> // sending state of channel (closed)\n" +
-		// "    assert(1 == 0)\n" +
-		"  :: ch.rcving?false->\n" +
-		"  :: ch.sync!true-> // can always receive on a closed chan\n" +
-		"  fi->\n" +
-		":: else -> \n" +
-		"end1: if\n" +
-		"    :: ch.rcving?false ->\n " +
-		"      ch.sending!true->\n" +
-		"    :: ch.closing!false ->\n" +
-		"      ch.closed = true\n" +
-		"    fi->\n" +
-		"fi->\n" +
-		"od->\n" +
-		"stop_process: skip\n" +
-		"}\n\n"
+	return `
+proctype sync_monitor(Chandef ch) {
+	do
+	:: true ->
+		if
+		:: ch.closed;
+			end: if
+		  	:: ch.enq!false; // cannot send on closed channel
+		  	:: ch.closing!true; // cannot close twice a channel
+		  	:: ch.sending!false; // sending state of channel (closed)
+		  	:: ch.rcving?false;
+		  	:: ch.sync!true; // can always receive on a closed chan
+		  	fi;
+		:: else ->
+			end1: if
+		  	:: ch.rcving?false -> ch.sending!true;
+		  	:: ch.closing!false -> ch.closed = true;
+		  	fi;
+		fi;
+	od;
+	stop_process: skip;
+}
+`
 }
 
 func GenerateAsyncMonitor() string {
-	return "proctype async_monitor(Chandef ch) {\n" +
-		"do\n" +
-		":: true ->\n" +
-		"if\n" +
-		":: ch.closed -> \n" +
-		"end: if\n" +
-		"  :: ch.num_msgs > 0 -> // cannot send on closed channel\n" +
-		"    end4: if\n" +
-		"    :: ch.enq!false-> // cannot send on closed channel\n" +
-		//"      assert(1 == 0)\n" +
-		"    :: ch.closing!true -> // cannot close twice a channel\n" +
-		//"      assert(2 == 0)\n" +
-		"    :: ch.rcving?false->\n" +
-		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
-		//"      assert(1 == 0)\n" +
-		"    :: ch.deq!true,ch.num_msgs -> \n" +
-		"  		 ch.num_msgs = ch.num_msgs - 1\n" +
-		"    fi->\n" +
-		"  :: else ->" +
-		"    end5: if\n" +
-		"    :: ch.enq!false-> // cannot send on closed channel\n" +
-		//"      assert(1 == 0)\n" +
-		"    :: ch.closing!true -> // cannot close twice a channel\n" +
-		//"      assert(2 == 0)\n" +
-		"    :: ch.rcving?false->\n" +
-		"    :: ch.sending!false -> // sending state of channel (closed)\n" +
-		//"      assert(1 == 0)\n" +
-		"    :: ch.sync!true-> \n" +
-		"    fi->\n" +
-		"  fi->\n" +
-		":: else ->\n" +
-		"	if\n" +
-		"	:: ch.num_msgs == ch.size ->\n" +
-		"		end1: if\n" +
-		"		  :: ch.deq!false,ch.num_msgs ->\n" +
-		"		    ch.num_msgs = ch.num_msgs - 1\n" +
-		"		  :: ch.closing!false -> // closing the channel\n" +
-		"		    ch.closed = true\n" +
-		"		   :: ch.rcving?false ->\n " +
-		"		    ch.sending!true->\n" +
-		"		fi->\n" +
-		"	:: ch.num_msgs == 0 -> \n" +
-		"end2:		if\n" +
-		"		:: ch.enq!true -> // a message has been received\n" +
-		"			ch.num_msgs = ch.num_msgs + 1\n" +
-		"		:: ch.closing!false -> // closing the channel\n" +
-		"			ch.closed = true\n" +
-		"		:: ch.rcving?false ->\n " +
-		"		    ch.sending!true->\n" +
-		"		fi->\n" +
-		"		:: else -> \n" +
-		"		end3: if\n" +
-		"		  :: ch.enq!true->\n" +
-		"		     ch.num_msgs = ch.num_msgs + 1\n" +
-		"		  :: ch.deq!false,ch.num_msgs->\n" +
-		"		     ch.num_msgs = ch.num_msgs - 1\n" +
-		"		  :: ch.closing!false -> // closing the channel\n" +
-		"		     ch.closed = true\n" +
-		"		  :: ch.rcving?false ->\n " +
-		"		    ch.sending!true->\n" +
-		"		fi->\n" +
-		"	fi->\n" +
-		"fi->\n" +
-		"od->\n" +
-		"}\n\n"
+	return `
+proctype async_monitor(Chandef ch) {
+	do
+	:: true ->
+		if
+		:: ch.closed -> 
+			end: if
+		  	:: ch.num_msgs > 0 -> // cannot send on closed channel
+		  	  end4: if
+		  	  :: ch.enq!false; // cannot send on closed channel
+		  	  :: ch.closing!true; // cannot close twice a channel
+		  	  :: ch.rcving?false;
+		  	  :: ch.sending!false; // sending state of channel (closed)
+		  	  :: ch.deq!true,ch.num_msgs -> ch.num_msgs = ch.num_msgs - 1
+		  	  fi;
+		  	:: else ->
+		  	  end5: if
+		  	  	:: ch.enq!false; // cannot send on closed channel
+		  	  	:: ch.closing!true; // cannot close twice a channel
+		  	  	:: ch.rcving?false;
+		  	  	:: ch.sending!false; // sending state of channel (closed)
+		  	  	:: ch.sync!true; 
+		  	  	fi;
+		  	fi;
+		:: else ->
+			if
+			:: ch.num_msgs == ch.size ->
+				end1: if
+				  :: ch.deq!false,ch.num_msgs -> ch.num_msgs = ch.num_msgs - 1;
+				  :: ch.closing!false -> ch.closed = true; // closing the channel
+				  :: ch.rcving?false -> ch.sending!true;
+					fi;
+			:: ch.num_msgs == 0 -> 
+				end2: if
+				:: ch.enq!true -> ch.num_msgs = ch.num_msgs + 1; // a message has been received
+				:: ch.closing!false -> ch.closed = true; // closing the channel
+				:: ch.rcving?false -> ch.sending!true;
+				fi;
+			:: else -> 
+				end3: if
+				  :: ch.enq!true -> ch.num_msgs = ch.num_msgs + 1;
+				  :: ch.deq!false,ch.num_msgs -> ch.num_msgs = ch.num_msgs - 1;
+				  :: ch.closing!false -> ch.closed = true; // closing the channel
+				  :: ch.rcving?false -> ch.sending!true;
+					fi;
+				fi;
+		fi;
+	od;
+}
+`
 }
 
 // Return the Promela AST of a wg monitor proctype
@@ -151,59 +135,59 @@ func GenerateAsyncMonitor() string {
 //	  od
 //	}
 func GenerateStructMonitor() string {
-
-	return "proctype wg_monitor(Wgdef wg) {\n" +
-		"int i->\n" +
-		"end: do\n" +
-		"	:: wg.update?i ->\n" +
-		"		wg.Counter = wg.Counter + i->\n" +
-		"		wg.update_ack!(wg.Counter >= 0)\n" +
-		"	:: wg.Counter == 0 ->\n" +
-		"end1: if\n" +
-		"		:: wg.update?i ->\n" +
-		"			wg.Counter = wg.Counter + i->\n" +
-		"			wg.update_ack!(wg.Counter >= 0)\n" +
-		"		:: wg.wait!0->\n" +
-		"	fi\n" +
-		"od\n" +
-		"}\n\n"
-
+	return `
+proctype wg_monitor(Wgdef wg) {
+	int i;
+	end: do
+		:: wg.update?i ->
+			wg.Counter = wg.Counter + i;
+			wg.update_ack!(wg.Counter >= 0);
+		:: wg.Counter == 0;
+	end1: if
+			:: wg.update?i ->
+				wg.Counter = wg.Counter + i;
+				wg.update_ack!(wg.Counter >= 0);
+			:: wg.wait!0;
+		fi
+	od
+}
+`
 }
 
 func GenerateMutexMonitor() string {
-
-	return "proctype mutex_monitor(Mutexdef m) {\n" +
-		"bool locked = false->\n" +
-		"end: do\n" +
-		":: true ->\n" +
-		"	if\n" +
-		"	:: m.Counter > 0 ->\n" +
-		"		if \n" +
-		"		:: m.RUnlock!true -> \n" +
-		"			m.Counter = m.Counter - 1->\n" +
-		"		:: m.RLock!true -> \n" +
-		"			m.Counter = m.Counter + 1->\n" +
-		"		fi->\n" +
-		"	:: locked ->\n" +
-		"		m.Unlock!true->\n" +
-		"		locked = false->\n" +
-		"	:: else ->" +
-		"	 end1:	if\n" +
-		"		:: m.Unlock!false ->\n" +
-		"		:: m.Lock!true ->\n" +
-		"			locked =true->\n" +
-		"		:: m.RUnlock!false ->\n" +
-		"		:: m.RLock!true ->\n" +
-		"			m.Counter = m.Counter + 1->\n" +
-		"		fi->\n" +
-		"	fi->\n" +
-		"od\n" +
-		"}\n\n"
+	return `
+proctype mutex_monitor(Mutexdef m) {
+	bool locked = false;
+	end: do
+	:: true ->
+		if
+		:: m.Counter > 0 ->
+			if
+			:: m.RUnlock!true;
+				m.Counter = m.Counter - 1;
+			:: m.RLock!true;
+				m.Counter = m.Counter + 1;
+			fi;
+		:: locked ->
+			m.Unlock!true;
+			locked = false;
+		:: else ->
+			end1: if
+				:: m.Unlock!false;
+				:: m.Lock!true -> locked =true;
+				:: m.RUnlock!false;
+				:: m.RLock!true -> m.Counter = m.Counter + 1;
+				fi;
+		fi;
+	od
+}
+`
 }
 
 func GenerateReceiverProcess() string {
-
-	return "proctype receiver(chan c) {\n" +
-		"c?0\n" +
-		"}\n\n"
+	return `
+proctype receiver(chan c) {
+	c?0
+}
+`
 }
