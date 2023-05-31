@@ -24,7 +24,6 @@ type CommPar struct {
 
 // Return the parameters that are mandatory and optional
 // Mutates len(a) => a
-
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, error) {
 
 	params := []*CommPar{}
@@ -119,17 +118,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						switch s := s.Underlying().(type) {
 						case *types.Struct:
 							for i := 0; i < s.NumFields(); i++ {
-								switch field := s.Field(i).Type().(type) {
-								case *types.Named:
-									if field.Obj() != nil {
-										if field.Obj().Pkg() != nil {
-											if field.Obj().Pkg().Name() == "sync" {
-												if field.Obj().Name() == "WaitGroup" {
-													contains_chan = true
-												}
-											}
-										}
-									}
+								if field, ok := s.Field(i).Type().(*types.Named); ok &&
+									field.Obj() != nil &&
+									field.Obj().Pkg() != nil &&
+									field.Obj().Pkg().Name() == "sync" &&
+									field.Obj().Name() == "WaitGroup" {
+									contains_chan = true
 								}
 							}
 						}
