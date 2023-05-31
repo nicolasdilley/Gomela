@@ -35,15 +35,17 @@ func ParseAst(fileSet *token.FileSet, proj_name string, commit string, ast_map m
 					if !takesCommParAsParam(decl, ast_map[pack_name]) {
 						// fmt.Println("Parsing ", decl.Name.Name)
 						// fmt.Println("Parsing ", decl.Name)
+						props := new(promela.GlobalProps)
+						props.Fileset = fileSet
 
-						var m promela.Model = promela.Model{
+						m := &promela.Model{
+							Props:                props,
 							Result_fodler:        result_folder,
 							Project_name:         proj_name,
 							Package:              pack_name,
 							Go_names:             ver.Go_names,
 							Name:                 pack_name + PACKAGE_MODEL_SEP + decl.Name.Name + fmt.Sprint(fileSet.Position(decl.Pos()).Line),
 							AstMap:               ast_map,
-							Fileset:              fileSet,
 							FuncDecls:            []*ast.FuncDecl{},
 							Proctypes:            []*promela_ast.Proctype{},
 							RecFuncs:             []promela.RecFunc{},

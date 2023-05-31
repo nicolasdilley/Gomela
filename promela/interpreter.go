@@ -31,8 +31,8 @@ func Print(m *Model) {
 	stmt += "\n"
 
 	name := strings.Split(
-		m.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")
-	path := []string{m.Fileset.Position(m.Fun.Pos()).Filename}
+		m.Props.Fileset.Position(m.Fun.Pos()).Filename, m.Projects_folder+"/")
+	path := []string{m.Props.Fileset.Position(m.Fun.Pos()).Filename}
 
 	splitted := []string{""}
 	if len(name) > 1 {
@@ -52,7 +52,7 @@ func Print(m *Model) {
 		}
 	}
 	proj_name := strings.Replace(splitted[0], AUTHOR_PROJECT_SEP, "/", -1)
-	stmt += "// git_link=https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Fileset.Position(m.Fun.Pos()).Line) + "\n"
+	stmt += "// git_link=https://github.com/" + proj_name + "/blob/" + m.Commit + "/" + file_path + "#L" + strconv.Itoa(m.Props.Fileset.Position(m.Fun.Pos()).Line) + "\n"
 
 	// print the bounds
 	for _, c := range m.Defines {
@@ -101,13 +101,13 @@ func Print(m *Model) {
 	for _, c := range m.Global_vars {
 		b.List = append(b.List, c)
 	}
-	if m.ContainsChan {
+	if m.Props.ContainsChan {
 		stmt += chan_struct.Print(0)
 	}
-	if m.ContainsWg {
+	if m.Props.ContainsWg {
 		stmt += wg_struct.Print(0)
 	}
-	if m.ContainsMutexes {
+	if m.Props.ContainsMutexes {
 		stmt += mutex_struct.Print(0)
 	}
 
@@ -125,21 +125,18 @@ func Print(m *Model) {
 	stmt += "\n /* ================================================================================== */"
 	stmt += "\n /* ================================================================================== */ \n"
 
-	if m.ContainsChan {
-		// If there is a close statement, we need the monitors
-		if m.ContainsClose {
-			stmt += GenerateAsyncMonitor() + generateSyncChanMonitor()
-		}
+	if m.Props.ContainsChan && m.Props.ContainsClose {
+		stmt += GenerateAsyncMonitor() + generateSyncChanMonitor()
 	}
 
-	if m.ContainsWg {
+	if m.Props.ContainsWg {
 		stmt += GenerateStructMonitor()
 	}
-	if m.ContainsMutexes {
+	if m.Props.ContainsMutexes {
 		stmt += GenerateMutexMonitor()
 	}
 
-	if m.ContainsReceiver {
+	if m.Props.ContainsReceiver {
 		stmt += GenerateReceiverProcess()
 	}
 

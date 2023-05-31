@@ -15,13 +15,13 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, err
 
 	exprs := []ast.Expr{}
 	if con, num := IsConst(expr, m.AstMap[m.Package]); con {
-		return &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
+		return &promela_ast.Ident{Name: fmt.Sprint(num), Ident: m.Props.Fileset.Position(expr.Pos())}, exprs, nil
 	}
 
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		exprs = append(exprs, expr)
-		return &promela_ast.Ident{Name: VAR_PREFIX + expr.Name, Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
+		return &promela_ast.Ident{Name: VAR_PREFIX + expr.Name, Ident: m.Props.Fileset.Position(expr.Pos())}, exprs, nil
 
 	case *ast.SelectorExpr:
 
@@ -32,7 +32,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, err
 		}
 		exprs = append(exprs, expr)
 		return &promela_ast.Ident{Name: x.Name + "_" + expr.Sel.Name,
-			Ident: m.Fileset.Position(expr.Pos())}, exprs, nil
+			Ident: m.Props.Fileset.Position(expr.Pos())}, exprs, nil
 
 	case *ast.BinaryExpr:
 		lhs, new_exprs1, err := m.TranslateArg(expr.X)
@@ -60,7 +60,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, err
 		return m.TranslateArg(expr.X)
 
 	case *ast.CallExpr:
-		call_name := TranslateIdent(expr.Fun, m.Fileset).Name
+		call_name := TranslateIdent(expr.Fun, m.Props.Fileset).Name
 		if (call_name == "len" || call_name == "int") && len(expr.Args) > 0 {
 			return m.TranslateArg(expr.Args[0]) // if its len just return the translation of the first args which is the list
 		}
@@ -74,7 +74,7 @@ func (m *Model) TranslateArg(expr ast.Expr) (*promela_ast.Ident, []ast.Expr, err
 	case *ast.ParenExpr:
 		return m.TranslateArg(expr.X)
 	default:
-		return nil, exprs, errors.New(UNPARSABLE_ARG + m.Fileset.Position(expr.Pos()).String())
+		return nil, exprs, errors.New(UNPARSABLE_ARG + m.Props.Fileset.Position(expr.Pos()).String())
 
 	}
 

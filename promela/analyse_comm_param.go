@@ -24,7 +24,6 @@ type CommPar struct {
 
 // Return the parameters that are mandatory and optional
 // Mutates len(a) => a
-
 func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[string]*packages.Package, log bool) ([]*CommPar, error) {
 
 	params := []*CommPar{}
@@ -119,17 +118,12 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						switch s := s.Underlying().(type) {
 						case *types.Struct:
 							for i := 0; i < s.NumFields(); i++ {
-								switch field := s.Field(i).Type().(type) {
-								case *types.Named:
-									if field.Obj() != nil {
-										if field.Obj().Pkg() != nil {
-											if field.Obj().Pkg().Name() == "sync" {
-												if field.Obj().Name() == "WaitGroup" {
-													contains_chan = true
-												}
-											}
-										}
-									}
+								if field, ok := s.Field(i).Type().(*types.Named); ok &&
+									field.Obj() != nil &&
+									field.Obj().Pkg() != nil &&
+									field.Obj().Pkg().Name() == "sync" &&
+									field.Obj().Name() == "WaitGroup" {
+									contains_chan = true
 								}
 							}
 						}
@@ -170,7 +164,7 @@ func (m *Model) AnalyseCommParam(pack string, fun *ast.FuncDecl, ast_map map[str
 						for _, param := range fun_decl.Type.Params.List {
 							switch param.Type.(type) {
 							case *ast.Ellipsis:
-								err = errors.New(ELLIPSIS + m.Fileset.Position(fun_decl.Pos()).String())
+								err = errors.New(ELLIPSIS + m.Props.Fileset.Position(fun_decl.Pos()).String())
 								return false
 							}
 						}
@@ -375,8 +369,8 @@ func (m *Model) Vid(fun *ast.FuncDecl, expr ast.Expr, mandatory bool, log bool) 
 				return params
 			}
 		}
-		name := &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}
-		params = m.Upgrade(fun, params, []*CommPar{&CommPar{Name: name, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
+		name := &ast.Ident{Name: TranslateIdent(expr, m.Props.Fileset).Name}
+		params = m.Upgrade(fun, params, []*CommPar{{Name: name, Mandatory: mandatory, Expr: expr, Alias: false}}, log)
 	case *ast.BinaryExpr:
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.X, mandatory, log), log)
 		params = m.Upgrade(fun, params, m.Vid(fun, expr.Y, mandatory, log), log)
@@ -424,9 +418,9 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 			Name:      "Anonymous function as ident",
 			Mandatory: "false",
 			Info:      "Unsupported",
-			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.FuncType:
@@ -436,9 +430,9 @@ func (m *Model) getIdent(expr ast.Expr) *ast.Ident {
 			Name:      "High order function",
 			Mandatory: "false",
 			Info:      "Unsupported",
-			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 		})
 		return &ast.Ident{Name: "UNSUPPORTED", NamePos: expr.Pos()}
 	case *ast.KeyValueExpr:
@@ -529,9 +523,9 @@ func (m *Model) spawns(stmts *ast.BlockStmt, log bool) bool {
 			Name:      "Recursive call",
 			Mandatory: strconv.FormatBool(is_spawning),
 			Info:      "Spawning : " + strconv.FormatBool(is_spawning),
-			Line:      m.Fileset.Position(call.Pos()).Line,
+			Line:      m.Props.Fileset.Position(call.Pos()).Line,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(call.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(call.Pos()).Filename,
 		})
 
 	}

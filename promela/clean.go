@@ -173,7 +173,7 @@ func containsMSP(b *promela_ast.BlockStmt) bool {
 	contains := false
 	promela_ast.Inspect(b, func(s promela_ast.Stmt) bool {
 		switch s.(type) {
-		case *promela_ast.RcvStmt, *promela_ast.SendStmt, *promela_ast.RunStmt:
+		case *GenReceiver, *GenRcvStmt, *GenSendStmt, *promela_ast.RcvStmt, *promela_ast.SendStmt, *promela_ast.RunStmt:
 			contains = true
 		}
 		return !contains

@@ -9,7 +9,7 @@ import (
 
 type ChanDefDeclStmt struct {
 	Decl token.Position
-	M    *Model
+	M    *GlobalProps
 	Name *promela_ast.Ident
 	Size *promela_ast.Ident
 }
@@ -28,7 +28,21 @@ func (s *ChanDefDeclStmt) Print(num_tabs int) (stmt string) {
 		sync_monitor := &promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "sync_monitor"}, Args: []promela_ast.Expr{s.Name}}}
 
 		async_guard := &promela_ast.SingleGuardStmt{
-			Cond: &promela_ast.Ident{Name: s.Name.Name + " > 0"},
+			Cond: &promela_ast.BinaryExpr{
+				Pos: s.Name.Ident,
+				Lhs: &promela_ast.SelectorExpr{
+					X: &promela_ast.Ident{
+						Name: s.Name.Name,
+					},
+					Sel: &promela_ast.Ident{
+						Name: "size",
+					},
+				},
+				Op: "<",
+				Rhs: &promela_ast.Ident{
+					Name: "0",
+				},
+			},
 			Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{
 				&promela_ast.AssignStmt{Lhs: &promela_ast.SelectorExpr{X: s.Name, Sel: &promela_ast.Ident{Name: "size"}}, Rhs: s.Size},
 				&promela_ast.RunStmt{X: &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: "async_monitor"}, Args: []promela_ast.Expr{s.Name}}},

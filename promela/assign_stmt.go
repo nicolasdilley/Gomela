@@ -2,9 +2,10 @@ package promela
 
 import (
 	"errors"
-	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"go/ast"
 	"go/token"
+
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
 func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt, err error) {
@@ -17,7 +18,7 @@ func (m *Model) translateAssignStmt(s *ast.AssignStmt) (b *promela_ast.BlockStmt
 	for i, spec := range s.Rhs {
 		switch spec := spec.(type) {
 		case *ast.FuncLit:
-			return b, errors.New(FUNC_DECLARED_AS_VAR + m.Fileset.Position(spec.Pos()).String())
+			return b, errors.New(FUNC_DECLARED_AS_VAR + m.Props.Fileset.Position(spec.Pos()).String())
 		case *ast.UnaryExpr:
 			switch spec.Op {
 

@@ -10,7 +10,7 @@ import (
 type GenRcvStmt struct {
 	Rcv        token.Position
 	Model      string
-	M          *Model           // a pointer to the model to check whether it containsClose or not
+	M          *GlobalProps     // a pointer to the model to check whether it containsClose or not
 	Chan       promela_ast.Expr // the chan that we want to send on
 	Sync_body  *promela_ast.BlockStmt
 	Async_body *promela_ast.BlockStmt

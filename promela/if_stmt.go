@@ -2,16 +2,17 @@ package promela
 
 import (
 	"errors"
-	"github.com/nicolasdilley/gomela/promela/promela_ast"
 	"go/ast"
 	"go/token"
 	"strconv"
+
+	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
 
 func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+	i := &promela_ast.IfStmt{If: m.Props.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 	stmts, defer_stmts, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Init}})
 
@@ -50,7 +51,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			return b, defer_stmts, err1
 		}
 		if len(defer_stmts2.List) > 0 {
-			return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+			return b, defer_stmts, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 		}
 
 		contains := false
@@ -65,7 +66,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			case *ast.BlockStmt:
 				s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
 				if len(defer_stmts3.List) > 0 {
-					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					err = err1
@@ -74,7 +75,7 @@ func (m *Model) translateIfStmt(s *ast.IfStmt) (b *promela_ast.BlockStmt, defers
 			default:
 				s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
 				if len(defers.List) > 0 {
-					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+					return b, defer_stmts, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					err = err1
@@ -132,7 +133,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			return isClosed, b1, err1
 		}
 		if len(d1.List) > 0 {
-			return isClosed, b1, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+			return isClosed, b1, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 		}
 		then_guard := &promela_ast.SingleGuardStmt{Cond: cond, Body: b1}
 		else_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "else"}, Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -143,7 +144,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			case *ast.BlockStmt:
 				s1, defer_stmts3, err1 := m.TranslateBlockStmt(els)
 				if len(defer_stmts3.List) > 0 {
-					return isClosed, b, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+					return isClosed, b, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					return isClosed, b, err1
@@ -152,7 +153,7 @@ func (m *Model) isIfClosed(s *ast.IfStmt) (isClosed bool, b *promela_ast.BlockSt
 			default:
 				s1, defers, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: []ast.Stmt{s.Else}})
 				if len(defers.List) > 0 {
-					return isClosed, b, errors.New(DEFER_IN_IF + m.Fileset.Position(s.Pos()).String())
+					return isClosed, b, errors.New(DEFER_IN_IF + m.Props.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					return isClosed, b, err1
