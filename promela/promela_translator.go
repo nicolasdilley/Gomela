@@ -64,7 +64,6 @@ type Model struct {
 	For_counter          *ForCounter                  // Used to translate the for loop to break out properly out of them
 	Counter              int                          // used to differentiate call expr channels
 	AstMap               map[string]*packages.Package // the map used to find the type of the channels
-	Chan_closing         bool
 	Projects_folder      string
 	GenerateFeatures     bool // should the model print features ?
 	Current_return_label string
@@ -662,7 +661,6 @@ func (m *Model) TranslateExpr(expr ast.Expr) (b *promela_ast.BlockStmt, err erro
 						Pos: m.Fileset.Position(expr.Args[0].Pos()),
 					}
 					rcv.Rhs = &promela_ast.Ident{Name: "closed"}
-					m.Chan_closing = true
 
 					assert := &promela_ast.AssertStmt{Model: "Close", Pos: m.Fileset.Position(expr.Pos()), Expr: &promela_ast.Ident{Name: "!closed"}}
 					stmts.List = append(stmts.List, rcv, assert)
@@ -1174,6 +1172,7 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		Inlines:              m.Inlines,
 		Fun:                  fun,
 		ContainsChan:         m.ContainsChan,
+		ContainsClose:        m.ContainsClose,
 		ContainsWg:           m.ContainsWg,
 		ContainsReceiver:     m.ContainsReceiver,
 		Chans:                make(map[ast.Expr]*ChanStruct),
@@ -1190,7 +1189,6 @@ func (m *Model) newModel(pack string, fun *ast.FuncDecl) *Model {
 		For_counter:          m.For_counter,
 		Counter:              m.Counter,
 		AstMap:               m.AstMap,
-		Chan_closing:         m.Chan_closing,
 		Projects_folder:      m.Projects_folder,
 		ClosedVars:           make(map[*ChanStruct][]ast.Expr),
 		GenerateFeatures:     m.GenerateFeatures,
