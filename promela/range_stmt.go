@@ -12,7 +12,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
+	d := &promela_ast.DoStmt{Do: m.Props.Fileset.Position(s.Pos())}
 
 	had_go := m.For_counter.With_go
 	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
@@ -40,8 +40,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 	m.GenerateFeatures = true
 
 	if m.containsChan(s.X) {
-
-		m.ContainsClose = true
+		m.Props.ContainsClose = true
 
 		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
@@ -51,7 +50,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			Mandatory: "",
 			Line:      0,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(s.X.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(s.X.Pos()).Filename,
 		})
 		chan_name := m.getChanStruct(s.X)
 		do_guard := &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}}
@@ -60,7 +59,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 
 		sync_rcv := &promela_ast.RcvStmt{Chan: &promela_ast.SelectorExpr{X: chan_name.Name, Sel: &promela_ast.Ident{Name: "sync"}}, Rhs: &promela_ast.Ident{Name: "state"}}
 
-		async_guard := &promela_ast.SingleGuardStmt{Cond: async_rcv, Guard: m.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+		async_guard := &promela_ast.SingleGuardStmt{Cond: async_rcv, Guard: m.Props.Fileset.Position(s.Pos()), Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		sync_guard := &promela_ast.SingleGuardStmt{
 			Cond: sync_rcv,
@@ -74,7 +73,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 				}}},
 		}
 		rcv := &promela_ast.IfStmt{
-			If:     m.Fileset.Position(s.Pos()),
+			If:     m.Props.Fileset.Position(s.Pos()),
 			Model:  "Range",
 			Guards: []promela_ast.GuardStmt{async_guard, sync_guard},
 			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
@@ -86,7 +85,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			Init:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 		if len(d1.List) > 0 {
-			return b, d1, errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())
+			return b, d1, errors.New(DEFER_IN_RANGE + m.Props.Fileset.Position(s.Pos()).String())
 		}
 		if err1 != nil {
 			err = err1
@@ -97,7 +96,7 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 		b.List = append(b.List, d, for_label)
 
 	} else if isChan {
-		return b, b, errors.New(UNKNOWN_RANGE + m.Fileset.Position(s.Pos()).String())
+		return b, b, errors.New(UNKNOWN_RANGE + m.Props.Fileset.Position(s.Pos()).String())
 	} else {
 
 		// change into (for i:=0; i < len(x);i++)
@@ -111,25 +110,25 @@ func (m *Model) translateRangeStmt(s *ast.RangeStmt) (b *promela_ast.BlockStmt, 
 			err = err1
 		}
 		if len(d1.List) > 0 {
-			return b, d1, errors.New(DEFER_IN_RANGE + m.Fileset.Position(s.Pos()).String())
+			return b, d1, errors.New(DEFER_IN_RANGE + m.Props.Fileset.Position(s.Pos()).String())
 		}
 		block_stmt := s1
 
 		if m.spawns(s.Body, false) {
 			// need to change the for loop into a bounded for loop
-			b.List = append(b.List, &promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: &promela_ast.Ident{Name: ub.Name + "-1"}, Body: block_stmt})
+			b.List = append(b.List, &promela_ast.ForStmt{For: m.Props.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: &promela_ast.Ident{Name: ub.Name + "-1"}, Body: block_stmt})
 			b.List = append(b.List, for_label)
 		} else if containsMSP(s1) {
 			ub.Name += "-1"
 			// generate the optionnal loop
 			// print the for loop  with the if
-			if_stmt := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+			if_stmt := &promela_ast.IfStmt{If: m.Props.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 			ub_not_given := promela_ast.BinaryExpr{Lhs: ub, Rhs: &promela_ast.Ident{Name: "-3"}, Op: "!="}
 
 			then := &promela_ast.SingleGuardStmt{
 				Cond: &ub_not_given,
-				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: ub, Body: block_stmt}, for_label}},
+				Body: &promela_ast.BlockStmt{List: []promela_ast.Stmt{&promela_ast.ForStmt{For: m.Props.Fileset.Position(s.Pos()), Lb: &promela_ast.Ident{Name: "0"}, Ub: ub, Body: block_stmt}, for_label}},
 			}
 
 			// else part

@@ -12,7 +12,7 @@ import (
 func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	i := &promela_ast.SelectStmt{Select: m.Fileset.Position(s.Pos()), Model: "Select"}
+	i := &promela_ast.SelectStmt{Select: m.Props.Fileset.Position(s.Pos()), Model: "Select"}
 
 	was_in_for := m.For_counter.In_for //used to check if this is the outer loop
 	had_go := m.For_counter.With_go
@@ -46,7 +46,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 			body, d1, err1 := m.TranslateBlockStmt(&ast.BlockStmt{List: comm.Body})
 
 			if len(d1.List) > 0 {
-				return b, d1, errors.New(DEFER_IN_SELECT + m.Fileset.Position(s.Pos()).String())
+				return b, d1, errors.New(DEFER_IN_SELECT + m.Props.Fileset.Position(s.Pos()).String())
 			}
 			if err1 != nil {
 				return b, defers, err1
@@ -69,16 +69,16 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 						chan_name := m.getChanStruct(com.Chan)
 
 						gen_send := &GenSendStmt{
-							Send:       m.Fileset.Position(s.Pos()),
+							Send:       m.Props.Fileset.Position(s.Pos()),
 							Chan:       chan_name.Name,
-							M:          m,
+							M:          m.Props,
 							Sync_body:  body,
 							Async_body: body2,
 						}
 						i.Guards = append(i.Guards, gen_send)
 					} else {
 
-						err = errors.New(UNKNOWN_SEND + m.Fileset.Position(com.Chan.Pos()).String())
+						err = errors.New(UNKNOWN_SEND + m.Props.Fileset.Position(com.Chan.Pos()).String())
 						return b, defers, err
 					}
 
@@ -116,7 +116,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 			} else { // it is default
 				i.Has_default = true
 				m.checkForBreak(body, goto_stmt)
-				i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Fileset.Position(comm.Pos()), Body: body})
+				i.Guards = append(i.Guards, &promela_ast.SingleGuardStmt{Cond: &promela_ast.Ident{Name: "true"}, Guard: m.Props.Fileset.Position(comm.Pos()), Body: body})
 			}
 		}
 	}
@@ -124,7 +124,7 @@ func (m *Model) translateSelectStmt(s *ast.SelectStmt) (b *promela_ast.BlockStmt
 	if len(i.Guards) > 0 {
 		b.List = append(b.List, i, goto_stmt.Label, goto_end_stmt.Label)
 	} else {
-		return nil, nil, errors.New(SELECT_WITH_NO_BRANCH + m.Fileset.Position(s.Pos()).String())
+		return nil, nil, errors.New(SELECT_WITH_NO_BRANCH + m.Props.Fileset.Position(s.Pos()).String())
 
 	}
 

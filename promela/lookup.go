@@ -76,7 +76,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 	}
 
 	if !well_formed {
-		ub_decl := promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: fmt.Sprintf("ub_for%d_%d", m.Fileset.Position(s.Pos()).Line, m.Fileset.Position(s.Pos()).Column)}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}}
+		ub_decl := promela_ast.DefineStmt{Name: &promela_ast.Ident{Name: fmt.Sprintf("ub_for%d_%d", m.Props.Fileset.Position(s.Pos()).Line, m.Props.Fileset.Position(s.Pos()).Column)}, Rhs: &promela_ast.Ident{Name: OPTIONAL_BOUND}}
 		mandatory := "false"
 		if spawns {
 			mandatory = "true"
@@ -95,7 +95,7 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 			Mandatory: mandatory,
 			Line:      0,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(m.Fun.Pos()).Filename,
 		})
 		lb = &promela_ast.Ident{Name: "0"} // returning the fresh vars
 		ub = &promela_ast.Ident{Name: ub_decl.Name.Name + "-1"}
@@ -108,9 +108,9 @@ func (m *Model) lookUpFor(s *ast.ForStmt, spawns bool, pack *packages.Package) (
 				Name:      "For loop not well formed",
 				Mandatory: "false",
 				Info:      fmt.Sprint("Init : ", s.Init, " Cond : ", s.Cond, " Post : ", s.Post),
-				Line:      m.Fileset.Position(s.Pos()).Line,
+				Line:      m.Props.Fileset.Position(s.Pos()).Line,
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(s.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(s.Pos()).Filename,
 			})
 		}
 	}
@@ -157,7 +157,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 	// 	var_name = VAR_PREFIX + var_name
 	// }
 	if err != nil {
-		ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(expr.Pos()).Line) + strconv.Itoa(m.Fileset.Position(expr.Pos()).Column)}
+		ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Props.Fileset.Position(expr.Pos()).Line) + strconv.Itoa(m.Props.Fileset.Position(expr.Pos()).Column)}
 
 		m.PrintFeature(Feature{
 			Proj_name: m.Project_name,
@@ -168,7 +168,7 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 			Mandatory: mandatory,
 			Line:      0,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(m.Fun.Pos()).Filename,
 		})
 
 		if spawning_for_loop {
@@ -184,9 +184,9 @@ func (m *Model) lookUp(expr ast.Expr, bound_type int, spawning_for_loop bool) (*
 		Name:      "Comm Param",
 		Mandatory: mandatory,
 		Info:      ident.Name,
-		Line:      m.Fileset.Position(expr.Pos()).Line,
+		Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 		Commit:    m.Commit,
-		Filename:  m.Fileset.Position(expr.Pos()).Filename,
+		Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 	})
 
 	m.PrintCommParFeature(expr, bound, mandatory)

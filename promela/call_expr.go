@@ -71,11 +71,11 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
 				// check if positions match
 				if decl.Pos() == f.Decl.Pos() {
-					return stmts, errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())
+					return stmts, errors.New(RECURSIVE_FUNCTION + m.Props.Fileset.Position(decl.Pos()).String())
 				}
 			}
 		}
-		func_name = decl.Name.Name + fmt.Sprint(m.Fileset.Position(decl.Pos()).Line)
+		func_name = decl.Name.Name + fmt.Sprint(m.Props.Fileset.Position(decl.Pos()).Line)
 		new_mod := m.newModel(pack_name, decl)
 		new_mod.RecFuncs = append(new_mod.RecFuncs, RecFunc{Pkg: m.Package, Name: decl.Name.Name, Decl: decl})
 
@@ -121,7 +121,7 @@ func (m *Model) TranslateCallExpr(call_expr *ast.CallExpr) (stmts *promela_ast.B
 							select_stmt := &promela_ast.SelectStmt{
 								Model:  "Notify",
 								Guards: []promela_ast.GuardStmt{guard, true_guard},
-								Select: m.Fileset.Position(name.Pos())}
+								Select: m.Props.Fileset.Position(name.Pos())}
 
 							stmts.List = append(stmts.List, select_stmt)
 						}

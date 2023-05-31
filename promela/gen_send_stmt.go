@@ -10,7 +10,7 @@ import (
 type GenSendStmt struct {
 	Send       token.Position
 	Model      string
-	M          *Model           // a pointer to the model to check whether it containsClose or not
+	M          *GlobalProps     // a pointer to the model to check whether it containsClose or not
 	Chan       promela_ast.Expr // the chan that we want to send on
 	Sync_body  *promela_ast.BlockStmt
 	Async_body *promela_ast.BlockStmt
@@ -23,7 +23,6 @@ func (s *GenSendStmt) GoNode() token.Position {
 func (s *GenSendStmt) Print(num_tabs int) string {
 
 	// if contains close send to monitor
-
 	if s.M.ContainsClose {
 
 		sync_send := &promela_ast.SendStmt{
@@ -32,7 +31,7 @@ func (s *GenSendStmt) Print(num_tabs int) string {
 				Sel: &promela_ast.Ident{Name: "sync"}},
 			Rhs:   &promela_ast.Ident{Name: "false"}, // the channel is not closed
 			Model: s.Model,
-			//Send: m.Fileset.Position(s.Pos())
+			Send:  s.Send,
 		}
 		async_send := &promela_ast.RcvStmt{
 			Chan: &promela_ast.SelectorExpr{
@@ -40,7 +39,7 @@ func (s *GenSendStmt) Print(num_tabs int) string {
 				Sel: &promela_ast.Ident{Name: "enq"}},
 			Rhs:   &promela_ast.Ident{Name: "ok"},
 			Model: s.Model,
-			//Send: m.Fileset.Position(s.Pos())
+			Rcv:   s.Send,
 		}
 
 		assert := &promela_ast.AssertStmt{Pos: s.Send, Expr: &promela_ast.Ident{Name: "ok"}}
@@ -75,7 +74,6 @@ func (s *GenSendStmt) Print(num_tabs int) string {
 
 		return send_guard.Print(num_tabs)
 	}
-
 }
 
 func (s *GenSendStmt) Clone() promela_ast.Stmt {

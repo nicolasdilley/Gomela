@@ -11,7 +11,7 @@ import (
 func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt, defers *promela_ast.BlockStmt, err error) {
 	b = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defers = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	i := &promela_ast.IfStmt{If: m.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
+	i := &promela_ast.IfStmt{If: m.Props.Fileset.Position(s.Pos()), Init: &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}}
 
 	tag, err1 := m.TranslateExpr(s.Tag)
 	if err1 != nil {
@@ -56,7 +56,7 @@ func (m *Model) translateSwitchStmt(s *ast.SwitchStmt) (b *promela_ast.BlockStmt
 				}
 
 				if len(d2.List) > 0 {
-					return b, d2, errors.New(DEFER_IN_SWITCH + m.Fileset.Position(s.Pos()).String())
+					return b, d2, errors.New(DEFER_IN_SWITCH + m.Props.Fileset.Position(s.Pos()).String())
 				}
 				if err1 != nil {
 					return b, defers, err1

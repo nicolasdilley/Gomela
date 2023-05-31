@@ -49,14 +49,14 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 		for _, f := range m.RecFuncs {
 			if decl.Name.Name == f.Name && m.Package == f.Pkg {
 				if decl.Pos() == f.Decl.Pos() {
-					return b, errors.New(RECURSIVE_FUNCTION + m.Fileset.Position(decl.Pos()).String())
+					return b, errors.New(RECURSIVE_FUNCTION + m.Props.Fileset.Position(decl.Pos()).String())
 				}
 			}
 		}
 
 		// check if its a call on a struct that contains a chan, mutex or wgs
 
-		func_name = decl.Name.Name + fmt.Sprint(m.Fileset.Position(decl.Pos()).Line)
+		func_name = decl.Name.Name + fmt.Sprint(m.Props.Fileset.Position(decl.Pos()).Line)
 
 		new_mod := m.newModel(pack_name, decl)
 
@@ -103,15 +103,15 @@ func (m *Model) TranslateGoStmt(s *ast.GoStmt, isMain bool) (b *promela_ast.Bloc
 }
 
 // s can be either the go stmt or the call expr
-func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.CallExpr, func_name string, decl *ast.FuncDecl, params []*promela_ast.Param, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, error) {
+func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.CallExpr, func_name string, decl *ast.FuncDecl, params []promela_ast.Expr, args []promela_ast.Expr, isMain bool) (*promela_ast.BlockStmt, error) {
 
 	b := &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
-	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Fileset.Position(call_expr.Pos())}
+	prom_call := &promela_ast.CallExpr{Fun: &promela_ast.Ident{Name: func_name}, Call: m.Props.Fileset.Position(call_expr.Pos())}
 
 	prom_call.Args = args
 	proc := &promela_ast.Proctype{
 		Name:   &promela_ast.Ident{Name: func_name},
-		Pos:    m.Fileset.Position(call_expr.Pos()),
+		Pos:    m.Props.Fileset.Position(call_expr.Pos()),
 		Active: false,
 		Body:   &promela_ast.BlockStmt{List: []promela_ast.Stmt{}},
 		Params: params,
@@ -167,10 +167,10 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 			} else {
 				proc.Params = append(proc.Params, &promela_ast.Param{Name: VAR_PREFIX + commPar.Name.Name, Types: promela_types.Int})
 
-				arg := TranslateIdent(call_expr.Args[commPar.Pos], m.Fileset)
+				arg := TranslateIdent(call_expr.Args[commPar.Pos], m.Props.Fileset)
 
 				if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: arg.Name}}); found {
-					prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: VAR_PREFIX + arg.Name, Ident: m.Fileset.Position(call_expr.Pos())})
+					prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: VAR_PREFIX + arg.Name, Ident: m.Props.Fileset.Position(call_expr.Pos())})
 				} else {
 
 					var ident *promela_ast.Ident
@@ -182,7 +182,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 							for _, expr := range exprs {
 
 								// This is for accounting cases where an actual commParam args is a + b where a is known and b isnt. therefore we need to create a new def for b
-								if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(expr, m.Fileset).Name}}); !found {
+								if found, _ := ContainsCommParam(m.CommPars, &CommPar{Name: &ast.Ident{Name: TranslateIdent(expr, m.Props.Fileset).Name}}); !found {
 									// need to create a not found for it
 
 									rhs := ""
@@ -193,12 +193,13 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 									}
 
 									var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-									printer.Fprint(buff, m.Fileset, commPar.Expr)
-									rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
-									ident := &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Fileset).Name}
+									printer.Fprint(buff, m.Props.Fileset, commPar.Expr)
+									rhs += buff.String() + " line " + strconv.Itoa(m.Props.Fileset.Position(commPar.Expr.Pos()).Line)
+									ident := &promela_ast.Ident{Name: VAR_PREFIX + TranslateIdent(expr, m.Props.Fileset).Name}
 									m.Defines = append(m.Defines, promela_ast.DefineStmt{
 										Name: &promela_ast.Ident{Name: DEF_PREFIX + ident.Name},
-										Rhs:  &promela_ast.Ident{Name: rhs}})
+										Rhs:  &promela_ast.Ident{Name: rhs},
+									})
 
 									b.List = append(b.List, &promela_ast.DeclStmt{
 										Name:  ident,
@@ -212,7 +213,7 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 							ident = arg
 							prom_call.Args = append(prom_call.Args, ident)
 						} else {
-							ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Fileset.Position(call_expr.Pos()).Line)}
+							ident = &promela_ast.Ident{Name: "not_found_" + strconv.Itoa(m.Props.Fileset.Position(call_expr.Pos()).Line)}
 
 							rhs := ""
 							if commPar.Mandatory {
@@ -222,8 +223,8 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 							}
 
 							var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-							printer.Fprint(buff, m.Fileset, commPar.Expr)
-							rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+							printer.Fprint(buff, m.Props.Fileset, commPar.Expr)
+							rhs += buff.String() + " line " + strconv.Itoa(m.Props.Fileset.Position(commPar.Expr.Pos()).Line)
 
 							m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
 							prom_call.Args = append(prom_call.Args, ident)
@@ -245,8 +246,8 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 						}
 
 						var buff *bytes.Buffer = bytes.NewBuffer([]byte{})
-						printer.Fprint(buff, m.Fileset, commPar.Expr)
-						rhs += string(buff.Bytes()) + " line " + strconv.Itoa(m.Fileset.Position(commPar.Expr.Pos()).Line)
+						printer.Fprint(buff, m.Props.Fileset, commPar.Expr)
+						rhs += buff.String() + " line " + strconv.Itoa(m.Props.Fileset.Position(commPar.Expr.Pos()).Line)
 
 						m.Defines = append(m.Defines, promela_ast.DefineStmt{Name: ident, Rhs: &promela_ast.Ident{Name: rhs}})
 						prom_call.Args = append(prom_call.Args, ident)
@@ -264,17 +265,13 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 				Info:      commPar.Name.Name,
 				Line:      0,
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(m.Fun.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(m.Fun.Pos()).Filename,
 			})
 		}
 	}
-	prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Fileset.Position(call_expr.Pos())}
+	prom_call.Fun = &promela_ast.Ident{Name: func_name, Ident: m.Props.Fileset.Position(call_expr.Pos())}
 
 	m.addNewProctypes(new_mod) // adding the new proctypes create in the new model
-
-	m.ContainsChan = m.ContainsChan || new_mod.ContainsChan
-	m.ContainsWg = m.ContainsWg || new_mod.ContainsWg
-	m.ContainsMutexes = m.ContainsMutexes || new_mod.ContainsMutexes
 
 	child_func_name := "child_" + func_name + strconv.Itoa(m.Counter)
 	prom_call.Args = append(prom_call.Args, &promela_ast.Ident{Name: child_func_name})
@@ -292,12 +289,11 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 		b.List = append(b.List, &promela_ast.RcvStmt{Chan: &promela_ast.Ident{Name: child_func_name}, Rhs: &promela_ast.Ident{Name: "0"}})
 	} else {
 		// Add the receiver call
-		b.List = append(b.List, &promela_ast.RunStmt{
-			X: &promela_ast.CallExpr{
-				Fun: &promela_ast.Ident{
-					Name: "receiver"},
-				Args: []promela_ast.Expr{&promela_ast.Ident{Name: child_func_name}}}})
-		m.ContainsReceiver = true
+		b.List = append(b.List, &GenReceiver{
+			Name: child_func_name,
+			M:    m.Props,
+		})
+		m.Props.ContainsReceiver = true
 	}
 
 	if isMain {
@@ -309,10 +305,10 @@ func (m *Model) translateCommParams(new_mod *Model, isGo bool, call_expr *ast.Ca
 	return b, nil
 }
 
-func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *ast.CallExpr, isMain bool) ([]*promela_ast.Param, []promela_ast.Expr, bool, bool, error) {
+func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *ast.CallExpr, isMain bool) ([]promela_ast.Expr, []promela_ast.Expr, bool, bool, error) {
 	hasChan := isMain
 	known := true
-	params := []*promela_ast.Param{}
+	params := []promela_ast.Expr{}
 	args := []promela_ast.Expr{}
 
 	counter := 0
@@ -329,8 +325,12 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 				hasChan = true
 				if m.containsChan(call_expr.Args[counter]) {
 					chan_name := name.Name + CHAN_NAME
-					params = append(params, &promela_ast.Param{Name: chan_name, Types: promela_types.Chandef})
-					new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: chan_name}, Chan: m.Fileset.Position(name.Pos())}
+					params = append(params, &GenChanParam{
+						Pos:  m.Props.Fileset.Position(sel.Begin),
+						Name: chan_name,
+						M:    m.Props,
+					})
+					new_mod.Chans[name] = &ChanStruct{Name: &promela_ast.Ident{Name: chan_name}, Chan: m.Props.Fileset.Position(name.Pos())}
 
 					ch := m.getChanStruct(call_expr.Args[counter])
 
@@ -345,7 +345,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 						if sel.Sel.Name == "WaitGroup" {
 							hasChan = true
 							if m.containsWaitgroup(call_expr.Args[counter]) {
-								wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Fileset.Position(name.Pos())}, Wait: m.Fileset.Position(name.Pos())}
+								wg := &WaitGroupStruct{Name: &promela_ast.Ident{Name: name.Name, Ident: m.Props.Fileset.Position(name.Pos())}, Wait: m.Props.Fileset.Position(name.Pos())}
 								params = append(params, &promela_ast.Param{Name: name.Name, Types: promela_types.Wgdef})
 								new_mod.WaitGroups[name] = wg
 								arg := call_expr.Args[counter]
@@ -355,7 +355,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 									arg = unary.X
 								}
 
-								ident := &promela_ast.Ident{Name: m.getIdent(arg).Name, Ident: m.Fileset.Position(call_expr.Pos())}
+								ident := &promela_ast.Ident{Name: m.getIdent(arg).Name, Ident: m.Props.Fileset.Position(call_expr.Pos())}
 								args = append(args, ident)
 							} else {
 								known = false
@@ -373,7 +373,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 									arg = unary.X
 								}
 
-								ident := &promela_ast.Ident{Name: m.getIdent(arg).Name, Ident: m.Fileset.Position(call_expr.Pos())}
+								ident := &promela_ast.Ident{Name: m.getIdent(arg).Name, Ident: m.Props.Fileset.Position(call_expr.Pos())}
 								args = append(args, ident)
 
 							} else {
@@ -394,7 +394,7 @@ func (m *Model) translateParams(new_mod *Model, decl *ast.FuncDecl, call_expr *a
 
 // func (m *Model) GenerateParamAndArg(arg ast.Expr, t promela_types.Types) ([]*promela_ast.Param, []promela_ast.Expr) {
 // 	name := translateIdent(arg).Name
-// 	p := &promela_ast.Param{Name: name, Pos: m.Fileset.Position(arg.Pos()), Types: t}
+// 	p := &promela_ast.Param{Name: name, Pos: m.Props.Fileset.Position(arg.Pos()), Types: t}
 // 	e := &promela_ast.Ident{Name: name}
 
 // 	return p, e
@@ -412,7 +412,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 				Params: &ast.FieldList{List: append([]*ast.Field{}, name.Type.Params.List...)},
 			},
 		}
-		func_name := fmt.Sprint("Anonymous", m.Fun.Name.Name, m.Fileset.Position(name.Pos()).Line)
+		func_name := fmt.Sprint("Anonymous", m.Fun.Name.Name, m.Props.Fileset.Position(name.Pos()).Line)
 		ident := &ast.Ident{Name: func_name, NamePos: name.Pos()}
 		fun_decl.Name = ident
 		fun_decl.Body = name.Body
@@ -433,7 +433,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 		ch_names := []*ast.Ident{}
 		for ch, _ := range m.Chans {
 			if !containsExpr(exprs, ch) {
-				ch_names = append(ch_names, &ast.Ident{Name: TranslateIdent(ch, m.Fileset).Name, NamePos: ch.Pos()})
+				ch_names = append(ch_names, &ast.Ident{Name: TranslateIdent(ch, m.Props.Fileset).Name, NamePos: ch.Pos()})
 				new_call_expr.Args = append(new_call_expr.Args, ch)
 			}
 		}
@@ -444,7 +444,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 
 		for wg, _ := range m.WaitGroups {
 			if !containsExpr(exprs, wg) {
-				wg_names = append(wg_names, &ast.Ident{Name: TranslateIdent(wg, m.Fileset).Name, NamePos: wg.Pos()})
+				wg_names = append(wg_names, &ast.Ident{Name: TranslateIdent(wg, m.Props.Fileset).Name, NamePos: wg.Pos()})
 				new_call_expr.Args = append(new_call_expr.Args, wg)
 			}
 		}
@@ -460,7 +460,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 
 		for _, mu := range m.Mutexes {
 			if !containsExpr(exprs, mu) {
-				mu_names = append(mu_names, &ast.Ident{Name: TranslateIdent(mu, m.Fileset).Name, NamePos: mu.Pos()})
+				mu_names = append(mu_names, &ast.Ident{Name: TranslateIdent(mu, m.Props.Fileset).Name, NamePos: mu.Pos()})
 				new_call_expr.Args = append(new_call_expr.Args, mu)
 			}
 		}
@@ -491,7 +491,7 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 			for _, field := range decl.Type.Params.List {
 				switch field.Type.(type) {
 				case *ast.Ellipsis:
-					return nil, nil, pack_name, errors.New(ELLIPSIS + m.Fileset.Position(call_expr.Pos()).String())
+					return nil, nil, pack_name, errors.New(ELLIPSIS + m.Props.Fileset.Position(call_expr.Pos()).String())
 				}
 			}
 			new_decl, new_call_expr := m.updateDeclWithRcvAndStructs(*decl, call_expr)
@@ -509,14 +509,14 @@ func (m *Model) findFunDecl(call_expr *ast.CallExpr) (*ast.FuncDecl, *ast.CallEx
 					}
 				}
 				if m.isChan(expr) || m.isWaitgroup(expr) || m.isMutex(expr) {
-					return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))
+					return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Props.Fileset.Position(call_expr.Fun.Pos())))
 				}
 			}
 
 			// also check if the function is not a method on a struct that contains
 			// a mutex, a chan or a wg !
 			if m.isStructWithChans(call_expr.Fun) {
-				return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Fileset.Position(call_expr.Fun.Pos())))
+				return nil, nil, pack_name, errors.New(UNKNOWN_DECL + fmt.Sprint(m.Props.Fileset.Position(call_expr.Fun.Pos())))
 			}
 
 		}

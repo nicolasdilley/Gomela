@@ -9,7 +9,7 @@ import (
 
 type ChanDefDeclStmt struct {
 	Decl token.Position
-	M    *Model
+	M    *GlobalProps
 	Name *promela_ast.Ident
 	Size *promela_ast.Ident
 }

@@ -63,7 +63,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 		err = err1
 	}
 	if len(d3.List) > 0 {
-		return b, d3, errors.New(DEFER_IN_FOR + m.Fileset.Position(s.Pos()).String())
+		return b, d3, errors.New(DEFER_IN_FOR + m.Props.Fileset.Position(s.Pos()).String())
 	}
 	spawns := m.spawns(s.Body, false)
 	if spawns || containsMSP(stmts) {
@@ -77,14 +77,14 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 
 			// need to change the for loop into a bounded for loop
 			b.List = append(b.List, &promela_ast.ForStmt{
-				For:  m.Fileset.Position(s.Pos()),
+				For:  m.Props.Fileset.Position(s.Pos()),
 				Lb:   lb,
 				Ub:   ub,
 				Body: stmts,
 			}, for_label)
 
 		} else if len(stmts.List) > 0 {
-			d := &promela_ast.DoStmt{Do: m.Fileset.Position(s.Pos())}
+			d := &promela_ast.DoStmt{Do: m.Props.Fileset.Position(s.Pos())}
 			d.Guards = append(
 				d.Guards,
 				&promela_ast.SingleGuardStmt{
@@ -115,7 +115,7 @@ func (m *Model) translateForStmt(s *ast.ForStmt) (b *promela_ast.BlockStmt, defe
 					Body: &promela_ast.BlockStmt{
 						List: []promela_ast.Stmt{
 							&promela_ast.ForStmt{
-								For:  m.Fileset.Position(s.Pos()),
+								For:  m.Props.Fileset.Position(s.Pos()),
 								Lb:   lb,
 								Ub:   ub,
 								Body: body2,

@@ -12,7 +12,7 @@ func (m *Model) TranslateBlockStmt(b *ast.BlockStmt) (block_stmt *promela_ast.Bl
 	block_stmt = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	defer_stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if b != nil {
-		block_stmt.Block = m.Fileset.Position(b.Pos())
+		block_stmt.Block = m.Props.Fileset.Position(b.Pos())
 		for _, stmt := range b.List {
 			if stmt != nil {
 				switch stmt := stmt.(type) {

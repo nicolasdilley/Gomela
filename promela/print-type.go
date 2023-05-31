@@ -23,9 +23,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 				Name:      "Receive as a " + bound,
 				Mandatory: mandatory,
 				Info:      prettyPrint(expr) + " Mandatory : " + mandatory,
-				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 			})
 		} else if expr.Op == token.AND {
 			m.PrintFeature(Feature{
@@ -35,9 +35,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 				Name:      "Pointer as a " + bound,
 				Mandatory: mandatory,
 				Info:      prettyPrint(expr.X),
-				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 			})
 		}
 
@@ -50,9 +50,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Name:      "Func as a " + bound,
 			Mandatory: mandatory,
 			Info:      prettyPrint(expr),
-			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 		})
 		if m.getIdent(expr.Fun).Name == "len" {
 			m.PrintFeature(Feature{
@@ -62,9 +62,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 				Name:      "len() as a " + bound,
 				Mandatory: mandatory,
 				Info:      prettyPrint(expr),
-				Line:      m.Fileset.Position(expr.Pos()).Line,
+				Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(expr.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 			})
 
 		}
@@ -78,9 +78,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Name:      "Struct as a " + bound,
 			Mandatory: mandatory,
 			Info:      "UNSUPPORTED",
-			Line:      m.Fileset.Position(expr.Pos()).Line,
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 			Commit:    m.Commit,
-			Filename:  m.Fileset.Position(expr.Pos()).Filename,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 		})
 	case *ast.IndexExpr:
 		m.PrintFeature(Feature{
@@ -90,8 +90,8 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
 			Model:     m.Name,
-			Line:      m.Fileset.Position(expr.Pos()).Line,
-			Filename:  m.Fileset.Position(expr.Pos()).String(),
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).String(),
 			Commit:    m.Commit,
 		})
 
@@ -103,14 +103,14 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 			Fun:       m.Fun.Name.Name,
 			Proj_name: m.Project_name,
 			Model:     m.Name,
-			Line:      m.Fileset.Position(expr.Pos()).Line,
-			Filename:  m.Fileset.Position(expr.Pos()).String(),
+			Line:      m.Props.Fileset.Position(expr.Pos()).Line,
+			Filename:  m.Props.Fileset.Position(expr.Pos()).String(),
 			Commit:    m.Commit,
 		})
 	default:
 		Types := m.AstMap[m.Package].TypesInfo.TypeOf(expr)
 		if Types == nil {
-			fmt.Println("Could not find type of expr : ", expr, " in package :", m.Package, "at pos : ", m.Fileset.Position(expr.Pos()))
+			fmt.Println("Could not find type of expr : ", expr, " in package :", m.Package, "at pos : ", m.Props.Fileset.Position(expr.Pos()))
 		} else {
 			switch Types := Types.(type) {
 			case *types.Struct:
@@ -122,9 +122,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Name:      "Field of a struct as a " + bound,
 					Mandatory: mandatory,
 					Info:      "UNSUPPORTED",
-					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+					Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 				})
 
 			case *types.Basic:
@@ -137,9 +137,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 						Name:      "Integer as a " + bound,
 						Mandatory: mandatory,
 						Info:      isConstant(expr),
-						Line:      m.Fileset.Position(expr.Pos()).Line,
+						Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 						Commit:    m.Commit,
-						Filename:  m.Fileset.Position(expr.Pos()).Filename,
+						Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 					})
 				} else {
 					m.PrintFeature(Feature{
@@ -149,9 +149,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 						Name:      "Var as a " + bound,
 						Mandatory: mandatory,
 						Info:      "Name :" + fmt.Sprint(expr),
-						Line:      m.Fileset.Position(expr.Pos()).Line,
+						Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 						Commit:    m.Commit,
-						Filename:  m.Fileset.Position(expr.Pos()).Filename,
+						Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 					})
 				}
 
@@ -163,9 +163,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Name:      "Slice as a " + bound,
 					Mandatory: mandatory,
 					Info:      prettyPrint(expr),
-					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+					Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Map:
 				m.PrintFeature(Feature{
@@ -175,9 +175,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Name:      "Map as a " + bound,
 					Mandatory: mandatory,
 					Info:      Types.String(),
-					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+					Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 				})
 			case *types.Named:
 				m.PrintFeature(Feature{
@@ -187,9 +187,9 @@ func (m *Model) PrintCommParFeature(expr ast.Expr, bound string, mandatory strin
 					Name:      "Var as a " + bound,
 					Mandatory: mandatory,
 					Info:      Types.String(),
-					Line:      m.Fileset.Position(expr.Pos()).Line,
+					Line:      m.Props.Fileset.Position(expr.Pos()).Line,
 					Commit:    m.Commit,
-					Filename:  m.Fileset.Position(expr.Pos()).Filename,
+					Filename:  m.Props.Fileset.Position(expr.Pos()).Filename,
 				})
 			}
 		}

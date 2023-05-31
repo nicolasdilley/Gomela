@@ -2,8 +2,10 @@ package promela
 
 import (
 	"go/ast"
+
 	"github.com/nicolasdilley/gomela/promela/promela_ast"
 )
+
 func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (stmts *promela_ast.BlockStmt, err error) {
 	stmts = &promela_ast.BlockStmt{List: []promela_ast.Stmt{}}
 	if name.Sel.Name == "Add" {
@@ -21,27 +23,27 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Fun:       m.Fun.Name.String(),
 				Name:      "Add in for",
 				Mandatory: "true",
-				Line:      m.Fileset.Position(name.Pos()).Line,
+				Line:      m.Props.Fileset.Position(name.Pos()).Line,
 				Info:      "",
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(name.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(name.Pos()).Filename,
 			})
 		}
 		stmts.List = append(stmts.List, &promela_ast.SendStmt{
-			Send:  m.Fileset.Position(name.Pos()),
+			Send:  m.Props.Fileset.Position(name.Pos()),
 			Model: "Add(" + ub.Name + ")",
 			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
 			Rhs:   ub},
 
 			&promela_ast.RcvStmt{ // wait to receive the ack from the monitor
 				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"},
-				Rhs: &promela_ast.Ident{Name: "ok"}},
+				Rhs:  &promela_ast.Ident{Name: "ok"}},
 
-				// Check that the monitor says its ok
+			// Check that the monitor says its ok
 			&promela_ast.AssertStmt{
-				Pos: m.Fileset.Position(call_expr.Pos()),
+				Pos:   m.Props.Fileset.Position(call_expr.Pos()),
 				Model: "Add(" + ub.Name + ")",
-				Expr: &promela_ast.Ident{Name: "ok"}},
+				Expr:  &promela_ast.Ident{Name: "ok"}},
 		)
 
 	} else if name.Sel.Name == "Done" {
@@ -52,32 +54,31 @@ func (m *Model) parseWgFunc(call_expr *ast.CallExpr, name *ast.SelectorExpr) (st
 				Fun:       m.Fun.Name.String(),
 				Name:      "Done in for",
 				Mandatory: "false",
-				Line:      m.Fileset.Position(name.Pos()).Line,
+				Line:      m.Props.Fileset.Position(name.Pos()).Line,
 				Info:      "",
 				Commit:    m.Commit,
-				Filename:  m.Fileset.Position(name.Pos()).Filename,
+				Filename:  m.Props.Fileset.Position(name.Pos()).Filename,
 			})
 		}
 		stmts.List = append(stmts.List, &promela_ast.SendStmt{
-			Send:  m.Fileset.Position(name.Pos()),
+			Send:  m.Props.Fileset.Position(name.Pos()),
 			Model: "Done",
 			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update"},
 			Rhs:   &promela_ast.Ident{Name: "-1"}},
 
 			&promela_ast.RcvStmt{ // wait to receive the ack from the monitor
 				Chan: &promela_ast.Ident{Name: translateIdent(name.X).Name + ".update_ack"},
-				Rhs: &promela_ast.Ident{Name: "ok"}},
+				Rhs:  &promela_ast.Ident{Name: "ok"}},
 
-				// Check that the monitor says its ok
+			// Check that the monitor says its ok
 			&promela_ast.AssertStmt{
-				Pos: m.Fileset.Position(call_expr.Pos()),
+				Pos:   m.Props.Fileset.Position(call_expr.Pos()),
 				Model: "Done()",
-				Expr: &promela_ast.Ident{Name: "ok"}},
-
+				Expr:  &promela_ast.Ident{Name: "ok"}},
 		)
 	} else if name.Sel.Name == "Wait" {
 		stmts.List = append(stmts.List, &promela_ast.RcvStmt{
-			Rcv:   m.Fileset.Position(name.Pos()),
+			Rcv:   m.Props.Fileset.Position(name.Pos()),
 			Model: "Wait()",
 			Chan:  &promela_ast.Ident{Name: translateIdent(name.X).Name + ".wait"},
 			Rhs:   &promela_ast.Ident{Name: "0"}})
