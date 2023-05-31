@@ -18,7 +18,7 @@ func (c *InitDef) Print(num_tabs int) (stmt string) {
 
 	c.DeclAtStart()
 	stmt += c.Body.Print(num_tabs + 1)
-	stmt += "->\nstop_process:skip\n}\n"
+	stmt += ";\nstop_process:skip\n}\n"
 	return stmt
 }
 
